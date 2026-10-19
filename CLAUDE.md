@@ -1,63 +1,68 @@
 # BrotaSites
 
-Plataforma onde o cliente preenche um formulário e recebe uma landing page publicada automaticamente, sem ver código. Só landing pages por enquanto.
+Platform where a client fills out a form and gets a landing page published automatically, without ever seeing code. Landing pages only for now.
 
-Dono do projeto: Tiago da Silva Machado (github.com/tiagoosm). Idioma do produto e dos textos: português do Brasil.
+Project owner: Tiago da Silva Machado (github.com/tiagoosm). Product language (UI and generated site content): Brazilian Portuguese (pt-BR).
 
-## Como trabalhar neste projeto
+## Language rules
 
-- Responda e comente em português. Código, nomes de arquivos e de variáveis em inglês.
-- Faça uma etapa por vez, mostre o que mudou e rode os testes antes de seguir.
-- Não instale tecnologias fora da stack abaixo sem perguntar.
-- Fixe versões estáveis no `package.json`. Nada de `latest`.
-- Nunca grave segredos (chaves de API, tokens) no repositório. Use `.env.local` (no `.gitignore`) e mantenha um `.env.example`.
-- Commits pequenos, mensagens em português no imperativo (ex.: "Adiciona schema Zod da landing page").
-- Pergunte antes de qualquer ação irreversível ou que gere custo (comprar domínio, publicar em produção, criar projetos pagos).
+- Repository language is English: code, file and variable names, code comments, commit messages, README, everything in `docs/`, and repo metadata.
+- Product content stays in pt-BR: generated site text, form and dashboard UI copy, validation messages shown to users, and sample data (e.g. Padaria do Zé).
+- Chat with the project owner is in Portuguese.
 
-## Decisões já tomadas
+## How to work on this project
 
-- Linguagem: TypeScript em tudo. Monorepo com pnpm + Turborepo.
-- Plataforma (painel, formulário, API): Next.js (App Router), Tailwind e shadcn/ui.
-- Banco, login (link mágico) e arquivos: Supabase. Guarda só dados da plataforma (`users`, `sites`, `site_configs`, `jobs`, `assets`). Os sites dos clientes são estáticos, sem banco.
-- Validação: Zod em `packages/schema`, fonte única de verdade para formulário, API, IA e gerador. Referência inicial: `docs/site-config.schema.json` (versão 1.1).
-- Sites gerados: Astro + Tailwind, HTML estático, lendo o JSON de configuração.
-- Deploy dos sites: Cloudflare Pages (um projeto por cliente), em `cliente.brotasites.com`.
-- IA (Claude via SDK da Anthropic): gera só textos e ajustes, sempre devolvendo JSON validado pelo schema. Nunca gera código livre.
-- Testes: Vitest (schema e gerador) e Playwright (fluxo completo). CI no GitHub Actions.
-- Depois do MVP: fila de tarefas (Inngest ou Trigger.dev) e pagamento (Asaas ou Mercado Pago).
+- Do one step at a time, show what changed, and run the tests before moving on.
+- Do not install technologies outside the stack below without asking.
+- Pin stable versions in `package.json`. Never use `latest`.
+- Never commit secrets (API keys, tokens). Use `.env.local` (gitignored) and keep a `.env.example` up to date.
+- Small commits, messages in English in the imperative mood (e.g. "Add Zod schema for the landing page").
+- Ask before any irreversible or paid action (buying a domain, publishing to production, creating paid projects).
 
-## Regras da IA (inegociáveis)
+## Decisions already made
 
-- Nunca inventar depoimentos, avaliações, números, prêmios, certificações ou dados de contato.
-- Seção de depoimentos só liga se o cliente cadastrar ao menos um depoimento real.
-- Textos factuais (preços, horários, endereço, anos de história) vêm apenas do formulário. A IA só reescreve e organiza.
-- Campos editados à mão pelo cliente ficam em `ai.userEditedFields` e nunca são sobrescritos.
-- Se a saída da IA falhar na validação: tentar de novo uma vez e depois marcar o site como "em revisão".
+- Language: TypeScript everywhere. Monorepo with pnpm + Turborepo.
+- Platform (dashboard, form, API): Next.js (App Router), Tailwind and shadcn/ui.
+- Database, auth (magic link) and file storage: Supabase. Stores platform data only (`users`, `sites`, `site_configs`, `jobs`, `assets`). Client sites are static, with no database.
+- Validation: Zod in `packages/schema`, the single source of truth for the form, API, AI and generator. Initial reference: `docs/site-config.schema.json` (version 1.1).
+- Generated sites: Astro + Tailwind, static HTML, built from the configuration JSON.
+- Site deployment: Cloudflare Pages (one project per client), at `client.brotasites.com`.
+- AI (Claude via the Anthropic SDK): generates text and adjustments only, always returning JSON validated by the schema. Never generates free-form code.
+- Tests: Vitest (schema and generator) and Playwright (end-to-end flow). CI on GitHub Actions.
+- After the MVP: job queue (Inngest or Trigger.dev) and payments (Asaas or Mercado Pago).
 
-## Estrutura planejada
+## AI rules (non-negotiable)
+
+- Never invent testimonials, reviews, numbers, awards, certifications or contact details.
+- The testimonials section can only be enabled if the client provides at least one real testimonial.
+- Factual content (prices, opening hours, address, years in business) comes only from the form. The AI only rewrites and organizes it.
+- Fields edited by hand by the client are listed in `ai.userEditedFields` and are never overwritten.
+- If the AI output fails validation: retry once, then mark the site as "in review".
+
+## Planned structure
 
 ```
 brotasites/
 ├── apps/
-│   └── plataforma/        # Next.js: painel, formulário, API
+│   └── platform/          # Next.js: dashboard, form, API
 ├── packages/
-│   ├── schema/            # Zod + tipos (coração do projeto)
-│   ├── templates/         # modelos de landing page em Astro
-│   └── gerador/           # lê o JSON e monta o site estático
-├── docs/                  # schema JSON, exemplo e fluxo do formulário
+│   ├── schema/            # Zod + types (the heart of the project)
+│   ├── templates/         # Astro landing page templates
+│   └── generator/         # reads the JSON and builds the static site
+├── docs/                  # JSON schema, example and form flow
 ├── CLAUDE.md
 └── README.md
 ```
 
-## Documentos de referência (pasta `docs/`)
+## Reference documents (`docs/` folder)
 
-- `site-config.schema.json`: formato do JSON de configuração (v1.1).
-- `site-config.exemplo.json`: exemplo preenchido (Padaria do Zé).
-- `fluxo-formulario.md`: etapas do formulário e quais campos cada uma preenche.
+- `site-config.schema.json`: format of the configuration JSON (v1.1).
+- `site-config.example.json`: filled-in example (Padaria do Zé).
+- `form-flow.md`: form steps and which fields each step fills in.
 
-## Pontos em aberto
+## Open questions
 
-- Quantos templates no lançamento (sugestão: 2 ou 3 bem feitos).
-- Pagamento antes ou depois da geração.
-- Política de ajustes inclusos após a publicação.
-- Domínio e marca: `brotasites.com.br` já está registrado por terceiros. Domínio principal sugerido: `brotasites.com`. Consultar INPI antes de investir na marca.
+- How many templates at launch (suggestion: 2 or 3 polished ones).
+- Payment before or after generation.
+- Policy for included adjustments after publishing.
+- Domain and brand: `brotasites.com.br` is already registered by a third party. Suggested main domain: `brotasites.com`. Check INPI (Brazilian trademark office) before investing in the brand.
