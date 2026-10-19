@@ -41,6 +41,24 @@ packages/
 docs/            specification
 ```
 
+## Getting started
+
+Requirements: Node.js 24+ and pnpm (enable it with `corepack enable pnpm`).
+
+```sh
+pnpm install
+cp .env.example .env.local   # fill in the values
+```
+
+| Script | What it does |
+| --- | --- |
+| `pnpm build` | Build all packages (Turborepo) |
+| `pnpm dev` | Run all dev servers |
+| `pnpm test` | Run all tests |
+| `pnpm typecheck` | Type-check all packages |
+| `pnpm lint` | Lint and check formatting (Biome) |
+| `pnpm format` | Fix lint and formatting issues (Biome) |
+
 ## Documentation
 
 - [`docs/site-config.schema.json`](docs/site-config.schema.json): configuration JSON format (v1.1)

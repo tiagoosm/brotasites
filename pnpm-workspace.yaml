@@ -1,0 +1,6 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Pin exact versions when adding dependencies (no ^ or ~).
+saveExact: true
