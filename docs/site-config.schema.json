@@ -1,0 +1,300 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SiteConfig",
+  "type": "object",
+  "required": ["schemaVersion", "site", "business", "design", "sections"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.1" },
+    "site": {
+      "type": "object",
+      "required": ["type", "language", "subdomain"],
+      "properties": {
+        "type": { "enum": ["landing-page"] },
+        "language": { "type": "string", "default": "pt-BR" },
+        "subdomain": { "type": "string", "pattern": "^[a-z0-9](?:[a-z0-9-]{1,38})[a-z0-9]$" },
+        "customDomain": { "type": ["string", "null"] }
+      }
+    },
+    "business": {
+      "type": "object",
+      "required": ["name", "category", "contact"],
+      "properties": {
+        "name": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "tagline": { "type": "string", "maxLength": 120 },
+        "category": { "type": "string" },
+        "description": { "type": "string", "maxLength": 500 },
+        "logo": { "type": ["string", "null"] },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "phone": { "type": "string" },
+            "whatsapp": { "type": "string", "pattern": "^[0-9]{12,13}$" },
+            "email": { "type": "string", "format": "email" },
+            "address": {
+              "type": "object",
+              "properties": {
+                "street": { "type": "string" },
+                "district": { "type": "string" },
+                "city": { "type": "string" },
+                "state": { "type": "string", "minLength": 2, "maxLength": 2 },
+                "zip": { "type": "string" }
+              }
+            },
+            "openingHours": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["days", "hours"],
+                "properties": { "days": { "type": "string" }, "hours": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "social": {
+          "type": "object",
+          "properties": {
+            "instagram": { "type": ["string", "null"] },
+            "facebook": { "type": ["string", "null"] }
+          }
+        }
+      }
+    },
+    "design": {
+      "type": "object",
+      "required": ["template", "colors", "fonts"],
+      "properties": {
+        "template": { "enum": ["classico", "moderno", "minimalista", "vibrante"] },
+        "colors": {
+          "type": "object",
+          "required": ["primary", "background", "text"],
+          "properties": {
+            "primary": { "$ref": "#/$defs/hex" },
+            "secondary": { "$ref": "#/$defs/hex" },
+            "background": { "$ref": "#/$defs/hex" },
+            "text": { "$ref": "#/$defs/hex" }
+          }
+        },
+        "fonts": {
+          "type": "object",
+          "properties": {
+            "heading": { "enum": ["Inter", "Playfair Display", "Poppins", "Montserrat", "Lora", "Roboto Slab"] },
+            "body": { "enum": ["Inter", "Poppins", "Montserrat", "Lora", "Roboto"] }
+          }
+        },
+        "style": {
+          "type": "object",
+          "properties": {
+            "borderRadius": { "enum": ["none", "soft", "round"] },
+            "buttons": { "enum": ["filled", "outline"] },
+            "darkMode": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "navigation": {
+      "type": "object",
+      "properties": {
+        "sticky": { "type": "boolean" },
+        "ctaLabel": { "type": "string", "maxLength": 30 }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "enabled", "content"],
+        "properties": {
+          "id": { "enum": ["hero", "sobre", "servicos", "galeria", "depoimentos", "faq", "cta-final", "contato"] },
+          "enabled": { "type": "boolean" },
+          "content": { "type": "object" }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "id": { "const": "hero" } } },
+            "then": { "properties": { "content": { "$ref": "#/$defs/hero" } } }
+          },
+          {
+            "if": { "properties": { "id": { "const": "sobre" } } },
+            "then": { "properties": { "content": { "$ref": "#/$defs/sobre" } } }
+          },
+          {
+            "if": { "properties": { "id": { "const": "servicos" } } },
+            "then": { "properties": { "content": { "$ref": "#/$defs/servicos" } } }
+          },
+          {
+            "if": { "properties": { "id": { "const": "galeria" } } },
+            "then": { "properties": { "content": { "$ref": "#/$defs/galeria" } } }
+          },
+          {
+            "if": { "properties": { "id": { "const": "depoimentos" } } },
+            "then": { "properties": { "content": { "$ref": "#/$defs/depoimentos" } } }
+          },
+          {
+            "if": { "properties": { "id": { "const": "faq" } } },
+            "then": { "properties": { "content": { "$ref": "#/$defs/faq" } } }
+          },
+          {
+            "if": { "properties": { "id": { "const": "cta-final" } } },
+            "then": { "properties": { "content": { "$ref": "#/$defs/ctaFinal" } } }
+          },
+          {
+            "if": { "properties": { "id": { "const": "contato" } } },
+            "then": { "properties": { "content": { "$ref": "#/$defs/contato" } } }
+          }
+        ]
+      }
+    },
+    "seo": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 70 },
+        "description": { "type": "string", "maxLength": 160 },
+        "keywords": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "integrations": {
+      "type": "object",
+      "properties": {
+        "whatsappFloatingButton": { "type": "boolean" },
+        "googleMapsEmbed": { "type": "boolean" },
+        "contactForm": {
+          "type": "object",
+          "properties": {
+            "provider": { "enum": ["formspree", "web3forms", null] },
+            "endpoint": { "type": ["string", "null"] }
+          }
+        },
+        "analytics": { "type": ["string", "null"] }
+      }
+    },
+    "ai": {
+      "type": "object",
+      "properties": {
+        "tone": { "enum": ["amigavel", "profissional", "descontraido", "elegante"] },
+        "generatedFields": { "type": "array", "items": { "type": "string" } },
+        "userEditedFields": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "$defs": {
+    "hex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+    "cta": {
+      "type": "object",
+      "required": ["label", "action"],
+      "properties": {
+        "label": { "type": "string", "maxLength": 30 },
+        "action": { "enum": ["whatsapp", "phone", "link", "scroll"] },
+        "target": { "type": ["string", "null"] }
+      }
+    },
+    "hero": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 80 },
+        "subtitle": { "type": "string", "maxLength": 200 },
+        "image": { "type": ["string", "null"] },
+        "cta": { "$ref": "#/$defs/cta" }
+      }
+    },
+    "sobre": {
+      "type": "object",
+      "required": ["title", "text"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 60 },
+        "text": { "type": "string", "maxLength": 800 },
+        "image": { "type": ["string", "null"] }
+      }
+    },
+    "servicos": {
+      "type": "object",
+      "required": ["title", "items"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 60 },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 9,
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string", "maxLength": 50 },
+              "description": { "type": "string", "maxLength": 200 },
+              "icon": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "galeria": {
+      "type": "object",
+      "required": ["title", "images"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 60 },
+        "images": { "type": "array", "maxItems": 12, "items": { "type": "string" } }
+      }
+    },
+    "depoimentos": {
+      "type": "object",
+      "required": ["title", "items"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 60 },
+        "items": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "required": ["name", "text"],
+            "properties": {
+              "name": { "type": "string" },
+              "role": { "type": "string" },
+              "text": { "type": "string", "maxLength": 300 }
+            }
+          }
+        }
+      }
+    },
+    "faq": {
+      "type": "object",
+      "required": ["title", "items"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 60 },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": ["question", "answer"],
+            "properties": {
+              "question": { "type": "string", "maxLength": 120 },
+              "answer": { "type": "string", "maxLength": 400 }
+            }
+          }
+        }
+      }
+    },
+    "ctaFinal": {
+      "type": "object",
+      "required": ["title", "cta"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 80 },
+        "subtitle": { "type": "string", "maxLength": 160 },
+        "cta": { "$ref": "#/$defs/cta" }
+      }
+    },
+    "contato": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 60 },
+        "showMap": { "type": "boolean" },
+        "showHours": { "type": "boolean" },
+        "showForm": { "type": "boolean" }
+      }
+    }
+  }
+}

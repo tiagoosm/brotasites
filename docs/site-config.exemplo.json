@@ -1,0 +1,151 @@
+{
+  "schemaVersion": "1.1",
+  "site": {
+    "type": "landing-page",
+    "language": "pt-BR",
+    "subdomain": "padaria-do-ze",
+    "customDomain": null
+  },
+  "business": {
+    "name": "Padaria do Zé",
+    "tagline": "Pão quentinho todo dia",
+    "category": "padaria",
+    "description": "Padaria de bairro com pães artesanais, bolos e café da manhã desde 1998.",
+    "logo": "assets/logo.png",
+    "contact": {
+      "phone": "(35) 3555-0000",
+      "whatsapp": "5535999990000",
+      "email": "contato@padariadoze.com.br",
+      "address": {
+        "street": "Rua das Flores, 123",
+        "district": "Centro",
+        "city": "Santa Rita do Sapucaí",
+        "state": "MG",
+        "zip": "37540-000"
+      },
+      "openingHours": [
+        { "days": "Seg a Sex", "hours": "06:00 - 19:00" },
+        { "days": "Sábado", "hours": "06:00 - 14:00" },
+        { "days": "Domingo", "hours": "Fechado" }
+      ]
+    },
+    "social": {
+      "instagram": "padariadoze",
+      "facebook": null
+    }
+  },
+  "design": {
+    "template": "classico",
+    "colors": {
+      "primary": "#B45309",
+      "secondary": "#78350F",
+      "background": "#FFFBEB",
+      "text": "#1C1917"
+    },
+    "fonts": {
+      "heading": "Playfair Display",
+      "body": "Inter"
+    },
+    "style": {
+      "borderRadius": "soft",
+      "buttons": "filled",
+      "darkMode": false
+    }
+  },
+  "navigation": {
+    "sticky": true,
+    "ctaLabel": "Fale conosco"
+  },
+  "sections": [
+    {
+      "id": "hero",
+      "enabled": true,
+      "content": {
+        "title": "Pão quentinho todo dia",
+        "subtitle": "Feito com carinho, direto do forno para a sua mesa.",
+        "image": "assets/hero.jpg",
+        "cta": { "label": "Fale conosco", "action": "whatsapp", "target": null }
+      }
+    },
+    {
+      "id": "sobre",
+      "enabled": true,
+      "content": {
+        "title": "Nossa história",
+        "text": "Desde 1998 servindo o bairro com pães artesanais e muito carinho.",
+        "image": "assets/sobre.jpg"
+      }
+    },
+    {
+      "id": "servicos",
+      "enabled": true,
+      "content": {
+        "title": "O que oferecemos",
+        "items": [
+          { "name": "Pães artesanais", "description": "Fermentação natural, feitos todas as manhãs.", "icon": "bread" },
+          { "name": "Bolos e tortas", "description": "Encomendas para aniversários e eventos.", "icon": "cake" },
+          { "name": "Café da manhã", "description": "Mesa completa, de segunda a sábado.", "icon": "coffee" }
+        ]
+      }
+    },
+    {
+      "id": "galeria",
+      "enabled": true,
+      "content": {
+        "title": "Galeria",
+        "images": ["assets/galeria-1.jpg", "assets/galeria-2.jpg", "assets/galeria-3.jpg"]
+      }
+    },
+    {
+      "id": "depoimentos",
+      "enabled": false,
+      "content": { "title": "Quem prova, aprova", "items": [] }
+    },
+    {
+      "id": "faq",
+      "enabled": true,
+      "content": {
+        "title": "Perguntas frequentes",
+        "items": [
+          { "question": "Vocês fazem encomendas?", "answer": "Sim, bolos e tortas sob encomenda. Chame no WhatsApp com 2 dias de antecedência." },
+          { "question": "Tem opção sem glúten?", "answer": "Consulte nossas opções do dia direto no balcão ou pelo WhatsApp." }
+        ]
+      }
+    },
+    {
+      "id": "cta-final",
+      "enabled": true,
+      "content": {
+        "title": "Venha tomar um café com a gente",
+        "subtitle": "Estamos de portas abertas de segunda a sábado.",
+        "cta": { "label": "Chamar no WhatsApp", "action": "whatsapp", "target": null }
+      }
+    },
+    {
+      "id": "contato",
+      "enabled": true,
+      "content": {
+        "title": "Venha nos visitar",
+        "showMap": true,
+        "showHours": true,
+        "showForm": false
+      }
+    }
+  ],
+  "seo": {
+    "title": "Padaria do Zé | Pães artesanais em Santa Rita do Sapucaí",
+    "description": "Pães artesanais, bolos e café da manhã. Venha conhecer a Padaria do Zé.",
+    "keywords": ["padaria", "pão artesanal", "café da manhã"]
+  },
+  "integrations": {
+    "whatsappFloatingButton": true,
+    "googleMapsEmbed": true,
+    "contactForm": { "provider": null, "endpoint": null },
+    "analytics": null
+  },
+  "ai": {
+    "tone": "amigavel",
+    "generatedFields": ["business.tagline", "business.description", "sections.sobre.content.text", "sections.faq.content.items", "seo.description"],
+    "userEditedFields": []
+  }
+}
