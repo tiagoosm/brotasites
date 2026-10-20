@@ -116,3 +116,14 @@ describe("fonts", () => {
     expect(fontWeights(fonts)).toEqual({ body: ["400", "600", "700"], heading: [] });
   });
 });
+
+describe("preview fonts", () => {
+  it("builds one Google Fonts request with the right weights", async () => {
+    const { googleFontsHref, previewFontCss } = await import("../src/lib/fonts");
+    const fonts = fontChoice(example);
+    expect(googleFontsHref(fonts)).toBe(
+      "https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Playfair+Display:wght@400;600&display=swap",
+    );
+    expect(previewFontCss(fonts)).toContain('--brand-font-heading:"Playfair Display", serif');
+  });
+});

@@ -3,16 +3,24 @@ import { Font, getImage } from "astro:assets";
 import type { SiteConfig } from "@brotasites/schema";
 import "../styles/global.css";
 import { siteUrl } from "../lib/config";
-import { BODY_FONT_VAR, fontChoice, HEADING_FONT_VAR } from "../lib/fonts";
+import {
+  BODY_FONT_VAR,
+  fontChoice,
+  googleFontsHref,
+  HEADING_FONT_VAR,
+  previewFontCss,
+} from "../lib/fonts";
 import { findImage } from "../lib/images";
 import { facebookUrl, instagramUrl } from "../lib/links";
 import { themeCss } from "../lib/theme";
 
 interface Props {
   config: SiteConfig;
+  /** Live preview in the form: fonts come from Google Fonts instead of the build. */
+  preview?: boolean;
 }
 
-const { config } = Astro.props;
+const { config, preview = false } = Astro.props;
 const { business, seo } = config;
 const url = siteUrl(config);
 const fonts = fontChoice(config);
@@ -76,18 +84,33 @@ const jsonLd = {
     {ogImage && <meta property="og:image" content={ogImage} />}
     <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
 
-    <!-- Preload only what the first screen needs: body text and the display headline. -->
-    <Font
-      cssVariable={BODY_FONT_VAR}
-      preload={[{ weight: "400" }, ...(fonts.shared ? [{ weight: fonts.displayWeight }] : [])]}
-    />
     {
-      !fonts.shared && (
-        <Font cssVariable={HEADING_FONT_VAR} preload={[{ weight: fonts.displayWeight }]} />
+      preview ? (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+          <link rel="stylesheet" href={googleFontsHref(fonts)} />
+          <style is:inline set:html={previewFontCss(fonts)} />
+        </>
+      ) : (
+        <>
+          {/* Preload only what the first screen needs: body text and the display headline. */}
+          <Font
+            cssVariable={BODY_FONT_VAR}
+            preload={[
+              { weight: "400" },
+              ...(fonts.shared ? [{ weight: fonts.displayWeight }] : []),
+            ]}
+          />
+          {!fonts.shared && (
+            <Font cssVariable={HEADING_FONT_VAR} preload={[{ weight: fonts.displayWeight }]} />
+          )}
+        </>
       )
     }
     <style is:inline set:html={themeCss(config)}></style>
     <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)}></script>
+    <slot name="head" />
   </head>
   <body class="bg-surface font-body text-ink antialiased">
     <slot />

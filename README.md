@@ -34,6 +34,7 @@ The product UI and the generated sites are in Brazilian Portuguese (pt-BR).
 ```
 apps/
   platform/      Next.js: dashboard, form, API
+  preview/       Astro server that renders the live preview
 packages/
   schema/        Zod schema and types (single source of truth)
   templates/     Astro landing page templates
@@ -70,7 +71,7 @@ pnpm --filter @brotasites/generator generate path/to/site-config.json --out ../.
 
 The config is validated first, with error messages in Portuguese; missing images produce warnings and the site is built without them. Only the `classico` template is available so far.
 
-To work on the form, run `pnpm --filter @brotasites/platform dev` and open http://localhost:3000. The draft is saved in the browser for now.
+To work on the form, run `pnpm dev` (or the platform and preview apps on their own) and open http://localhost:3000. The live preview comes from `apps/preview` on port 4400: an Astro server that renders the real template from the draft the form posts. The draft is saved in the browser for now.
 
 To work on the templates with live reload, run `pnpm --filter @brotasites/templates dev`. It renders `docs/site-config.example.json` by default, or the file set in `BROTASITES_CONFIG`.
 

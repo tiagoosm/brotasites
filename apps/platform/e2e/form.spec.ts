@@ -70,23 +70,50 @@ test("a business type outside the list can be typed", async ({ page }) => {
   await expect(page).toHaveURL(/\/criar\/modelo$/);
 });
 
-test("the preview follows what the client types", async ({ page }) => {
+/** The visible preview iframe (two are kept; the hidden one loads the next update). */
+const site = (page: Page) => page.frameLocator('iframe[data-active="true"]');
+
+async function openPreview(page: Page) {
+  if (isMobile(page)) await page.getByRole("button", { name: "Ver prévia" }).click();
+  return isMobile(page)
+    ? page.getByRole("dialog", { name: "Prévia do site" })
+    : page.getByRole("region", { name: "Prévia do site" });
+}
+
+test("the preview renders the real template and follows typing", async ({ page }) => {
   await page.goto("/criar/negocio");
+  await page.getByLabel("Nome do negócio").fill("Barbearia do Léo");
+  await chooseType(page, "Barbearia");
+  const preview = await openPreview(page);
+  await expect(preview).toContainText("barbearia-do-leo.brotasites.com");
+  // The template's own markup: hero title and the sections suggested for a barbershop.
+  await expect(site(page).locator("#hero-title")).toHaveText(/Barbearia\s+do\s+Léo/);
+  await expect(site(page).locator("#servicos")).toBeVisible();
+
   if (isMobile(page)) {
-    await page.getByLabel("Nome do negócio").fill("Barbearia do Léo");
-    await page.getByRole("button", { name: "Ver prévia" }).click();
-    const dialog = page.getByRole("dialog", { name: "Prévia do site" });
-    await expect(dialog).toContainText("Barbearia do Léo");
-    await expect(dialog).toContainText("barbearia-do-leo.brotasites.com");
     await page.keyboard.press("Escape");
-    await expect(dialog).toBeHidden();
+    await expect(preview).toBeHidden();
+    await page.getByLabel("Nome do negócio").fill("Barbearia do Léo Centro");
+    await openPreview(page);
   } else {
-    const preview = page.getByRole("region", { name: "Prévia do site" });
-    await expect(preview).toContainText("Nome do seu negócio");
-    await page.getByLabel("Nome do negócio").fill("Barbearia do Léo");
-    await expect(preview).toContainText("Barbearia do Léo");
-    await expect(preview).toContainText("barbearia-do-leo.brotasites.com");
+    await page.getByLabel("Nome do negócio").fill("Barbearia do Léo Centro");
   }
+  await expect(site(page).locator("#hero-title")).toHaveText(/Barbearia\s+do\s+Léo\s+Centro/);
+});
+
+test("the preview switches between phone and computer", async ({ page }) => {
+  test.skip(isMobile(page), "On phones the preview opens at phone size");
+  await page.goto("/criar/negocio");
+  const preview = await openPreview(page);
+  await expect(site(page).locator("#hero-title")).toBeVisible();
+  await preview.getByRole("button", { name: "celular" }).click();
+  await expect(preview.getByRole("button", { name: "celular" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.locator('iframe[data-active="true"]')).toHaveCSS("width", "390px");
+  // At phone width the template shows its mobile menu button.
+  await expect(site(page).getByLabel("Abrir menu")).toBeVisible();
 });
 
 test("does not scroll sideways and logs no errors", async ({ page }) => {

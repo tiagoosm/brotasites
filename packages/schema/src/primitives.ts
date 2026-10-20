@@ -22,10 +22,16 @@ export const whatsappSchema = z
     "Informe o WhatsApp só com números, incluindo país e DDD (ex.: 5535999990000).",
   );
 
-export const ctaSchema = z.object({
-  label: z.string().max(30),
-  action: z.enum(["whatsapp", "phone", "link", "scroll"]),
-  target: z.string().nullish(),
-});
+export const ctaSchema = z
+  .object({
+    label: z.string().max(30),
+    action: z.enum(["whatsapp", "phone", "link", "scroll"]),
+    target: z.string().nullish(),
+  })
+  // Link buttons open real web addresses only (no javascript:, data: and the like).
+  .refine((cta) => cta.action !== "link" || !cta.target || /^https?:\/\/\S+$/i.test(cta.target), {
+    path: ["target"],
+    error: "Use um endereço que comece com http:// ou https://.",
+  });
 
 export type Cta = z.infer<typeof ctaSchema>;

@@ -17,9 +17,11 @@ import "./classico.css";
 
 interface Props {
   config: SiteConfig;
+  /** Rendered by the live preview server instead of a static build. */
+  preview?: boolean;
 }
 
-const { config } = Astro.props;
+const { config, preview = false } = Astro.props;
 const { contact } = config.business;
 // Sections render in the order chosen by the client; disabled ones are skipped.
 const sections = config.sections.filter((section) => section.enabled);
@@ -30,7 +32,8 @@ const parsedHours = parseOpeningHours(contact.openingHours);
 const week = parsedHours ? buildWeek(parsedHours) : undefined;
 ---
 
-<Layout config={config}>
+<Layout config={config} preview={preview}>
+  <slot name="head" slot="head" />
   <a
     href="#inicio"
     class="sr-only z-50 rounded-button bg-brand px-4 py-2 font-bold text-on-brand focus:not-sr-only focus:fixed focus:top-2 focus:left-2"

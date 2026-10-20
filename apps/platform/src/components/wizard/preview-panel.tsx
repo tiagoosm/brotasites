@@ -4,17 +4,15 @@ import { buildPreviewConfig, PLACEHOLDER_SUBDOMAIN, suggestSubdomain } from "@br
 import { useMemo, useState } from "react";
 import { useDraft } from "@/lib/draft-store";
 import { cn } from "@/lib/utils";
-
-type Device = "celular" | "computador";
+import { type Device, LivePreview } from "./live-preview";
 
 // The "table" the client's site sits on: device switch, live marker and a browser frame
-// showing the address the site will get. The frame renders the real template in phase 2.
+// showing the address the site will get, with the real template rendered inside.
 export function PreviewPanel({ compact = false }: { compact?: boolean }) {
   const { draft } = useDraft();
   const [device, setDevice] = useState<Device>(compact ? "celular" : "computador");
   const config = useMemo(() => buildPreviewConfig(draft), [draft]);
   const address = `${draft.site?.subdomain ?? suggestSubdomain(draft.business?.name) ?? PLACEHOLDER_SUBDOMAIN}.brotasites.com`;
-  const { colors } = config.design;
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -55,12 +53,8 @@ export function PreviewPanel({ compact = false }: { compact?: boolean }) {
             {address}
           </span>
         </div>
-        <div
-          className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center"
-          style={{ background: colors.background, color: colors.text }}
-        >
-          <p className="text-sm opacity-60">{config.business.category}</p>
-          <p className="font-display text-3xl">{config.business.name}</p>
+        <div className="min-h-0 flex-1">
+          <LivePreview config={config} device={device} />
         </div>
       </div>
     </div>

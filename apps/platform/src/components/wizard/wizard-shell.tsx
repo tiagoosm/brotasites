@@ -18,6 +18,8 @@ export const useOpenPreview = () => useContext(PreviewToggle);
 
 export function WizardShell({ children }: { children: React.ReactNode }) {
   const [previewOpen, setPreviewOpen] = useState(false);
+  // Mount the live preview only where it shows: side panel on wide screens, dialog on phones.
+  const wide = useMediaQuery("(min-width: 1024px)");
   const params = useParams<{ etapa?: string }>();
   const step = (formSteps.find((s) => s.slug === params.etapa)?.slug ?? "negocio") as FormStepSlug;
 
@@ -54,10 +56,10 @@ export function WizardShell({ children }: { children: React.ReactNode }) {
           aria-label="Prévia do site"
           className="sticky top-0 hidden h-dvh bg-table p-5 lg:block xl:p-7"
         >
-          <PreviewPanel />
+          {wide && <PreviewPanel />}
         </section>
 
-        {previewOpen && (
+        {previewOpen && !wide && (
           <div
             role="dialog"
             aria-modal="true"
@@ -84,6 +86,18 @@ export function WizardShell({ children }: { children: React.ReactNode }) {
       </div>
     </PreviewToggle>
   );
+}
+
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const list = window.matchMedia(query);
+    setMatches(list.matches);
+    const onChange = (event: MediaQueryListEvent) => setMatches(event.matches);
+    list.addEventListener("change", onChange);
+    return () => list.removeEventListener("change", onChange);
+  }, [query]);
+  return matches;
 }
 
 function Brand() {

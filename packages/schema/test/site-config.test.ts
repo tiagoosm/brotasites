@@ -86,3 +86,21 @@ describe("siteConfigSchema", () => {
     expect(siteConfigSchema.safeParse(config).success).toBe(true);
   });
 });
+
+describe("ctaSchema", () => {
+  it("only accepts web addresses for link buttons", async () => {
+    const { ctaSchema } = await import("../src/index.js");
+    expect(
+      ctaSchema.safeParse({ label: "Ver", action: "link", target: "https://exemplo.com" }).success,
+    ).toBe(true);
+    for (const target of ["javascript:alert(1)", "data:text/html,oi", "exemplo.com"]) {
+      expect(ctaSchema.safeParse({ label: "Ver", action: "link", target }).success, target).toBe(
+        false,
+      );
+    }
+    // Other actions keep their own targets (e.g. a section id to scroll to).
+    expect(ctaSchema.safeParse({ label: "Ver", action: "scroll", target: "faq" }).success).toBe(
+      true,
+    );
+  });
+});
