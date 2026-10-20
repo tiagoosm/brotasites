@@ -1,0 +1,219 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* No dark theme yet: shadcn dark: styles apply only under an explicit .dark class. */
+@custom-variant dark (&:is(.dark *));
+
+/* Herbarium. The platform is a botanical plate on which the client's site grows:
+   cool paper, ink-green line work, a leaf green for actions and a pollen yellow kept
+   for "now" (the current step and the live preview). The client's site is the star. */
+:root {
+  --paper: #f7f8f3;
+  --table: #eceee7;
+  --surface: #ffffff;
+  --ink: #14241b;
+  --ink-soft: #4d5c53;
+  --line: #d7ddd2;
+  --line-strong: #c3ccbf;
+  --leaf: #2f7a4a;
+  --leaf-deep: #22603a;
+  --leaf-wash: #e2efe4;
+  --stem: #2f5d45;
+  --pollen: #e2b23c;
+  --danger: #b42318;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* shadcn/ui tokens */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--leaf);
+  --primary-foreground: #ffffff;
+  --secondary: var(--leaf-wash);
+  --secondary-foreground: var(--leaf-deep);
+  --muted: var(--table);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--leaf-wash);
+  --accent-foreground: var(--leaf-deep);
+  --destructive: var(--danger);
+  --border: var(--line);
+  --input: var(--line-strong);
+  --ring: var(--leaf);
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-paper: var(--paper);
+  --color-table: var(--table);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-leaf: var(--leaf);
+  --color-leaf-deep: var(--leaf-deep);
+  --color-leaf-wash: var(--leaf-wash);
+  --color-stem: var(--stem);
+  --color-pollen: var(--pollen);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-display: var(--font-young-serif);
+  --font-sans: var(--font-hanken);
+  --font-mono: var(--font-plex-mono);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--leaf-wash);
+    color: var(--leaf-deep);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--leaf);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Specimen-tag label: the mono utility face, used for numbers and machine values. */
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
+
+/* ---------- Herbarium sprout: the stem is drawn as the client advances ---------- */
+
+.stem-path {
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 900ms var(--ease-in-out);
+}
+
+.stem-path[data-grown="true"] {
+  stroke-dashoffset: 0;
+}
+
+.leaf {
+  transform-box: fill-box;
+  transition:
+    transform 700ms var(--ease-out) 350ms,
+    opacity 400ms ease 350ms;
+}
+
+.leaf[data-grown="false"] {
+  opacity: 0;
+  transform: scale(0.15) rotate(-35deg);
+}
+
+.bud-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bud-ring {
+    animation: bud-breathe 2600ms var(--ease-in-out) infinite;
+  }
+
+  .live-dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--pollen);
+    animation: live-ping 2200ms var(--ease-out) infinite;
+  }
+
+  .step-enter > * {
+    animation: step-enter 620ms var(--ease-out) both;
+  }
+
+  .step-enter > *:nth-child(2) {
+    animation-delay: 60ms;
+  }
+
+  .step-enter > *:nth-child(3) {
+    animation-delay: 120ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stem-path,
+  .leaf {
+    transition: none;
+  }
+}
+
+@keyframes bud-breathe {
+  50% {
+    transform: scale(1.35);
+    opacity: 0.35;
+  }
+}
+
+@keyframes live-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  80%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+@keyframes step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}

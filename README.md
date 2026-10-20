@@ -70,6 +70,8 @@ pnpm --filter @brotasites/generator generate path/to/site-config.json --out ../.
 
 The config is validated first, with error messages in Portuguese; missing images produce warnings and the site is built without them. Only the `classico` template is available so far.
 
+To work on the form, run `pnpm --filter @brotasites/platform dev` and open http://localhost:3000. The draft is saved in the browser for now.
+
 To work on the templates with live reload, run `pnpm --filter @brotasites/templates dev`. It renders `docs/site-config.example.json` by default, or the file set in `BROTASITES_CONFIG`.
 
 ## Tests
@@ -84,6 +86,8 @@ The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec p
 - [`docs/site-config.schema.json`](docs/site-config.schema.json): configuration JSON format (v1.1)
 - [`docs/site-config.example.json`](docs/site-config.example.json): filled-in example (a bakery)
 - [`docs/form-flow.md`](docs/form-flow.md): form steps and the fields each one fills in
+- [`docs/platform-design.md`](docs/platform-design.md): platform art direction (Herbarium)
+- [`docs/platform-copy.md`](docs/platform-copy.md): slogan, marketing copy and the seven form questions
 - [`CLAUDE.md`](CLAUDE.md): project conventions, decisions and AI rules
 
 ## License
