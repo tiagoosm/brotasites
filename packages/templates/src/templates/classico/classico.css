@@ -334,6 +334,14 @@ details[open] .c-plus::after {
     animation-delay: calc(var(--i, 0) * 65ms + 60ms);
   }
 
+  /* Without a hero photo the title is the largest element on screen (LCP): it must paint in
+     the first frame, so the words start partly visible and settle instead of rising from
+     behind the mask. */
+  .c-hero--text .c-word > span {
+    animation-name: c-word-settle;
+    animation-delay: calc(var(--i, 0) * 50ms);
+  }
+
   .c-window__img {
     animation: c-settle 1600ms var(--ease-out) both;
   }
@@ -414,6 +422,12 @@ details[open] .c-plus::after {
 @keyframes c-word {
   from {
     transform: translateY(108%);
+  }
+}
+
+@keyframes c-word-settle {
+  from {
+    transform: translateY(32%);
   }
 }
 

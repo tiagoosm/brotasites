@@ -149,14 +149,25 @@ const channels = [
     <div class="space-y-14">
       {
         showMap && (
-          <div class="c-reveal-image overflow-hidden rounded-box border border-line">
-            <iframe
-              title={`Mapa com a localização de ${name}`}
-              src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-              class="block aspect-[4/3] w-full border-0 md:aspect-[16/9]"
-            />
+          <div
+            class="c-reveal-image relative aspect-[4/3] overflow-hidden rounded-box border border-line bg-wash md:aspect-[16/9]"
+            data-map
+            data-map-src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
+            data-map-title={`Mapa com a localização de ${name}`}
+          >
+            {/* Lightweight stand-in: Google Maps only loads when the visitor scrolls near it. */}
+            <div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+              <Icon name="pin" class="size-8 text-accent" />
+              <p class="max-w-xs text-ink-soft">{addressLines[0]}</p>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+                target="_blank"
+                rel="noopener"
+                class="c-link font-bold"
+              >
+                Abrir no Google Maps
+              </a>
+            </div>
           </div>
         )
       }
@@ -215,3 +226,23 @@ const channels = [
     </div>
   </div>
 </Section>
+
+<script>
+  // Swap the stand-in for the real map once it is close to the viewport.
+  for (const holder of document.querySelectorAll<HTMLElement>("[data-map]")) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        const iframe = document.createElement("iframe");
+        iframe.src = holder.dataset.mapSrc ?? "";
+        iframe.title = holder.dataset.mapTitle ?? "Mapa";
+        iframe.referrerPolicy = "no-referrer-when-downgrade";
+        iframe.className = "absolute inset-0 h-full w-full border-0";
+        holder.append(iframe);
+      },
+      { rootMargin: "400px 0px" },
+    );
+    observer.observe(holder);
+  }
+</script>

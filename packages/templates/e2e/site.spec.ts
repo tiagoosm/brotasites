@@ -188,6 +188,22 @@ test.describe("interactions", () => {
       /^https:\/\/wa\.me\//,
     );
   });
+
+  test("the map loads only when the visitor gets close to it", async ({ page }) => {
+    await page.goto("/");
+    const map = page.locator("[data-map]");
+    // A link to Google Maps works even before (or without) the embedded map.
+    await expect(map.getByRole("link", { name: "Abrir no Google Maps" })).toHaveAttribute(
+      "href",
+      /^https:\/\/www\.google\.com\/maps\/search\//,
+    );
+    await expect(map.locator("iframe")).toHaveCount(0);
+    await map.scrollIntoViewIfNeeded();
+    const iframe = map.locator("iframe");
+    await expect(iframe).toHaveCount(1);
+    await expect(iframe).toHaveAttribute("src", /^https:\/\/www\.google\.com\/maps\?q=/);
+    await expect(iframe).toHaveAttribute("title", /Mapa com a localização/);
+  });
 });
 
 test.describe("door sign and opening hours", () => {
