@@ -1,0 +1,40 @@
+@import "tailwindcss" source("../");
+
+/* Brand values come from the site config as CSS variables (see src/lib/theme.ts). */
+@theme inline {
+  --color-brand: var(--brand-primary);
+  --color-on-brand: var(--brand-on-primary);
+  --color-accent: var(--brand-accent-text);
+  --color-surface: var(--brand-bg);
+  --color-ink: var(--brand-text);
+  --color-band: var(--brand-band);
+  --color-on-band: var(--brand-on-band);
+  --font-heading: var(--brand-heading-family);
+  --font-body: var(--brand-body-family);
+  --radius-box: var(--brand-radius);
+  --radius-button: var(--brand-radius-button);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--brand-accent-text);
+    outline-offset: 3px;
+  }
+}

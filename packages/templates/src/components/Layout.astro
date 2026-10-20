@@ -1,0 +1,87 @@
+---
+import { Font, getImage } from "astro:assets";
+import type { SiteConfig } from "@brotasites/schema";
+import "../styles/global.css";
+import { siteUrl } from "../lib/config";
+import { BODY_FONT_VAR, fontChoice, HEADING_FONT_VAR } from "../lib/fonts";
+import { findImage } from "../lib/images";
+import { facebookUrl, instagramUrl } from "../lib/links";
+import { themeCss } from "../lib/theme";
+
+interface Props {
+  config: SiteConfig;
+}
+
+const { config } = Astro.props;
+const { business, seo } = config;
+const url = siteUrl(config);
+const fonts = fontChoice(config);
+
+const title =
+  seo?.title ?? (business.tagline ? `${business.name} | ${business.tagline}` : business.name);
+const description = seo?.description ?? business.description ?? business.tagline ?? business.name;
+
+const heroSection = config.sections.find((s) => s.id === "hero" && s.enabled);
+const heroImage = heroSection?.id === "hero" ? findImage(heroSection.content.image) : undefined;
+const ogImage = heroImage
+  ? new URL((await getImage({ src: heroImage, width: 1200, format: "jpg" })).src, url).href
+  : undefined;
+
+const sameAs = [
+  business.social?.instagram && instagramUrl(business.social.instagram),
+  business.social?.facebook && facebookUrl(business.social.facebook),
+].filter(Boolean);
+
+// Structured data built only from facts the client provided.
+const address = business.contact.address;
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  name: business.name,
+  description: business.description,
+  url,
+  image: ogImage,
+  telephone: business.contact.phone,
+  email: business.contact.email,
+  address: address && {
+    "@type": "PostalAddress",
+    streetAddress: address.street,
+    addressLocality: address.city,
+    addressRegion: address.state,
+    postalCode: address.zip,
+    addressCountry: "BR",
+  },
+  sameAs: sameAs.length ? sameAs : undefined,
+};
+---
+
+<!doctype html>
+<html lang={config.site.language}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {seo?.keywords?.length ? <meta name="keywords" content={seo.keywords.join(", ")} /> : null}
+    <link rel="canonical" href={`${url}/`} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content={config.design.colors.primary} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={config.site.language.replace("-", "_")} />
+    <meta property="og:site_name" content={business.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={`${url}/`} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+
+    <Font cssVariable={BODY_FONT_VAR} preload />
+    {!fonts.shared && <Font cssVariable={HEADING_FONT_VAR} preload />}
+    <style is:inline set:html={themeCss(config)}></style>
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)}></script>
+  </head>
+  <body class="bg-surface font-body text-ink antialiased">
+    <slot />
+  </body>
+</html>

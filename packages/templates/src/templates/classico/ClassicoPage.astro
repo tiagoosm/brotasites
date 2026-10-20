@@ -1,0 +1,62 @@
+---
+import type { SiteConfig } from "@brotasites/schema";
+import Layout from "../../components/Layout.astro";
+import About from "./About.astro";
+import Contact from "./Contact.astro";
+import Faq from "./Faq.astro";
+import FinalCta from "./FinalCta.astro";
+import Footer from "./Footer.astro";
+import Gallery from "./Gallery.astro";
+import Header from "./Header.astro";
+import Hero from "./Hero.astro";
+import Services from "./Services.astro";
+import Testimonials from "./Testimonials.astro";
+import WhatsAppButton from "./WhatsAppButton.astro";
+
+interface Props {
+  config: SiteConfig;
+}
+
+const { config } = Astro.props;
+// Sections render in the order chosen by the client; disabled ones are skipped.
+const sections = config.sections.filter((section) => section.enabled);
+const whatsapp = config.integrations?.whatsappFloatingButton
+  ? config.business.contact.whatsapp
+  : undefined;
+---
+
+<Layout config={config}>
+  <a
+    href="#inicio"
+    class="sr-only z-50 rounded-button bg-brand px-4 py-2 font-bold text-on-brand focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+  >
+    Pular para o conteúdo
+  </a>
+  <Header config={config} />
+  <main id="inicio">
+    {!sections.some((section) => section.id === "hero") && <h1 class="sr-only">{config.business.name}</h1>}
+    {sections.map((section, index) => {
+      const muted = index % 2 === 1;
+      switch (section.id) {
+        case "hero":
+          return <Hero config={config} content={section.content} />;
+        case "sobre":
+          return <About config={config} content={section.content} muted={muted} />;
+        case "servicos":
+          return <Services content={section.content} muted={muted} />;
+        case "galeria":
+          return <Gallery config={config} content={section.content} muted={muted} />;
+        case "depoimentos":
+          return <Testimonials content={section.content} muted={muted} />;
+        case "faq":
+          return <Faq content={section.content} muted={muted} />;
+        case "cta-final":
+          return <FinalCta config={config} content={section.content} />;
+        case "contato":
+          return <Contact config={config} content={section.content} muted={muted} />;
+      }
+    })}
+  </main>
+  <Footer config={config} />
+  {whatsapp && <WhatsAppButton number={whatsapp} />}
+</Layout>

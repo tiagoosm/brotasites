@@ -1,0 +1,21 @@
+---
+import Icon from "../../components/Icon.astro";
+import { whatsappUrl } from "../../lib/links";
+
+interface Props {
+  number: string;
+}
+
+const { number } = Astro.props;
+---
+
+<!-- WhatsApp's dark green keeps the white icon above the 3:1 contrast required for graphics. -->
+<a
+  href={whatsappUrl(number)}
+  target="_blank"
+  rel="noopener"
+  aria-label="Conversar no WhatsApp"
+  class="fixed right-4 bottom-4 z-50 flex size-14 items-center justify-center rounded-full bg-[#128C7E] text-white shadow-lg transition hover:scale-105 md:right-6 md:bottom-6"
+>
+  <Icon name="chat" class="size-7" />
+</a>

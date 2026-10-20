@@ -1,0 +1,29 @@
+---
+import type { TestimonialsContent } from "@brotasites/schema";
+import Section from "./Section.astro";
+
+interface Props {
+  content: TestimonialsContent;
+  muted: boolean;
+}
+
+const { content, muted } = Astro.props;
+---
+
+<Section id="depoimentos" title={content.title} muted={muted}>
+  <ul class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    {content.items.map((item) => (
+      <li>
+        <figure class="h-full rounded-box border border-ink/10 bg-surface p-6 shadow-sm">
+          <blockquote class="text-lg leading-relaxed">
+            <p>“{item.text}”</p>
+          </blockquote>
+          <figcaption class="mt-4">
+            <span class="font-bold">{item.name}</span>
+            {item.role && <span class="block text-sm">{item.role}</span>}
+          </figcaption>
+        </figure>
+      </li>
+    ))}
+  </ul>
+</Section>

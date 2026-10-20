@@ -1,0 +1,135 @@
+---
+import type { ContactContent, SiteConfig } from "@brotasites/schema";
+import Icon from "../../components/Icon.astro";
+import { facebookUrl, instagramUrl, phoneUrl, whatsappUrl } from "../../lib/links";
+import Section from "./Section.astro";
+
+interface Props {
+  config: SiteConfig;
+  content: ContactContent;
+  muted: boolean;
+}
+
+const { config, content, muted } = Astro.props;
+const { contact, social, name } = config.business;
+const { address, openingHours } = contact;
+
+const addressLines = address
+  ? [
+      [address.street, address.district].filter(Boolean).join(" – "),
+      [address.city, address.state].filter(Boolean).join(" – "),
+      address.zip && `CEP ${address.zip}`,
+    ].filter(Boolean)
+  : [];
+const mapQuery = [name, ...addressLines].join(", ");
+
+const showHours = (content.showHours ?? true) && Boolean(openingHours?.length);
+const showMap = Boolean(
+  content.showMap && config.integrations?.googleMapsEmbed && addressLines.length,
+);
+const form = config.integrations?.contactForm;
+const showForm = Boolean(content.showForm && form?.provider && form.endpoint);
+
+const formatWhatsapp = (n: string) => n.replace(/^55(\d{2})(\d{4,5})(\d{4})$/, "($1) $2-$3");
+---
+
+<Section id="contato" title={content.title} muted={muted}>
+  <div class="grid gap-10 md:grid-cols-2">
+    <div class="space-y-8">
+      <ul class="space-y-4 text-lg">
+        {addressLines.length > 0 && (
+          <li class="flex gap-3">
+            <Icon name="pin" class="mt-1 size-6 shrink-0 text-accent" />
+            <address class="not-italic">
+              {addressLines.map((line) => <span class="block">{line}</span>)}
+            </address>
+          </li>
+        )}
+        {contact.whatsapp && (
+          <li class="flex gap-3">
+            <Icon name="chat" class="mt-1 size-6 shrink-0 text-accent" />
+            <a href={whatsappUrl(contact.whatsapp)} target="_blank" rel="noopener" class="underline underline-offset-4 hover:text-accent">
+              WhatsApp {formatWhatsapp(contact.whatsapp)}
+            </a>
+          </li>
+        )}
+        {contact.phone && (
+          <li class="flex gap-3">
+            <Icon name="phone" class="mt-1 size-6 shrink-0 text-accent" />
+            <a href={phoneUrl(contact.phone)} class="underline underline-offset-4 hover:text-accent">{contact.phone}</a>
+          </li>
+        )}
+        {contact.email && (
+          <li class="flex gap-3">
+            <Icon name="mail" class="mt-1 size-6 shrink-0 text-accent" />
+            <a href={`mailto:${contact.email}`} class="break-all underline underline-offset-4 hover:text-accent">{contact.email}</a>
+          </li>
+        )}
+        {social?.instagram && (
+          <li class="flex gap-3">
+            <Icon name="instagram" class="mt-1 size-6 shrink-0 text-accent" />
+            <a href={instagramUrl(social.instagram)} target="_blank" rel="noopener" class="underline underline-offset-4 hover:text-accent">
+              Instagram @{social.instagram.replace(/^@/, "").replace(/^https?:\/\/[^/]+\//, "")}
+            </a>
+          </li>
+        )}
+        {social?.facebook && (
+          <li class="flex gap-3">
+            <Icon name="facebook" class="mt-1 size-6 shrink-0 text-accent" />
+            <a href={facebookUrl(social.facebook)} target="_blank" rel="noopener" class="underline underline-offset-4 hover:text-accent">Facebook</a>
+          </li>
+        )}
+      </ul>
+
+      {showHours && (
+        <div>
+          <h3 class="mb-3 flex items-center gap-2 text-xl font-bold">
+            <Icon name="clock" class="size-6 text-accent" />
+            Horário de funcionamento
+          </h3>
+          <table class="w-full max-w-sm text-left">
+            <tbody>
+              {openingHours?.map((row) => (
+                <tr class="border-b border-ink/10">
+                  <th scope="row" class="py-2 pr-4 font-normal">{row.days}</th>
+                  <td class="py-2 text-right font-bold">{row.hours}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
+    <div class="space-y-8">
+      {showMap && (
+        <iframe
+          title={`Mapa com a localização de ${name}`}
+          src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          class="aspect-[4/3] w-full rounded-box border-0"
+        ></iframe>
+      )}
+
+      {showForm && (
+        <form action={form?.endpoint} method="POST" class="space-y-4 rounded-box border border-ink/10 bg-surface p-6">
+          <h3 class="text-xl font-bold">Envie uma mensagem</h3>
+          <div>
+            <label for="contact-name" class="mb-1 block font-bold">Nome</label>
+            <input id="contact-name" name="name" type="text" required autocomplete="name" class="w-full rounded-button border border-ink/30 bg-surface px-4 py-3" />
+          </div>
+          <div>
+            <label for="contact-email" class="mb-1 block font-bold">E-mail</label>
+            <input id="contact-email" name="email" type="email" required autocomplete="email" class="w-full rounded-button border border-ink/30 bg-surface px-4 py-3" />
+          </div>
+          <div>
+            <label for="contact-message" class="mb-1 block font-bold">Mensagem</label>
+            <textarea id="contact-message" name="message" rows="4" required class="w-full rounded-button border border-ink/30 bg-surface px-4 py-3"></textarea>
+          </div>
+          <button type="submit" class="min-h-12 rounded-button bg-brand px-6 py-3 font-bold text-on-brand hover:opacity-90">Enviar</button>
+        </form>
+      )}
+    </div>
+  </div>
+</Section>

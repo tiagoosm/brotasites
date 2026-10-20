@@ -1,0 +1,22 @@
+---
+import type { FinalCtaContent, SiteConfig } from "@brotasites/schema";
+import Button from "../../components/Button.astro";
+import { ctaLink } from "../../lib/links";
+
+interface Props {
+  config: SiteConfig;
+  content: FinalCtaContent;
+}
+
+const { config, content } = Astro.props;
+---
+
+<section id="cta-final" aria-labelledby="cta-final-title" class="bg-band py-16 text-on-band md:py-20">
+  <div class="mx-auto max-w-3xl px-5 text-center">
+    <h2 id="cta-final-title" class="text-3xl font-bold md:text-4xl">{content.title}</h2>
+    {content.subtitle && <p class="mt-4 text-lg">{content.subtitle}</p>}
+    <div class="mt-8">
+      <Button link={ctaLink(content.cta, config)} config={config} tone="band">{content.cta.label}</Button>
+    </div>
+  </div>
+</section>

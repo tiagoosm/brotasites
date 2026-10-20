@@ -1,0 +1,33 @@
+---
+import { Image } from "astro:assets";
+import type { AboutContent, SiteConfig } from "@brotasites/schema";
+import { findImage } from "../../lib/images";
+import Section from "./Section.astro";
+
+interface Props {
+  config: SiteConfig;
+  content: AboutContent;
+  muted: boolean;
+}
+
+const { config, content, muted } = Astro.props;
+const image = findImage(content.image);
+const paragraphs = content.text.split(/\n+/).filter(Boolean);
+---
+
+<Section id="sobre" title={content.title} muted={muted}>
+  <div class:list={["grid items-center gap-10", image && "md:grid-cols-2"]}>
+    <div class="max-w-prose space-y-4 text-lg leading-relaxed">
+      {paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+    </div>
+    {image && (
+      <Image
+        src={image}
+        alt={`${content.title} – ${config.business.name}`}
+        widths={[480, 800, 1200]}
+        sizes="(min-width: 768px) 50vw, 100vw"
+        class="aspect-[4/3] w-full rounded-box object-cover"
+      />
+    )}
+  </div>
+</Section>

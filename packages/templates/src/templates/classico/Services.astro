@@ -1,0 +1,26 @@
+---
+import type { ServicesContent } from "@brotasites/schema";
+import Icon from "../../components/Icon.astro";
+import Section from "./Section.astro";
+
+interface Props {
+  content: ServicesContent;
+  muted: boolean;
+}
+
+const { content, muted } = Astro.props;
+---
+
+<Section id="servicos" title={content.title} muted={muted}>
+  <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    {content.items.map((item) => (
+      <li class="rounded-box border border-ink/10 bg-surface p-6 shadow-sm">
+        <span class="mb-4 inline-flex size-12 items-center justify-center rounded-box bg-brand text-on-brand">
+          <Icon name={item.icon} />
+        </span>
+        <h3 class="text-xl font-bold">{item.name}</h3>
+        {item.description && <p class="mt-2 leading-relaxed">{item.description}</p>}
+      </li>
+    ))}
+  </ul>
+</Section>

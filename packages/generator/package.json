@@ -1,0 +1,35 @@
+{
+  "name": "@brotasites/generator",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Validates a site config and builds the static landing page.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "brotasites-generate": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "generate": "node dist/cli.js"
+  },
+  "dependencies": {
+    "@brotasites/schema": "workspace:*",
+    "@brotasites/templates": "workspace:*",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

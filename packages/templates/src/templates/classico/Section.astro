@@ -1,0 +1,17 @@
+---
+interface Props {
+  id: string;
+  title: string;
+  /** Alternate background to separate consecutive sections. */
+  muted?: boolean;
+}
+
+const { id, title, muted = false } = Astro.props;
+---
+
+<section id={id} aria-labelledby={`${id}-title`} class:list={["scroll-mt-16 py-16 md:py-24", muted && "bg-ink/[0.04]"]}>
+  <div class="mx-auto max-w-6xl px-5">
+    <h2 id={`${id}-title`} class="mb-10 text-3xl font-bold md:text-4xl">{title}</h2>
+    <slot />
+  </div>
+</section>

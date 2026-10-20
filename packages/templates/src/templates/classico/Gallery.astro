@@ -1,0 +1,33 @@
+---
+import { Image } from "astro:assets";
+import type { GalleryContent, SiteConfig } from "@brotasites/schema";
+import { findImage } from "../../lib/images";
+import Section from "./Section.astro";
+
+interface Props {
+  config: SiteConfig;
+  content: GalleryContent;
+  muted: boolean;
+}
+
+const { config, content, muted } = Astro.props;
+const images = content.images.map(findImage).filter((image) => image !== undefined);
+---
+
+{images.length > 0 && (
+  <Section id="galeria" title={content.title} muted={muted}>
+    <ul class="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+      {images.map((image, index) => (
+        <li>
+          <Image
+            src={image}
+            alt={`Foto ${index + 1} de ${images.length} – ${config.business.name}`}
+            widths={[320, 480, 800]}
+            sizes="(min-width: 768px) 33vw, 50vw"
+            class="aspect-square w-full rounded-box object-cover"
+          />
+        </li>
+      ))}
+    </ul>
+  </Section>
+)}

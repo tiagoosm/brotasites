@@ -1,0 +1,16 @@
+---
+import { loadSiteConfig } from "../lib/config";
+import ClassicoPage from "../templates/classico/ClassicoPage.astro";
+
+const { config } = loadSiteConfig();
+
+// Only "classico" exists so far; the generator rejects other templates before building.
+const pages = { classico: ClassicoPage } as const;
+const template = config.design.template;
+if (!(template in pages)) {
+  throw new Error(`O modelo "${template}" ainda não está disponível.`);
+}
+const Page = pages[template as keyof typeof pages];
+---
+
+<Page config={config} />

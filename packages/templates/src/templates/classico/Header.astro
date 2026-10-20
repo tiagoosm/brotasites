@@ -1,0 +1,70 @@
+---
+import { Image } from "astro:assets";
+import type { SiteConfig } from "@brotasites/schema";
+import Button from "../../components/Button.astro";
+import Icon from "../../components/Icon.astro";
+import { findImage } from "../../lib/images";
+import { navLabels } from "../../lib/labels";
+import { primaryContactLink } from "../../lib/links";
+
+interface Props {
+  config: SiteConfig;
+}
+
+const { config } = Astro.props;
+const { business, navigation } = config;
+const logo = findImage(business.logo);
+const sticky = navigation?.sticky ?? true;
+
+const links = config.sections
+  .filter((section) => section.enabled && navLabels[section.id])
+  .map((section) => ({ href: `#${section.id}`, label: navLabels[section.id] }));
+const ctaLabel = navigation?.ctaLabel;
+---
+
+<header
+  class:list={[
+    "z-40 border-b border-ink/10 bg-surface/95 backdrop-blur",
+    sticky ? "sticky top-0" : "relative",
+  ]}
+>
+  <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
+    <a href="#inicio" class="flex min-w-0 items-center gap-3 font-heading text-xl font-bold">
+      {logo && <Image src={logo} alt="" width={40} height={40} densities={[1, 2]} loading="eager" class="size-10 rounded-box object-contain" />}
+      <span class="truncate">{business.name}</span>
+    </a>
+
+    <nav aria-label="Menu principal" class="hidden md:block">
+      <ul class="flex items-center gap-6 text-sm font-bold">
+        {links.map((link) => <li><a href={link.href} class="py-2 hover:text-accent">{link.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="flex items-center gap-2">
+      {ctaLabel && <Button link={primaryContactLink(config)} config={config} class="hidden min-h-10 px-4 py-2 text-sm sm:inline-flex">{ctaLabel}</Button>}
+
+      <details class="group relative md:hidden" data-mobile-menu>
+        <summary
+          class="flex size-11 cursor-pointer list-none items-center justify-center rounded-button hover:bg-ink/5 [&::-webkit-details-marker]:hidden"
+          aria-label="Abrir menu"
+        >
+          <Icon name="menu" />
+        </summary>
+        <nav aria-label="Menu" class="absolute right-0 mt-2 w-56 rounded-box border border-ink/10 bg-surface p-2 shadow-lg">
+          <ul class="flex flex-col text-base font-bold">
+            {links.map((link) => <li><a href={link.href} class="block rounded-button px-4 py-3 hover:bg-ink/5">{link.label}</a></li>)}
+          </ul>
+        </nav>
+      </details>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Close the mobile menu after choosing a section.
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>("[data-mobile-menu]")) {
+    menu.addEventListener("click", (event) => {
+      if ((event.target as HTMLElement).closest("a")) menu.open = false;
+    });
+  }
+</script>

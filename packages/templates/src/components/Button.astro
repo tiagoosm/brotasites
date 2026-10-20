@@ -1,0 +1,36 @@
+---
+import type { SiteConfig } from "@brotasites/schema";
+import type { Link } from "../lib/links";
+
+interface Props {
+  link: Link;
+  config: SiteConfig;
+  /** "band" renders a button that stands out on the secondary-color band. */
+  tone?: "default" | "band";
+  class?: string;
+}
+
+const { link, config, tone = "default", class: className } = Astro.props;
+const outline = config.design.style?.buttons === "outline";
+
+const toneClass =
+  tone === "band"
+    ? outline
+      ? "border-2 border-on-band text-on-band hover:bg-on-band hover:text-band"
+      : "bg-on-band text-band hover:opacity-90"
+    : outline
+      ? "border-2 border-brand text-accent hover:bg-brand hover:text-on-brand"
+      : "bg-brand text-on-brand hover:opacity-90";
+---
+
+<a
+  href={link.href}
+  class:list={[
+    "inline-flex min-h-12 items-center justify-center gap-2 rounded-button px-6 py-3 text-base font-bold transition",
+    toneClass,
+    className,
+  ]}
+  {...link.external ? { target: "_blank", rel: "noopener" } : {}}
+>
+  <slot />
+</a>

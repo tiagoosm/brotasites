@@ -59,6 +59,18 @@ cp .env.example .env.local   # fill in the values
 | `pnpm lint` | Lint and check formatting (Biome) |
 | `pnpm format` | Fix lint and formatting issues (Biome) |
 
+## Generating a site
+
+After `pnpm build`, generate a site from a config file. Image paths in the config are relative to the config file's folder.
+
+```sh
+pnpm --filter @brotasites/generator generate path/to/site-config.json --out ../../out/my-site
+```
+
+The config is validated first, with error messages in Portuguese; missing images produce warnings and the site is built without them. Only the `classico` template is available so far.
+
+To work on the templates with live reload, run `pnpm --filter @brotasites/templates dev`. It renders `docs/site-config.example.json` by default, or the file set in `BROTASITES_CONFIG`.
+
 ## Documentation
 
 - [`docs/site-config.schema.json`](docs/site-config.schema.json): configuration JSON format (v1.1)
