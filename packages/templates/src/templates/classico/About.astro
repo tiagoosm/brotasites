@@ -7,27 +7,32 @@ import Section from "./Section.astro";
 interface Props {
   config: SiteConfig;
   content: AboutContent;
-  muted: boolean;
 }
 
-const { config, content, muted } = Astro.props;
+const { config, content } = Astro.props;
 const image = findImage(content.image);
-const paragraphs = content.text.split(/\n+/).filter(Boolean);
+// The first paragraph is set large as a lead; the rest reads as body text.
+const [lead, ...paragraphs] = content.text.split(/\n+/).filter(Boolean);
 ---
 
-<Section id="sobre" title={content.title} muted={muted}>
-  <div class:list={["grid items-center gap-10", image && "md:grid-cols-2"]}>
-    <div class="max-w-prose space-y-4 text-lg leading-relaxed">
-      {paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+<Section id="sobre" eyebrow="Sobre" title={content.title}>
+  <div class="space-y-12">
+    <div class="c-reveal max-w-3xl space-y-5">
+      {lead && <p class="c-lead">{lead}</p>}
+      {paragraphs.map((paragraph) => <p class="text-lg text-ink-soft">{paragraph}</p>)}
     </div>
-    {image && (
-      <Image
-        src={image}
-        alt={`${content.title} – ${config.business.name}`}
-        widths={[480, 800, 1200]}
-        sizes="(min-width: 768px) 50vw, 100vw"
-        class="aspect-[4/3] w-full rounded-box object-cover"
-      />
-    )}
+    {
+      image && (
+        <div class="c-reveal-image overflow-hidden rounded-box">
+          <Image
+            src={image}
+            alt={`${content.title} – ${config.business.name}`}
+            widths={[480, 800, 1200, 1600]}
+            sizes="(min-width: 1280px) 820px, (min-width: 1024px) 64vw, 100vw"
+            class="c-parallax aspect-[16/10] w-full object-cover"
+          />
+        </div>
+      )
+    }
   </div>
 </Section>

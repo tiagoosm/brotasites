@@ -3,9 +3,9 @@ import { firstReadable, mostReadable } from "./color";
 import { BODY_FONT_VAR, fontChoice, HEADING_FONT_VAR } from "./fonts";
 
 const radii = {
-  none: { box: "0", button: "0" },
-  soft: { box: "0.75rem", button: "0.5rem" },
-  round: { box: "1.5rem", button: "9999px" },
+  none: { box: "0", button: "0", window: "0" },
+  soft: { box: "0.75rem", button: "0.5rem", window: "100vmax" },
+  round: { box: "1.5rem", button: "9999px", window: "100vmax" },
 } as const;
 
 /** Builds the CSS custom properties that drive the template's colors, fonts and shapes. */
@@ -26,8 +26,11 @@ export function themeCss(config: SiteConfig): string {
     "--brand-on-band": mostReadable(band, [background, text]),
     "--brand-radius": radius.box,
     "--brand-radius-button": radius.button,
+    // Top corners of the hero "shop window": an arch unless the client chose square corners.
+    "--brand-radius-window": radius.window,
     "--brand-heading-family": `var(${fonts.shared ? BODY_FONT_VAR : HEADING_FONT_VAR})`,
     "--brand-body-family": `var(${BODY_FONT_VAR})`,
+    "--brand-display-weight": fonts.displayWeight,
   };
 
   return `:root{${Object.entries(vars)

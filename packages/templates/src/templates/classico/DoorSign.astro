@@ -1,0 +1,24 @@
+---
+// The "Aberto / Fechado" sign. Rendered hidden: the browser fills it in from the opening hours
+// (see hours-client.ts), so a static page never shows a stale status.
+
+interface Props {
+  /** Inline when there is no hero photo to hang from. */
+  inline?: boolean;
+}
+
+const { inline = false } = Astro.props;
+---
+
+<div class:list={["c-sign", inline && "c-sign--inline"]} data-door-sign hidden>
+  <svg class="c-sign__cord" viewBox="0 0 52 28" fill="none" aria-hidden="true">
+    <path d="M3 27 26 4l23 23" stroke="currentColor" stroke-width="1.2"></path>
+    <circle cx="26" cy="4" r="3" fill="currentColor"></circle>
+  </svg>
+  <p class="c-sign__plate">
+    <span class="font-heading text-xl font-semibold tracking-tight">
+      <span class="c-sign__dot" aria-hidden="true"></span><span data-sign-label></span>
+    </span>
+    <span class="c-tabular text-sm whitespace-nowrap text-ink-soft" data-sign-detail></span>
+  </p>
+</div>

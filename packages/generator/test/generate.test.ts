@@ -24,7 +24,9 @@ describe("generateSite", () => {
 
     const html = await readFile(join(outDir, "index.html"), "utf8");
     expect(html).toContain("<h1");
-    expect(html).toContain("Pão quentinho todo dia");
+    // The hero title is split into one span per word for the entrance animation.
+    const text = html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ");
+    expect(text).toContain("Pão quentinho todo dia");
     expect(html).toContain('<section id="faq"');
     // Disabled sections are not rendered.
     expect(html).not.toContain('id="depoimentos"');

@@ -7,30 +7,44 @@ interface Props {
   config: SiteConfig;
   /** "band" renders a button that stands out on the secondary-color band. */
   tone?: "default" | "band";
+  size?: "default" | "small";
   class?: string;
 }
 
-const { link, config, tone = "default", class: className } = Astro.props;
+const { link, config, tone = "default", size = "default", class: className } = Astro.props;
 const outline = config.design.style?.buttons === "outline";
 
 const toneClass =
   tone === "band"
     ? outline
-      ? "border-2 border-on-band text-on-band hover:bg-on-band hover:text-band"
-      : "bg-on-band text-band hover:opacity-90"
+      ? "border-[1.5px] border-on-band text-on-band hover:bg-on-band hover:text-band"
+      : "bg-on-band text-band"
     : outline
-      ? "border-2 border-brand text-accent hover:bg-brand hover:text-on-brand"
-      : "bg-brand text-on-brand hover:opacity-90";
+      ? "border-[1.5px] border-brand text-accent hover:bg-brand hover:text-on-brand"
+      : "bg-brand text-on-brand";
 ---
 
 <a
   href={link.href}
   class:list={[
-    "inline-flex min-h-12 items-center justify-center gap-2 rounded-button px-6 py-3 text-base font-bold transition",
+    "c-btn inline-flex items-center justify-center gap-3 rounded-button font-bold whitespace-nowrap",
+    size === "small" ? "min-h-10 px-4 text-sm" : "min-h-13 px-7 text-base",
     toneClass,
     className,
   ]}
   {...link.external ? { target: "_blank", rel: "noopener" } : {}}
 >
   <slot />
+  <svg
+    class="c-btn__arrow size-4"
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M2 8h11M9 3.5 13.5 8 9 12.5"></path>
+  </svg>
 </a>

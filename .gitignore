@@ -35,3 +35,6 @@ Thumbs.db
 
 # Generated sites
 out/
+
+# Playwright
+dist-e2e/

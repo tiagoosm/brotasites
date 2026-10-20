@@ -5,22 +5,29 @@ import Section from "./Section.astro";
 
 interface Props {
   content: ServicesContent;
-  muted: boolean;
 }
 
-const { content, muted } = Astro.props;
+const { content } = Astro.props;
 ---
 
-<Section id="servicos" title={content.title} muted={muted}>
-  <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    {content.items.map((item) => (
-      <li class="rounded-box border border-ink/10 bg-surface p-6 shadow-sm">
-        <span class="mb-4 inline-flex size-12 items-center justify-center rounded-box bg-brand text-on-brand">
-          <Icon name={item.icon} />
-        </span>
-        <h3 class="text-xl font-bold">{item.name}</h3>
-        {item.description && <p class="mt-2 leading-relaxed">{item.description}</p>}
-      </li>
-    ))}
+<Section id="servicos" eyebrow="Serviços" title={content.title}>
+  <ul class="c-list border-y border-line">
+    {
+      content.items.map((item) => (
+        <li class="c-reveal grid grid-cols-[auto_1fr] items-start gap-x-6 gap-y-2 py-8 md:grid-cols-[auto_minmax(0,18rem)_1fr] md:gap-x-10">
+          <span class="flex size-12 items-center justify-center rounded-full border border-line text-accent">
+            <Icon name={item.icon} class="size-[1.4rem]" />
+          </span>
+          <h3 class="self-center text-2xl font-semibold tracking-tight md:text-[1.75rem]">
+            {item.name}
+          </h3>
+          {item.description && (
+            <p class="col-start-2 text-ink-soft md:col-start-3 md:self-center">
+              {item.description}
+            </p>
+          )}
+        </li>
+      ))
+    }
   </ul>
 </Section>

@@ -11,12 +11,14 @@ interface Props {
 const { config, content } = Astro.props;
 ---
 
-<section id="cta-final" aria-labelledby="cta-final-title" class="bg-band py-16 text-on-band md:py-20">
-  <div class="mx-auto max-w-3xl px-5 text-center">
-    <h2 id="cta-final-title" class="text-3xl font-bold md:text-4xl">{content.title}</h2>
-    {content.subtitle && <p class="mt-4 text-lg">{content.subtitle}</p>}
-    <div class="mt-8">
-      <Button link={ctaLink(content.cta, config)} config={config} tone="band">{content.cta.label}</Button>
+<section id="cta-final" aria-labelledby="cta-final-title" class="bg-band text-on-band">
+  <div class="mx-auto grid max-w-7xl gap-10 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-12 lg:items-end">
+    <h2 id="cta-final-title" class="c-display-xl c-reveal lg:col-span-8">{content.title}</h2>
+    <div class="c-reveal space-y-8 lg:col-span-4">
+      {content.subtitle && <p class="text-lg">{content.subtitle}</p>}
+      <Button link={ctaLink(content.cta, config)} config={config} tone="band">
+        {content.cta.label}
+      </Button>
     </div>
   </div>
 </section>

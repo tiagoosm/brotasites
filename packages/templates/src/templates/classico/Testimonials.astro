@@ -4,26 +4,30 @@ import Section from "./Section.astro";
 
 interface Props {
   content: TestimonialsContent;
-  muted: boolean;
 }
 
-const { content, muted } = Astro.props;
+const { content } = Astro.props;
 ---
 
-<Section id="depoimentos" title={content.title} muted={muted}>
-  <ul class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-    {content.items.map((item) => (
-      <li>
-        <figure class="h-full rounded-box border border-ink/10 bg-surface p-6 shadow-sm">
-          <blockquote class="text-lg leading-relaxed">
-            <p>“{item.text}”</p>
-          </blockquote>
-          <figcaption class="mt-4">
-            <span class="font-bold">{item.name}</span>
-            {item.role && <span class="block text-sm">{item.role}</span>}
-          </figcaption>
-        </figure>
-      </li>
-    ))}
+<Section id="depoimentos" eyebrow="Depoimentos" title={content.title}>
+  <ul class="c-list border-y border-line">
+    {
+      content.items.map((item) => (
+        <li class="c-reveal py-10">
+          <figure>
+            <blockquote class="c-lead">
+              <span aria-hidden="true" class="block h-8 font-heading text-6xl leading-none text-accent">
+                “
+              </span>
+              <p>{item.text}</p>
+            </blockquote>
+            <figcaption class="mt-5 text-[0.9375rem]">
+              <span class="font-bold">{item.name}</span>
+              {item.role && <span class="text-ink-soft"> · {item.role}</span>}
+            </figcaption>
+          </figure>
+        </li>
+      ))
+    }
   </ul>
 </Section>

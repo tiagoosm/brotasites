@@ -10,9 +10,14 @@ const { name, contact } = config.business;
 const place = [contact.address?.city, contact.address?.state].filter(Boolean).join(" – ");
 ---
 
-<footer class="border-t border-ink/10 py-10 text-sm">
-  <div class="mx-auto flex max-w-6xl flex-col gap-2 px-5 md:flex-row md:justify-between">
-    <p>© {new Date().getFullYear()} {name}{place && ` · ${place}`}</p>
-    <p>Site feito com BrotaSites</p>
+<footer class="mx-auto max-w-7xl px-5 sm:px-8">
+  <div
+    class="c-rule flex flex-col gap-3 py-10 text-sm text-ink-soft md:flex-row md:items-baseline md:justify-between"
+  >
+    <p>
+      <span class="font-heading text-lg font-semibold text-ink">{name}</span>
+      {place && <span> · {place}</span>}
+    </p>
+    <p>© {new Date().getFullYear()} · Site feito com BrotaSites</p>
   </div>
 </footer>

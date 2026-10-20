@@ -76,8 +76,16 @@ const jsonLd = {
     {ogImage && <meta property="og:image" content={ogImage} />}
     <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
 
-    <Font cssVariable={BODY_FONT_VAR} preload />
-    {!fonts.shared && <Font cssVariable={HEADING_FONT_VAR} preload />}
+    <!-- Preload only what the first screen needs: body text and the display headline. -->
+    <Font
+      cssVariable={BODY_FONT_VAR}
+      preload={[{ weight: "400" }, ...(fonts.shared ? [{ weight: fonts.displayWeight }] : [])]}
+    />
+    {
+      !fonts.shared && (
+        <Font cssVariable={HEADING_FONT_VAR} preload={[{ weight: fonts.displayWeight }]} />
+      )
+    }
     <style is:inline set:html={themeCss(config)}></style>
     <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)}></script>
   </head>

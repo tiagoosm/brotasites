@@ -3,45 +3,129 @@ import { Image } from "astro:assets";
 import type { HeroContent, SiteConfig } from "@brotasites/schema";
 import Button from "../../components/Button.astro";
 import { findImage } from "../../lib/images";
-import { ctaLink } from "../../lib/links";
+import { ctaLink, phoneUrl, whatsappUrl } from "../../lib/links";
+import DoorSign from "./DoorSign.astro";
 
 interface Props {
   config: SiteConfig;
   content: HeroContent;
+  /** Whether the opening hours could be read, so the door sign can be shown. */
+  hasSchedule: boolean;
 }
 
-const { config, content } = Astro.props;
+const { config, content, hasSchedule } = Astro.props;
+const { business } = config;
+const { contact } = business;
 const image = findImage(content.image);
+
+// Eyebrow: what the business is and where. Both come straight from the form.
+const category = business.category.charAt(0).toUpperCase() + business.category.slice(1);
+const eyebrow = [category, contact.address?.city].filter(Boolean).join(" · ");
+
+const words = content.title.split(/\s+/).filter(Boolean);
+
+const street = [contact.address?.street, contact.address?.district].filter(Boolean).join(" · ");
+const call = contact.phone
+  ? { label: "Telefone", text: contact.phone, href: phoneUrl(contact.phone), external: false }
+  : contact.whatsapp
+    ? {
+        label: "WhatsApp",
+        text: contact.whatsapp.replace(/^55(\d{2})(\d{4,5})(\d{4})$/, "($1) $2-$3"),
+        href: whatsappUrl(contact.whatsapp),
+        external: true,
+      }
+    : undefined;
 ---
 
 <section id="hero" aria-labelledby="hero-title" class="scroll-mt-20">
-  <div
-    class:list={[
-      "mx-auto grid max-w-6xl items-center gap-10 px-5 py-14 md:py-24",
-      image && "md:grid-cols-2",
-    ]}
-  >
-    <div class:list={[!image && "mx-auto max-w-3xl text-center"]}>
-      {config.business.tagline && config.business.tagline !== content.title && (
-        <p class="mb-3 text-sm font-bold tracking-wide text-accent uppercase">{config.business.tagline}</p>
-      )}
-      <h1 id="hero-title" class="text-4xl leading-tight font-bold md:text-6xl">{content.title}</h1>
-      {content.subtitle && <p class="mt-5 text-lg md:text-xl">{content.subtitle}</p>}
-      {content.cta && (
-        <div class="mt-8">
-          <Button link={ctaLink(content.cta, config)} config={config}>{content.cta.label}</Button>
-        </div>
-      )}
+  <div class="mx-auto max-w-7xl px-5 pt-10 pb-12 sm:px-8 md:pt-16 lg:pb-20">
+    <div class:list={["grid items-end gap-x-12 gap-y-14", image && "lg:grid-cols-12"]}>
+      <div class:list={[image ? "lg:col-span-7" : "max-w-5xl"]}>
+        <p class="c-eyebrow c-rise mb-6" style="--d: 0">{eyebrow}</p>
+        <h1 id="hero-title" class="c-display-xl">
+          {
+            words.map((word, i) => (
+              <>
+                <span class="c-word">
+                  <span style={`--i: ${i}`}>{word}</span>
+                </span>{" "}
+              </>
+            ))
+          }
+        </h1>
+        {
+          content.subtitle && (
+            <p class="c-rise mt-8 max-w-xl text-lg text-ink-soft md:text-xl" style="--d: 4">
+              {content.subtitle}
+            </p>
+          )
+        }
+        {
+          content.cta && (
+            <div class="c-rise mt-10" style="--d: 5">
+              <Button link={ctaLink(content.cta, config)} config={config}>
+                {content.cta.label}
+              </Button>
+            </div>
+          )
+        }
+        {hasSchedule && !image && <DoorSign inline />}
+      </div>
+
+      {
+        image && (
+          <div class="lg:col-span-5">
+            <figure class="c-window mx-auto max-w-md lg:max-w-none">
+              <div class="c-window__frame">
+                <Image
+                  src={image}
+                  alt={`Foto de ${business.name}`}
+                  widths={[400, 640, 900, 1200]}
+                  sizes="(min-width: 1024px) 36vw, (min-width: 448px) 448px, 100vw"
+                  priority
+                  class="c-window__img aspect-[4/5] w-full object-cover"
+                />
+              </div>
+              {hasSchedule && <DoorSign />}
+            </figure>
+          </div>
+        )
+      }
     </div>
-    {image && (
-      <Image
-        src={image}
-        alt={`Foto de ${config.business.name}`}
-        widths={[480, 800, 1200]}
-        sizes="(min-width: 768px) 50vw, 100vw"
-        priority
-        class="aspect-[4/3] w-full rounded-box object-cover shadow-xl"
-      />
-    )}
+
+    <dl class="c-rule c-rise mt-14 grid gap-6 pt-6 text-[0.9375rem] sm:grid-cols-3" style="--d: 6">
+      {
+        street && (
+          <div>
+            <dt class="c-eyebrow mb-1">Endereço</dt>
+            <dd>
+              <a href="#contato" class="c-link">
+                {street}
+              </a>
+            </dd>
+          </div>
+        )
+      }
+      <div data-today-fact hidden>
+        <dt class="c-eyebrow mb-1">Hoje</dt>
+        <dd class="c-tabular" data-today-value></dd>
+      </div>
+      {
+        call && (
+          <div>
+            <dt class="c-eyebrow mb-1">{call.label}</dt>
+            <dd class="c-tabular">
+              <a
+                href={call.href}
+                class="c-link"
+                {...(call.external ? { target: "_blank", rel: "noopener" } : {})}
+              >
+                {call.text}
+              </a>
+            </dd>
+          </div>
+        )
+      }
+    </dl>
   </div>
 </section>

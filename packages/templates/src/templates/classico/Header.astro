@@ -22,37 +22,71 @@ const links = config.sections
 const ctaLabel = navigation?.ctaLabel;
 ---
 
-<header
-  class:list={[
-    "z-40 border-b border-ink/10 bg-surface/95 backdrop-blur",
-    sticky ? "sticky top-0" : "relative",
-  ]}
->
-  <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
-    <a href="#inicio" class="flex min-w-0 items-center gap-3 font-heading text-xl font-bold">
-      {logo && <Image src={logo} alt="" width={40} height={40} densities={[1, 2]} loading="eager" class="size-10 rounded-box object-contain" />}
-      <span class="truncate">{business.name}</span>
+<header class:list={["c-header z-40", sticky ? "sticky top-0" : "relative"]}>
+  <div class="mx-auto flex h-18 max-w-7xl items-center justify-between gap-6 px-5 sm:px-8">
+    <a href="#inicio" class="flex min-w-0 items-center gap-3">
+      {
+        logo && (
+          <Image
+            src={logo}
+            alt=""
+            width={40}
+            height={40}
+            densities={[1, 2]}
+            loading="eager"
+            class="size-10 rounded-box object-contain"
+          />
+        )
+      }
+      <span class="truncate font-heading text-xl font-semibold tracking-tight">{business.name}</span>
     </a>
 
-    <nav aria-label="Menu principal" class="hidden md:block">
-      <ul class="flex items-center gap-6 text-sm font-bold">
-        {links.map((link) => <li><a href={link.href} class="py-2 hover:text-accent">{link.label}</a></li>)}
+    <nav aria-label="Menu principal" class="hidden lg:block">
+      <ul class="flex items-center gap-8 text-[0.9375rem]">
+        {
+          links.map((link) => (
+            <li>
+              <a href={link.href} class="c-nav-link py-1">
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
       </ul>
     </nav>
 
     <div class="flex items-center gap-2">
-      {ctaLabel && <Button link={primaryContactLink(config)} config={config} class="hidden min-h-10 px-4 py-2 text-sm sm:inline-flex">{ctaLabel}</Button>}
+      {
+        ctaLabel && (
+          <div class="hidden md:block">
+            <Button link={primaryContactLink(config)} config={config} size="small">
+              {ctaLabel}
+            </Button>
+          </div>
+        )
+      }
 
-      <details class="group relative md:hidden" data-mobile-menu>
+      <details class="relative lg:hidden" data-mobile-menu>
         <summary
-          class="flex size-11 cursor-pointer list-none items-center justify-center rounded-button hover:bg-ink/5 [&::-webkit-details-marker]:hidden"
+          class="flex size-11 cursor-pointer list-none items-center justify-center rounded-button [&::-webkit-details-marker]:hidden"
           aria-label="Abrir menu"
         >
           <Icon name="menu" />
         </summary>
-        <nav aria-label="Menu" class="absolute right-0 mt-2 w-56 rounded-box border border-ink/10 bg-surface p-2 shadow-lg">
-          <ul class="flex flex-col text-base font-bold">
-            {links.map((link) => <li><a href={link.href} class="block rounded-button px-4 py-3 hover:bg-ink/5">{link.label}</a></li>)}
+        <nav
+          aria-label="Menu"
+          class="absolute right-0 mt-3 w-64 origin-top-right rounded-box border border-line bg-surface p-2 shadow-xl transition duration-200 ease-out starting:scale-95 starting:opacity-0"
+        >
+          <ul class="flex flex-col">
+            {
+              links.map((link) => (
+                <li>
+                  <a href={link.href} class="block rounded-button px-4 py-3 text-lg hover:bg-wash">
+                    {link.label}
+                  </a>
+                </li>
+              ))
+            }
           </ul>
         </nav>
       </details>
@@ -61,10 +95,16 @@ const ctaLabel = navigation?.ctaLabel;
 </header>
 
 <script>
-  // Close the mobile menu after choosing a section.
+  // Close the mobile menu after choosing a section or pressing Escape.
   for (const menu of document.querySelectorAll<HTMLDetailsElement>("[data-mobile-menu]")) {
     menu.addEventListener("click", (event) => {
       if ((event.target as HTMLElement).closest("a")) menu.open = false;
+    });
+    menu.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && menu.open) {
+        menu.open = false;
+        menu.querySelector("summary")?.focus();
+      }
     });
   }
 </script>

@@ -1,6 +1,7 @@
 ---
 import type { SiteConfig } from "@brotasites/schema";
 import Layout from "../../components/Layout.astro";
+import { buildWeek, parseOpeningHours, timeZoneForState } from "../../lib/hours";
 import About from "./About.astro";
 import Contact from "./Contact.astro";
 import Faq from "./Faq.astro";
@@ -12,17 +13,21 @@ import Hero from "./Hero.astro";
 import Services from "./Services.astro";
 import Testimonials from "./Testimonials.astro";
 import WhatsAppButton from "./WhatsAppButton.astro";
+import "./classico.css";
 
 interface Props {
   config: SiteConfig;
 }
 
 const { config } = Astro.props;
+const { contact } = config.business;
 // Sections render in the order chosen by the client; disabled ones are skipped.
 const sections = config.sections.filter((section) => section.enabled);
-const whatsapp = config.integrations?.whatsappFloatingButton
-  ? config.business.contact.whatsapp
-  : undefined;
+const whatsapp = config.integrations?.whatsappFloatingButton ? contact.whatsapp : undefined;
+
+// The weekly schedule is computed at build time; the browser only checks the clock.
+const parsedHours = parseOpeningHours(contact.openingHours);
+const week = parsedHours ? buildWeek(parsedHours) : undefined;
 ---
 
 <Layout config={config}>
@@ -34,29 +39,45 @@ const whatsapp = config.integrations?.whatsappFloatingButton
   </a>
   <Header config={config} />
   <main id="inicio">
-    {!sections.some((section) => section.id === "hero") && <h1 class="sr-only">{config.business.name}</h1>}
-    {sections.map((section, index) => {
-      const muted = index % 2 === 1;
-      switch (section.id) {
-        case "hero":
-          return <Hero config={config} content={section.content} />;
-        case "sobre":
-          return <About config={config} content={section.content} muted={muted} />;
-        case "servicos":
-          return <Services content={section.content} muted={muted} />;
-        case "galeria":
-          return <Gallery config={config} content={section.content} muted={muted} />;
-        case "depoimentos":
-          return <Testimonials content={section.content} muted={muted} />;
-        case "faq":
-          return <Faq content={section.content} muted={muted} />;
-        case "cta-final":
-          return <FinalCta config={config} content={section.content} />;
-        case "contato":
-          return <Contact config={config} content={section.content} muted={muted} />;
-      }
-    })}
+    {
+      !sections.some((section) => section.id === "hero") && (
+        <h1 class="sr-only">{config.business.name}</h1>
+      )
+    }
+    {
+      sections.map((section) => {
+        switch (section.id) {
+          case "hero":
+            return <Hero config={config} content={section.content} hasSchedule={Boolean(week)} />;
+          case "sobre":
+            return <About config={config} content={section.content} />;
+          case "servicos":
+            return <Services content={section.content} />;
+          case "galeria":
+            return <Gallery config={config} content={section.content} />;
+          case "depoimentos":
+            return <Testimonials content={section.content} />;
+          case "faq":
+            return <Faq content={section.content} />;
+          case "cta-final":
+            return <FinalCta config={config} content={section.content} />;
+          case "contato":
+            return <Contact config={config} content={section.content} />;
+        }
+      })
+    }
   </main>
   <Footer config={config} />
   {whatsapp && <WhatsAppButton number={whatsapp} />}
+  <div
+    hidden
+    data-schedule
+    data-week={JSON.stringify(week ?? [])}
+    data-tz={timeZoneForState(contact.address?.state)}
+  >
+  </div>
 </Layout>
+
+<script>
+  import "./hours-client";
+</script>

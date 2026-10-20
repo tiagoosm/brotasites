@@ -54,7 +54,8 @@ cp .env.example .env.local   # fill in the values
 | --- | --- |
 | `pnpm build` | Build all packages (Turborepo) |
 | `pnpm dev` | Run all dev servers |
-| `pnpm test` | Run all tests |
+| `pnpm test` | Run unit and integration tests (Vitest) |
+| `pnpm test:e2e` | Run end-to-end tests in a real browser (Playwright) |
 | `pnpm typecheck` | Type-check all packages |
 | `pnpm lint` | Lint and check formatting (Biome) |
 | `pnpm format` | Fix lint and formatting issues (Biome) |
@@ -70,6 +71,13 @@ pnpm --filter @brotasites/generator generate path/to/site-config.json --out ../.
 The config is validated first, with error messages in Portuguese; missing images produce warnings and the site is built without them. Only the `classico` template is available so far.
 
 To work on the templates with live reload, run `pnpm --filter @brotasites/templates dev`. It renders `docs/site-config.example.json` by default, or the file set in `BROTASITES_CONFIG`.
+
+## Tests
+
+- **Unit (Vitest):** the Zod schema, the generator's validation and build, and the template helpers (opening hours, contrast, links, theme, fonts).
+- **End-to-end (Playwright):** builds a fixture site with every section on (`packages/templates/e2e/fixture`) and checks it at desktop and 375px widths: section order, SEO metadata, images, navigation and mobile menu, FAQ, WhatsApp links, the open/closed door sign at fixed times, and reduced motion. External requests are blocked so the run is hermetic.
+
+The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec playwright install chromium`. GitHub Actions runs lint, build, type-check, unit and e2e tests on every push and pull request.
 
 ## Documentation
 

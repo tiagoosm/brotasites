@@ -4,22 +4,23 @@ import Section from "./Section.astro";
 
 interface Props {
   content: FaqContent;
-  muted: boolean;
 }
 
-const { content, muted } = Astro.props;
+const { content } = Astro.props;
 ---
 
-<Section id="faq" title={content.title} muted={muted}>
-  <div class="max-w-3xl divide-y divide-ink/15 border-y border-ink/15">
-    {content.items.map((item) => (
-      <details class="group py-2">
-        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-3 text-lg font-bold [&::-webkit-details-marker]:hidden">
-          {item.question}
-          <span aria-hidden="true" class="text-2xl text-accent transition group-open:rotate-45">+</span>
-        </summary>
-        <p class="pb-4 leading-relaxed">{item.answer}</p>
-      </details>
-    ))}
+<Section id="faq" eyebrow="Dúvidas" title={content.title}>
+  <div class="c-faq c-list border-y border-line">
+    {
+      content.items.map((item) => (
+        <details class="c-reveal group">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-xl font-semibold tracking-tight md:text-2xl [&::-webkit-details-marker]:hidden">
+            <span class="font-heading">{item.question}</span>
+            <span class="c-plus text-accent" aria-hidden="true" />
+          </summary>
+          <p class="max-w-2xl pb-7 text-lg text-ink-soft">{item.answer}</p>
+        </details>
+      ))
+    }
   </div>
 </Section>

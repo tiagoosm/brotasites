@@ -1,12 +1,27 @@
 @import "tailwindcss" source("../");
 
-/* Brand values come from the site config as CSS variables (see src/lib/theme.ts). */
+/* Brand values come from the site config as CSS variables (see src/lib/theme.ts).
+   Supporting tones are mixed from them, so any palette stays coherent. */
+:root {
+  --ink-soft: color-mix(in oklab, var(--brand-text) 80%, var(--brand-bg));
+  --line: color-mix(in oklab, var(--brand-text) 14%, var(--brand-bg));
+  --wash: color-mix(in oklab, var(--brand-primary) 8%, var(--brand-bg));
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  interpolate-size: allow-keywords;
+}
+
 @theme inline {
   --color-brand: var(--brand-primary);
   --color-on-brand: var(--brand-on-primary);
   --color-accent: var(--brand-accent-text);
   --color-surface: var(--brand-bg);
   --color-ink: var(--brand-text);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-wash: var(--wash);
   --color-band: var(--brand-band);
   --color-on-band: var(--brand-on-band);
   --font-heading: var(--brand-heading-family);
@@ -18,12 +33,18 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
   }
 
   @media (prefers-reduced-motion: no-preference) {
     html {
       scroll-behavior: smooth;
     }
+  }
+
+  body {
+    font-size: 1.0625rem;
+    line-height: 1.65;
   }
 
   h1,
@@ -33,8 +54,17 @@
     text-wrap: balance;
   }
 
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--brand-primary);
+    color: var(--brand-on-primary);
+  }
+
   :focus-visible {
-    outline: 3px solid var(--brand-accent-text);
+    outline: 2px solid var(--brand-accent-text);
     outline-offset: 3px;
   }
 }

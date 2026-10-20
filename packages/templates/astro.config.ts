@@ -2,7 +2,13 @@ import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, fontProviders } from "astro/config";
 import { loadSiteConfig, siteUrl } from "./src/lib/config";
-import { BODY_FONT_VAR, fallbacksFor, fontChoice, HEADING_FONT_VAR } from "./src/lib/fonts";
+import {
+  BODY_FONT_VAR,
+  fallbacksFor,
+  fontChoice,
+  fontWeights,
+  HEADING_FONT_VAR,
+} from "./src/lib/fonts";
 
 // The generator sets BROTASITES_CONFIG; `astro dev` / `astro build` here use the docs example.
 process.env.BROTASITES_CONFIG ??= fileURLToPath(
@@ -11,6 +17,9 @@ process.env.BROTASITES_CONFIG ??= fileURLToPath(
 
 const { config, baseDir } = loadSiteConfig();
 const fonts = fontChoice(config);
+const weights = fontWeights(fonts);
+
+type NonEmpty = [string, ...string[]];
 
 // Google Fonts are downloaded at build time and self-hosted with the site.
 const fontFamilies = [
@@ -18,8 +27,9 @@ const fontFamilies = [
     provider: fontProviders.google(),
     name: fonts.body,
     cssVariable: BODY_FONT_VAR,
-    weights: ["400", "700"] as [string, ...string[]],
-    subsets: ["latin"] as [string, ...string[]],
+    weights: weights.body as NonEmpty,
+    styles: ["normal"] as ["normal"],
+    subsets: ["latin"] as NonEmpty,
     fallbacks: fallbacksFor(fonts.body),
   },
   ...(fonts.shared
@@ -29,8 +39,9 @@ const fontFamilies = [
           provider: fontProviders.google(),
           name: fonts.heading,
           cssVariable: HEADING_FONT_VAR,
-          weights: ["700"] as [string, ...string[]],
-          subsets: ["latin"] as [string, ...string[]],
+          weights: weights.heading as NonEmpty,
+          styles: ["normal"] as ["normal"],
+          subsets: ["latin"] as NonEmpty,
           fallbacks: fallbacksFor(fonts.heading),
         },
       ]),
