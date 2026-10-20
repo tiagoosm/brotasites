@@ -1,0 +1,29 @@
+{
+  "name": "@brotasites/schema",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Zod schema and types for the BrotaSites site configuration (single source of truth).",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}
