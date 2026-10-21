@@ -7,6 +7,7 @@ import { StepFooter } from "@/components/wizard/step-footer";
 import { StepHeader } from "@/components/wizard/step-header";
 import { useDraft } from "@/lib/draft-store";
 import { BusinessStep } from "./business-step";
+import { ContentStep } from "./content-step";
 import { DesignStep } from "./design-step";
 import { SectionsStep } from "./sections-step";
 import { TemplateStep } from "./template-step";
@@ -34,6 +35,8 @@ export function StepContent({ step }: { step: FormStepSlug }) {
       return <DesignStep />;
     case "secoes":
       return <SectionsStep />;
+    case "conteudo":
+      return <ContentStep />;
     default:
       return <UpcomingStep step={step} />;
   }

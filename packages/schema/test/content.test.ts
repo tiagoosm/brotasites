@@ -66,3 +66,25 @@ describe("testimonials", () => {
     expect(draftSections(draft).find((s) => s.id === "depoimentos")?.enabled).toBe(false);
   });
 });
+
+describe("buttons", () => {
+  it("a blank button label keeps the example text but uses the chosen action", () => {
+    const draft = setSectionContent(bakery(), "hero", {
+      cta: { label: "", action: "link", target: "https://instagram.com/padariadoze" },
+    });
+    expect(section(buildPreviewConfig(draft), "hero")?.content).toMatchObject({
+      cta: { label: "Fale conosco", action: "link", target: "https://instagram.com/padariadoze" },
+    });
+  });
+
+  it("a half-typed link shows the example button and keeps the rest", () => {
+    const draft = setSectionContent(bakery(), "hero", {
+      title: "Pão quentinho todo dia",
+      cta: { label: "Veja o cardápio", action: "link", target: "instagram.com" },
+    });
+    expect(section(buildPreviewConfig(draft), "hero")?.content).toMatchObject({
+      title: "Pão quentinho todo dia",
+      cta: { label: "Fale conosco", action: "whatsapp" },
+    });
+  });
+});

@@ -3,6 +3,7 @@ export * from "./color.js";
 export * from "./design-options.js";
 export * from "./draft.js";
 export * from "./draft-actions.js";
+export * from "./icons.js";
 export * from "./primitives.js";
 export * from "./sections.js";
 export * from "./site-config.js";

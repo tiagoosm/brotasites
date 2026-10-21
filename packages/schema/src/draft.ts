@@ -43,7 +43,8 @@ export interface SiteDraft {
 export const PLACEHOLDER_NAME = "Nome do seu negócio";
 export const PLACEHOLDER_SUBDOMAIN = "seu-site";
 
-function placeholderContent(id: SectionId, name: string): Section["content"] {
+/** What the preview shows for a section the client has not written yet. */
+export function placeholderContent(id: SectionId, name: string): Section["content"] {
   switch (id) {
     case "hero":
       return {
@@ -138,6 +139,8 @@ function filled(value: unknown): string | undefined {
 }
 
 const isBlank = (value: unknown) => typeof value === "string" && value.trim() === "";
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
 
 /**
  * Keeps only what the client actually answered, so empty fields keep showing the
@@ -187,11 +190,27 @@ export function buildPreviewConfig(draft: SiteDraft): SiteConfig {
         enabled: section.enabled,
         content: placeholderContent(section.id, name),
       };
-      const merged = {
-        ...fallback,
-        content: { ...fallback.content, ...answeredContent(section.id, section.content) },
-      };
-      // Half-typed content (e.g. over the length limit) falls back to the placeholder.
+      // Nested answers (the button) merge into the placeholder, so a blank label keeps its text.
+      const content: Record<string, unknown> = { ...fallback.content };
+      for (const [key, value] of Object.entries(answeredContent(section.id, section.content))) {
+        const base = content[key];
+        content[key] =
+          isRecord(value) && isRecord(base) && !Array.isArray(value)
+            ? { ...base, ...value }
+            : value;
+      }
+      const merged = { ...fallback, content };
+      const result = sectionSchema.safeParse(merged);
+      if (result.success) return result.data;
+      // Half-typed answers (e.g. a link still being written) show the placeholder for that
+      // field only, so the rest of the section keeps what the client wrote.
+      const fallbackContent = fallback.content as Record<string, unknown>;
+      for (const issue of result.error.issues) {
+        const key = issue.path[1];
+        if (issue.path[0] !== "content" || typeof key !== "string") continue;
+        if (key in fallbackContent) content[key] = fallbackContent[key];
+        else delete content[key];
+      }
       return valid(sectionSchema, merged, valid(sectionSchema, fallback, fallback as Section));
     },
   );
