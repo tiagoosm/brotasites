@@ -18,6 +18,7 @@ UI copy shown to the client is in pt-BR; labels quoted below are the actual pt-B
 ### 0. Sign-in
 - Email sign-in (magic link), no password.
 - Creates the user record and a draft site.
+- Decision (2026-10-21): sign-in is **optional until publishing**. Anyone can start answering right away; the draft is saved on the device. Signing in (offered in the questions rail and header) keeps the draft in the account and on every device. Publishing will require it. This keeps the first screen free of friction.
 
 ### 1. Your business
 - Fields: business name, type/category (list with an "other" option), city.

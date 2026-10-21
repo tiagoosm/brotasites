@@ -51,7 +51,13 @@ export default defineConfig({
     {
       command: `pnpm exec next build && pnpm exec next start --port ${PORT}`,
       url: `http://localhost:${PORT}/criar/negocio`,
-      env: { NEXT_TELEMETRY_DISABLED: "1", NEXT_PUBLIC_PREVIEW_URL: PREVIEW_URL },
+      env: {
+        NEXT_TELEMETRY_DISABLED: "1",
+        NEXT_PUBLIC_PREVIEW_URL: PREVIEW_URL,
+        // A fake project: tests intercept its auth calls, so nothing reaches real Supabase.
+        NEXT_PUBLIC_SUPABASE_URL: "https://e2e-test.supabase.co",
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_e2e_test",
+      },
       reuseExistingServer: !process.env.CI,
       timeout: 240_000,
     },

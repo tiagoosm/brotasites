@@ -75,6 +75,18 @@ To work on the form, run `pnpm dev` (or the platform and preview apps on their o
 
 To work on the templates with live reload, run `pnpm --filter @brotasites/templates dev`. It renders `docs/site-config.example.json` by default, or the file set in `BROTASITES_CONFIG`.
 
+## Supabase
+
+The platform keeps accounts and drafts in Supabase (project `brotasites`, region sa-east-1). Schema and row level security live in [`supabase/migrations`](supabase/migrations); [`supabase/tests/rls.sql`](supabase/tests/rls.sql) checks the access rules and leaves nothing behind.
+
+Copy `.env.example` to `apps/platform/.env.local` and fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Without them the form still works and saves drafts only on the device.
+
+Dashboard settings (Authentication):
+
+- **URL Configuration:** add `http://localhost:3000/**` (and later the production domain) to Redirect URLs.
+- **Email templates, Magic Link:** link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/criar/negocio` so the link also works when opened on another device.
+- **SMTP:** the built-in sender is rate limited and meant for testing; production needs a custom SMTP provider.
+
 ## Tests
 
 - **Unit (Vitest):** the Zod schema, the generator's validation and build, and the template helpers (opening hours, contrast, links, theme, fonts).
