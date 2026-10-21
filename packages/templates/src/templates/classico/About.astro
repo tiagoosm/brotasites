@@ -1,6 +1,6 @@
 ---
-import { Image } from "astro:assets";
 import type { AboutContent, SiteConfig } from "@brotasites/schema";
+import Picture from "../../components/Picture.astro";
 import { findImage } from "../../lib/images";
 import Section from "./Section.astro";
 
@@ -24,7 +24,7 @@ const [lead, ...paragraphs] = content.text.split(/\n+/).filter(Boolean);
     {
       image && (
         <div class="c-reveal-image overflow-hidden rounded-box">
-          <Image
+          <Picture
             src={image}
             alt={`${content.title} – ${config.business.name}`}
             widths={[480, 800, 1200, 1600]}

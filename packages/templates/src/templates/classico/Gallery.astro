@@ -1,6 +1,6 @@
 ---
-import { Image } from "astro:assets";
 import type { GalleryContent, SiteConfig } from "@brotasites/schema";
+import Picture from "../../components/Picture.astro";
 import { findImage } from "../../lib/images";
 import Section from "./Section.astro";
 
@@ -23,7 +23,7 @@ const images = content.images.map(findImage).filter((image) => image !== undefin
       >
         {images.map((image, index) => (
           <li class="c-reveal-image overflow-hidden rounded-box">
-            <Image
+            <Picture
               src={image}
               alt={`Foto ${index + 1} de ${images.length} – ${config.business.name}`}
               widths={[360, 640, 960, 1400]}

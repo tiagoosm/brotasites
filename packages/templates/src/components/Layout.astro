@@ -31,9 +31,13 @@ const description = seo?.description ?? business.description ?? business.tagline
 
 const heroSection = config.sections.find((s) => s.id === "hero" && s.enabled);
 const heroImage = heroSection?.id === "hero" ? findImage(heroSection.content.image) : undefined;
-const ogImage = heroImage
-  ? new URL((await getImage({ src: heroImage, width: 1200, format: "jpg" })).src, url).href
-  : undefined;
+// Photos by web address only appear in the live preview, where the address itself will do.
+const ogImage =
+  typeof heroImage === "string"
+    ? heroImage
+    : heroImage
+      ? new URL((await getImage({ src: heroImage, width: 1200, format: "jpg" })).src, url).href
+      : undefined;
 
 const sameAs = [
   business.social?.instagram && instagramUrl(business.social.instagram),

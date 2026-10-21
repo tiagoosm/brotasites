@@ -69,15 +69,17 @@ After `pnpm build`, generate a site from a config file. Image paths in the confi
 pnpm --filter @brotasites/generator generate path/to/site-config.json --out ../../out/my-site
 ```
 
-The config is validated first, with error messages in Portuguese; missing images produce warnings and the site is built without them. Only the `classico` template is available so far.
+The config is validated first, with error messages in Portuguese; missing images produce warnings and the site is built without them. Photos uploaded in the form are referenced by URL: the generator downloads them before building (only from Supabase Storage by default, see `allowedHosts`), so sites serve optimized local copies. Only the `classico` template is available so far.
 
-To work on the form, run `pnpm dev` (or the platform and preview apps on their own) and open http://localhost:3000. The live preview comes from `apps/preview` on port 4400: an Astro server that renders the real template from the draft the form posts. The draft is saved in the browser for now.
+To work on the form, run `pnpm dev` (or the platform and preview apps on their own) and open http://localhost:3000. The live preview comes from `apps/preview` on port 4400: an Astro server that renders the real template from the draft the form posts. The draft is saved in the browser, and in the account once the person signs in.
 
 To work on the templates with live reload, run `pnpm --filter @brotasites/templates dev`. It renders `docs/site-config.example.json` by default, or the file set in `BROTASITES_CONFIG`.
 
 ## Supabase
 
 The platform keeps accounts and drafts in Supabase (project `brotasites`, region sa-east-1). Schema and row level security live in [`supabase/migrations`](supabase/migrations); [`supabase/tests/rls.sql`](supabase/tests/rls.sql) checks the access rules and leaves nothing behind.
+
+Photos go to the public `site-images` Storage bucket under `<user id>/<site id>/`; each person can only write to their own folder. The form shrinks photos to WebP (2000px at most) before uploading, and uploading requires signing in.
 
 Copy `.env.example` to `apps/platform/.env.local` and fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Without them the form still works and saves drafts only on the device.
 

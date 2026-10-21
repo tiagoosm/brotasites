@@ -1,0 +1,31 @@
+---
+import { Image, type LocalImageProps } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+// A site photo. Local files go through Astro's image pipeline (resized, modern formats);
+// photos referenced by web address, which only happens in the live preview, are shown as is.
+// Generated sites always have local files: the generator downloads uploaded photos first.
+
+type Props = Omit<LocalImageProps, "src"> & { src: ImageMetadata | string };
+
+const props = Astro.props;
+const { src, alt, priority, loading, width, height, class: className } = props;
+---
+
+{
+  typeof src === "string" ? (
+    <img
+      src={src}
+      alt={alt}
+      width={width}
+      height={height}
+      loading={priority ? "eager" : (loading ?? "lazy")}
+      decoding="async"
+      fetchpriority={priority ? "high" : undefined}
+      referrerpolicy="no-referrer"
+      class={className}
+    />
+  ) : (
+    <Image {...(props as LocalImageProps)} />
+  )
+}

@@ -1,8 +1,8 @@
 ---
-import { Image } from "astro:assets";
 import type { SiteConfig } from "@brotasites/schema";
 import Button from "../../components/Button.astro";
 import Icon from "../../components/Icon.astro";
+import Picture from "../../components/Picture.astro";
 import { findImage } from "../../lib/images";
 import { navLabels } from "../../lib/labels";
 import { primaryContactLink } from "../../lib/links";
@@ -27,7 +27,7 @@ const ctaLabel = navigation?.ctaLabel;
     <a href="#inicio" class="flex min-w-0 items-center gap-3">
       {
         logo && (
-          <Image
+          <Picture
             src={logo}
             alt=""
             width={40}

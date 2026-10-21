@@ -24,6 +24,7 @@ import { z } from "zod";
 import { useDraft } from "@/lib/draft-store";
 import { cn } from "@/lib/utils";
 import { ItemList, SectionCard, TextField } from "./fields";
+import { PhotosCard } from "./photos-card";
 import { StepForm } from "./step-form";
 
 // Question 6: how customers reach the business. Everything here is factual, so it goes to
@@ -133,6 +134,8 @@ export function ContactStep() {
           />
         </div>
       </SectionCard>
+
+      <PhotosCard />
     </StepForm>
   );
 }

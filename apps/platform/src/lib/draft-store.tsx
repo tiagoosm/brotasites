@@ -30,6 +30,7 @@ export type SaveState = "idle" | "saving" | "saved" | "failed" | "account-failed
 export interface Account {
   /** "unknown" until the session has been checked. */
   status: "unknown" | "signed-out" | "signed-in";
+  id?: string;
   email?: string;
 }
 
@@ -40,6 +41,8 @@ interface DraftContextValue extends StoredDraft {
   account: Account;
   updateDraft: (update: (draft: SiteDraft) => SiteDraft) => void;
   completeStep: (slug: FormStepSlug) => void;
+  /** The site in the person's account, created on first use (photos need it). Null when signed out. */
+  ensureSite: () => Promise<{ userId: string; siteId: string } | null>;
   /** Steps the client may open: every finished step plus the next one. */
   isReachable: (slug: FormStepSlug) => boolean;
 }
@@ -103,7 +106,11 @@ export function DraftProvider({ children }: { children: React.ReactNode }) {
         setAccount({ status: "signed-out" });
         return;
       }
-      setAccount({ status: "signed-in", email: claims.email as string | undefined });
+      setAccount({
+        status: "signed-in",
+        id: claims.sub,
+        email: claims.email as string | undefined,
+      });
       try {
         const remote = await fetchRemoteDraft(supabase);
         if (cancelled) return;
@@ -130,7 +137,7 @@ export function DraftProvider({ children }: { children: React.ReactNode }) {
         siteId.current = null;
         setAccount({ status: "signed-out" });
       } else if (session?.user) {
-        setAccount({ status: "signed-in", email: session.user.email });
+        setAccount({ status: "signed-in", id: session.user.id, email: session.user.email });
       }
     });
     return () => {
@@ -183,6 +190,16 @@ export function DraftProvider({ children }: { children: React.ReactNode }) {
     setState((current) => ({ ...current, draft: update(current.draft), updatedAt: Date.now() }));
   }, []);
 
+  const accountRef = useRef(account);
+  accountRef.current = account;
+  const ensureSite = useCallback(async () => {
+    const supabase = getBrowserSupabase();
+    const userId = accountRef.current.id;
+    if (!supabase || !userId) return null;
+    siteId.current ??= await pushRemoteDraft(supabase, null, latest.current);
+    return { userId, siteId: siteId.current };
+  }, []);
+
   const completeStep = useCallback((slug: FormStepSlug) => {
     setState((current) =>
       current.completed.includes(slug)
@@ -201,11 +218,12 @@ export function DraftProvider({ children }: { children: React.ReactNode }) {
       account,
       updateDraft,
       completeStep,
+      ensureSite,
       isReachable: (slug) =>
         state.completed.includes(slug) ||
         formSteps.findIndex((step) => step.slug === slug) <= lastReachable,
     };
-  }, [state, ready, saveState, account, updateDraft, completeStep]);
+  }, [state, ready, saveState, account, updateDraft, completeStep, ensureSite]);
 
   return <DraftContext value={value}>{children}</DraftContext>;
 }

@@ -1,7 +1,7 @@
 ---
-import { Image } from "astro:assets";
 import type { HeroContent, SiteConfig } from "@brotasites/schema";
 import Button from "../../components/Button.astro";
+import Picture from "../../components/Picture.astro";
 import { findImage } from "../../lib/images";
 import { ctaLink, phoneUrl, whatsappUrl } from "../../lib/links";
 import DoorSign from "./DoorSign.astro";
@@ -81,7 +81,7 @@ const call = contact.phone
           <div class="lg:col-span-5">
             <figure class="c-window mx-auto max-w-md lg:max-w-none">
               <div class="c-window__frame">
-                <Image
+                <Picture
                   src={image}
                   alt={`Foto de ${business.name}`}
                   widths={[400, 640, 900, 1200]}
