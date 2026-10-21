@@ -4,3 +4,8 @@ packages:
 
 # Pin exact versions when adding dependencies (no ^ or ~).
 saveExact: true
+
+# Install scripts allowed to run: Wrangler's bundler and Workers runtime binaries.
+allowBuilds:
+  esbuild: true
+  workerd: true

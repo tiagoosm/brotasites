@@ -1,0 +1,13 @@
+// The single Worker that serves every client site. Nothing here is deployed by the
+// platform: run `pnpm --filter @brotasites/sites-worker deploy` once the R2 bucket and the
+// brotasites.com zone exist in Cloudflare (see README, "Publishing").
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "brotasites-sites",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "r2_buckets": [{ "binding": "SITES", "bucket_name": "brotasites-sites" }],
+  "vars": { "SITES_DOMAIN": "brotasites.com" },
+  "routes": [{ "pattern": "*.brotasites.com/*", "zone_name": "brotasites.com" }],
+  "observability": { "enabled": true }
+}

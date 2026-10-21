@@ -10,7 +10,7 @@ Form-to-landing-page platform for small businesses. The client fills out a short
 2. The answers become a single configuration JSON, validated by a Zod schema.
 3. AI (Claude) suggests and polishes copy only. It never invents facts and never writes code.
 4. A generator renders the JSON with an Astro template into static HTML.
-5. The site is deployed to Cloudflare Pages at `client.brotasites.com`.
+5. The site is uploaded to Cloudflare R2 and served at `client.brotasites.com` by a single Cloudflare Worker.
 
 The product UI and the generated sites are in Brazilian Portuguese (pt-BR).
 
@@ -24,7 +24,7 @@ The product UI and the generated sites are in Brazilian Portuguese (pt-BR).
 | Database, auth, storage | Supabase |
 | Validation | Zod (`packages/schema`) |
 | Generated sites | Astro + Tailwind |
-| Site hosting | Cloudflare Pages |
+| Site hosting | Cloudflare R2 + one Cloudflare Worker |
 | AI | Claude via the Anthropic SDK |
 | Tests | Vitest, Playwright |
 | CI | GitHub Actions |
@@ -35,10 +35,11 @@ The product UI and the generated sites are in Brazilian Portuguese (pt-BR).
 apps/
   platform/      Next.js: dashboard, form, API
   preview/       Astro server that renders the live preview
+  sites-worker/  Cloudflare Worker serving every client site from R2
 packages/
   schema/        Zod schema and types (single source of truth)
   templates/     Astro landing page templates
-  generator/     reads the JSON and builds the static site
+  generator/     builds the static site, uploads it to R2, runs the job worker
 docs/            specification
 ```
 
@@ -84,7 +85,16 @@ pnpm --filter @brotasites/generator worker          # keeps running, one job at 
 pnpm --filter @brotasites/generator worker --once   # processes one job and stops
 ```
 
-The worker needs `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY` in its environment (never in the browser). Deployment to Cloudflare Pages is not wired yet: built sites wait in "publishing" until it is.
+The worker needs `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY` in its environment (never in the browser).
+
+Sites go live through Cloudflare: the worker uploads each build to the R2 bucket `brotasites-sites` under `sites/<subdomain>/<deploy id>/` and then switches `sites/<subdomain>/current`, so visitors never see a half-updated site. A single Worker, [`apps/sites-worker`](apps/sites-worker), serves `<subdomain>.brotasites.com` from the bucket. Without the R2 variables (`CLOUDFLARE_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`) built sites wait in "publishing".
+
+One-time Cloudflare setup (not done yet):
+
+1. Add the `brotasites.com` zone to Cloudflare (the domain must be registered first).
+2. Create the R2 bucket `brotasites-sites` and an R2 API token with Object Read & Write on it.
+3. Deploy the Worker: `pnpm --filter @brotasites/sites-worker deploy` (uses `CLOUDFLARE_API_TOKEN`), which serves the `*.brotasites.com/*` route.
+4. Add a proxied wildcard DNS record `*` so subdomains reach the Worker.
 
 ## Supabase
 

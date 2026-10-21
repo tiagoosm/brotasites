@@ -26,7 +26,7 @@ Project owner: Tiago da Silva Machado (github.com/tiagoosm). Product language (U
 - Database, auth (magic link) and file storage: Supabase. Stores platform data only (`users`, `sites`, `site_configs`, `jobs`, `assets`). Client sites are static, with no database.
 - Validation: Zod in `packages/schema`, the single source of truth for the form, API, AI and generator. Initial reference: `docs/site-config.schema.json` (version 1.1).
 - Generated sites: Astro + Tailwind, static HTML, built from the configuration JSON.
-- Site deployment: Cloudflare Pages (one project per client), at `client.brotasites.com`.
+- Site deployment (decision of 2026-10-21, replacing one Cloudflare Pages project per client, which hits the 100-projects-per-account limit): every generated site is uploaded to one Cloudflare R2 bucket under `sites/<subdomain>/`, and a single Cloudflare Worker (`apps/sites-worker`) serves `<subdomain>.brotasites.com` from it. Wrangler deploys that Worker; the generation worker uploads sites through the R2 S3 API.
 - AI (Claude via the Anthropic SDK): generates text and adjustments only, always returning JSON validated by the schema. Never generates free-form code.
 - Tests: Vitest (schema and generator) and Playwright (end-to-end flow). CI on GitHub Actions.
 - After the MVP: job queue (Inngest or Trigger.dev) and payments (Asaas or Mercado Pago).
@@ -44,7 +44,9 @@ Project owner: Tiago da Silva Machado (github.com/tiagoosm). Product language (U
 ```
 brotasites/
 ├── apps/
-│   └── platform/          # Next.js: dashboard, form, API
+│   ├── platform/          # Next.js: dashboard, form, API
+│   ├── preview/           # Astro server for the live preview in the form
+│   └── sites-worker/      # Cloudflare Worker serving the client sites from R2
 ├── packages/
 │   ├── schema/            # Zod + types (the heart of the project)
 │   ├── templates/         # Astro landing page templates
