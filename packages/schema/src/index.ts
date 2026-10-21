@@ -7,6 +7,7 @@ export * from "./draft-actions.js";
 export * from "./hours.js";
 export * from "./icons.js";
 export * from "./primitives.js";
+export * from "./publish.js";
 export * from "./sections.js";
 export * from "./site-config.js";
 export * from "./steps.js";
