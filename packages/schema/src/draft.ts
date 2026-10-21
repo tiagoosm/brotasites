@@ -137,6 +137,40 @@ function filled(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
+const isBlank = (value: unknown) => typeof value === "string" && value.trim() === "";
+
+/**
+ * Keeps only what the client actually answered, so empty fields keep showing the
+ * placeholder: blank strings are dropped, and list items without their main text too.
+ * An empty testimonials list stays empty (there is no placeholder testimonial).
+ */
+export function answeredContent(
+  id: SectionId,
+  content: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(content ?? {})) {
+    if (isBlank(value)) continue;
+    if (Array.isArray(value)) {
+      const items = value.filter((item) => {
+        if (typeof item === "string") return !isBlank(item);
+        const record = item as Record<string, unknown>;
+        const main = record.name ?? record.question ?? record.text;
+        return main !== undefined && !isBlank(main);
+      });
+      if (items.length || id === "depoimentos") result[key] = items;
+      continue;
+    }
+    if (value && typeof value === "object") {
+      const nested = Object.fromEntries(Object.entries(value).filter(([, v]) => !isBlank(v)));
+      if (Object.keys(nested).length) result[key] = nested;
+      continue;
+    }
+    result[key] = value;
+  }
+  return result;
+}
+
 /** Builds a valid SiteConfig from a draft, for the live preview. */
 export function buildPreviewConfig(draft: SiteDraft): SiteConfig {
   const preset = findCategory(draft.business?.category);
@@ -153,7 +187,10 @@ export function buildPreviewConfig(draft: SiteDraft): SiteConfig {
         enabled: section.enabled,
         content: placeholderContent(section.id, name),
       };
-      const merged = { ...fallback, content: { ...fallback.content, ...section.content } };
+      const merged = {
+        ...fallback,
+        content: { ...fallback.content, ...answeredContent(section.id, section.content) },
+      };
       // Half-typed content (e.g. over the length limit) falls back to the placeholder.
       return valid(sectionSchema, merged, valid(sectionSchema, fallback, fallback as Section));
     },

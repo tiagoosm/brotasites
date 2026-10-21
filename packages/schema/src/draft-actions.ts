@@ -88,3 +88,38 @@ export function moveSection(draft: SiteDraft, id: SectionId, delta: -1 | 1): Sit
   sections[to] = moving;
   return withSections(draft, sections);
 }
+
+/** Merges answers into a section's content (e.g. its title or list of items). */
+export function setSectionContent(
+  draft: SiteDraft,
+  id: SectionId,
+  patch: Record<string, unknown>,
+): SiteDraft {
+  return {
+    ...draft,
+    sections: draftSections(draft).map((section) =>
+      section.id === id ? { ...section, content: { ...section.content, ...patch } } : section,
+    ),
+  };
+}
+
+export interface Testimonial {
+  name: string;
+  role?: string;
+  text: string;
+}
+
+/**
+ * Saves the testimonials. The section turns on with the first real one and off when none is
+ * left, since it may only show testimonials the client actually provided.
+ */
+export function setTestimonials(draft: SiteDraft, items: Testimonial[]): SiteDraft {
+  const hasReal = items.some((item) => item.name.trim() && item.text.trim());
+  const next = setSectionContent(draft, "depoimentos", { items });
+  return {
+    ...next,
+    sections: draftSections(next).map((section) =>
+      section.id === "depoimentos" ? { ...section, enabled: hasReal } : section,
+    ),
+  };
+}
