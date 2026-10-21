@@ -22,11 +22,11 @@ const store = supabaseJobStore(supabase);
 const options = { allowedImageHosts: [new URL(url).hostname] };
 
 console.log("Worker de geração iniciado.");
-do {
+for (;;) {
   const worked = await processNextJob(store, options).catch((error: unknown) => {
     console.error("Falha ao processar um pedido:", error);
     return false;
   });
   if (values.once) break;
   if (!worked) await sleep(IDLE_MS);
-} while (true);
+}

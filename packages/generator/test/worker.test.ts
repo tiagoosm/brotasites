@@ -76,7 +76,7 @@ describe("processNextJob", () => {
     });
     expect(builds).toBe(0);
     expect(finished[0]?.outcome).toMatchObject({ ok: false });
-    expect((finished[0]?.outcome as { error: string }).error).toMatch(/seção Sobre/);
+    expect((finished[0]?.outcome as { error?: string } | undefined)?.error).toMatch(/seção Sobre/);
   });
 
   it("reports build and deploy failures", async () => {
