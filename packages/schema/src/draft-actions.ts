@@ -1,6 +1,7 @@
 import { findPalette } from "./categories.js";
 import { sectionInfo } from "./design-options.js";
 import { type DraftSection, defaultSections, type SiteDraft } from "./draft.js";
+import type { OpeningHoursRow } from "./hours.js";
 import type { SectionId } from "./sections.js";
 import type { SiteConfig, Template } from "./site-config.js";
 
@@ -100,6 +101,48 @@ export function setSectionContent(
     sections: draftSections(draft).map((section) =>
       section.id === id ? { ...section, content: { ...section.content, ...patch } } : section,
     ),
+  };
+}
+
+type Business = NonNullable<SiteDraft["business"]>;
+type Contact = NonNullable<Business["contact"]>;
+
+/** Phone, WhatsApp and e-mail. */
+export function setContact(
+  draft: SiteDraft,
+  patch: Partial<Pick<Contact, "phone" | "whatsapp" | "email">>,
+): SiteDraft {
+  return {
+    ...draft,
+    business: { ...draft.business, contact: { ...draft.business?.contact, ...patch } },
+  };
+}
+
+export function setAddress(draft: SiteDraft, patch: NonNullable<Contact["address"]>): SiteDraft {
+  const contact = draft.business?.contact;
+  return {
+    ...draft,
+    business: {
+      ...draft.business,
+      contact: { ...contact, address: { ...contact?.address, ...patch } },
+    },
+  };
+}
+
+export function setOpeningHours(draft: SiteDraft, rows: OpeningHoursRow[]): SiteDraft {
+  return {
+    ...draft,
+    business: {
+      ...draft.business,
+      contact: { ...draft.business?.contact, openingHours: rows },
+    },
+  };
+}
+
+export function setSocial(draft: SiteDraft, patch: NonNullable<Business["social"]>): SiteDraft {
+  return {
+    ...draft,
+    business: { ...draft.business, social: { ...draft.business?.social, ...patch } },
   };
 }
 

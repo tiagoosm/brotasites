@@ -13,7 +13,7 @@ test.beforeEach(async ({ page }) => {
       "brotasites:rascunho:v1",
       JSON.stringify({
         draft: {},
-        completed: ["negocio", "modelo", "cores", "secoes"],
+        completed: ["negocio", "modelo", "cores", "secoes", "conteudo"],
       }),
     );
   });
@@ -112,7 +112,7 @@ test("question 4 turns sections off and reorders them", async ({ page }) => {
 
 test("no question scrolls sideways on any screen", async ({ page }) => {
   test.setTimeout(60_000);
-  for (const slug of ["negocio", "modelo", "cores", "secoes", "conteudo"]) {
+  for (const slug of ["negocio", "modelo", "cores", "secoes", "conteudo", "contato"]) {
     await page.goto(`/criar/${slug}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     const overflow = await page.evaluate(

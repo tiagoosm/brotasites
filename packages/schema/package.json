@@ -8,6 +8,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./hours": {
+      "types": "./dist/hours.d.ts",
+      "default": "./dist/hours.js"
     }
   },
   "files": [

@@ -1,6 +1,6 @@
 // Runs in the browser: fills the door sign and marks today's opening hours,
 // using the visitor's clock converted to the business's time zone.
-import { localTime, statusAt, type WeekSchedule } from "../../lib/hours";
+import { localTime, statusAt, type WeekSchedule } from "@brotasites/schema/hours";
 
 const source = document.querySelector<HTMLElement>("[data-schedule]");
 

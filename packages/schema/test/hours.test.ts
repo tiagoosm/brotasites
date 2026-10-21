@@ -7,7 +7,7 @@ import {
   parseOpeningHours,
   statusAt,
   timeZoneForState,
-} from "../src/lib/hours";
+} from "../src/hours.js";
 
 const h = (hours: number, minutes = 0) => hours * 60 + minutes;
 

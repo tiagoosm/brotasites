@@ -3,7 +3,14 @@ import { type SiteConfig, siteConfigSchema } from "@brotasites/schema";
 import { describe, expect, it } from "vitest";
 import { contrastRatio, firstReadable, mostReadable } from "../src/lib/color";
 import { fontChoice, fontWeights } from "../src/lib/fonts";
-import { ctaLink, instagramUrl, phoneUrl, primaryContactLink, whatsappUrl } from "../src/lib/links";
+import {
+  ctaLink,
+  facebookUrl,
+  instagramUrl,
+  phoneUrl,
+  primaryContactLink,
+  whatsappUrl,
+} from "../src/lib/links";
 import { themeCss } from "../src/lib/theme";
 
 const example = siteConfigSchema.parse(
@@ -47,7 +54,12 @@ describe("links", () => {
     expect(phoneUrl("(55) 3222-0000")).toBe("tel:+555532220000");
     expect(phoneUrl("+55 35 99999-0000")).toBe("tel:+5535999990000");
     expect(instagramUrl("@padariadoze")).toBe("https://www.instagram.com/padariadoze");
-    expect(instagramUrl("https://instagram.com/x")).toBe("https://instagram.com/x");
+    expect(instagramUrl("https://instagram.com/x")).toBe("https://www.instagram.com/x");
+    expect(instagramUrl("instagram.com/padariadoze/")).toBe(
+      "https://www.instagram.com/padariadoze",
+    );
+    expect(facebookUrl("facebook.com/padariadoze")).toBe("https://www.facebook.com/padariadoze");
+    expect(facebookUrl("Padaria do Zé")).toBe("https://www.facebook.com/Padaria%20do%20Z%C3%A9");
   });
 
   it("falls back to the contact section without WhatsApp", () => {

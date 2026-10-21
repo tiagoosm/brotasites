@@ -142,6 +142,12 @@ const isBlank = (value: unknown) => typeof value === "string" && value.trim() ==
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
+/** Top-level blank strings removed, so an emptied field means "not informed". */
+function withoutBlanks<T extends object>(value: T | undefined): T | undefined {
+  if (!value) return undefined;
+  return Object.fromEntries(Object.entries(value).filter(([, v]) => !isBlank(v))) as T;
+}
+
 /**
  * Keeps only what the client actually answered, so empty fields keep showing the
  * placeholder: blank strings are dropped, and list items without their main text too.
@@ -224,13 +230,18 @@ export function buildPreviewConfig(draft: SiteDraft): SiteConfig {
       customDomain: null,
     },
     business: {
-      ...draft.business,
+      ...withoutBlanks(draft.business),
       name,
       category,
       contact: {
-        ...draft.business?.contact,
-        address: { ...draft.business?.contact?.address, city },
+        ...withoutBlanks(draft.business?.contact),
+        address: { ...withoutBlanks(draft.business?.contact?.address), city },
+        // Rows still being typed stay out of the hours table.
+        openingHours: draft.business?.contact?.openingHours?.filter(
+          (row) => filled(row?.days) && filled(row?.hours),
+        ),
       },
+      social: withoutBlanks(draft.business?.social),
     },
     design: {
       template: valid(

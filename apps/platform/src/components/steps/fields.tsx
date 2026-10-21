@@ -12,6 +12,7 @@ interface TextFieldProps {
   label: string;
   value: string | undefined;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   maxLength: number;
   hint?: string;
@@ -29,6 +30,7 @@ export function TextField({
   label,
   value = "",
   onChange,
+  onBlur,
   placeholder,
   maxLength,
   hint,
@@ -42,7 +44,8 @@ export function TextField({
   const id = useId();
   const noteId = `${id}-note`;
   const left = maxLength - value.length;
-  const showCount = multiline || left <= 10;
+  // Short fields (CEP, phone) never need a counter.
+  const showCount = multiline || (maxLength > 40 && left <= 10);
   const note = error ?? hint;
 
   return (
@@ -69,6 +72,7 @@ export function TextField({
           aria-describedby={note ? noteId : undefined}
           aria-invalid={error ? true : undefined}
           onChange={(event) => onChange(event.target.value)}
+          onBlur={onBlur}
         />
       ) : (
         <Input
@@ -82,6 +86,7 @@ export function TextField({
           aria-describedby={note ? noteId : undefined}
           aria-invalid={error ? true : undefined}
           onChange={(event) => onChange(event.target.value)}
+          onBlur={onBlur}
         />
       )}
       {note && (

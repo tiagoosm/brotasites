@@ -1,8 +1,8 @@
 ---
 import type { ContactContent, SiteConfig } from "@brotasites/schema";
+import { parseDays } from "@brotasites/schema/hours";
 import Icon from "../../components/Icon.astro";
-import { parseDays } from "../../lib/hours";
-import { facebookUrl, instagramUrl, phoneUrl, whatsappUrl } from "../../lib/links";
+import { facebookUrl, instagramUrl, phoneUrl, socialHandle, whatsappUrl } from "../../lib/links";
 import Section from "./Section.astro";
 
 interface Props {
@@ -31,7 +31,7 @@ const form = config.integrations?.contactForm;
 const showForm = Boolean(content.showForm && form?.provider && form.endpoint);
 
 const formatWhatsapp = (n: string) => n.replace(/^55(\d{2})(\d{4,5})(\d{4})$/, "($1) $2-$3");
-const instagramHandle = social?.instagram?.replace(/^@/, "").replace(/^https?:\/\/[^/]+\//, "");
+const instagramHandle = social?.instagram && socialHandle(social.instagram, "instagram.com");
 
 const channels = [
   contact.whatsapp && {

@@ -15,14 +15,24 @@ export function phoneUrl(phone: string): string {
   return `tel:+${digits.length <= 11 ? `55${digits}` : digits}`;
 }
 
-export function instagramUrl(handle: string): string {
-  return /^https?:\/\//.test(handle)
-    ? handle
-    : `https://www.instagram.com/${handle.replace(/^@/, "")}`;
+/** The profile name from "@padaria", "padaria" or a profile address with or without https. */
+export function socialHandle(value: string, host: "instagram.com" | "facebook.com"): string {
+  const site =
+    host === "instagram.com" ? /^(www\.)?instagram\.com\//i : /^(www\.|m\.)?facebook\.com\//i;
+  return value
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(site, "")
+    .replace(/^@/, "")
+    .replace(/[/?#].*$/, "");
 }
 
-export function facebookUrl(handle: string): string {
-  return /^https?:\/\//.test(handle) ? handle : `https://www.facebook.com/${handle}`;
+export function instagramUrl(value: string): string {
+  return `https://www.instagram.com/${encodeURIComponent(socialHandle(value, "instagram.com"))}`;
+}
+
+export function facebookUrl(value: string): string {
+  return `https://www.facebook.com/${encodeURIComponent(socialHandle(value, "facebook.com"))}`;
 }
 
 /** The main contact link: WhatsApp when available, otherwise the contact section. */
