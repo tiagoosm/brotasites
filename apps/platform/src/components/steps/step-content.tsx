@@ -7,6 +7,9 @@ import { StepFooter } from "@/components/wizard/step-footer";
 import { StepHeader } from "@/components/wizard/step-header";
 import { useDraft } from "@/lib/draft-store";
 import { BusinessStep } from "./business-step";
+import { DesignStep } from "./design-step";
+import { SectionsStep } from "./sections-step";
+import { TemplateStep } from "./template-step";
 
 export function StepContent({ step }: { step: FormStepSlug }) {
   const { ready, isReachable } = useDraft();
@@ -25,6 +28,12 @@ export function StepContent({ step }: { step: FormStepSlug }) {
   switch (step) {
     case "negocio":
       return <BusinessStep />;
+    case "modelo":
+      return <TemplateStep />;
+    case "cores":
+      return <DesignStep />;
+    case "secoes":
+      return <SectionsStep />;
     default:
       return <UpcomingStep step={step} />;
   }

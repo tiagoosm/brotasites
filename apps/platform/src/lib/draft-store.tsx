@@ -82,6 +82,23 @@ export function DraftProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(saveTimer.current);
   }, [state, ready]);
 
+  // Leaving or reloading the page right after typing must not lose the last answer.
+  const latest = useRef(state);
+  latest.current = state;
+  useEffect(() => {
+    if (!ready) return;
+    const flush = () => {
+      if (!loaded.current) return;
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(latest.current));
+      } catch {
+        // Nothing else to do while the page goes away.
+      }
+    };
+    window.addEventListener("pagehide", flush);
+    return () => window.removeEventListener("pagehide", flush);
+  }, [ready]);
+
   const updateDraft = useCallback((update: (draft: SiteDraft) => SiteDraft) => {
     setState((current) => ({ ...current, draft: update(current.draft) }));
   }, []);

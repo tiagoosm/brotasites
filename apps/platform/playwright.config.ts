@@ -8,6 +8,8 @@ export const PREVIEW_URL = `http://localhost:${PREVIEW_PORT}`;
 export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
+  // The preview server renders every keystroke; too many browsers at once slow it to a crawl.
+  workers: process.env.CI ? 2 : 3,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",

@@ -127,3 +127,11 @@ test("does not scroll sideways and logs no errors", async ({ page }) => {
   expect(overflow).toBe(0);
   expect(errors).toEqual([]);
 });
+
+test("an answer typed right before leaving the page is kept", async ({ page }) => {
+  await page.goto("/criar/negocio");
+  await page.getByLabel("Nome do negócio").fill("Empório Serra");
+  // Reload immediately, before the debounced save would run.
+  await page.reload();
+  await expect(page.getByLabel("Nome do negócio")).toHaveValue("Empório Serra");
+});
