@@ -1,103 +1,13 @@
-import { readFileSync } from "node:fs";
-import { type BrowserContext, expect, type Page, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
+import { fakeSupabase, photoBytes, SITE, signIn, USER } from "./support/supabase";
 
-// Photo uploads (question 6). Supabase is the fake e2e project: the session is a cookie made
-// here and every auth, database and storage call is answered by the test.
+// Photo uploads (question 6), against the fake Supabase in support/supabase.ts.
 
-const SUPABASE = "https://e2e-test.supabase.co";
-const USER = { id: "user-1", email: "ze@padariadoze.com.br" };
-const SITE = "site-1";
-const photo = new URL("../../../packages/templates/e2e/fixture/assets/hero.jpg", import.meta.url);
-const photoBytes = readFileSync(photo);
 const photoFile = (name: string) => ({ name, mimeType: "image/jpeg", buffer: photoBytes });
 
 const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024;
 const site = (page: Page) => page.frameLocator('iframe[data-active="true"]');
 const card = (page: Page) => page.getByRole("group", { name: "Fotos", exact: true });
-
-const base64url = (value: string) => Buffer.from(value).toString("base64url");
-
-/** A session cookie in the format @supabase/ssr reads. The token is checked via /auth/v1/user. */
-async function signIn(context: BrowserContext) {
-  const exp = Math.floor(Date.now() / 1000) + 3600;
-  const token = [
-    base64url(JSON.stringify({ alg: "HS256", typ: "JWT" })),
-    base64url(
-      JSON.stringify({
-        sub: USER.id,
-        email: USER.email,
-        role: "authenticated",
-        aud: "authenticated",
-        exp,
-      }),
-    ),
-    "assinatura",
-  ].join(".");
-  const user = {
-    ...USER,
-    aud: "authenticated",
-    role: "authenticated",
-    app_metadata: {},
-    user_metadata: {},
-    created_at: "2026-10-21T00:00:00Z",
-  };
-  const session = {
-    access_token: token,
-    token_type: "bearer",
-    expires_in: 3600,
-    expires_at: exp,
-    refresh_token: "r",
-    user,
-  };
-  await context.addCookies([
-    {
-      name: "sb-e2e-test-auth-token",
-      value: `base64-${base64url(JSON.stringify(session))}`,
-      domain: "localhost",
-      path: "/",
-    },
-  ]);
-  return user;
-}
-
-interface Calls {
-  uploads: { path: string; type: string | null }[];
-  removed: string[];
-}
-
-async function fakeSupabase(context: BrowserContext, user: object): Promise<Calls> {
-  const calls: Calls = { uploads: [], removed: [] };
-  const json = (body: unknown, status = 200) => ({
-    status,
-    contentType: "application/json",
-    body: JSON.stringify(body),
-  });
-  await context.route(`${SUPABASE}/auth/v1/user`, (route) => route.fulfill(json(user)));
-  await context.route(`${SUPABASE}/rest/v1/**`, (route) => {
-    const request = route.request();
-    const table = new URL(request.url()).pathname.split("/").pop();
-    const method = request.method();
-    if (table === "sites" && method === "GET") return route.fulfill(json(null));
-    if (table === "sites" && method === "POST") return route.fulfill(json({ id: SITE }, 201));
-    if (method === "PATCH") return route.fulfill(json([]));
-    return route.fulfill(json(method === "POST" ? [] : null, method === "POST" ? 201 : 200));
-  });
-  await context.route(`${SUPABASE}/storage/v1/object/public/**`, (route) =>
-    route.fulfill({ status: 200, contentType: "image/jpeg", body: photoBytes }),
-  );
-  await context.route(`${SUPABASE}/storage/v1/object/site-images**`, (route) => {
-    const request = route.request();
-    if (request.method() === "DELETE") {
-      const body = request.postDataJSON() as { prefixes?: string[] };
-      calls.removed.push(...(body.prefixes ?? []));
-      return route.fulfill(json([]));
-    }
-    const path = new URL(request.url()).pathname.replace("/storage/v1/object/site-images/", "");
-    calls.uploads.push({ path, type: request.headers()["content-type"] ?? null });
-    return route.fulfill(json({ Key: `site-images/${path}`, Id: "1" }));
-  });
-  return calls;
-}
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {

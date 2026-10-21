@@ -5,6 +5,7 @@ import { Check, CloudOff, LoaderCircle, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
+import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { useDraft } from "@/lib/draft-store";
 import { supabaseEnv } from "@/lib/supabase/env";
@@ -105,22 +106,6 @@ function useMediaQuery(query: string): boolean {
     return () => list.removeEventListener("change", onChange);
   }, [query]);
   return matches;
-}
-
-function Brand() {
-  return (
-    <Link
-      href="/criar/negocio"
-      className="flex items-center gap-2.5 font-display text-[1.375rem] leading-none"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6 text-leaf">
-        <path d="M12 22V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path d="M12 13C12 8 8.5 5 3 5c0 5.5 3.5 8 9 8Z" fill="currentColor" />
-        <path d="M12 11c0-4.5 3-7.5 9-7.5 0 5-3 7.5-9 7.5Z" fill="currentColor" opacity=".65" />
-      </svg>
-      BrotaSites
-    </Link>
-  );
 }
 
 /** Tells the truth about the autosave: where it is saved, or that it is not. */

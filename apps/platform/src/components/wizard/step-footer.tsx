@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { useOpenPreview } from "./wizard-shell";
 
 /** Back link and the button that validates the step and names where it goes next. */
-export function StepFooter({ step }: { step: FormStepSlug }) {
+export function StepFooter({
+  step,
+  action,
+}: {
+  step: FormStepSlug;
+  /** Replaces the next-step button (the last question publishes instead). */
+  action?: React.ReactNode;
+}) {
   const openPreview = useOpenPreview();
   const index = formSteps.findIndex((s) => s.slug === step);
   const previous = formSteps[index - 1];
@@ -34,13 +41,15 @@ export function StepFooter({ step }: { step: FormStepSlug }) {
           </Link>
         </Button>
       )}
-      <Button type="submit" size="lg" className="group ml-auto flex-1 sm:flex-none">
-        {label}
-        <ArrowRight
-          aria-hidden="true"
-          className="transition-transform duration-200 group-hover:translate-x-0.5"
-        />
-      </Button>
+      {action ?? (
+        <Button type="submit" size="lg" className="group ml-auto flex-1 sm:flex-none">
+          {label}
+          <ArrowRight
+            aria-hidden="true"
+            className="transition-transform duration-200 group-hover:translate-x-0.5"
+          />
+        </Button>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { StepFooter } from "@/components/wizard/step-footer";
 import { StepHeader } from "@/components/wizard/step-header";
 import { useDraft } from "@/lib/draft-store";
+import { AddressStep } from "./address-step";
 import { BusinessStep } from "./business-step";
 import { ContactStep } from "./contact-step";
 import { ContentStep } from "./content-step";
@@ -40,6 +41,8 @@ export function StepContent({ step }: { step: FormStepSlug }) {
       return <ContentStep />;
     case "contato":
       return <ContactStep />;
+    case "endereco":
+      return <AddressStep />;
     default:
       return <UpcomingStep step={step} />;
   }
