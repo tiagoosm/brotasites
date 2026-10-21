@@ -34,7 +34,7 @@ describe("section content", () => {
     const draft = setSectionContent(bakery(), "sobre", { title: "Nossa história", text: "" });
     const about = section(buildPreviewConfig(draft), "sobre");
     expect(about?.content).toMatchObject({ title: "Nossa história" });
-    expect((about?.content as { text: string }).text).toMatch(/^Conte como/);
+    expect((about?.content as { text?: string } | undefined)?.text).toMatch(/^Conte como/);
   });
 
   it("uses the client's services instead of the placeholders", () => {
