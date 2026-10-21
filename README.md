@@ -75,6 +75,17 @@ To work on the form, run `pnpm dev` (or the platform and preview apps on their o
 
 To work on the templates with live reload, run `pnpm --filter @brotasites/templates dev`. It renders `docs/site-config.example.json` by default, or the file set in `BROTASITES_CONFIG`.
 
+## Publishing
+
+The last question reserves the site address and queues a generation job (`request_publication` in [`supabase/migrations`](supabase/migrations)). The worker takes queued jobs, turns the draft into the final config (the Zod schema has the last word), builds the site with the generator and records the result; the client follows it at `/meu-site`.
+
+```sh
+pnpm --filter @brotasites/generator worker          # keeps running, one job at a time
+pnpm --filter @brotasites/generator worker --once   # processes one job and stops
+```
+
+The worker needs `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY` in its environment (never in the browser). Deployment to Cloudflare Pages is not wired yet: built sites wait in "publishing" until it is.
+
 ## Supabase
 
 The platform keeps accounts and drafts in Supabase (project `brotasites`, region sa-east-1). Schema and row level security live in [`supabase/migrations`](supabase/migrations); [`supabase/tests/rls.sql`](supabase/tests/rls.sql) checks the access rules and leaves nothing behind.

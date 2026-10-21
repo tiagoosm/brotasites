@@ -11,7 +11,8 @@
     }
   },
   "bin": {
-    "brotasites-generate": "./dist/cli.js"
+    "brotasites-generate": "./dist/cli.js",
+    "brotasites-worker": "./dist/worker-cli.js"
   },
   "files": [
     "dist"
@@ -20,12 +21,14 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "generate": "node dist/cli.js"
+    "generate": "node dist/cli.js",
+    "worker": "node dist/worker-cli.js"
   },
   "dependencies": {
     "@brotasites/schema": "workspace:*",
     "@brotasites/templates": "workspace:*",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "@supabase/supabase-js": "2.118.0"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
