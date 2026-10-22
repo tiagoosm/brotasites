@@ -2,7 +2,9 @@
 
 Form-to-landing-page platform for small businesses. The client fills out a short form, and BrotaSites builds and publishes a static landing page for them automatically. No code, no page builder.
 
-> **Status:** early development. Only the specification exists so far; the monorepo is being set up.
+> **Status:** in development, not deployed yet. The seven-question form with live preview, accounts (magic link), photo uploads, the publishing queue, the static site generator and the Worker that serves client sites are built and covered by tests. Nothing is online yet: the `brotasites.com` domain is not registered and the Cloudflare and platform hosting are not set up, so there is no public link for now.
+>
+> Repository: https://github.com/tiagoosm/brotasites (private)
 
 ## How it works
 
