@@ -91,12 +91,16 @@ The worker needs `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY` in its env
 
 Sites go live through Cloudflare: the worker uploads each build to the R2 bucket `brotasites-sites` under `sites/<subdomain>/<deploy id>/` and then switches `sites/<subdomain>/current`, so visitors never see a half-updated site. A single Worker, [`apps/sites-worker`](apps/sites-worker), serves `<subdomain>.brotasites.com` from the bucket. Without the R2 variables (`CLOUDFLARE_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`) built sites wait in "publishing".
 
-One-time Cloudflare setup (not done yet):
+One-time Cloudflare setup (not done yet). Testing needs no domain:
 
-1. Add the `brotasites.com` zone to Cloudflare (the domain must be registered first).
-2. Create the R2 bucket `brotasites-sites` and an R2 API token with Object Read & Write on it.
-3. Deploy the Worker: `pnpm --filter @brotasites/sites-worker deploy` (uses `CLOUDFLARE_API_TOKEN`), which serves the `*.brotasites.com/*` route.
-4. Add a proxied wildcard DNS record `*` so subdomains reach the Worker.
+1. Create the R2 bucket `brotasites-sites` and an R2 API token with Object Read & Write on it (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`).
+2. Deploy the Worker: `pnpm --filter @brotasites/sites-worker deploy` (uses `CLOUDFLARE_API_TOKEN`). It answers on its free address, `https://brotasites-sites.<account>.workers.dev`.
+3. Set `NEXT_PUBLIC_SITES_TEST_URL` to that address, so "Abrir o meu site" links to `https://brotasites-sites.<account>.workers.dev/<subdomain>/`.
+
+On the workers.dev address sites open by path and are marked `noindex`; the Worker remembers the open site in a cookie so its files load. Later, with a domain:
+
+4. Add the `brotasites.com` zone to Cloudflare, uncomment the route in [`apps/sites-worker/wrangler.jsonc`](apps/sites-worker/wrangler.jsonc) and deploy again.
+5. Add a proxied wildcard DNS record `*` so subdomains reach the Worker, and clear `NEXT_PUBLIC_SITES_TEST_URL`.
 
 ## Supabase
 

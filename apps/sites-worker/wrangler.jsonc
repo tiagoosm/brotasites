@@ -1,13 +1,19 @@
 // The single Worker that serves every client site. Nothing here is deployed by the
-// platform: run `pnpm --filter @brotasites/sites-worker deploy` once the R2 bucket and the
-// brotasites.com zone exist in Cloudflare (see README, "Publishing").
+// platform: run `pnpm --filter @brotasites/sites-worker deploy` once the R2 bucket exists
+// in Cloudflare (see README, "Publishing").
+//
+// For now sites are opened on the free workers.dev address, by path:
+//   https://brotasites-sites.<account>.workers.dev/<subdomain>/
+// Once brotasites.com is in Cloudflare, add the route below to serve
+// <subdomain>.brotasites.com as well.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "brotasites-sites",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
+  "workers_dev": true,
   "r2_buckets": [{ "binding": "SITES", "bucket_name": "brotasites-sites" }],
   "vars": { "SITES_DOMAIN": "brotasites.com" },
-  "routes": [{ "pattern": "*.brotasites.com/*", "zone_name": "brotasites.com" }],
+  // "routes": [{ "pattern": "*.brotasites.com/*", "zone_name": "brotasites.com" }],
   "observability": { "enabled": true }
 }

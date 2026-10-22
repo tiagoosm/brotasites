@@ -95,3 +95,39 @@ describe("paths and hosts", () => {
     expect(siteFromHost("padaria.exemplo.com", "brotasites.com")).toBeNull();
   });
 });
+
+describe("test address (workers.dev)", () => {
+  const TEST = "https://brotasites-sites.conta.workers.dev";
+
+  it("opens a site by its path and remembers it in a cookie", async () => {
+    const response = await get(`${TEST}/padaria-do-ze/`);
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("<h1>Padaria do Zé</h1>");
+    expect(response.headers.get("set-cookie")).toContain("brotasites_site=padaria-do-ze");
+    expect(response.headers.get("x-robots-tag")).toBe("noindex");
+  });
+
+  it("adds the slash so links inside the site work", async () => {
+    const response = await get(`${TEST}/padaria-do-ze`);
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toBe(`${TEST}/padaria-do-ze/`);
+  });
+
+  it("finds the site's own files, asked by absolute path, through the cookie", async () => {
+    const cookie = { headers: { cookie: "outro=1; brotasites_site=padaria-do-ze" } };
+    const css = await get(`${TEST}/_astro/site.abc.css`, cookie);
+    expect(await css.text()).toBe("body{}");
+    expect(css.headers.get("cache-control")).toBe("no-store");
+    expect((await get(`${TEST}/padaria-do-ze/cardapio`)).status).toBe(200);
+    // Without the cookie there is no way to know the site.
+    expect((await get(`${TEST}/_astro/site.abc.css`)).status).toBe(404);
+  });
+
+  it("explains itself at the root and refuses unknown sites", async () => {
+    const root = await get(`${TEST}/`);
+    expect(await root.text()).toContain("Ambiente de teste da BrotaSites");
+    expect((await get(`${TEST}/outro-site/`)).status).toBe(404);
+    const bad = await get(`${TEST}/_astro/x.css`, { headers: { cookie: "brotasites_site=../x" } });
+    expect(bad.status).toBe(404);
+  });
+});
