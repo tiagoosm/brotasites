@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Hanken_Grotesk, IBM_Plex_Mono, Young_Serif } from "next/font/google";
+import { PLATFORM_URL } from "@/lib/site-url";
 import "./globals.css";
 
 // Herbarium: a warm, characterful serif for titles, a clear grotesk for reading,
@@ -25,6 +26,9 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(PLATFORM_URL),
+  applicationName: "BrotaSites",
+  openGraph: { type: "website", locale: "pt_BR", siteName: "BrotaSites" },
   title: { default: "BrotaSites · Sete perguntas e seu site pronto", template: "%s · BrotaSites" },
   description:
     "Responda sete perguntas e veja o site do seu negócio ficar pronto enquanto escreve. Com WhatsApp, mapa e horário de funcionamento. Sem código.",

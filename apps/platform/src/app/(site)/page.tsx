@@ -7,12 +7,23 @@ import { CREATE_HREF } from "@/components/site/nav";
 import { Stem } from "@/components/site/stem/stem";
 import { Button } from "@/components/ui/button";
 import { mainFaqs } from "@/content/faq";
+import { PLATFORM_URL } from "@/lib/site-url";
 
 export const metadata: Metadata = {
   title: { absolute: "BrotaSites · Sete perguntas e seu site pronto" },
   description:
     "Responda sete perguntas e veja o site do seu negócio ficar pronto enquanto escreve. Com WhatsApp, mapa e horário de funcionamento. Sem código.",
   alternates: { canonical: "/" },
+};
+
+// Organization structured data for search engines.
+const organization = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "BrotaSites",
+  url: PLATFORM_URL,
+  slogan: "Sete perguntas e seu site pronto.",
+  description: metadata.description,
 };
 
 const features = [
@@ -55,6 +66,11 @@ function CreateButton() {
 export default function HomePage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD needs raw JSON
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }}
+      />
       <section className="mx-auto grid max-w-6xl items-center gap-x-14 gap-y-24 px-5 pt-14 pb-28 sm:px-8 sm:pt-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,30rem)] lg:pb-36">
         <div className="hero-rise grid gap-7">
           <h1 className="font-display text-[3.25rem] leading-[0.98] tracking-[-0.025em] sm:text-[4.5rem] lg:text-[4rem] xl:text-[4.5rem]">

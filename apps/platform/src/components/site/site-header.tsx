@@ -41,7 +41,11 @@ export function SiteHeader() {
             Entrar
           </Link>
         </nav>
-        <Button asChild size="lg" className="ml-auto h-9 px-4 text-sm sm:h-10 sm:px-5 sm:text-[0.9375rem] md:ml-0">
+        <Button
+          asChild
+          size="lg"
+          className="ml-auto h-9 px-4 text-sm sm:h-10 sm:px-5 sm:text-[0.9375rem] md:ml-0"
+        >
           <Link href={CREATE_HREF}>Criar meu site</Link>
         </Button>
         <Button
