@@ -17,12 +17,6 @@ async function fillBusiness(page: Page) {
   await page.getByLabel("Cidade").fill("Santa Rita do Sapucaí");
 }
 
-test("the home page opens the first question", async ({ page }) => {
-  await page.goto("/");
-  await expect(page).toHaveURL(/\/criar\/negocio$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Qual é o seu negócio?");
-});
-
 test("explains what is missing, in Portuguese", async ({ page }) => {
   await page.goto("/criar/negocio");
   await page.getByRole("button", { name: "Próximo: modelo" }).click();

@@ -218,3 +218,113 @@
     transform: translateY(12px);
   }
 }
+
+/* ---------- Home page stem: grows with scrolling, a leaf opens at each question ---------- */
+
+.stem-track,
+.stem-ink {
+  position: absolute;
+  top: 0.5rem;
+  bottom: 1.25rem;
+  left: calc(1rem - 1px);
+  width: 2px;
+  border-radius: 2px;
+}
+
+.stem-track {
+  background: repeating-linear-gradient(var(--line-strong) 0 3px, transparent 3px 9px);
+}
+
+.stem-ink {
+  background: var(--stem);
+  transform-origin: top;
+}
+
+.stem-leaf {
+  transform-origin: 0 50%;
+}
+
+/* The text being typed in the "conteúdo" excerpt. */
+.caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 1.1em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--ink);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .caret {
+    animation: caret-blink 1100ms steps(1) infinite;
+  }
+
+  /* The hero settles in once, on load. */
+  .hero-rise > * {
+    animation: step-enter 800ms var(--ease-out) both;
+  }
+
+  .hero-rise > :nth-child(2) {
+    animation-delay: 90ms;
+  }
+
+  .hero-rise > :nth-child(3) {
+    animation-delay: 180ms;
+  }
+
+  .hero-rise > :nth-child(4) {
+    animation-delay: 270ms;
+  }
+
+  @supports (animation-timeline: view()) {
+    .stem {
+      view-timeline: --stem-line block;
+    }
+
+    /* The tip of the ink follows a point about two thirds down the screen. */
+    .stem-ink {
+      animation: stem-grow linear both;
+      animation-timeline: --stem-line;
+      animation-range: cover 35vh cover calc(100% - 65vh);
+    }
+
+    .stem-leaf,
+    .stem-bud {
+      animation: leaf-open linear both;
+      animation-timeline: view();
+      animation-range: entry 70% cover 40%;
+    }
+
+    .stem-node > :not(:first-child) {
+      animation: node-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 30%;
+    }
+  }
+}
+
+@keyframes stem-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes leaf-open {
+  from {
+    opacity: 0;
+    transform: scale(0.15) rotate(-35deg);
+  }
+}
+
+@keyframes node-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}

@@ -1,10 +1,10 @@
 import Link from "next/link";
 
-/** The BrotaSites mark: a sprout and the name. */
-export function Brand({ className }: { className?: string }) {
+/** The BrotaSites mark: a sprout and the name. Links to the home page. */
+export function Brand({ className, href = "/" }: { className?: string; href?: string }) {
   return (
     <Link
-      href="/criar/negocio"
+      href={href}
       className={`flex items-center gap-2.5 font-display text-[1.375rem] leading-none ${className ?? ""}`}
     >
       <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6 text-leaf">

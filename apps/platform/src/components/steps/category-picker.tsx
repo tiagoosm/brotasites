@@ -3,6 +3,7 @@
 import { categories } from "@brotasites/schema";
 import { Check } from "lucide-react";
 import { useId } from "react";
+import { chipClass } from "@/components/shared/chip";
 import { cn } from "@/lib/utils";
 
 export const OTHER = "outro";
@@ -40,14 +41,8 @@ export function CategoryPicker({
           <label
             key={option.id}
             className={cn(
-              "inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] transition-[background-color,border-color,color] duration-150 select-none",
-              "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-leaf",
-              checked
-                ? "border-leaf bg-leaf-wash font-semibold text-leaf-deep"
-                : cn(
-                    "bg-card text-ink hover:border-ink-soft",
-                    invalid ? "border-destructive" : "border-input",
-                  ),
+              chipClass({ checked, invalid }),
+              "cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-leaf",
             )}
           >
             <input
