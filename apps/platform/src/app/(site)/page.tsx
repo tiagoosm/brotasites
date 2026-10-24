@@ -52,7 +52,7 @@ const features = [
 function CreateButton() {
   return (
     <Button asChild size="lg" className="group">
-      <Link href={CREATE_HREF}>
+      <Link href={CREATE_HREF} prefetch={false}>
         Criar meu site
         <ArrowRight
           aria-hidden="true"

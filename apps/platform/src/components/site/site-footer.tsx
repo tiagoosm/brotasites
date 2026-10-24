@@ -18,6 +18,7 @@ export function SiteFooter() {
               <li key={link.href}>
                 <Link
                   href={link.href}
+                  prefetch={link.href === "/entrar" ? false : undefined}
                   className="text-ink-soft transition-colors duration-150 hover:text-ink"
                 >
                   {link.label}

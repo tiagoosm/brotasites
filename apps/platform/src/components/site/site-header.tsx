@@ -36,6 +36,7 @@ export function SiteHeader() {
           ))}
           <Link
             href="/entrar"
+            prefetch={false}
             className="text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
           >
             Entrar
@@ -46,7 +47,9 @@ export function SiteHeader() {
           size="lg"
           className="ml-auto h-9 px-4 text-sm sm:h-10 sm:px-5 sm:text-[0.9375rem] md:ml-0"
         >
-          <Link href={CREATE_HREF}>Criar meu site</Link>
+          <Link href={CREATE_HREF} prefetch={false}>
+            Criar meu site
+          </Link>
         </Button>
         <Button
           type="button"
@@ -124,6 +127,8 @@ function PhoneMenu({ onClose }: { onClose: () => void }) {
           <Link
             key={link.href}
             href={link.href}
+            // The form and sign-in pages carry the account code; load it only when opened.
+            prefetch={link.href === "/entrar" ? false : undefined}
             onClick={onClose}
             className={cn(
               "border-b border-line py-4 font-display text-[1.75rem] leading-tight text-ink",
@@ -134,7 +139,7 @@ function PhoneMenu({ onClose }: { onClose: () => void }) {
         ))}
       </nav>
       <Button asChild size="lg" className="mt-auto">
-        <Link href={CREATE_HREF} onClick={onClose}>
+        <Link href={CREATE_HREF} prefetch={false} onClick={onClose}>
           Criar meu site
         </Link>
       </Button>

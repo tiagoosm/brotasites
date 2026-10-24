@@ -36,6 +36,7 @@ export default function HelpPage() {
           Respostas curtas sobre como funciona. Se preferir ver na prática,{" "}
           <Link
             href={CREATE_HREF}
+            prefetch={false}
             className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
           >
             comece a criar o seu site

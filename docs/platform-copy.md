@@ -1,6 +1,6 @@
 # Platform copy
 
-Copy for the BrotaSites platform: the marketing page and the form. User-facing text is pt-BR; notes are in English. Written on 2026-10-20 with the slogan chosen by the project owner.
+Copy for the BrotaSites platform: the public site and the form. User-facing text is pt-BR; notes are in English. Written on 2026-10-20 with the slogan chosen by the project owner.
 
 ## Voice
 
@@ -18,57 +18,36 @@ Alternatives kept for A/B tests:
 - *Sete perguntas. Seu site pronto.* Two beats, more poster-like.
 - *Responda sete perguntas e publique seu site.* Puts the action first.
 
-## Marketing page
+## Public site
 
-### Hero
+Built on 2026-10-24 (design: [superpowers/specs/2026-10-24-main-site-design.md](superpowers/specs/2026-10-24-main-site-design.md)). The text lives in the code: `apps/platform/src/app/(site)/page.tsx` and `apps/platform/src/content/` (`faq.ts`, `stem.ts`, `legal.ts`). This section records the decisions behind it.
 
-- **Headline:** Sete perguntas e seu site pronto.
-- **Subheadline:** Conte o que você faz, escolha cores e fotos e veja o site tomar forma enquanto responde. Sem código.
-- **Primary button:** Criar meu site
-- **Secondary link:** Ver um site pronto
+### Price
 
-Why: the headline is specific (a number the visitor can trust) and states the outcome; the subheadline answers "how?" and removes the main fear (technology) in two words. No eyebrow: the headline already says what this is.
+- Creating the site and seeing the preview is free; the price to publish is shown before publishing. No amounts anywhere until pricing is decided.
+- Phrases: *Criar é grátis · Você só publica quando gostar* (hero), *Criar é grátis.* (band), *Quanto custa?* (help).
 
-### How it works (a real sequence, so it is numbered)
+### Home page
 
-1. **Conte sobre o seu negócio.** Nome, tipo e cidade. A partir daí sugerimos modelo, cores e seções.
-2. **Veja o site enquanto escreve.** Cada resposta aparece na prévia na hora, no celular e no computador.
-3. **Escolha o endereço e publique.** Seu site vai ao ar em *seu-negocio.brotasites.com*.
+- **Header:** Como funciona · Ajuda · Entrar · **Criar meu site**.
+- **Hero:** *Sete perguntas e seu site pronto.* / *Conte o que você faz, escolha cores e fotos e veja o site tomar forma enquanto responde. Sem código.* / **Criar meu site** · Ver como funciona. Beside it, the example site as a herbarium specimen labeled *Espécime · exemplo* (it is the Padaria do Zé sample, never presented as a real client).
+- **Como funciona:** *Sete perguntas, uma de cada vez.* / *Cada resposta aparece na prévia na hora. Você pode voltar e mudar o que quiser antes de publicar.* Then the seven questions, exactly as in the form (`formSteps`), each with one sentence from `content/stem.ts`, ending with *Pronto. Seu site no ar.*
+- **O que todo site tem:** WhatsApp a um toque; Aberto ou fechado, na hora; Endereço e mapa; Feito para o celular; Pronto para o Google. All exist in the `classico` template.
+- **Criar é grátis.** / *Montar o site e ver a prévia não custa nada. O preço para publicar aparece antes de você publicar.*
+- **Dúvidas:** the four questions marked `main` in `content/faq.ts`, and *Ver todas as dúvidas*.
+- **Final call:** *Seu site está a sete perguntas de distância.* / *Comece agora e veja a prévia na hora. Você só publica quando gostar do resultado.*
 
-### What every site has
+### Help, terms and privacy
 
-All of these exist in the `classico` template today.
-
-- **WhatsApp a um toque.** Um botão fixo leva o cliente direto para a conversa com você.
-- **Aberto ou fechado, na hora.** O site mostra se você está aberto agora, a partir do seu horário de funcionamento.
-- **Endereço e mapa.** Quem procura você encontra o caminho sem sair do site.
-- **Feito para o celular.** Abre rápido e fica bonito na tela onde seus clientes estão.
-- **Pronto para o Google.** Título, descrição e informações do negócio já vêm configurados.
-
-### Showcase
-
-- **Heading:** Um site com a cara do seu negócio.
-- **Body:** Cores, fontes e fotos são suas. O modelo cuida do resto: espaçamento, leitura e animações.
-
-### Questions (objection handling)
-
-- **Preciso entender de tecnologia?** Não. Se você manda mensagem no WhatsApp, consegue criar o seu site.
-- **Vocês vão inventar informações sobre o meu negócio?** Não. Preços, horários, endereço e depoimentos vêm só do que você informar.
-- **E se eu não tiver fotos agora?** O site fica bonito mesmo sem fotos, e você pode incluir quando tiver. `[pendente: fluxo de edição depois de publicar]`
-- **Posso mudar o site depois de publicar?** `[pendente: política de ajustes inclusos]`
-- **Posso usar um domínio próprio?** `[pendente: suporte a domínio próprio]`
-- **Quanto custa?** `[pendente: preço e momento do pagamento]`
-
-### Final call
-
-- **Heading:** Seu site está a sete perguntas de distância.
-- **Body:** Comece agora e veja a prévia na hora. Você só publica quando gostar do resultado.
-- **Button:** Criar meu site
+- Help answers say only what the product does today. Open decisions are stated as such: custom domain *ainda não está disponível*; changes after publishing *ainda está sendo definida*; account deletion is done on request.
+- Terms and privacy are first drafts in plain language, marked *Versão inicial, em revisão jurídica*. They need a lawyer's review before BrotaSites accepts clients.
+- Responsible party and contact e-mail: pending (`src/content/contact.ts`). Pages say *a definir*; nothing shows an address until it exists.
 
 ### Meta
 
 - **Title:** BrotaSites · Sete perguntas e seu site pronto
 - **Description:** Responda sete perguntas e veja o site do seu negócio ficar pronto enquanto escreve. Com WhatsApp, mapa e horário de funcionamento. Sem código.
+- **Share image:** `src/app/opengraph-image.png`, made by `scripts/og-image.mjs`.
 
 ## The seven questions (form)
 
