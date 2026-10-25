@@ -45,12 +45,16 @@ function TemplateExcerpt() {
           key={option.id}
           className={cn(
             "rounded-xl border p-4",
-            option.available ? "border-leaf bg-leaf-wash/60" : "border-input opacity-60",
+            option.available
+              ? "border-leaf bg-leaf-wash/60"
+              : "border-dashed border-line-strong bg-paper",
           )}
         >
           <p className="flex items-center justify-between font-semibold">
             {option.name}
-            <span className="tag text-ink-soft">{option.available ? "Escolhido" : "Em breve"}</span>
+            <span className="tag text-[0.75rem] text-ink-soft">
+              {option.available ? "Escolhido" : "Em breve"}
+            </span>
           </p>
           <p className="mt-1 text-sm text-ink-soft">{option.description}</p>
         </div>

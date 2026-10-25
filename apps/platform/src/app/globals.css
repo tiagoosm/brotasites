@@ -316,9 +316,10 @@
   }
 }
 
+/* Movement only: the text keeps its full contrast while a question is still ahead. The
+   "not reached yet" cue is the closed leaf and the dashed stem below the ink. */
 @keyframes node-rise {
   from {
-    opacity: 0;
     transform: translateY(24px);
   }
 }
