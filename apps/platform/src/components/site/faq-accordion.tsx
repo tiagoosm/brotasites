@@ -77,9 +77,9 @@ function FaqItem({
           />
         </button>
       </h3>
-      <div id={panelId} role="region" aria-labelledby={buttonId} hidden={!expanded}>
+      <section id={panelId} aria-labelledby={buttonId} hidden={!expanded}>
         <p className="max-w-[62ch] pb-6 text-ink-soft">{item.answer}</p>
-      </div>
+      </section>
     </div>
   );
 }
