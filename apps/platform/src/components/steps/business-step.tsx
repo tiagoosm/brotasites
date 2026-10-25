@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { StepFooter } from "@/components/wizard/step-footer";
 import { StepHeader } from "@/components/wizard/step-header";
+import { readDemoHandoff } from "@/lib/demo-handoff";
 import { useDraft } from "@/lib/draft-store";
 import { CategoryPicker, listedCategories, OTHER, pickerValueFor } from "./category-picker";
 
@@ -66,6 +67,19 @@ export function BusinessStep() {
     });
     return unsubscribe;
   }, [form, updateDraft]);
+
+  // Answers brought from the home page demo (/criar/negocio?nome=...&tipo=...): applied once,
+  // then removed from the address. Other answers in the draft stay as they are.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once, on arrival
+  useEffect(() => {
+    const { name, type } = readDemoHandoff(
+      window.location.search,
+      listedCategories.map((c) => c.id),
+    );
+    if (name) form.setValue("name", name, { shouldDirty: true });
+    if (type) chooseCategory(type);
+    if (window.location.search) window.history.replaceState(null, "", window.location.pathname);
+  }, []);
 
   function chooseCategory(id: string) {
     setChoice(id);
