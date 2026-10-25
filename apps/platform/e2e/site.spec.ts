@@ -111,3 +111,13 @@ test("search engines get the sitemap and the public pages only", async ({ reques
   const robots = await (await request.get("/robots.txt")).text();
   expect(robots).toContain("Disallow: /criar");
 });
+
+test("the site has a favicon, app icons and a manifest", async ({ page, request }) => {
+  for (const path of ["/favicon.ico", "/icon.png", "/apple-icon.png", "/manifest.webmanifest"]) {
+    expect((await request.get(path)).status(), path).toBe(200);
+  }
+  await page.goto("/");
+  await expect(page.locator('link[rel="icon"]').first()).toHaveAttribute("href", /icon|favicon/);
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
+  await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
+});
