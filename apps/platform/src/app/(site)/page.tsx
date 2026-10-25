@@ -2,8 +2,8 @@ import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FaqAccordion } from "@/components/site/faq-accordion";
+import { HeroDemo } from "@/components/site/home/hero-demo";
 import { HeroRays } from "@/components/site/home/hero-rays";
-import { Specimen } from "@/components/site/home/specimen";
 import { CREATE_HREF } from "@/components/site/nav";
 import { Stem } from "@/components/site/stem/stem";
 import { Button } from "@/components/ui/button";
@@ -85,7 +85,6 @@ export default function HomePage() {
             </p>
             <div className="grid justify-items-start gap-5">
               <div className="flex flex-wrap items-center gap-3">
-                <CreateButton />
                 <Button
                   asChild
                   size="lg"
@@ -103,7 +102,7 @@ export default function HomePage() {
               </Link>
             </div>
           </div>
-          <Specimen />
+          <HeroDemo />
         </section>
       </div>
 

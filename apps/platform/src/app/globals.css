@@ -288,6 +288,13 @@ html:has([data-wizard]) {
     animation: caret-blink 1100ms steps(1) infinite;
   }
 
+  /* The home demo eases into each type's colors. */
+  .demo-site {
+    transition:
+      background-color 300ms var(--ease-out),
+      color 300ms var(--ease-out);
+  }
+
   /* The hero settles in once, on load. */
   .hero-rise > * {
     animation: step-enter 800ms var(--ease-out) both;
