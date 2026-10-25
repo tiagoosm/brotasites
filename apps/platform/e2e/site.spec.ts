@@ -67,10 +67,13 @@ test("the phone menu works with the keyboard", async ({ page }) => {
   test.skip(!isPhone(page), "The menu exists only on phones");
   await page.goto("/");
   const open = page.getByRole("button", { name: "Abrir menu" });
-  await open.focus();
-  await page.keyboard.press("Enter");
   const menu = page.getByRole("dialog", { name: "Menu" });
-  await expect(menu).toBeVisible();
+  // The button only responds once the page's script has loaded; retry until it does.
+  await expect(async () => {
+    await open.focus();
+    await page.keyboard.press("Enter");
+    await expect(menu).toBeVisible({ timeout: 1000 });
+  }).toPass();
   // Focus stays inside while it is open.
   for (let i = 0; i < 8; i++) await page.keyboard.press("Tab");
   expect(await menu.evaluate((el) => el.contains(document.activeElement))).toBe(true);
@@ -154,5 +157,9 @@ test("the vine decoration stays out of the content", async ({ page }) => {
   // Wide screens: only the margins outside the 72rem content column show it.
   await expect(vine).toHaveCSS("pointer-events", "none");
   await expect(vine).toHaveAttribute("aria-hidden", "true");
-  await expect(vine).toHaveCSS("mask-image", /transparent calc\(50% - 36rem\)/);
+  // The column edge is 50% - 36rem (576px); the browser reports the mask in pixels.
+  await expect(vine).toHaveCSS(
+    "mask-image",
+    /linear-gradient.*rgba\(0, 0, 0, 0\) calc\(50% - 576px\).*calc\(50% \+ 576px\)/,
+  );
 });

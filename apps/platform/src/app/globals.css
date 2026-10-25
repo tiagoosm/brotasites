@@ -119,6 +119,19 @@
   }
 }
 
+/* Form pages: the sticky header (phones and tablets) must never cover the title or a focused
+   field, also when the virtual keyboard shrinks the screen. From 1280px the header becomes
+   the side rail. */
+html:has([data-wizard]) {
+  scroll-padding-top: 8.5rem;
+}
+
+@media (min-width: 1280px) {
+  html:has([data-wizard]) {
+    scroll-padding-top: 2rem;
+  }
+}
+
 /* At least 44 x 44px to tap, without changing how the link or button looks: an invisible
    pseudo-element, centered on the element, grows the area that receives the click. */
 @utility touch-target {

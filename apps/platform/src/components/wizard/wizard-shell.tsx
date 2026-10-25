@@ -34,7 +34,10 @@ export function WizardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <PreviewToggle value={() => setPreviewOpen(true)}>
-      <div className="grid min-h-dvh lg:grid-cols-[minmax(26rem,30rem)_1fr] xl:grid-cols-[15rem_minmax(26rem,30rem)_1fr]">
+      <div
+        data-wizard
+        className="grid min-h-dvh lg:grid-cols-[minmax(26rem,30rem)_1fr] xl:grid-cols-[15rem_minmax(26rem,30rem)_1fr]"
+      >
         <aside className="sticky top-0 hidden h-dvh flex-col gap-12 border-r border-border px-7 py-8 xl:flex">
           <Brand />
           <SproutProgress current={step} />
