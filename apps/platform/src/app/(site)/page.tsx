@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FaqAccordion } from "@/components/site/faq-accordion";
+import { HeroRays } from "@/components/site/home/hero-rays";
 import { Specimen } from "@/components/site/home/specimen";
 import { CREATE_HREF } from "@/components/site/nav";
 import { Stem } from "@/components/site/stem/stem";
@@ -71,28 +72,31 @@ export default function HomePage() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD needs raw JSON
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }}
       />
-      <section className="mx-auto grid max-w-6xl items-center gap-x-14 gap-y-24 px-5 pt-14 pb-28 sm:px-8 sm:pt-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,30rem)] lg:pb-36">
-        <div className="hero-rise grid gap-7">
-          <h1 className="font-display text-[3.25rem] leading-[0.98] tracking-[-0.025em] sm:text-[4.5rem] lg:text-[4rem] xl:text-[4.5rem]">
-            Sete perguntas <span className="block text-stem">e seu site pronto.</span>
-          </h1>
-          <p className="max-w-[34ch] text-[1.1875rem] text-ink-soft">
-            Conte o que você faz, escolha cores e fotos e veja o site tomar forma enquanto responde.
-            Sem código.
-          </p>
-          <div className="flex flex-wrap items-center gap-x-7 gap-y-4">
-            <CreateButton />
-            <Link
-              href="#como-funciona"
-              className="text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
-            >
-              Ver como funciona
-            </Link>
+      <div className="relative isolate overflow-hidden">
+        <HeroRays />
+        <section className="mx-auto grid max-w-6xl items-center gap-x-14 gap-y-24 px-5 pt-14 pb-28 sm:px-8 sm:pt-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,30rem)] lg:pb-36">
+          <div className="hero-rise grid gap-7">
+            <h1 className="font-display text-[3.25rem] leading-[0.98] tracking-[-0.025em] sm:text-[4.5rem] lg:text-[4rem] xl:text-[4.5rem]">
+              Sete perguntas <span className="block text-stem">e seu site pronto.</span>
+            </h1>
+            <p className="max-w-[34ch] text-[1.1875rem] text-ink-soft">
+              Conte o que você faz, escolha cores e fotos e veja o site tomar forma enquanto
+              responde. Sem código.
+            </p>
+            <div className="flex flex-wrap items-center gap-x-7 gap-y-4">
+              <CreateButton />
+              <Link
+                href="#como-funciona"
+                className="text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
+              >
+                Ver como funciona
+              </Link>
+            </div>
+            <p className="tag text-ink-soft">Criar é grátis · Você só publica quando gostar</p>
           </div>
-          <p className="tag text-ink-soft">Criar é grátis · Você só publica quando gostar</p>
-        </div>
-        <Specimen />
-      </section>
+          <Specimen />
+        </section>
+      </div>
 
       <section
         id="como-funciona"
