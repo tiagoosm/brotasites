@@ -13,13 +13,13 @@ export function SiteFooter() {
           </p>
         </div>
         <nav aria-label="Rodapé">
-          <ul className="flex flex-wrap gap-x-7 gap-y-3 text-[0.9375rem]">
+          <ul className="flex flex-wrap gap-x-7 gap-y-6 text-[0.9375rem]">
             {footerLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
                   prefetch={link.href === "/entrar" ? false : undefined}
-                  className="text-ink-soft transition-colors duration-150 hover:text-ink"
+                  className="touch-target text-ink-soft transition-colors duration-150 hover:text-ink"
                 >
                   {link.label}
                 </Link>

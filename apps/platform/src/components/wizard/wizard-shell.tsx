@@ -153,7 +153,7 @@ function AccountArea({ step, compact = false }: { step: FormStepSlug; compact?: 
         href={`/entrar?voltar=${encodeURIComponent(here)}`}
         className={
           compact
-            ? "text-[0.8125rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
+            ? "touch-target text-[0.8125rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
             : "rounded-lg border border-dashed border-line-strong p-3 text-[0.8125rem] text-ink-soft transition-colors hover:border-leaf hover:text-ink"
         }
       >
@@ -177,7 +177,7 @@ function AccountArea({ step, compact = false }: { step: FormStepSlug; compact?: 
       {!compact && <span className="truncate">{account.email}</span>}
       <button
         type="submit"
-        className="justify-self-start font-semibold text-leaf-deep underline-offset-4 hover:underline"
+        className="touch-target justify-self-start font-semibold text-leaf-deep underline-offset-4 hover:underline"
       >
         Sair
       </button>

@@ -87,7 +87,7 @@ export default function HomePage() {
               <CreateButton />
               <Link
                 href="#como-funciona"
-                className="text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
+                className="touch-target text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
               >
                 Ver como funciona
               </Link>
@@ -181,7 +181,7 @@ export default function HomePage() {
           </h2>
           <Link
             href="/ajuda"
-            className="text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
+            className="touch-target text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
           >
             Ver todas as dúvidas
           </Link>
