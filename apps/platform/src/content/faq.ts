@@ -1,5 +1,14 @@
+import { formatBRL, LEGAL_REVIEW_PENDING, pricing } from "@/config/pricing";
+
 // Questions and answers for /ajuda; the ones marked `main` also appear on the home page.
 // Answers state only what the product does today (see docs/platform-copy.md).
+
+// Prices and conditions come from src/config/pricing.ts.
+const launchNote =
+  pricing.launchPrice === null
+    ? formatBRL(pricing.publish)
+    : `${formatBRL(pricing.launchPrice)} (preço de lançamento; o normal é ${formatBRL(pricing.publish)})`;
+const legalNote = pricing.legalReviewed ? "" : ` (texto ${LEGAL_REVIEW_PENDING})`;
 
 export interface Faq {
   slug: string;
@@ -97,21 +106,23 @@ export const faqGroups: FaqGroup[] = [
       {
         slug: "quanto-custa",
         question: "Quanto custa?",
-        answer:
-          "Criar o site e ver a prévia é grátis. O preço para publicar aparece antes de você publicar, e você só paga se quiser colocar o site no ar.",
+        answer: `Criar, editar e ver a prévia é grátis. Para publicar, você paga ${launchNote} uma vez só, com ${pricing.hostingMonths} meses de hospedagem, ajustes pelo painel nos primeiros ${pricing.adjustmentsDays} dias e o direito de baixar o site quando quiser. Depois de ${pricing.hostingMonths} meses, manter no ar custa ${formatBRL(pricing.renewalPerYear)} por ano, se você quiser.`,
         main: true,
       },
       {
         slug: "endereco-do-site",
         question: "Qual vai ser o endereço do meu site?",
-        answer:
-          "Você escolhe na última pergunta, no formato seu-negocio.brotasites.com. Domínio próprio, como seunegocio.com.br, ainda não está disponível.",
+        answer: `Você escolhe na última pergunta, no formato seu-negocio.brotasites.com. Se quiser um domínio próprio, como seunegocio.com.br, conectar custa + ${formatBRL(pricing.customDomain)}: você registra o domínio e paga o registro direto ao registrador.`,
       },
       {
         slug: "mudar-depois",
         question: "Posso mudar o site depois de publicar?",
-        answer:
-          "Suas respostas continuam guardadas na sua conta. A forma de fazer ajustes depois de publicar ainda está sendo definida e será explicada antes de você publicar.",
+        answer: `Pode. Nos primeiros ${pricing.adjustmentsDays} dias depois de publicar, os ajustes pelo painel estão incluídos. Depois disso, você pode pedir ajustes à parte, com o valor informado antes.`,
+      },
+      {
+        slug: "nao-quiser-mais",
+        question: "E se eu não quiser mais?",
+        answer: `O site é seu: você pode baixar o site pronto a qualquer momento e hospedá-lo onde quiser. Se não renovar depois dos ${pricing.hostingMonths} meses, ele sai do ar, e você pode baixá-lo antes. Nos primeiros ${pricing.guaranteeDays} dias depois de pagar, se não gostar, devolvemos o valor${legalNote}.`,
       },
     ],
   },

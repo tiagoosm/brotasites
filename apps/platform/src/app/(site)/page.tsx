@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FaqAccordion } from "@/components/site/faq-accordion";
 import { HeroDemo } from "@/components/site/home/hero-demo";
 import { HeroRays } from "@/components/site/home/hero-rays";
+import { PriceSection } from "@/components/site/home/price-section";
 import { CREATE_HREF } from "@/components/site/nav";
 import { Stem } from "@/components/site/stem/stem";
 import { Button } from "@/components/ui/button";
@@ -162,22 +163,7 @@ export default function HomePage() {
         </ul>
       </section>
 
-      <section aria-labelledby="gratis-titulo" className="bg-table">
-        <div className="mx-auto grid max-w-6xl items-center gap-8 px-5 py-20 sm:px-8 ">
-          <div className="grid gap-3">
-            <h2
-              id="gratis-titulo"
-              className="font-display text-[2.25rem] leading-[1.08] sm:text-[2.75rem]"
-            >
-              Criar é grátis.
-            </h2>
-            <p className="max-w-[48ch] text-[1.0625rem] text-ink-soft">
-              Montar o site e ver a prévia não custa nada. O preço para publicar aparece antes de
-              você publicar.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PriceSection />
 
       <section
         aria-labelledby="duvidas-titulo"

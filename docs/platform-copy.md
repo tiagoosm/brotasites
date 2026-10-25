@@ -24,18 +24,19 @@ Built on 2026-10-24 (design: [superpowers/specs/2026-10-24-main-site-design.md](
 
 ### Price
 
-- Creating the site and seeing the preview is free; the price to publish is shown before publishing. No amounts anywhere until pricing is decided.
-- Phrases: *Criar é grátis.* (band), *Quanto custa?* (help). The hero no longer repeats it (removed on 2026-10-24 at the owner's request).
+- Model (2026-10-25): one-time payment per site, no monthly plan. All values live in `apps/platform/src/config/pricing.ts` (publish R$ 297, optional `launchPrice` shown with the regular price crossed out, 12 months of hosting, 30 days of dashboard changes, optional renewal R$ 99/year, custom domain + R$ 97, 7-day guarantee).
+- Section *Quanto custa*: *Criar, editar e ver a prévia é grátis. Você só paga se quiser colocar o site no ar.* The guarantee and refund texts show *pendente de revisão jurídica* until `legalReviewed` is true.
+- No comparisons with freelancers or competitors.
 
 ### Home page
 
 - **Header:** Como funciona · Ajuda · Entrar · **Criar meu site** (not on the home page, which has its own).
-- **Main button:** *Criar meu site* appears at most three times on the home page: in the hero, after the seven questions and in the final call.
+- **Main button:** three on the home page: *Continuar com este site* in the hero demo, *Criar meu site* after the seven questions and in the final call.
 - **Example page (/exemplo):** the Padaria do Zé example built by the real generator, under a slim bar: *Voltar* · *Site de exemplo: a Padaria do Zé é fictícia, mas o site foi feito pelo BrotaSites.* · *Criar o meu*.
-- **Hero:** *Sete perguntas e seu site pronto.* / *Conte o que você faz, escolha cores e fotos e veja o site tomar forma enquanto responde. Sem código.* / **Criar meu site** · **Ver um site de exemplo** (to /exemplo) · a smaller *Ver como funciona* text link. Behind it, a soft morning light from the top right corner; across the public pages, a faint vine follows the mouse. Beside it, the example site as a herbarium specimen labeled *Site de exemplo* (it is the Padaria do Zé sample, never presented as a real client).
+- **Hero:** *Sete perguntas e seu site pronto.* / *Conte o que você faz, escolha cores e fotos e veja o site tomar forma enquanto responde. Sem código.* / **Ver um site de exemplo** (to /exemplo) · a smaller *Ver como funciona* text link. Beside it, the *Experimente aqui* demo: a name field and six business types update a miniature of the site (fixed example titles per type, labeled *Texto de exemplo*; *Nada é salvo aqui*), and **Continuar com este site** carries name and type to the first question. Behind it, a soft morning light from the top right corner; in the side margins of wide screens, a faint vine follows the mouse.
 - **Como funciona:** *Sete perguntas, uma de cada vez.* / *Cada resposta aparece na prévia na hora. Você pode voltar e mudar o que quiser antes de publicar.* Then the seven questions, exactly as in the form (`formSteps`), each with one sentence from `content/stem.ts`, ending with *Pronto. Seu site no ar.*
 - **O que todo site tem:** WhatsApp a um toque; Aberto ou fechado, na hora; Endereço e mapa; Feito para o celular; Pronto para o Google. All exist in the `classico` template.
-- **Criar é grátis.** / *Montar o site e ver a prévia não custa nada. O preço para publicar aparece antes de você publicar.*
+- **Quanto custa:** see Price above.
 - **Dúvidas:** the four questions marked `main` in `content/faq.ts`, and *Ver todas as dúvidas*.
 - **Final call:** *Seu site está a sete perguntas de distância.* / *Comece agora e veja a prévia na hora. Você só publica quando gostar do resultado.*
 
