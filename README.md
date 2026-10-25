@@ -2,9 +2,13 @@
 
 Form-to-landing-page platform for small businesses. The client fills out a short form, and BrotaSites builds and publishes a static landing page for them automatically. No code, no page builder.
 
-> **Status:** in development, not deployed yet. The seven-question form with live preview, accounts (magic link), photo uploads, the publishing queue, the static site generator and the Worker that serves client sites are built and covered by tests. Nothing is online yet: the `brotasites.com` domain is not registered and the Cloudflare and platform hosting are not set up, so there is no public link for now.
+> **Status:** in development. The public site and the form are online at **https://brotasites.vercel.app** (Vercel, Hobby plan, testing only). The seven-question form, accounts (magic link), photo uploads, the publishing queue, the static site generator and the Worker that serves client sites are built and covered by tests. Not online yet: the live preview server, site generation and publishing (Cloudflare), and the `brotasites.com` domain.
 >
 > Repository: https://github.com/tiagoosm/brotasites (private)
+
+## Platform hosting
+
+The platform (`apps/platform`) runs on Vercel, project `brotasites`, linked to this repository: every push to `main` deploys to production. Project settings: root directory `apps/platform`; install `pnpm install --frozen-lockfile`; build `cd ../.. && pnpm turbo run build --filter=@brotasites/platform`; environment variables `ENABLE_EXPERIMENTAL_COREPACK=1` (pnpm 12 through Corepack), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `NEXT_PUBLIC_PLATFORM_URL`. The Hobby plan does not allow commercial use; move to Pro before selling.
 
 ## How it works
 
