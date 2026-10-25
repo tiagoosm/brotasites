@@ -147,6 +147,8 @@ export interface VineTrailProps {
   leafEvery?: number;
   /** How long a leaf lives, in seconds. */
   leafLife?: number;
+  /** Leaf size, as a fraction of the home page stem leaf (40 x 24 px). */
+  leafSize?: number;
   className?: string;
 }
 
@@ -163,6 +165,7 @@ export default function VineTrail({
   opacity = 0.7,
   leafEvery = 64,
   leafLife = 1.6,
+  leafSize = 0.42,
   className = "",
 }: VineTrailProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -181,6 +184,7 @@ export default function VineTrail({
     opacity: clamp(opacity, 0, 1),
     leafEvery,
     leafLife,
+    leafSize,
   };
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
@@ -266,7 +270,8 @@ export default function VineTrail({
     };
 
     const resize = () => {
-      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      // The vine may cover the whole window, so keep the canvases light.
+      const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
       const width = Math.max(1, container.clientWidth);
       const height = Math.max(1, container.clientHeight);
       state.width = width;
@@ -334,7 +339,7 @@ export default function VineTrail({
             x: head.x,
             y: head.y,
             angle: heading + Math.PI + state.side * (0.75 + 0.3 * hash(state.time * 13)),
-            size: 0.42 + 0.14 * hash(state.time * 7),
+            size: s.leafSize * (1 + 0.3 * hash(state.time * 7)),
             born: state.time,
           });
           if (state.leaves.length > 24) state.leaves.shift();

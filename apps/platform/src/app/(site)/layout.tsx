@@ -1,5 +1,6 @@
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
+import { SiteVine } from "@/components/site/site-vine";
 
 // The public site around the form: home, help and the legal pages.
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -16,6 +17,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         {children}
       </main>
       <SiteFooter />
+      <SiteVine />
     </>
   );
 }
