@@ -83,11 +83,21 @@ export default function HomePage() {
               Conte o que você faz, escolha cores e fotos e veja o site tomar forma enquanto
               responde. Sem código.
             </p>
-            <div className="flex flex-wrap items-center gap-x-7 gap-y-4">
-              <CreateButton />
+            <div className="grid justify-items-start gap-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <CreateButton />
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-line-strong bg-card/70"
+                >
+                  <Link href="/exemplo">Ver um site de exemplo</Link>
+                </Button>
+              </div>
               <Link
                 href="#como-funciona"
-                className="touch-target text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
+                className="touch-target text-[0.875rem] text-ink-soft underline underline-offset-4 hover:text-ink"
               >
                 Ver como funciona
               </Link>
@@ -117,6 +127,9 @@ export default function HomePage() {
             </p>
           </header>
           <Stem />
+          <div className="mt-16 pl-14 sm:mt-20 sm:pl-20">
+            <CreateButton />
+          </div>
         </div>
       </section>
 
@@ -151,7 +164,7 @@ export default function HomePage() {
       </section>
 
       <section aria-labelledby="gratis-titulo" className="bg-table">
-        <div className="mx-auto grid max-w-6xl items-center gap-8 px-5 py-20 sm:px-8 md:grid-cols-[1fr_auto] md:gap-16">
+        <div className="mx-auto grid max-w-6xl items-center gap-8 px-5 py-20 sm:px-8 ">
           <div className="grid gap-3">
             <h2
               id="gratis-titulo"
@@ -164,7 +177,6 @@ export default function HomePage() {
               você publicar.
             </p>
           </div>
-          <CreateButton />
         </div>
       </section>
 

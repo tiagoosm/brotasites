@@ -13,6 +13,7 @@ import { CREATE_HREF, headerLinks } from "./nav";
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const isHome = pathname === "/";
 
   // Navigating closes the phone menu.
   useEffect(() => {
@@ -42,20 +43,23 @@ export function SiteHeader() {
             Entrar
           </Link>
         </nav>
-        <Button
-          asChild
-          size="lg"
-          className="touch-target ml-auto h-9 px-4 text-sm sm:h-10 sm:px-5 sm:text-[0.9375rem] md:ml-0"
-        >
-          <Link href={CREATE_HREF} prefetch={false}>
-            Criar meu site
-          </Link>
-        </Button>
+        {/* The home page has its own buttons (at most three); the other pages get one here. */}
+        {!isHome && (
+          <Button
+            asChild
+            size="lg"
+            className="touch-target ml-auto h-9 px-4 text-sm sm:h-10 sm:px-5 sm:text-[0.9375rem] md:ml-0"
+          >
+            <Link href={CREATE_HREF} prefetch={false}>
+              Criar meu site
+            </Link>
+          </Button>
+        )}
         <Button
           type="button"
           variant="ghost"
           size="icon-lg"
-          className="touch-target -mr-2 md:hidden"
+          className={cn("touch-target -mr-2 md:hidden", isHome && "ml-auto")}
           aria-label="Abrir menu"
           aria-expanded={open}
           aria-controls="menu-celular"

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import desktop from "../../../../public/specimen/desktop.png";
 import phone from "../../../../public/specimen/phone.png";
 
@@ -46,7 +47,12 @@ export function Specimen() {
       </div>
 
       <figcaption className="absolute -bottom-12 left-3 w-[15rem] rotate-[0.5deg] border border-line-strong bg-paper px-4 py-3 shadow-[0_12px_24px_-20px_rgb(20_36_27/0.6)] sm:left-6">
-        <span className="tag block text-stem">Site de exemplo</span>
+        <Link
+          href="/exemplo"
+          className="touch-target tag block text-stem underline underline-offset-4 hover:text-leaf-deep"
+        >
+          Site de exemplo
+        </Link>
         <span className="mt-1 block font-display text-[1.125rem] leading-tight">Padaria do Zé</span>
         <span className="mt-1 block text-[0.8125rem] text-ink-soft">Sete perguntas, um site.</span>
       </figcaption>

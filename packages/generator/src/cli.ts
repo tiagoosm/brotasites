@@ -2,12 +2,13 @@
 import { parseArgs } from "node:util";
 import { generateSite } from "./generate.js";
 
-const usage = "Uso: brotasites-generate <config.json> [--out <pasta>]";
+const usage = "Uso: brotasites-generate <config.json> [--out <pasta>] [--base </caminho>]";
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: {
     out: { type: "string", short: "o" },
+    base: { type: "string" },
     help: { type: "boolean", short: "h" },
   },
 });
@@ -19,7 +20,11 @@ if (values.help || !configPath) {
 }
 
 console.log(`Gerando o site a partir de ${configPath}...`);
-const result = await generateSite({ configPath, outDir: values.out ?? "out/site" });
+const result = await generateSite({
+  configPath,
+  outDir: values.out ?? "out/site",
+  base: values.base,
+});
 
 for (const warning of result.warnings) console.warn(`Aviso: ${warning}`);
 
