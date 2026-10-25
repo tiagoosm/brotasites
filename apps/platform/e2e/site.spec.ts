@@ -88,9 +88,9 @@ test("help answers open from a direct link and the contents lead to each part", 
   page,
 }) => {
   await page.goto("/ajuda#quanto-custa");
-  const answer = page.locator("details#quanto-custa");
-  await expect(answer).toHaveAttribute("open", "");
-  await expect(answer).toContainText("Criar o site e ver a prévia é grátis.");
+  const question = page.getByRole("button", { name: "Quanto custa?" });
+  await expect(question).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("region", { name: "Quanto custa?" })).toBeVisible();
 
   const contents = page.getByRole("navigation", { name: "Nesta página" });
   if (isPhone(page)) await contents.locator("summary").click();
@@ -120,4 +120,24 @@ test("the site has a favicon, app icons and a manifest", async ({ page, request 
   await expect(page.locator('link[rel="icon"]').first()).toHaveAttribute("href", /icon|favicon/);
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
   await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
+});
+
+test("questions are headings with buttons that open by keyboard", async ({ page }) => {
+  await page.goto("/");
+  const question = page
+    .getByRole("heading", { level: 3, name: "Quanto custa?" })
+    .getByRole("button");
+  await expect(question).toHaveAttribute("aria-expanded", "false");
+  const panel = page.locator(`[id="${await question.getAttribute("aria-controls")}"]`);
+  await expect(panel).toBeHidden();
+
+  await question.focus();
+  await page.keyboard.press("Enter");
+  await expect(question).toHaveAttribute("aria-expanded", "true");
+  await expect(panel).toBeVisible();
+  await expect(question).toHaveCSS("outline-style", "solid");
+
+  await page.keyboard.press("Space");
+  await expect(question).toHaveAttribute("aria-expanded", "false");
+  await expect(panel).toBeHidden();
 });
