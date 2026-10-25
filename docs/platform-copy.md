@@ -30,7 +30,7 @@ Built on 2026-10-24 (design: [superpowers/specs/2026-10-24-main-site-design.md](
 ### Home page
 
 - **Header:** Como funciona · Ajuda · Entrar · **Criar meu site**.
-- **Hero:** *Sete perguntas e seu site pronto.* / *Conte o que você faz, escolha cores e fotos e veja o site tomar forma enquanto responde. Sem código.* / **Criar meu site** · Ver como funciona. Behind it, a soft morning light from the top right corner; across the public pages, a faint vine follows the mouse. Beside it, the example site as a herbarium specimen labeled *Espécime · exemplo* (it is the Padaria do Zé sample, never presented as a real client).
+- **Hero:** *Sete perguntas e seu site pronto.* / *Conte o que você faz, escolha cores e fotos e veja o site tomar forma enquanto responde. Sem código.* / **Criar meu site** · Ver como funciona. Behind it, a soft morning light from the top right corner; across the public pages, a faint vine follows the mouse. Beside it, the example site as a herbarium specimen labeled *Site de exemplo* (it is the Padaria do Zé sample, never presented as a real client).
 - **Como funciona:** *Sete perguntas, uma de cada vez.* / *Cada resposta aparece na prévia na hora. Você pode voltar e mudar o que quiser antes de publicar.* Then the seven questions, exactly as in the form (`formSteps`), each with one sentence from `content/stem.ts`, ending with *Pronto. Seu site no ar.*
 - **O que todo site tem:** WhatsApp a um toque; Aberto ou fechado, na hora; Endereço e mapa; Feito para o celular; Pronto para o Google. All exist in the `classico` template.
 - **Criar é grátis.** / *Montar o site e ver a prévia não custa nada. O preço para publicar aparece antes de você publicar.*
