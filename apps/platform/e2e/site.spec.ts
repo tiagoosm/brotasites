@@ -141,3 +141,18 @@ test("questions are headings with buttons that open by keyboard", async ({ page 
   await expect(question).toHaveAttribute("aria-expanded", "false");
   await expect(panel).toBeHidden();
 });
+
+test("the vine decoration stays out of the content", async ({ page }) => {
+  await page.goto("/");
+  const vine = page.getByTestId("site-vine");
+  const width = page.viewportSize()?.width ?? 0;
+  if (width < 1280) {
+    // Narrow screens have no side margins, so there is no vine at all.
+    await expect(vine).toHaveCount(0);
+    return;
+  }
+  // Wide screens: only the margins outside the 72rem content column show it.
+  await expect(vine).toHaveCSS("pointer-events", "none");
+  await expect(vine).toHaveAttribute("aria-hidden", "true");
+  await expect(vine).toHaveCSS("mask-image", /transparent calc\(50% - 36rem\)/);
+});
