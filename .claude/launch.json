@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@brotasites/preview", "dev"],
+      "port": 4400
+    },
+    {
+      "name": "platform",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@brotasites/platform", "dev"],
+      "port": 3000
+    }
+  ]
+}
