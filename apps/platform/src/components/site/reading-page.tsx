@@ -22,12 +22,12 @@ export function ReadingPage({
   children: React.ReactNode;
 }) {
   const links = (
-    <ol className="grid gap-2.5 text-[0.9375rem]">
+    <ol className="grid text-[0.9375rem]">
       {toc.map((entry) => (
         <li key={entry.id}>
           <a
             href={`#${entry.id}`}
-            className="text-ink-soft transition-colors duration-150 hover:text-ink"
+            className="flex min-h-11 items-center text-ink-soft transition-colors duration-150 hover:text-ink"
           >
             {entry.label}
           </a>
@@ -45,15 +45,15 @@ export function ReadingPage({
       </header>
 
       <nav aria-label="Nesta página" className="lg:row-span-2 lg:row-start-1">
-        <details className="group rounded-xl border border-line bg-card px-4 py-3 lg:hidden">
-          <summary className="flex cursor-pointer list-none items-center justify-between font-semibold [&::-webkit-details-marker]:hidden">
+        <details className="group rounded-xl border border-line bg-card px-4 py-0.5 lg:hidden">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between font-semibold [&::-webkit-details-marker]:hidden">
             Nesta página
             <ChevronDown
               aria-hidden="true"
               className="size-4 transition-transform group-open:rotate-180"
             />
           </summary>
-          <div className="pt-4 pb-1">{links}</div>
+          <div className="pt-1 pb-2">{links}</div>
         </details>
         <div className="sticky top-24 hidden lg:block">
           <p className="tag mb-4 text-stem">Nesta página</p>

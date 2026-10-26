@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function ExamplePage() {
   return (
     <div className="flex h-dvh flex-col bg-paper">
-      <header className="flex min-h-14 shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-4 py-2 sm:px-6">
+      <header className="flex min-h-14 shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-4 py-3 sm:px-6">
         <Link
           href="/"
           className="touch-target inline-flex items-center gap-1.5 text-[0.9375rem] font-semibold text-leaf-deep"
