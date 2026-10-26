@@ -22,8 +22,17 @@
   --pollen: #e2b23c;
   --danger: #b42318;
 
+  /* Motion language, shared by every animation on the platform. Two curves: a soft ease-out
+     for anything entering or answering a touch, and an ease-in-out for things that travel.
+     Micro-interactions stay at 150 to 250ms, entrances at 400 to 700ms, nothing over 900ms. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --motion-micro: 180ms;
+  --motion-enter: 560ms;
+  --motion-unfurl: 720ms;
+  --motion-stagger: 70ms;
+  --motion-shift: 16px;
+  --motion-blur: 3px;
 
   /* shadcn/ui tokens */
   --background: var(--paper);
@@ -323,19 +332,6 @@ html:has([data-wizard]) {
       animation-timeline: --stem-line;
       animation-range: cover 35vh cover calc(100% - 65vh);
     }
-
-    .stem-leaf,
-    .stem-bud {
-      animation: leaf-open linear both;
-      animation-timeline: view();
-      animation-range: entry 70% cover 40%;
-    }
-
-    .stem-node > :not(:first-child) {
-      animation: node-rise linear both;
-      animation-timeline: view();
-      animation-range: entry 10% cover 30%;
-    }
   }
 }
 
@@ -345,18 +341,52 @@ html:has([data-wizard]) {
   }
 }
 
-@keyframes leaf-open {
-  from {
-    opacity: 0;
-    transform: scale(0.15) rotate(-35deg);
-  }
-}
+/* ---------- Section entrances: once per element, as it reaches the screen ----------
+   The HTML always carries the content in its final state. Only motion-reveal.tsx moves an
+   element to "waiting" (below the screen, JavaScript running, motion allowed) and then to
+   "done" when it arrives. Without JavaScript, or with reduced motion, nothing is ever hidden.
+   Transforms, opacity and blur only, so nothing around it moves (no layout shift). */
 
-/* Movement only: the text keeps its full contrast while a question is still ahead. The
-   "not reached yet" cue is the closed leaf and the dashed stem below the ink. */
-@keyframes node-rise {
-  from {
-    transform: translateY(24px);
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal=""][data-entry="waiting"],
+  [data-reveal="stem"][data-entry="waiting"] > :not(.stem-anchor) {
+    opacity: 0;
+    transform: translateY(var(--motion-shift));
+    filter: blur(var(--motion-blur));
+  }
+
+  [data-reveal=""][data-entry="done"],
+  [data-reveal="stem"][data-entry="done"] > :not(.stem-anchor) {
+    transition:
+      opacity var(--motion-enter) var(--ease-out),
+      transform var(--motion-enter) var(--ease-out),
+      filter var(--motion-enter) var(--ease-out);
+    transition-delay: calc(var(--entry-index, 0) * var(--motion-stagger));
+  }
+
+  /* A question enters when the tip of the ink reaches it: its leaf unfurls from the stem,
+     then the text and the picture rise in, one after the other. */
+  [data-reveal="stem"] > :nth-child(2) {
+    --entry-index: 1;
+  }
+
+  [data-reveal="stem"] > :nth-child(3) {
+    --entry-index: 2;
+  }
+
+  .stem-leaf,
+  .stem-bud {
+    transform-box: fill-box;
+    transition:
+      transform var(--motion-unfurl) var(--ease-out),
+      opacity calc(var(--motion-unfurl) / 2) var(--ease-out);
+  }
+
+  [data-entry="waiting"] .stem-leaf,
+  [data-entry="waiting"] .stem-bud {
+    opacity: 0;
+    transform: scale(0.2) rotate(-28deg);
+    transition: none;
   }
 }
 

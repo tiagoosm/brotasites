@@ -1,3 +1,4 @@
+import { MotionReveal } from "@/components/site/motion-reveal";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteVine } from "@/components/site/site-vine";
@@ -18,6 +19,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       </main>
       <SiteFooter />
       <SiteVine />
+      <MotionReveal />
     </>
   );
 }

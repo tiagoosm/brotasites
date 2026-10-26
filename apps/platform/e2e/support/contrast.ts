@@ -68,6 +68,9 @@ export function findContrastIssues(page: Page): Promise<ContrastIssue[]> {
       const offscreen = box.bottom < 0 || box.top > window.innerHeight;
       if (!box.width || !box.height || offscreen || style.visibility === "hidden") continue;
       if (element.closest(".sr-only, [hidden], script, style, noscript")) continue;
+      // Not entered yet (below the line where sections and stem questions come in): it is
+      // not shown to the reader. motion.spec.ts checks that every one of them enters.
+      if (element.closest('[data-entry="waiting"]')) continue;
       const behind = background(element);
       const own = parse(style.color);
       const text = over([own[0], own[1], own[2], own[3] * opacity(element)], behind);
@@ -90,6 +93,26 @@ export function findContrastIssues(page: Page): Promise<ContrastIssue[]> {
   });
 }
 
+/**
+ * Waits for the entrances that just started (a section fading in as it reaches the screen)
+ * to finish, so the check sees the text as the reader settles on it. Endless loops and
+ * animations driven by the scroll position are left alone: they are part of what is read.
+ */
+export function settleEntrances(page: Page): Promise<void> {
+  return page.evaluate(async () => {
+    const entering = document.getAnimations().filter((animation) => {
+      const timing = animation.effect?.getComputedTiming();
+      return (
+        animation.playState === "running" &&
+        animation.timeline === document.timeline &&
+        timing?.iterations !== Number.POSITIVE_INFINITY
+      );
+    });
+    const limit = new Promise((resolve) => setTimeout(resolve, 2000));
+    await Promise.race([Promise.all(entering.map((animation) => animation.finished)), limit]);
+  });
+}
+
 /** Scrolls through the whole page, checking each screen as a reader would see it. */
 export async function findContrastIssuesWhileScrolling(page: Page): Promise<ContrastIssue[]> {
   const issues = new Map<string, ContrastIssue>();
@@ -98,6 +121,7 @@ export async function findContrastIssuesWhileScrolling(page: Page): Promise<Cont
   for (let y = 0; y <= height; y += step) {
     await page.evaluate((top) => window.scrollTo(0, top), y);
     await page.waitForTimeout(150);
+    await settleEntrances(page);
     for (const issue of await findContrastIssues(page)) issues.set(issue.text, issue);
   }
   return [...issues.values()];

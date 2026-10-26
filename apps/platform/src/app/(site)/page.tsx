@@ -114,20 +114,23 @@ export default function HomePage() {
       >
         <div className="mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
           <header className="mb-16 grid gap-4 sm:mb-24">
-            <p className="tag text-stem">Como funciona</p>
+            <p data-reveal="" className="tag text-stem">
+              Como funciona
+            </p>
             <h2
+              data-reveal=""
               id="como-funciona-titulo"
               className="max-w-[16ch] font-display text-[2.5rem] leading-[1.05] sm:text-[3.5rem]"
             >
               Sete perguntas, uma de cada vez.
             </h2>
-            <p className="max-w-[46ch] text-[1.125rem] text-ink-soft">
+            <p data-reveal="" className="max-w-[46ch] text-[1.125rem] text-ink-soft">
               Cada resposta aparece na prévia na hora. Você pode voltar e mudar o que quiser antes
               de publicar.
             </p>
           </header>
           <Stem />
-          <div className="mt-16 pl-14 sm:mt-20 sm:pl-20">
+          <div data-reveal="" className="mt-16 pl-14 sm:mt-20 sm:pl-20">
             <CreateButton />
           </div>
         </div>
@@ -139,12 +142,13 @@ export default function HomePage() {
       >
         <header className="grid content-start gap-4">
           <h2
+            data-reveal=""
             id="recursos-titulo"
             className="font-display text-[2.25rem] leading-[1.08] sm:text-[2.75rem]"
           >
             O que todo site tem
           </h2>
-          <p className="text-[1.0625rem] text-ink-soft">
+          <p data-reveal="" className="text-[1.0625rem] text-ink-soft">
             Você não precisa pedir nem configurar. Vem em todo site, em todos os modelos.
           </p>
         </header>
@@ -152,6 +156,7 @@ export default function HomePage() {
           {features.map((feature) => (
             <li
               key={feature.title}
+              data-reveal=""
               className="grid gap-1 border-b border-line py-6 sm:grid-cols-[minmax(0,15rem)_1fr] sm:gap-8"
             >
               <h3 className="font-sans text-[1.0625rem] font-semibold tracking-normal">
@@ -166,11 +171,13 @@ export default function HomePage() {
       <PriceSection />
 
       <section
+        id="duvidas"
         aria-labelledby="duvidas-titulo"
-        className="mx-auto grid max-w-6xl gap-12 px-5 py-24 sm:px-8 sm:py-32 lg:grid-cols-[minmax(0,22rem)_1fr] lg:gap-20"
+        className="scroll-mt-16 mx-auto grid max-w-6xl gap-12 px-5 py-24 sm:px-8 sm:py-32 lg:grid-cols-[minmax(0,22rem)_1fr] lg:gap-20"
       >
         <header className="grid content-start gap-4">
           <h2
+            data-reveal=""
             id="duvidas-titulo"
             className="font-display text-[2.25rem] leading-[1.08] sm:text-[2.75rem]"
           >
@@ -178,12 +185,13 @@ export default function HomePage() {
           </h2>
           <Link
             href="/ajuda"
+            data-reveal=""
             className="touch-target text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
           >
             Ver todas as dúvidas
           </Link>
         </header>
-        <FaqAccordion items={mainFaqs} />
+        <FaqAccordion items={mainFaqs} reveal />
       </section>
 
       <section aria-labelledby="final-titulo" className="border-t border-line bg-card">
