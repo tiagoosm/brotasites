@@ -119,6 +119,35 @@
   }
 }
 
+/* Form pages: the sticky header (phones and tablets) must never cover the title or a focused
+   field, also when the virtual keyboard shrinks the screen. From 1280px the header becomes
+   the side rail. */
+html:has([data-wizard]) {
+  scroll-padding-top: 8.5rem;
+}
+
+@media (min-width: 1280px) {
+  html:has([data-wizard]) {
+    scroll-padding-top: 2rem;
+  }
+}
+
+/* At least 44 x 44px to tap, without changing how the link or button looks: an invisible
+   pseudo-element, centered on the element, grows the area that receives the click. */
+@utility touch-target {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 2.75rem);
+    height: max(100%, 2.75rem);
+    transform: translate(-50%, -50%);
+  }
+}
+
 @layer components {
   /* Specimen-tag label: the mono utility face, used for numbers and machine values. */
   .tag {
@@ -259,6 +288,13 @@
     animation: caret-blink 1100ms steps(1) infinite;
   }
 
+  /* The home demo eases into each type's colors. */
+  .demo-site {
+    transition:
+      background-color 300ms var(--ease-out),
+      color 300ms var(--ease-out);
+  }
+
   /* The hero settles in once, on load. */
   .hero-rise > * {
     animation: step-enter 800ms var(--ease-out) both;
@@ -316,9 +352,10 @@
   }
 }
 
+/* Movement only: the text keeps its full contrast while a question is still ahead. The
+   "not reached yet" cue is the closed leaf and the dashed stem below the ink. */
 @keyframes node-rise {
   from {
-    opacity: 0;
     transform: translateY(24px);
   }
 }

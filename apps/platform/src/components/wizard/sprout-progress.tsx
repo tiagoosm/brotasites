@@ -127,11 +127,10 @@ export function SproutProgress({ current }: { current: FormStepSlug }) {
                   {content}
                 </Link>
               ) : (
+                // Steps ahead keep full text contrast; the dashed stem and the missing leaf
+                // already say they are still to come.
                 <span
-                  className={cn(
-                    "flex flex-col justify-center gap-0.5 pl-9",
-                    !reachable && "opacity-70",
-                  )}
+                  className="flex flex-col justify-center gap-0.5 pl-9"
                   aria-current={active ? "step" : undefined}
                 >
                   {content}

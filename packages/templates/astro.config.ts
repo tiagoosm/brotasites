@@ -49,6 +49,8 @@ const fontFamilies = [
 
 export default defineConfig({
   site: siteUrl(config),
+  // Optional path the site is served under (e.g. /exemplo-site for the platform's example).
+  base: process.env.BROTASITES_BASE || undefined,
   fonts: fontFamilies,
   devToolbar: { enabled: false },
   build: {

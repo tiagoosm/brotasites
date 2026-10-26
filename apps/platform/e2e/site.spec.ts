@@ -67,10 +67,13 @@ test("the phone menu works with the keyboard", async ({ page }) => {
   test.skip(!isPhone(page), "The menu exists only on phones");
   await page.goto("/");
   const open = page.getByRole("button", { name: "Abrir menu" });
-  await open.focus();
-  await page.keyboard.press("Enter");
   const menu = page.getByRole("dialog", { name: "Menu" });
-  await expect(menu).toBeVisible();
+  // The button only responds once the page's script has loaded; retry until it does.
+  await expect(async () => {
+    await open.focus();
+    await page.keyboard.press("Enter");
+    await expect(menu).toBeVisible({ timeout: 1000 });
+  }).toPass();
   // Focus stays inside while it is open.
   for (let i = 0; i < 8; i++) await page.keyboard.press("Tab");
   expect(await menu.evaluate((el) => el.contains(document.activeElement))).toBe(true);
@@ -88,9 +91,9 @@ test("help answers open from a direct link and the contents lead to each part", 
   page,
 }) => {
   await page.goto("/ajuda#quanto-custa");
-  const answer = page.locator("details#quanto-custa");
-  await expect(answer).toHaveAttribute("open", "");
-  await expect(answer).toContainText("Criar o site e ver a prévia é grátis.");
+  const question = page.getByRole("button", { name: "Quanto custa?" });
+  await expect(question).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("region", { name: "Quanto custa?" })).toBeVisible();
 
   const contents = page.getByRole("navigation", { name: "Nesta página" });
   if (isPhone(page)) await contents.locator("summary").click();
@@ -110,4 +113,53 @@ test("search engines get the sitemap and the public pages only", async ({ reques
   for (const path of ["/ajuda", "/termos", "/privacidade"]) expect(sitemap).toContain(path);
   const robots = await (await request.get("/robots.txt")).text();
   expect(robots).toContain("Disallow: /criar");
+});
+
+test("the site has a favicon, app icons and a manifest", async ({ page, request }) => {
+  for (const path of ["/favicon.ico", "/icon.png", "/apple-icon.png", "/manifest.webmanifest"]) {
+    expect((await request.get(path)).status(), path).toBe(200);
+  }
+  await page.goto("/");
+  await expect(page.locator('link[rel="icon"]').first()).toHaveAttribute("href", /icon|favicon/);
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
+  await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
+});
+
+test("questions are headings with buttons that open by keyboard", async ({ page }) => {
+  await page.goto("/");
+  const question = page
+    .getByRole("heading", { level: 3, name: "Quanto custa?" })
+    .getByRole("button");
+  await expect(question).toHaveAttribute("aria-expanded", "false");
+  const panel = page.locator(`[id="${await question.getAttribute("aria-controls")}"]`);
+  await expect(panel).toBeHidden();
+
+  await question.focus();
+  await page.keyboard.press("Enter");
+  await expect(question).toHaveAttribute("aria-expanded", "true");
+  await expect(panel).toBeVisible();
+  await expect(question).toHaveCSS("outline-style", "solid");
+
+  await page.keyboard.press("Space");
+  await expect(question).toHaveAttribute("aria-expanded", "false");
+  await expect(panel).toBeHidden();
+});
+
+test("the vine decoration stays out of the content", async ({ page }) => {
+  await page.goto("/");
+  const vine = page.getByTestId("site-vine");
+  const width = page.viewportSize()?.width ?? 0;
+  if (width < 1280) {
+    // Narrow screens have no side margins, so there is no vine at all.
+    await expect(vine).toHaveCount(0);
+    return;
+  }
+  // Wide screens: only the margins outside the 72rem content column show it.
+  await expect(vine).toHaveCSS("pointer-events", "none");
+  await expect(vine).toHaveAttribute("aria-hidden", "true");
+  // The column edge is 50% - 36rem (576px); the browser reports the mask in pixels.
+  await expect(vine).toHaveCSS(
+    "mask-image",
+    /linear-gradient.*rgba\(0, 0, 0, 0\) calc\(50% - 576px\).*calc\(50% \+ 576px\)/,
+  );
 });

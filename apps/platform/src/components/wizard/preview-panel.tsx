@@ -26,7 +26,7 @@ export function PreviewPanel({ compact = false }: { compact?: boolean }) {
               aria-pressed={device === option}
               onClick={() => setDevice(option)}
               className={cn(
-                "rounded-full px-3.5 py-1.5 capitalize transition-colors duration-200",
+                "touch-target rounded-full px-3.5 py-1.5 capitalize transition-colors duration-200",
                 device === option
                   ? "bg-ink font-semibold text-white"
                   : "text-ink-soft hover:text-ink",

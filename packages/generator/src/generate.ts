@@ -15,6 +15,8 @@ export interface GenerateOptions extends RemoteImageOptions {
   configPath: string;
   /** Folder where the static site is written. */
   outDir: string;
+  /** Path the site is served under, when not the root (e.g. "/exemplo-site"). */
+  base?: string;
 }
 
 export type GenerateResult =
@@ -29,11 +31,20 @@ function astroBin(): string {
 }
 
 /** Runs `astro build` in a child process so each build gets its own config and environment. */
-function runAstroBuild(configPath: string, outDir: string): Promise<{ ok: boolean; log: string }> {
+function runAstroBuild(
+  configPath: string,
+  outDir: string,
+  base?: string,
+): Promise<{ ok: boolean; log: string }> {
   return new Promise((resolvePromise) => {
     const child = spawn(process.execPath, [astroBin(), "build", "--outDir", outDir], {
       cwd: templatesRoot,
-      env: { ...process.env, BROTASITES_CONFIG: configPath, ASTRO_TELEMETRY_DISABLED: "1" },
+      env: {
+        ...process.env,
+        BROTASITES_CONFIG: configPath,
+        BROTASITES_BASE: base ?? "",
+        ASTRO_TELEMETRY_DISABLED: "1",
+      },
     });
     let log = "";
     child.stdout.on("data", (chunk) => {
@@ -64,7 +75,7 @@ export async function generateSite(options: GenerateOptions): Promise<GenerateRe
   const usesCopy = remote.downloaded > 0 || remote.warnings.length > 0;
   if (usesCopy) await writeFile(resolvedPath, JSON.stringify(remote.config, null, 2));
   try {
-    const build = await runAstroBuild(usesCopy ? resolvedPath : configPath, outDir);
+    const build = await runAstroBuild(usesCopy ? resolvedPath : configPath, outDir, options.base);
     if (!build.ok) {
       return {
         success: false,

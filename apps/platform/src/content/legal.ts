@@ -1,4 +1,11 @@
+import { formatBRL, LEGAL_REVIEW_PENDING, pricing } from "@/config/pricing";
 import { PENDING } from "./contact";
+
+// Prices and conditions come from src/config/pricing.ts.
+const publishPriceText =
+  pricing.launchPrice === null
+    ? formatBRL(pricing.publish)
+    : `${formatBRL(pricing.launchPrice)} (preço de lançamento; o valor normal é ${formatBRL(pricing.publish)})`;
 
 // Terms of use and privacy policy, in plain pt-BR. First drafts describing what the platform
 // does today; they must be reviewed by a lawyer before BrotaSites accepts clients.
@@ -142,8 +149,24 @@ export const termsSections: LegalSection[] = [
     title: "O serviço",
     blocks: [
       "O BrotaSites ajuda você a criar o site do seu negócio respondendo sete perguntas, com uma prévia que mostra o resultado enquanto você responde.",
-      "Criar o site e ver a prévia é grátis. O preço para publicar será informado antes de você publicar, e você só paga se decidir publicar.",
+      `Criar, editar e ver a prévia é grátis. Publicar o site custa ${publishPriceText}, em pagamento único, e você só paga se decidir publicar.`,
       "O serviço está em desenvolvimento: funções podem mudar, ser incluídas ou retiradas.",
+    ],
+  },
+  {
+    id: "preco",
+    title: "Preço, renovação e reembolso",
+    blocks: [
+      `Texto ${LEGAL_REVIEW_PENDING}.`,
+      {
+        list: [
+          `O pagamento para publicar inclui ${pricing.hostingMonths} meses de hospedagem no endereço seunegocio.brotasites.com e ajustes pelo painel nos primeiros ${pricing.adjustmentsDays} dias. Depois desse prazo, ajustes podem ser pedidos à parte, com o valor informado antes.`,
+          `O site é seu: você pode baixar o site pronto a qualquer momento e hospedá-lo onde quiser.`,
+          `Depois dos ${pricing.hostingMonths} meses, manter o site no ar custa ${formatBRL(pricing.renewalPerYear)} por ano, de forma opcional. Se não houver renovação, o site sai do ar, e você pode baixá-lo antes.`,
+          `Conectar um domínio próprio custa ${formatBRL(pricing.customDomain)}. O registro do domínio é feito e pago por você, direto ao registrador.`,
+          `Garantia de ${pricing.guaranteeDays} dias: se não gostar, devolvemos o valor pago.`,
+        ],
+      },
     ],
   },
   {

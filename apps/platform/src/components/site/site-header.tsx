@@ -13,6 +13,7 @@ import { CREATE_HREF, headerLinks } from "./nav";
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const isHome = pathname === "/";
 
   // Navigating closes the phone menu.
   useEffect(() => {
@@ -29,7 +30,7 @@ export function SiteHeader() {
               key={link.href}
               href={link.href}
               aria-current={pathname === link.href ? "page" : undefined}
-              className="text-[0.9375rem] text-ink-soft transition-colors duration-150 hover:text-ink aria-[current=page]:text-ink"
+              className="touch-target text-[0.9375rem] text-ink-soft transition-colors duration-150 hover:text-ink aria-[current=page]:text-ink"
             >
               {link.label}
             </Link>
@@ -37,25 +38,28 @@ export function SiteHeader() {
           <Link
             href="/entrar"
             prefetch={false}
-            className="text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
+            className="touch-target text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
           >
             Entrar
           </Link>
         </nav>
-        <Button
-          asChild
-          size="lg"
-          className="ml-auto h-9 px-4 text-sm sm:h-10 sm:px-5 sm:text-[0.9375rem] md:ml-0"
-        >
-          <Link href={CREATE_HREF} prefetch={false}>
-            Criar meu site
-          </Link>
-        </Button>
+        {/* The home page has its own buttons (at most three); the other pages get one here. */}
+        {!isHome && (
+          <Button
+            asChild
+            size="lg"
+            className="touch-target ml-auto h-9 px-4 text-sm sm:h-10 sm:px-5 sm:text-[0.9375rem] md:ml-0"
+          >
+            <Link href={CREATE_HREF} prefetch={false}>
+              Criar meu site
+            </Link>
+          </Button>
+        )}
         <Button
           type="button"
           variant="ghost"
           size="icon-lg"
-          className="-mr-2 md:hidden"
+          className={cn("touch-target -mr-2 md:hidden", isHome && "ml-auto")}
           aria-label="Abrir menu"
           aria-expanded={open}
           aria-controls="menu-celular"
@@ -115,7 +119,7 @@ function PhoneMenu({ onClose }: { onClose: () => void }) {
           type="button"
           variant="ghost"
           size="icon-lg"
-          className="-mr-2"
+          className="touch-target -mr-2"
           aria-label="Fechar menu"
           onClick={onClose}
         >

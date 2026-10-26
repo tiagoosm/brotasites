@@ -34,7 +34,10 @@ export function WizardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <PreviewToggle value={() => setPreviewOpen(true)}>
-      <div className="grid min-h-dvh lg:grid-cols-[minmax(26rem,30rem)_1fr] xl:grid-cols-[15rem_minmax(26rem,30rem)_1fr]">
+      <div
+        data-wizard
+        className="grid min-h-dvh lg:grid-cols-[minmax(26rem,30rem)_1fr] xl:grid-cols-[15rem_minmax(26rem,30rem)_1fr]"
+      >
         <aside className="sticky top-0 hidden h-dvh flex-col gap-12 border-r border-border px-7 py-8 xl:flex">
           <Brand />
           <SproutProgress current={step} />
@@ -153,7 +156,7 @@ function AccountArea({ step, compact = false }: { step: FormStepSlug; compact?: 
         href={`/entrar?voltar=${encodeURIComponent(here)}`}
         className={
           compact
-            ? "text-[0.8125rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
+            ? "touch-target text-[0.8125rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
             : "rounded-lg border border-dashed border-line-strong p-3 text-[0.8125rem] text-ink-soft transition-colors hover:border-leaf hover:text-ink"
         }
       >
@@ -177,7 +180,7 @@ function AccountArea({ step, compact = false }: { step: FormStepSlug; compact?: 
       {!compact && <span className="truncate">{account.email}</span>}
       <button
         type="submit"
-        className="justify-self-start font-semibold text-leaf-deep underline-offset-4 hover:underline"
+        className="touch-target justify-self-start font-semibold text-leaf-deep underline-offset-4 hover:underline"
       >
         Sair
       </button>

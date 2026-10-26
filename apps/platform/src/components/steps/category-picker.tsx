@@ -42,7 +42,7 @@ export function CategoryPicker({
             key={option.id}
             className={cn(
               chipClass({ checked, invalid }),
-              "cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-leaf",
+              "touch-target cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-leaf",
             )}
           >
             <input

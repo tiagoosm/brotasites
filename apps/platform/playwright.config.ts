@@ -49,7 +49,7 @@ export default defineConfig({
       timeout: 240_000,
     },
     {
-      command: `pnpm exec next build && pnpm exec next start --port ${PORT}`,
+      command: `pnpm run build && pnpm exec next start --port ${PORT}`,
       url: `http://localhost:${PORT}/criar/negocio`,
       env: {
         NEXT_TELEMETRY_DISABLED: "1",
