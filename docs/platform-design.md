@@ -53,12 +53,15 @@ One motion language, defined as tokens in `globals.css` and used everywhere:
 | `--motion-micro` | 180ms | Micro-interactions (150 to 250ms) |
 | `--motion-enter` | 560ms | Section entrances (400 to 700ms) |
 | `--motion-unfurl` | 720ms | A leaf unfurling on the stem |
+| `--motion-word` | 400ms | Each word of a title revealed word by word |
 | `--motion-stagger` | 70ms | Between items entering together |
 | `--motion-shift` / `--motion-blur` | 16px / 3px | How far an entrance travels, and its blur |
 
 Nothing runs over 900ms, except what follows the scroll.
 
 - Section entrances (home page): each element marked `data-reveal` rises 16px with a short fade and blur, once, as it reaches the screen (`motion-reveal.tsx`). The HTML always holds the final content: without JavaScript or with reduced motion nothing is hidden, and only elements below the screen ever wait.
+- Section titles (h2 on the home page): revealed word by word as they reach the screen, once, in at most 600ms in all (`split-words.tsx`). The server writes the whole title, the heading carries it in `aria-label` and the word pieces are `aria-hidden`.
+- Hero: the title stays still (animating it delayed the largest paint by about 0.4s on a simulated phone); the text and the buttons under it rise in once on load.
 - Home page stem: the ink grows with the scroll (CSS scroll-driven animation). When its tip reaches a question, the leaf unfurls and the question's text and picture enter, one after the other, once.
 - Form stem: drawing (stroke-dashoffset, 900ms ease-in-out) and leaf unfurling (700ms ease-out).
 - Question content rises in with a short stagger when the step changes.

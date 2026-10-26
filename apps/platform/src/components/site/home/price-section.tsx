@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { SplitWords } from "@/components/site/split-words";
 import { formatBRL, LEGAL_REVIEW_PENDING, pricing } from "@/config/pricing";
 
 // "Quanto custa": creating is free, publishing is a one-time payment. Every value comes from
@@ -35,13 +36,12 @@ export function PriceSection() {
     <section id="preco" aria-labelledby="preco-titulo" className="scroll-mt-16 bg-table">
       <div className="mx-auto grid max-w-6xl gap-12 px-5 py-24 sm:px-8 sm:py-28 lg:grid-cols-[minmax(0,22rem)_1fr] lg:gap-20">
         <header className="grid content-start gap-4">
-          <h2
-            data-reveal=""
+          <SplitWords
+            as="h2"
             id="preco-titulo"
             className="font-display text-[2.25rem] leading-[1.08] sm:text-[2.75rem]"
-          >
-            Quanto custa
-          </h2>
+            segments={[{ text: "Quanto custa" }]}
+          />
           <p data-reveal="" className="text-[1.0625rem] text-ink-soft">
             Criar, editar e ver a prévia é grátis. Você só paga se quiser colocar o site no ar.
           </p>

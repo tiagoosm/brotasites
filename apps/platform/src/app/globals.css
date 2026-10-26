@@ -30,6 +30,7 @@
   --motion-micro: 180ms;
   --motion-enter: 560ms;
   --motion-unfurl: 720ms;
+  --motion-word: 400ms;
   --motion-stagger: 70ms;
   --motion-shift: 16px;
   --motion-blur: 3px;
@@ -304,21 +305,18 @@ html:has([data-wizard]) {
       color 300ms var(--ease-out);
   }
 
-  /* The hero settles in once, on load. */
-  .hero-rise > * {
-    animation: step-enter 800ms var(--ease-out) both;
+  /* The hero settles in once, on load: the text and the buttons rise in under the title.
+     The title itself stays still, so the largest paint is never delayed. */
+  .hero-enter > :not(h1) {
+    animation: enter-rise var(--motion-enter) var(--ease-out) both;
   }
 
-  .hero-rise > :nth-child(2) {
-    animation-delay: 90ms;
+  .hero-enter > :nth-child(2) {
+    animation-delay: 140ms;
   }
 
-  .hero-rise > :nth-child(3) {
-    animation-delay: 180ms;
-  }
-
-  .hero-rise > :nth-child(4) {
-    animation-delay: 270ms;
+  .hero-enter > :nth-child(3) {
+    animation-delay: 210ms;
   }
 
   @supports (animation-timeline: view()) {
@@ -332,6 +330,14 @@ html:has([data-wizard]) {
       animation-timeline: --stem-line;
       animation-range: cover 35vh cover calc(100% - 65vh);
     }
+  }
+}
+
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-shift));
+    filter: blur(var(--motion-blur));
   }
 }
 
@@ -388,6 +394,26 @@ html:has([data-wizard]) {
     transform: scale(0.2) rotate(-28deg);
     transition: none;
   }
+
+  /* Titles revealed word by word (split-words.tsx): each word rises a third of a line. The
+     words are inline blocks, so the title wraps exactly as plain text and never reflows. */
+  [data-reveal="words"][data-entry="waiting"] .word {
+    opacity: 0;
+    transform: translateY(0.3em);
+    filter: blur(2px);
+  }
+
+  [data-reveal="words"][data-entry="done"] .word {
+    transition:
+      opacity var(--motion-word) var(--ease-out),
+      transform var(--motion-word) var(--ease-out),
+      filter var(--motion-word) var(--ease-out);
+    transition-delay: calc(var(--word-index) * var(--word-stagger));
+  }
+}
+
+.word {
+  display: inline-block;
 }
 
 @keyframes caret-blink {

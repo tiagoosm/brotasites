@@ -108,3 +108,104 @@ test("with reduced motion nothing waits or moves", async ({ browser }) => {
   expect(moving).toBe(0);
   await context.close();
 });
+
+// Titles revealed word by word (split-words.tsx).
+
+const splitTitles = [
+  "Sete perguntas, uma de cada vez.",
+  "O que todo site tem",
+  "Quanto custa",
+  "Dúvidas",
+  "Seu site está a sete perguntas de distância.",
+];
+
+test("screen readers get each split title whole, once", async ({ page }) => {
+  await page.goto("/");
+  for (const name of splitTitles) {
+    const heading = page.getByRole("heading", { name, exact: true });
+    await expect(heading, name).toHaveCount(1);
+    await expect(heading, name).toHaveAccessibleName(name);
+    expect(await heading.locator('.word:not([aria-hidden="true"])').count(), name).toBe(0);
+  }
+});
+
+test("split titles wrap exactly like plain text", async ({ page }) => {
+  await page.goto("/");
+  const differences = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>("h2[aria-label]")]
+      .map((heading) => {
+        const plain = heading.cloneNode(false) as HTMLElement;
+        plain.removeAttribute("id");
+        // The same text, unsplit, with the same second line as the original.
+        for (const part of heading.children) {
+          const span = document.createElement("span");
+          span.className = part.className;
+          span.textContent = part.textContent;
+          plain.append(span);
+        }
+        plain.style.cssText = `position:absolute;visibility:hidden;width:${heading.getBoundingClientRect().width}px`;
+        heading.after(plain);
+        const height = (element: HTMLElement) => Math.round(element.getBoundingClientRect().height);
+        const result = {
+          title: heading.getAttribute("aria-label"),
+          split: height(heading),
+          plain: height(plain),
+        };
+        plain.remove();
+        return result;
+      })
+      .filter((result) => result.split !== result.plain),
+  );
+  expect(differences).toEqual([]);
+});
+
+test("the hero title stays still, so the largest paint is not delayed", async ({ page }) => {
+  await page.goto("/");
+  const title = page.getByRole("heading", { level: 1 });
+  await expect(title).toHaveText("Sete perguntas e seu site pronto.");
+  expect(await title.evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(
+    0,
+  );
+  await expect(title).toHaveCSS("opacity", "1");
+});
+
+test("a section title enters word by word, in at most 600ms, once", async ({ page }) => {
+  await page.goto("/");
+  const title = page.locator("#recursos-titulo");
+  await expect(title).toHaveAttribute("data-entry", "waiting");
+  await title.scrollIntoViewIfNeeded();
+  await expect(title).toHaveAttribute("data-entry", "done");
+  const end = await title.locator(".word").evaluateAll((words) =>
+    Math.max(
+      ...words.map((word) => {
+        const style = getComputedStyle(word);
+        return (
+          Number.parseFloat(style.transitionDelay) * 1000 +
+          Number.parseFloat(style.transitionDuration) * 1000
+        );
+      }),
+    ),
+  );
+  expect(end).toBeLessThanOrEqual(600);
+  await settleEntrances(page);
+  await expect(title.locator(".word").last()).toHaveCSS("opacity", "1");
+});
+
+test("with reduced motion or without JavaScript every word is in place", async ({ browser }) => {
+  for (const options of [{ reducedMotion: "reduce" as const }, { javaScriptEnabled: false }]) {
+    const context = await browser.newContext(options);
+    const page = await context.newPage();
+    await page.goto("/");
+    const out = await page.locator(".word").evaluateAll(
+      (words) =>
+        words.filter((word) => {
+          const style = getComputedStyle(word);
+          return (
+            style.opacity !== "1" || style.transform !== "none" || word.getAnimations().length > 0
+          );
+        }).length,
+    );
+    expect(out, JSON.stringify(options)).toBe(0);
+    await context.close();
+  }
+});

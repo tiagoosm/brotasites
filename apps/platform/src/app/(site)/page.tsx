@@ -6,6 +6,7 @@ import { HeroDemo } from "@/components/site/home/hero-demo";
 import { HeroRays } from "@/components/site/home/hero-rays";
 import { PriceSection } from "@/components/site/home/price-section";
 import { CREATE_HREF } from "@/components/site/nav";
+import { SplitWords } from "@/components/site/split-words";
 import { Stem } from "@/components/site/stem/stem";
 import { Button } from "@/components/ui/button";
 import { mainFaqs } from "@/content/faq";
@@ -76,7 +77,7 @@ export default function HomePage() {
       <div className="relative isolate overflow-hidden">
         <HeroRays />
         <section className="mx-auto grid max-w-6xl items-center gap-x-14 gap-y-24 px-5 pt-14 pb-28 sm:px-8 sm:pt-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,30rem)] lg:pb-36">
-          <div className="hero-rise grid gap-7">
+          <div className="hero-enter grid gap-7">
             <h1 className="font-display text-[3.25rem] leading-[0.98] tracking-[-0.025em] sm:text-[4.5rem] lg:text-[4rem] xl:text-[4.5rem]">
               Sete perguntas <span className="block text-stem">e seu site pronto.</span>
             </h1>
@@ -117,13 +118,12 @@ export default function HomePage() {
             <p data-reveal="" className="tag text-stem">
               Como funciona
             </p>
-            <h2
-              data-reveal=""
+            <SplitWords
+              as="h2"
               id="como-funciona-titulo"
               className="max-w-[16ch] font-display text-[2.5rem] leading-[1.05] sm:text-[3.5rem]"
-            >
-              Sete perguntas, uma de cada vez.
-            </h2>
+              segments={[{ text: "Sete perguntas, uma de cada vez." }]}
+            />
             <p data-reveal="" className="max-w-[46ch] text-[1.125rem] text-ink-soft">
               Cada resposta aparece na prévia na hora. Você pode voltar e mudar o que quiser antes
               de publicar.
@@ -141,13 +141,12 @@ export default function HomePage() {
         className="mx-auto grid max-w-6xl gap-12 px-5 py-24 sm:px-8 sm:py-32 lg:grid-cols-[minmax(0,22rem)_1fr] lg:gap-20"
       >
         <header className="grid content-start gap-4">
-          <h2
-            data-reveal=""
+          <SplitWords
+            as="h2"
             id="recursos-titulo"
             className="font-display text-[2.25rem] leading-[1.08] sm:text-[2.75rem]"
-          >
-            O que todo site tem
-          </h2>
+            segments={[{ text: "O que todo site tem" }]}
+          />
           <p data-reveal="" className="text-[1.0625rem] text-ink-soft">
             Você não precisa pedir nem configurar. Vem em todo site, em todos os modelos.
           </p>
@@ -176,13 +175,12 @@ export default function HomePage() {
         className="scroll-mt-16 mx-auto grid max-w-6xl gap-12 px-5 py-24 sm:px-8 sm:py-32 lg:grid-cols-[minmax(0,22rem)_1fr] lg:gap-20"
       >
         <header className="grid content-start gap-4">
-          <h2
-            data-reveal=""
+          <SplitWords
+            as="h2"
             id="duvidas-titulo"
             className="font-display text-[2.25rem] leading-[1.08] sm:text-[2.75rem]"
-          >
-            Dúvidas
-          </h2>
+            segments={[{ text: "Dúvidas" }]}
+          />
           <Link
             href="/ajuda"
             data-reveal=""
@@ -201,12 +199,12 @@ export default function HomePage() {
             <path d="M12 13C12 8 8.5 5 3 5c0 5.5 3.5 8 9 8Z" fill="currentColor" />
             <path d="M12 11c0-4.5 3-7.5 9-7.5 0 5-3 7.5-9 7.5Z" fill="currentColor" opacity=".65" />
           </svg>
-          <h2
+          <SplitWords
+            as="h2"
             id="final-titulo"
             className="font-display text-[2.5rem] leading-[1.05] sm:text-[3.5rem]"
-          >
-            Seu site está a sete perguntas de distância.
-          </h2>
+            segments={[{ text: "Seu site está a sete perguntas de distância." }]}
+          />
           <p className="max-w-[40ch] text-[1.0625rem] text-ink-soft">
             Comece agora e veja a prévia na hora. Você só publica quando gostar do resultado.
           </p>
