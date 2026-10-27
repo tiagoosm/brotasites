@@ -62,6 +62,7 @@ Nothing runs over 900ms, except what follows the scroll.
 - Section entrances (home page): each element marked `data-reveal` rises 16px with a short fade and blur, once, as it reaches the screen (`motion-reveal.tsx`). The HTML always holds the final content: without JavaScript or with reduced motion nothing is hidden, and only elements below the screen ever wait.
 - Section titles (h2 on the home page): revealed word by word as they reach the screen, once, in at most 600ms in all (`split-words.tsx`). The server writes the whole title, the heading carries it in `aria-label` and the word pieces are `aria-hidden`.
 - Hero: the title stays still (animating it delayed the largest paint by about 0.4s on a simulated phone); the text and the buttons under it rise in once on load.
+- Example frame ("Veja um site de verdade", right under the hero): the real example site in a browser frame. On screens wider than 768px it starts scaled down to about the text column and grows to full size with the scroll (CSS scroll-driven, never holding the scroll); phones, reduced motion and browsers without support get the full-size frame. The page inside loads only when the frame is about to show.
 - Home page stem: the ink grows with the scroll (CSS scroll-driven animation). When its tip reaches a question, the leaf unfurls and the question's text and picture enter, one after the other, once.
 - Form stem: drawing (stroke-dashoffset, 900ms ease-in-out) and leaf unfurling (700ms ease-out).
 - Question content rises in with a short stagger when the step changes.

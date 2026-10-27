@@ -136,13 +136,8 @@ test("split titles wrap exactly like plain text", async ({ page }) => {
       .map((heading) => {
         const plain = heading.cloneNode(false) as HTMLElement;
         plain.removeAttribute("id");
-        // The same text, unsplit, with the same second line as the original.
-        for (const part of heading.children) {
-          const span = document.createElement("span");
-          span.className = part.className;
-          span.textContent = part.textContent;
-          plain.append(span);
-        }
+        // The same text, unsplit.
+        plain.textContent = heading.textContent;
         plain.style.cssText = `position:absolute;visibility:hidden;width:${heading.getBoundingClientRect().width}px`;
         heading.after(plain);
         const height = (element: HTMLElement) => Math.round(element.getBoundingClientRect().height);

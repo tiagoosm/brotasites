@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FaqAccordion } from "@/components/site/faq-accordion";
+import { ExampleShowcase } from "@/components/site/home/example-showcase";
 import { HeroDemo } from "@/components/site/home/hero-demo";
 import { HeroRays } from "@/components/site/home/hero-rays";
 import { PriceSection } from "@/components/site/home/price-section";
@@ -107,6 +108,8 @@ export default function HomePage() {
           <HeroDemo />
         </section>
       </div>
+
+      <ExampleShowcase />
 
       <section
         id="como-funciona"

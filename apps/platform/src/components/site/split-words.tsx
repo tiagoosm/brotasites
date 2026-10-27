@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+
 // A title revealed word by word. The server writes every word, so the title is complete
 // and wraps the same without JavaScript. Screen readers get the whole title once, from
 // aria-label; the word pieces are hidden from them. The title enters once, when it reaches
@@ -35,25 +37,31 @@ export function SplitWords({ as: Tag, segments, id, className }: SplitWordsProps
       style={{ "--word-stagger": `${Math.round(stagger)}ms` } as React.CSSProperties}
     >
       {segments.map((segment, s) => {
-        const pieces = segment.text.split(/\s+/).filter(Boolean);
-        const content = pieces.map((word, w) => {
-          const style = { "--word-index": index++ } as React.CSSProperties;
-          return (
+        // One element per word (a short title is hydrated with the page, so every node counts).
+        const content = segment.text
+          .split(/\s+/)
+          .filter(Boolean)
+          .map((word, w) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: the words of a fixed title
-            <span key={w}>
-              {w > 0 && " "}
-              <span aria-hidden="true" className="word" style={style}>
+            <Fragment key={w}>
+              {(s > 0 || w > 0) && " "}
+              <span
+                aria-hidden="true"
+                className="word"
+                style={{ "--word-index": index++ } as React.CSSProperties}
+              >
                 {word}
               </span>
-            </span>
-          );
-        });
-        return (
+            </Fragment>
+          ));
+        return segment.className ? (
           // biome-ignore lint/suspicious/noArrayIndexKey: the parts of a fixed title
           <span key={s} className={segment.className}>
-            {s > 0 && " "}
             {content}
           </span>
+        ) : (
+          // biome-ignore lint/suspicious/noArrayIndexKey: the parts of a fixed title
+          <Fragment key={s}>{content}</Fragment>
         );
       })}
     </Tag>
