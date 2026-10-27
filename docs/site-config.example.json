@@ -52,7 +52,8 @@
     "identity": {
       "personality": "acolhedor",
       "heroVariant": "food-hero-arch",
-      "fontPair": "serif-soft-grotesk",
+      "fontPair": "fraunces-manrope",
+      "typeScale": "gentle",
       "palette": {
         "background": "#FFFBEB",
         "surface": "#FEF3C7",
@@ -63,7 +64,7 @@
         "accent": "#78350F"
       },
       "shape": "rounded",
-      "ornamentSet": "wheat",
+      "ornamentSet": "organic",
       "pattern": "grain-dots",
       "imageTreatment": "offset-frame",
       "dividerStyle": "wave-soft",

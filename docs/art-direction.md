@@ -33,7 +33,11 @@ The references listed below are protected third-party work. NEVER copy their lay
 
 ## Typography
 
-Locally hosted (woff2) open-license fonts, with the license checked in the official repository and recorded in `THIRD_PARTY_LICENSES.md`. Candidates (licenses to confirm): Playfair Display, Fraunces, Instrument Serif, DM Serif Display, Cormorant Garamond, Young Serif, Bricolage Grotesque, Manrope, DM Sans, Space Grotesk, Fredoka, Baloo 2, Caveat, Kalam. Compatible font pairs defined in the catalog. Latin subset with the accents Portuguese needs.
+Locally hosted (woff2) open-license fonts, with the license checked in the official repository and recorded in `THIRD_PARTY_LICENSES.md`. Latin subset (Basic Latin and Latin-1, which cover every Portuguese accent).
+
+Chosen in E3, all SIL OFL 1.1: Fraunces, Instrument Serif, DM Serif Display, Cormorant Garamond and Young Serif (serif titles); Bricolage Grotesque and Space Grotesk (sans titles); Fredoka and Baloo 2 (rounded titles); Manrope and DM Sans (text); Caveat and Kalam (handwritten labels). Playfair Display was a candidate but its name is a Reserved Font Name, and the OFL treats a subset as a modified version, so it was left out.
+
+Font pairs (title + text + handwritten label) and the personalities each suits are in `packages/catalog/src/fonts.ts`. A title highlights a word in italics only when the title font has a real italic; otherwise it uses color or underline, since browsers fake a slanted italic.
 
 ## First families (this round): food, beauty, events and creatives
 
@@ -74,3 +78,18 @@ Review cards with stars, metrics ("12m+", "98%"), third-party logos, award and c
 ## Targets this round
 
 Per family: 4 heroes. Shared sections: 3 variants each (sobre, servicos, como-funciona, diferenciais, galeria, depoimentos, faq, cta-final, contato). Before mass production, a taste calibration with the owner (see E6 in `PLAN.md`).
+
+## The catalog in code (E3)
+
+`packages/catalog` holds the tokens; the engine (E4) picks among them and the templates (E5, E6) read them as CSS variables.
+
+- **Grammar** (`grammar.ts`): per personality, the weighted lists of type scales, shapes, patterns, dividers, ornament sets, photo treatments, rhythms and mark styles the engine may draw from.
+- **Palettes** (`palette.ts`): OKLCH recipes per personality, light and dark where they fit, with the hue from the brand color or the seed. Every palette is forced to AA: text 7:1 when reachable and never under 4.5:1, muted text and button text 4.5:1, buttons and ornaments 3:1 against the page. The "Fiel à marca" direction keeps the brand color exactly when it reaches 3:1 on the background.
+- **Type scales** (`scale.ts`): 4 modular scales with fluid `clamp()` sizes from 360 to 1280 px, a large title-to-text jump and a display step for the giant name.
+- **Shapes, patterns, rhythms, marks, motion**: radius sets; CSS-only patterns; section tone sequences (base, surface, inverse, brand, all pairs already AA); monogram styles with initials from the meaningful words of the name; the single motion preset of `default-motion.md`.
+- **Dividers and ornaments** (`dividers.ts`, `ornaments.ts`): inline SVG built from geometry (seals, stars, sparkles, flowers, blobs, a hand-drawn arrow, waves, zigzags, drips, arches, thin grids, a dotted thread). Inline because the sites' CSP (`img-src 'self'`) blocks `data:` URIs. They carry no text: a fact such as "Desde 1998" is written over a seal by the template, only when the client gave it.
+- **Photo treatments** (`treatments.ts`): offset frame, color block, polaroid, perforated stamp, tilt, duotone, grain, arch and circle masks, in plain CSS. The masks need a good photo.
+- **Gradient backgrounds** (`backgrounds.ts`): seeded color spots with grain, every color checked against the text color. The grain is a small SVG file (`GRAIN_SVG`) the generator writes into each site.
+- **Specimen**: `pnpm --filter @brotasites/catalog specimen` writes `packages/catalog/dist/specimen/index.html` with every font pair, palettes, ornaments, dividers and patterns.
+
+Hero and section variants are not in the catalog yet: they arrive with the variant factory (E6).

@@ -53,3 +53,31 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Fonts of client sites
+
+Client sites use these font families, hosted with each site as woff2 files (Latin subset). All are licensed under the SIL Open Font License 1.1 (https://openfontlicense.org), which allows using, embedding and redistributing them, including commercially, as long as the fonts are not sold by themselves and the license goes with them. Each family's license text is in `packages/catalog/fonts/<id>/OFL.txt` and must be copied into every site and every static export next to the font files (the generator does this from E5 on).
+
+Licenses checked on 2026-10-27 in the Google Fonts repository (`github.com/google/fonts`, `ofl/<family>/METADATA.pb`: `license: "OFL"`). Files taken from the Fontsource npm packages 5.3.0 (`@fontsource-variable/<id>` or `@fontsource/<id>`), which repackage the Google Fonts binaries and ship the same OFL text.
+
+| Family | Source repository | Copyright |
+| --- | --- | --- |
+| Fraunces | https://github.com/undercasetype/Fraunces | 2020 The Fraunces Project Authors |
+| Instrument Serif | https://github.com/Instrument/instrument-serif | 2022 The Instrument Serif Project Authors |
+| DM Serif Display | https://github.com/googlefonts/dm-fonts | 2014-2017 Adobe Systems Incorporated, with Reserved Font Name "Source"; 2019 Google LLC |
+| Cormorant Garamond | https://github.com/CatharsisFonts/Cormorant | 2015 The Cormorant Project Authors |
+| Young Serif | https://github.com/noirblancrouge/YoungSerif | 2023 The Young Serif Project Authors |
+| Bricolage Grotesque | https://github.com/ateliertriay/bricolage | 2022 The Bricolage Grotesque Project Authors |
+| Space Grotesk | https://github.com/floriankarsten/space-grotesk | 2020 The Space Grotesk Project Authors |
+| Manrope | https://github.com/googlefonts/manrope | 2019 The Manrope Project Authors |
+| DM Sans | https://github.com/googlefonts/dm-fonts | 2014 The DM Sans Project Authors |
+| Fredoka | https://github.com/hafontia-zz/Fredoka-One | 2016 The Fredoka Project Authors |
+| Baloo 2 | https://github.com/yanone/Baloo2-Variable | 2019 The Baloo 2 Project Authors |
+| Caveat | https://github.com/googlefonts/caveat | 2014 The Caveat Project Authors |
+| Kalam | https://github.com/itfoundry/kalam | 2014 Indian Type Foundry |
+
+Rules for this project:
+
+- Keep `OFL.txt` next to the font files wherever they are shipped (sites and exports).
+- Do not add fonts whose Reserved Font Name is their own name (Playfair Display, for example): the OFL treats a subset as a modified version, and a modified version may not use a reserved name. DM Serif Display reserves only "Source", which it does not use.
+- Never sell the fonts by themselves.
