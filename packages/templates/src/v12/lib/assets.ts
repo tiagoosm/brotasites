@@ -18,3 +18,11 @@ for (const [key, module] of Object.entries(modules)) {
 export function findAsset(assetId: string | null | undefined): ImageMetadata | undefined {
   return assetId ? byId.get(assetId.toLowerCase()) : undefined;
 }
+
+/**
+ * A photo good enough to fill a wide frame: at least 1200 px on its long side. Smaller ones are
+ * "weak" and variants show them smaller (a framed print instead of a full-width strip).
+ */
+export function isStrongPhoto(image: ImageMetadata | undefined): boolean {
+  return Boolean(image && Math.max(image.width, image.height) >= 1200);
+}

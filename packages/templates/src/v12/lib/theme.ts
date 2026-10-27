@@ -76,7 +76,9 @@ export function resolveTheme(config: SiteConfig): Theme {
     ...Object.entries(tones).map(([tone, vars]) => `.tone-${tone}{${vars}}`),
     pattern.background === "none" ? "" : `.has-pattern{background:${pattern.background},var(--bg)}`,
     `.gradient-bg{background:${gradient.background}}.gradient-bg::after{${gradient.grain}}`,
+    // Every treatment ships (about 2 KB): some variants frame their photos their own way.
     treatmentCss(treatment),
+    ...imageTreatments.filter((item) => item.id !== treatment.id).map((item) => item.css),
   ].join("\n");
 
   return {
