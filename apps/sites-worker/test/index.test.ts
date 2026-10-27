@@ -2,13 +2,16 @@ import { describe, expect, it } from "vitest";
 import worker, { candidateKeys, type Env, siteFromHost } from "../src/index";
 
 /** An in-memory stand-in for the R2 bucket binding. */
-function bucket(files: Record<string, { body: string; type?: string }>): R2Bucket {
+function bucket(
+  files: Record<string, { body: string; type?: string; customMetadata?: Record<string, string> }>,
+): R2Bucket {
   return {
     async get(key: string) {
       const file = files[key];
       if (!file) return null;
       return {
         httpEtag: `"${key.length}"`,
+        customMetadata: file.customMetadata,
         body: new Response(file.body).body,
         text: async () => file.body,
         writeHttpMetadata(headers: Headers) {
@@ -27,6 +30,12 @@ const env: Env = {
     "sites/padaria-do-ze/d2/index.html": { body: "<h1>Padaria do Zé</h1>", type: "text/html" },
     "sites/padaria-do-ze/d2/_astro/site.abc.css": { body: "body{}", type: "text/css" },
     "sites/padaria-do-ze/d2/cardapio/index.html": { body: "cardápio", type: "text/html" },
+    "sites/oficina-nova/current": { body: "v1" },
+    "sites/oficina-nova/v1/index.html": {
+      body: "<h1>Oficina</h1>",
+      type: "text/html",
+      customMetadata: { csp: "strict" },
+    },
   }),
 };
 
@@ -129,5 +138,24 @@ describe("test address (workers.dev)", () => {
     expect((await get(`${TEST}/outro-site/`)).status).toBe(404);
     const bad = await get(`${TEST}/_astro/x.css`, { headers: { cookie: "brotasites_site=../x" } });
     expect(bad.status).toBe(404);
+  });
+});
+
+describe("security headers on responses", () => {
+  it("send the strict policy for 1.2 sites and the legacy one for 1.1 sites", async () => {
+    const strict = await get("https://oficina-nova.brotasites.com/");
+    expect(strict.status).toBe(200);
+    expect(strict.headers.get("content-security-policy")).toContain("script-src 'self'");
+    expect(strict.headers.get("content-security-policy")).not.toContain("unsafe-inline");
+    const legacy = await get("https://padaria-do-ze.brotasites.com/");
+    expect(legacy.headers.get("content-security-policy")).toContain("'unsafe-inline'");
+    expect(legacy.headers.get("permissions-policy")).toContain("camera=()");
+  });
+
+  it("send them on the not-found page too", async () => {
+    const response = await get("https://padaria-do-ze.brotasites.com/nao-existe.png");
+    expect(response.status).toBe(404);
+    expect(response.headers.get("content-security-policy")).toContain("script-src 'none'");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
   });
 });

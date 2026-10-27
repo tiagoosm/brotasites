@@ -14,10 +14,49 @@ export const catalogIdSchema = z
 /** Uploaded files (logo, photos) are referenced by their id, never by a URL. */
 export const assetIdSchema = z.uuid("Use a referência de um arquivo enviado.");
 
-export const imageSchema = z.strictObject({
-  assetId: assetIdSchema,
-  alt: z.string().trim().max(160, "Descreva a foto em até 160 caracteres."),
-});
+export const imageSchema = z
+  .strictObject({
+    assetId: assetIdSchema,
+    alt: z.string().trim().max(160, "Descreva a foto em até 160 caracteres."),
+    /** The client says the photo shows the face of a child or teenager. */
+    showsMinor: z.boolean().optional(),
+    /** The client confirms the guardians authorized it (docs/categories.md, Minors). */
+    minorConsent: z.literal(true).optional(),
+  })
+  .refine((image) => !image.showsMinor || image.minorConsent === true, {
+    path: ["minorConsent"],
+    error: "Confirme que os responsáveis autorizaram o uso da foto.",
+  });
+
+/**
+ * Removes characters that can disguise text: control characters (line breaks stay) and the
+ * bidirectional overrides used to reverse how a name or link reads.
+ */
+export function cleanText(text: string): string {
+  const hidden = (code: number) =>
+    (code <= 0x1f && code !== 0x0a) ||
+    (code >= 0x7f && code <= 0x9f) ||
+    (code >= 0x202a && code <= 0x202e) ||
+    (code >= 0x2066 && code <= 0x2069) ||
+    code === 0x200e ||
+    code === 0x200f;
+  return Array.from(text.normalize("NFC"))
+    .filter((char) => !hidden(char.codePointAt(0) ?? 0))
+    .join("");
+}
+
+/**
+ * True for the only links a client site may have: https, tel: with digits, mailto: and
+ * in-page anchors (docs/security.md). Everything else (javascript:, data:, http:) is false.
+ */
+export function isSafeHref(href: string): boolean {
+  return (
+    /^https:\/\/[^\s"'<>]+$/i.test(href) ||
+    /^tel:\+?[0-9]{8,15}$/.test(href) ||
+    /^mailto:[^\s"'<>:/]+@[^\s"'<>/]+$/i.test(href) ||
+    /^#[a-z][a-z0-9-]*$/.test(href)
+  );
+}
 
 // 3 to 40 characters: lowercase letters, digits and hyphens, not starting or ending with a
 // hyphen. A double hyphen is refused, which also refuses punycode ("xn--") look-alikes.

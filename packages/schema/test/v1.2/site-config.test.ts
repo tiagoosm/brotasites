@@ -387,3 +387,23 @@ describe("site config 1.2", () => {
     });
   });
 });
+
+describe("photos of minors", () => {
+  it("need the guardians' authorization", () => {
+    expect(
+      issuesAfter((c) => {
+        const hero = c.sections.find((s) => s.id === "hero");
+        if (hero?.id === "hero" && hero.content.image) hero.content.image.showsMinor = true;
+      }),
+    ).toEqual(["sections.0.content.image.minorConsent"]);
+    expect(
+      issuesAfter((c) => {
+        const hero = c.sections.find((s) => s.id === "hero");
+        if (hero?.id === "hero" && hero.content.image) {
+          hero.content.image.showsMinor = true;
+          hero.content.image.minorConsent = true;
+        }
+      }),
+    ).toEqual([]);
+  });
+});

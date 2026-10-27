@@ -11,6 +11,8 @@
 // A new deploy is uploaded in full before `current` changes, so visitors never see a
 // half-updated site.
 
+import { policyFor, securityHeaders } from "./headers";
+
 export interface Env {
   SITES: R2Bucket;
   SITES_DOMAIN: string;
@@ -19,13 +21,6 @@ export interface Env {
 const SUBDOMAIN = /^[a-z0-9](?:[a-z0-9-]{1,38})[a-z0-9]$/;
 const TEST_HOST_SUFFIX = ".workers.dev";
 const SITE_COOKIE = "brotasites_site";
-
-const securityHeaders: Record<string, string> = {
-  "x-content-type-options": "nosniff",
-  "referrer-policy": "strict-origin-when-cross-origin",
-  "x-frame-options": "DENY",
-  "strict-transport-security": "max-age=31536000",
-};
 
 /** The subdomain of a request host, or null when the host is not a client site. */
 export function siteFromHost(host: string, domain: string): string | null {
@@ -73,7 +68,7 @@ function page(status: number, title: string, text: string): Response {
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
-      ...securityHeaders,
+      ...securityHeaders("page"),
     },
   });
 }
@@ -99,7 +94,7 @@ async function serveFile(
   for (const key of keys) {
     const object = await env.SITES.get(`sites/${subdomain}/${deploy}/${key}`);
     if (!object) continue;
-    const headers = new Headers(securityHeaders);
+    const headers = new Headers(securityHeaders(policyFor(object.customMetadata)));
     object.writeHttpMetadata(headers);
     headers.set("etag", object.httpEtag);
     headers.set("cache-control", cacheControl(key));

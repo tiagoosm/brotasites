@@ -778,6 +778,13 @@
                           "alt": {
                             "type": "string",
                             "maxLength": 160
+                          },
+                          "showsMinor": {
+                            "type": "boolean"
+                          },
+                          "minorConsent": {
+                            "type": "boolean",
+                            "const": true
                           }
                         },
                         "required": [
@@ -881,6 +888,13 @@
                           "alt": {
                             "type": "string",
                             "maxLength": 160
+                          },
+                          "showsMinor": {
+                            "type": "boolean"
+                          },
+                          "minorConsent": {
+                            "type": "boolean",
+                            "const": true
                           }
                         },
                         "required": [
@@ -1149,6 +1163,13 @@
                         "alt": {
                           "type": "string",
                           "maxLength": 160
+                        },
+                        "showsMinor": {
+                          "type": "boolean"
+                        },
+                        "minorConsent": {
+                          "type": "boolean",
+                          "const": true
                         }
                       },
                       "required": [

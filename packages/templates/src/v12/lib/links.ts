@@ -1,4 +1,4 @@
-import type { Cta, SiteConfig } from "@brotasites/schema/v1.2";
+import { type Cta, isSafeHref, type SiteConfig } from "@brotasites/schema/v1.2";
 
 // Every link a 1.2 site has is built here from the business contact. Only https, wa.me, tel: and
 // mailto: links exist (docs/security.md); the config itself never holds a URL.
@@ -10,14 +10,19 @@ export interface Link {
 
 type Business = SiteConfig["business"];
 
-export const whatsappHref = (number: string) => `https://wa.me/${number}`;
+/** Every link goes through this: anything that is not an allowed link becomes "#". */
+export function safe(href: string): string {
+  return isSafeHref(href) ? href : "#";
+}
+
+export const whatsappHref = (number: string) => safe(`https://wa.me/${number}`);
 
 /** tel: link with the country code (numbers are stored as digits, 55 optional). */
 export function phoneHref(phone: string): string {
-  return `tel:+${phone.length <= 11 ? `55${phone}` : phone}`;
+  return safe(`tel:+${phone.length <= 11 ? `55${phone}` : phone}`);
 }
 
-export const emailHref = (email: string) => `mailto:${email}`;
+export const emailHref = (email: string) => safe(`mailto:${email}`);
 
 /** One line of the address, for display and for the "Como chegar" search. */
 export function addressLine(business: Business): string {
@@ -29,13 +34,13 @@ export function addressLine(business: Business): string {
 /** "Como chegar": a map search for the address, opened in the visitor's maps app or site. */
 export function directionsHref(business: Business): string {
   const query = `${business.name}, ${addressLine(business)}`;
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  return safe(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`);
 }
 
 export const instagramHref = (user: string) =>
-  `https://www.instagram.com/${encodeURIComponent(user)}`;
+  safe(`https://www.instagram.com/${encodeURIComponent(user)}`);
 export const facebookHref = (page: string) =>
-  `https://www.facebook.com/${encodeURIComponent(page)}`;
+  safe(`https://www.facebook.com/${encodeURIComponent(page)}`);
 
 /** The main way to reach the business: WhatsApp, else phone, else email, else the contact section. */
 export function primaryContact(business: Business): Link {
