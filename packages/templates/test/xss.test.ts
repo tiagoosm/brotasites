@@ -66,8 +66,12 @@ beforeAll(() => {
   }
   writeFileSync(join(dir, "site-config.json"), JSON.stringify(config));
   cpSync(join(fixture, "assets"), join(dir, "assets"), { recursive: true });
-  const build = spawnSync("pnpm", ["exec", "astro", "build", "--outDir", join(dir, "dist")], {
-    cwd: root,
+  // Run from the temporary directory: with an outDir outside its working directory Astro
+  // writes its build scratch to `<cwd>/.astro`, shared with any other build running then.
+  const astro = join(root, "node_modules/astro/bin/astro.mjs");
+  const args = [astro, "build", "--root", root, "--outDir", join(dir, "dist")];
+  const build = spawnSync(process.execPath, args, {
+    cwd: dir,
     env: {
       ...process.env,
       BROTASITES_CONFIG: join(dir, "site-config.json"),

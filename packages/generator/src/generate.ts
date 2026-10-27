@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { rm, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { templatesRoot } from "@brotasites/templates";
@@ -37,8 +37,12 @@ function runAstroBuild(
   base?: string,
 ): Promise<{ ok: boolean; log: string }> {
   return new Promise((resolvePromise) => {
-    const child = spawn(process.execPath, [astroBin(), "build", "--outDir", outDir], {
-      cwd: templatesRoot,
+    // The working directory is the output's parent, not the templates package: with an outDir
+    // outside its working directory Astro writes its build scratch to `<cwd>/.astro`, which two
+    // builds at the same time would share and break.
+    const args = [astroBin(), "build", "--root", templatesRoot, "--outDir", outDir];
+    const child = spawn(process.execPath, args, {
+      cwd: dirname(outDir),
       env: {
         ...process.env,
         BROTASITES_CONFIG: configPath,
@@ -72,6 +76,7 @@ export async function generateSite(options: GenerateOptions): Promise<GenerateRe
 
   // With downloaded photos, the build reads a copy of the config that points to them.
   const resolvedPath = join(baseDir, RESOLVED_CONFIG);
+  await mkdir(dirname(outDir), { recursive: true });
   const usesCopy = remote.downloaded > 0 || remote.warnings.length > 0;
   if (usesCopy) await writeFile(resolvedPath, JSON.stringify(remote.config, null, 2));
   try {
