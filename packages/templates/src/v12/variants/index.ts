@@ -6,8 +6,11 @@ import DepoimentosCards from "./DepoimentosCards.astro";
 import DiferenciaisGrid from "./DiferenciaisGrid.astro";
 import FaqAccordion from "./FaqAccordion.astro";
 import GaleriaMosaic from "./GaleriaMosaic.astro";
+import HeroFeast from "./HeroFeast.astro";
 import HeroSplit from "./HeroSplit.astro";
 import ServicosCards from "./ServicosCards.astro";
+import ServicosMenu from "./ServicosMenu.astro";
+import SobreManifesto from "./SobreManifesto.astro";
 import SobreSplit from "./SobreSplit.astro";
 
 // Variant id (catalog) -> component. Every id in the catalog's variant list must be here; a test
@@ -18,8 +21,11 @@ type Component = (props: any) => any;
 
 export const variantComponents: Record<string, Component> = {
   "hero-split": HeroSplit,
+  "hero-feast": HeroFeast,
   "sobre-split": SobreSplit,
+  "sobre-manifesto": SobreManifesto,
   "servicos-cards": ServicosCards,
+  "servicos-menu": ServicosMenu,
   "como-funciona-steps": ComoFuncionaSteps,
   "diferenciais-grid": DiferenciaisGrid,
   "galeria-mosaic": GaleriaMosaic,

@@ -1,0 +1,107 @@
+---
+// sobre-manifesto: the story set large, lighting up word by word, beside a fact the client gave
+// (the founding year as a big counted number) or an ornament. A photo, when there is one, sits
+// below as a tilted print, smaller when it is weak.
+import Ornament from "../components/Ornament.astro";
+import Photo from "../components/Photo.astro";
+import SectionShell from "../components/SectionShell.astro";
+import Words from "../components/Words.astro";
+import { findAsset, isStrongPhoto } from "../lib/assets";
+import type { VariantProps } from "./types";
+
+type Props = VariantProps<"sobre">;
+const { config, theme, content, tone, previousTone, divider, index } = Astro.props;
+const image = findAsset(content.image?.assetId);
+const year = config.business.foundedYear;
+// A long story reads better smaller.
+const long = content.text.length > 320;
+---
+
+<SectionShell id="sobre" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Nossa história">
+  <div class="manifesto">
+    <div class="manifesto-side">
+      {
+        year ? (
+          <p class="manifesto-year">
+            <span class="manifesto-year-label">desde</span>
+            <span data-anim="count">{year}</span>
+          </p>
+        ) : (
+          <span class="manifesto-ornament" data-anim="float">
+            <Ornament set={theme.identity.ornamentSet} index={index + 1} seed={config.design.seed} />
+          </span>
+        )
+      }
+    </div>
+    <div class="manifesto-body">
+      <Words text={content.text} anim="words-lit" class:list={["manifesto-text", long && "is-long"]} />
+      {
+        image && (
+          <div class:list={["manifesto-photo", !isStrongPhoto(image) && "is-small"]} data-anim="reveal">
+            <Photo image={image} alt={content.image?.alt ?? ""} treatment="polaroid" sizes="(min-width: 900px) 30vw, 80vw" />
+          </div>
+        )
+      }
+    </div>
+  </div>
+</SectionShell>
+
+<style>
+  .manifesto {
+    display: grid;
+    gap: clamp(1.5rem, 5vw, 4rem);
+  }
+  @media (min-width: 900px) {
+    .manifesto {
+      grid-template-columns: minmax(10rem, 1fr) 2.4fr;
+    }
+    .manifesto-side {
+      position: sticky;
+      top: 6rem;
+      align-self: start;
+    }
+  }
+  .manifesto-year {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: calc(var(--step-display) * 1.35);
+    line-height: 0.9;
+    display: grid;
+  }
+  .manifesto-year-label {
+    font-family: var(--font-label);
+    font-size: var(--step-1);
+    color: var(--fg-muted);
+  }
+  .manifesto-ornament {
+    display: block;
+    width: clamp(5rem, 14vw, 9rem);
+    color: var(--ornament);
+  }
+  .manifesto-ornament :global(svg) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  :global(.manifesto-text) {
+    font-family: var(--font-heading);
+    font-size: var(--step-3);
+    line-height: 1.2;
+    margin: 0;
+    max-width: 26ch;
+    overflow-wrap: break-word;
+  }
+  :global(.manifesto-text.is-long) {
+    font-size: var(--step-1);
+    line-height: 1.5;
+    max-width: 52ch;
+  }
+  .manifesto-photo {
+    margin-top: clamp(2rem, 5vw, 3rem);
+    width: min(100%, 28rem);
+    margin-left: auto;
+  }
+  .manifesto-photo.is-small {
+    width: min(70%, 16rem);
+  }
+</style>

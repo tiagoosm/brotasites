@@ -55,6 +55,31 @@ export const variants: readonly Variant[] = [
   base("faq-accordion", "faq", "none"),
   base("cta-final-band", "cta-final", "none"),
   base("contato-columns", "contato", "none"),
+  // Food (E6).
+  {
+    id: "hero-feast",
+    section: "hero",
+    families: ["food"],
+    personalities: ["acolhedor", "elegante", "robusto", "ousado"],
+    requires: { photo: "optional" },
+    version: 1,
+  },
+  {
+    id: "sobre-manifesto",
+    section: "sobre",
+    families: "all",
+    personalities: ["acolhedor", "elegante", "robusto"],
+    requires: { photo: "optional" },
+    version: 1,
+  },
+  {
+    id: "servicos-menu",
+    section: "servicos",
+    families: ["food", "beauty"],
+    personalities: ["acolhedor", "elegante", "robusto", "moderno"],
+    requires: { photo: "none" },
+    version: 1,
+  },
 ];
 
 /**
