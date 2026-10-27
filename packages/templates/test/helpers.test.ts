@@ -15,7 +15,10 @@ import { themeCss } from "../src/lib/theme";
 
 const example = siteConfigSchema.parse(
   JSON.parse(
-    readFileSync(new URL("../../../docs/site-config.example.json", import.meta.url), "utf8"),
+    readFileSync(
+      new URL("../../../docs/legacy/site-config.example.v1.1.json", import.meta.url),
+      "utf8",
+    ),
   ),
 );
 

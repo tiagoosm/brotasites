@@ -7,7 +7,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { generateSite, localizeRemoteImages } from "../src/index.js";
 
 const examplePath = fileURLToPath(
-  new URL("../../../docs/site-config.example.json", import.meta.url),
+  new URL("../../../docs/legacy/site-config.example.v1.1.json", import.meta.url),
 );
 const photo = fileURLToPath(
   new URL("../../templates/e2e/fixture/assets/hero.jpg", import.meta.url),

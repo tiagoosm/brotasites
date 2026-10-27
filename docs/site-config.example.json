@@ -1,8 +1,9 @@
 {
-  "schemaVersion": "1.1",
+  "schemaVersion": "1.2",
   "site": {
     "type": "landing-page",
     "language": "pt-BR",
+    "timezone": "America/Sao_Paulo",
     "subdomain": "padaria-do-ze",
     "customDomain": null
   },
@@ -10,51 +11,79 @@
     "name": "Padaria do Zé",
     "tagline": "Pão quentinho todo dia",
     "category": "padaria",
+    "family": "food",
     "description": "Padaria de bairro com pães artesanais, bolos e café da manhã desde 1998.",
-    "logo": "assets/logo.png",
+    "foundedYear": 1998,
     "contact": {
-      "phone": "(35) 3555-0000",
+      "phone": "3535550000",
       "whatsapp": "5535999990000",
-      "email": "contato@padariadoze.com.br",
-      "address": {
-        "street": "Rua das Flores, 123",
-        "district": "Centro",
-        "city": "Santa Rita do Sapucaí",
-        "state": "MG",
-        "zip": "37540-000"
-      },
-      "openingHours": [
-        { "days": "Seg a Sex", "hours": "06:00 - 19:00" },
-        { "days": "Sábado", "hours": "06:00 - 14:00" },
-        { "days": "Domingo", "hours": "Fechado" }
-      ]
+      "email": "contato@padariadoze.com.br"
+    },
+    "address": {
+      "hasFixedAddress": true,
+      "street": "Rua das Flores",
+      "number": "123",
+      "district": "Centro",
+      "city": "Santa Rita do Sapucaí",
+      "state": "MG",
+      "zip": "37540-000"
+    },
+    "serviceArea": [],
+    "openingHours": {
+      "mode": "schedule",
+      "rules": [
+        { "days": ["mon", "tue", "wed", "thu", "fri"], "intervals": [{ "open": "06:00", "close": "19:00" }] },
+        { "days": ["sat"], "intervals": [{ "open": "06:00", "close": "14:00" }] }
+      ],
+      "note": "Domingo fechado."
     },
     "social": {
-      "instagram": "padariadoze",
-      "facebook": null
+      "instagram": "padariadoze"
     }
+  },
+  "brand": {
+    "logoAsset": "0b6f2a4e-5c1d-4e8a-9f3b-2d7c6a1e4b90",
+    "brandColors": ["#B45309", "#78350F"],
+    "feelings": ["acolhedor"]
   },
   "design": {
-    "template": "classico",
-    "colors": {
-      "primary": "#B45309",
-      "secondary": "#78350F",
-      "background": "#FFFBEB",
-      "text": "#1C1917"
+    "seed": "padaria-do-ze|santa-rita-do-sapucai|padaria",
+    "round": 0,
+    "identity": {
+      "personality": "acolhedor",
+      "heroVariant": "food-hero-arch",
+      "fontPair": "serif-soft-grotesk",
+      "palette": {
+        "background": "#FFFBEB",
+        "surface": "#FEF3C7",
+        "text": "#1C1917",
+        "textMuted": "#57534E",
+        "primary": "#B45309",
+        "onPrimary": "#FFFFFF",
+        "accent": "#78350F"
+      },
+      "shape": "rounded",
+      "ornamentSet": "wheat",
+      "pattern": "grain-dots",
+      "imageTreatment": "offset-frame",
+      "dividerStyle": "wave-soft",
+      "markStyle": "logo",
+      "sectionVariants": {
+        "sobre": "sobre-split",
+        "servicos": "servicos-cards",
+        "galeria": "galeria-mosaic",
+        "faq": "faq-accordion",
+        "cta-final": "cta-band",
+        "contato": "contato-columns"
+      },
+      "rhythm": "aba",
+      "motionPreset": "default",
+      "fingerprint": "3f9a1c7e5b2d8046"
     },
-    "fonts": {
-      "heading": "Playfair Display",
-      "body": "Inter"
-    },
-    "style": {
-      "borderRadius": "soft",
-      "buttons": "filled",
-      "darkMode": false
-    }
-  },
-  "navigation": {
-    "sticky": true,
-    "ctaLabel": "Fale conosco"
+    "directionStatus": "approved",
+    "approvedDirectionId": "fiel-a-marca",
+    "lockedFields": ["personality", "heroVariant", "sectionVariants", "motionPreset", "markStyle"],
+    "overrides": {}
   },
   "sections": [
     {
@@ -62,25 +91,25 @@
       "enabled": true,
       "content": {
         "title": "Pão quentinho todo dia",
-        "subtitle": "Feito com carinho, direto do forno para a sua mesa.",
-        "image": "assets/hero.jpg",
-        "cta": { "label": "Fale conosco", "action": "whatsapp", "target": null }
+        "subtitle": "Pães de fermentação natural, bolos e café da manhã no Centro de Santa Rita do Sapucaí.",
+        "image": { "assetId": "6a1d3f8b-2c4e-4b7a-8d9f-0e5c1b3a7f21", "alt": "Pães artesanais no balcão da padaria" },
+        "cta": { "label": "Pedir pelo WhatsApp", "action": "whatsapp" }
       }
     },
     {
       "id": "sobre",
       "enabled": true,
       "content": {
-        "title": "Nossa história",
-        "text": "Desde 1998 servindo o bairro com pães artesanais e muito carinho.",
-        "image": "assets/sobre.jpg"
+        "title": "Desde 1998 no bairro",
+        "text": "A Padaria do Zé abriu as portas em 1998, na Rua das Flores. Os pães saem do forno todas as manhãs, e os bolos são feitos por encomenda.",
+        "image": { "assetId": "9c2e7b1a-4d5f-4a8c-b3e6-1f0d2a9c8e47", "alt": "Fachada da Padaria do Zé" }
       }
     },
     {
       "id": "servicos",
       "enabled": true,
       "content": {
-        "title": "O que oferecemos",
+        "title": "O que sai do nosso forno",
         "items": [
           { "name": "Pães artesanais", "description": "Fermentação natural, feitos todas as manhãs.", "icon": "bread" },
           { "name": "Bolos e tortas", "description": "Encomendas para aniversários e eventos.", "icon": "cake" },
@@ -92,14 +121,18 @@
       "id": "galeria",
       "enabled": true,
       "content": {
-        "title": "Galeria",
-        "images": ["assets/galeria-1.jpg", "assets/galeria-2.jpg", "assets/galeria-3.jpg"]
+        "title": "Do forno para o balcão",
+        "images": [
+          { "assetId": "1e4b7c2d-8a3f-4c6e-9b1d-5f2a8e7c3d10", "alt": "Pão italiano recém-assado" },
+          { "assetId": "2f5c8d3e-9b4a-4d7f-8c2e-6a3b9f8d4e21", "alt": "Bolo de cenoura com cobertura de chocolate" },
+          { "assetId": "3a6d9e4f-0c5b-4e8a-9d3f-7b4c0a9e5f32", "alt": "Mesa de café da manhã com pães e frutas" }
+        ]
       }
     },
     {
       "id": "depoimentos",
       "enabled": false,
-      "content": { "title": "Quem prova, aprova", "items": [] }
+      "content": { "title": "Quem prova, volta", "items": [] }
     },
     {
       "id": "faq",
@@ -108,7 +141,7 @@
         "title": "Perguntas frequentes",
         "items": [
           { "question": "Vocês fazem encomendas?", "answer": "Sim, bolos e tortas sob encomenda. Chame no WhatsApp com 2 dias de antecedência." },
-          { "question": "Tem opção sem glúten?", "answer": "Consulte nossas opções do dia direto no balcão ou pelo WhatsApp." }
+          { "question": "Abre aos domingos?", "answer": "Não. Estamos abertos de segunda a sábado." }
         ]
       }
     },
@@ -116,36 +149,44 @@
       "id": "cta-final",
       "enabled": true,
       "content": {
-        "title": "Venha tomar um café com a gente",
-        "subtitle": "Estamos de portas abertas de segunda a sábado.",
-        "cta": { "label": "Chamar no WhatsApp", "action": "whatsapp", "target": null }
+        "title": "Encomende seu bolo",
+        "subtitle": "Chame no WhatsApp com 2 dias de antecedência.",
+        "cta": { "label": "Chamar no WhatsApp", "action": "whatsapp" }
       }
     },
     {
       "id": "contato",
       "enabled": true,
       "content": {
-        "title": "Venha nos visitar",
-        "showMap": true,
+        "title": "Onde estamos",
         "showHours": true,
-        "showForm": false
+        "showMapLink": true
       }
     }
   ],
+  "navigation": {
+    "sticky": true,
+    "ctaLabel": "Pedir pelo WhatsApp"
+  },
   "seo": {
     "title": "Padaria do Zé | Pães artesanais em Santa Rita do Sapucaí",
-    "description": "Pães artesanais, bolos e café da manhã. Venha conhecer a Padaria do Zé.",
-    "keywords": ["padaria", "pão artesanal", "café da manhã"]
+    "description": "Pães de fermentação natural, bolos por encomenda e café da manhã no Centro de Santa Rita do Sapucaí, MG.",
+    "keywords": ["padaria", "pão artesanal", "café da manhã", "Santa Rita do Sapucaí"]
   },
   "integrations": {
-    "whatsappFloatingButton": true,
-    "googleMapsEmbed": true,
-    "contactForm": { "provider": null, "endpoint": null },
-    "analytics": null
+    "whatsappFloatingButton": true
   },
   "ai": {
-    "tone": "amigavel",
-    "generatedFields": ["business.tagline", "business.description", "sections.sobre.content.text", "sections.faq.content.items", "seo.description"],
-    "userEditedFields": []
+    "tone": "informal",
+    "generatedFields": ["sections.sobre.content.text", "sections.faq.content.items", "seo.description"],
+    "userEditedFields": [],
+    "promptVersion": null,
+    "playbookVersion": null,
+    "modelId": null
+  },
+  "review": {
+    "status": "notReviewed",
+    "reviewerReportId": null,
+    "humanDecision": null
   }
 }

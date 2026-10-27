@@ -1,0 +1,1609 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.2"
+    },
+    "site": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "landing-page"
+        },
+        "language": {
+          "type": "string",
+          "const": "pt-BR"
+        },
+        "timezone": {
+          "default": "America/Sao_Paulo",
+          "type": "string",
+          "pattern": "^America\\/[A-Za-z_]+$"
+        },
+        "subdomain": {
+          "type": "string",
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{1,38})[a-z0-9]$"
+        },
+        "customDomain": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 253,
+              "pattern": "^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "language",
+        "subdomain",
+        "customDomain"
+      ],
+      "additionalProperties": false
+    },
+    "business": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "tagline": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "padaria",
+            "confeitaria",
+            "doces-encomenda",
+            "marmitaria",
+            "cafeteria",
+            "acai-sorveteria",
+            "food-truck",
+            "lanchonete",
+            "pizzaria",
+            "restaurante",
+            "hortifruti-acougue",
+            "salao-beleza",
+            "barbearia",
+            "manicure",
+            "sobrancelha-cilios",
+            "maquiadora",
+            "estetica",
+            "massagem-spa",
+            "depilacao",
+            "tatuagem-piercing",
+            "dentista",
+            "fisioterapia",
+            "psicologia",
+            "nutricao",
+            "fonoaudiologia",
+            "veterinario",
+            "clinica-medica",
+            "terapias-integrativas",
+            "pilates-personal",
+            "oficina-mecanica",
+            "funilaria-pintura",
+            "auto-eletrica",
+            "lava-jato",
+            "borracharia",
+            "martelinho-polimento",
+            "som-insulfilme",
+            "vidracaria-automotiva",
+            "oficina-moto",
+            "autoescola",
+            "autopecas",
+            "guincho",
+            "eletricista",
+            "encanador",
+            "pintor-reformas",
+            "marcenaria",
+            "serralheria-vidracaria",
+            "ar-condicionado",
+            "limpeza",
+            "jardinagem",
+            "piscineiro",
+            "assistencia-tecnica",
+            "dedetizacao",
+            "mudancas-fretes",
+            "chaveiro",
+            "desentupidora",
+            "energia-solar",
+            "cameras-seguranca",
+            "floricultura",
+            "presentes",
+            "papelaria",
+            "roupas",
+            "calcados",
+            "joalheria",
+            "otica",
+            "brecho",
+            "moveis-decoracao",
+            "material-construcao",
+            "celulares",
+            "perfumaria",
+            "livraria-sebo",
+            "artigos-festa",
+            "adega",
+            "reforco-escolar",
+            "idiomas",
+            "musica",
+            "danca",
+            "artes-marciais",
+            "escolinha-esportes",
+            "natacao",
+            "academia",
+            "cursos-profissionalizantes",
+            "preparatorio",
+            "creche",
+            "contador",
+            "arquiteto",
+            "fotografo-videomaker",
+            "despachante",
+            "corretor-imoveis",
+            "corretor-seguros",
+            "advogado",
+            "engenheiro",
+            "consultor-coach",
+            "tradutor",
+            "agencia-viagens",
+            "personal-organizer",
+            "cuidadores",
+            "buffet-festas",
+            "espaco-eventos",
+            "dj-sonorizacao",
+            "decoracao-cerimonial",
+            "aluguel-festas",
+            "salgados-doces-festa",
+            "fotografo-eventos",
+            "barman",
+            "artesanato-atelie",
+            "estamparia",
+            "oficinas",
+            "turismo-local",
+            "pousada-chale",
+            "banho-tosa",
+            "pet-shop",
+            "hotel-creche-pet",
+            "adestrador-passeador",
+            "agropecuaria",
+            "produtor-rural",
+            "feiras",
+            "igreja-templo",
+            "ong-associacao",
+            "outro"
+          ]
+        },
+        "family": {
+          "type": "string",
+          "enum": [
+            "food",
+            "beauty",
+            "health",
+            "automotive",
+            "home-services",
+            "retail",
+            "education",
+            "professionals",
+            "events-creative",
+            "pet-agro-institutions"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "foundedYear": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 9007199254740991
+        },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "phone": {
+              "type": "string",
+              "pattern": "^(?:55)?[1-9][0-9][0-9]{8,9}$"
+            },
+            "whatsapp": {
+              "type": "string",
+              "pattern": "^55[1-9][0-9][0-9]{8,9}$"
+            },
+            "email": {
+              "type": "string",
+              "maxLength": 254,
+              "format": "email",
+              "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "address": {
+          "type": "object",
+          "properties": {
+            "hasFixedAddress": {
+              "type": "boolean"
+            },
+            "street": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "number": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20
+            },
+            "district": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "city": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 80
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "AC",
+                "AL",
+                "AP",
+                "AM",
+                "BA",
+                "CE",
+                "DF",
+                "ES",
+                "GO",
+                "MA",
+                "MT",
+                "MS",
+                "MG",
+                "PA",
+                "PB",
+                "PR",
+                "PE",
+                "PI",
+                "RJ",
+                "RN",
+                "RS",
+                "RO",
+                "RR",
+                "SC",
+                "SP",
+                "SE",
+                "TO"
+              ]
+            },
+            "zip": {
+              "type": "string",
+              "pattern": "^[0-9]{5}-?[0-9]{3}$"
+            }
+          },
+          "required": [
+            "hasFixedAddress",
+            "city",
+            "state"
+          ],
+          "additionalProperties": false
+        },
+        "serviceArea": {
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 60
+          }
+        },
+        "openingHours": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "schedule",
+                "byAppointment",
+                "always"
+              ]
+            },
+            "rules": {
+              "maxItems": 7,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "days": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "mon",
+                        "tue",
+                        "wed",
+                        "thu",
+                        "fri",
+                        "sat",
+                        "sun"
+                      ]
+                    }
+                  },
+                  "intervals": {
+                    "minItems": 1,
+                    "maxItems": 3,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "open": {
+                          "type": "string",
+                          "pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+                        },
+                        "close": {
+                          "type": "string",
+                          "pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+                        }
+                      },
+                      "required": [
+                        "open",
+                        "close"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "days",
+                  "intervals"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "note": {
+              "type": "string",
+              "maxLength": 120
+            }
+          },
+          "required": [
+            "mode",
+            "rules"
+          ],
+          "additionalProperties": false
+        },
+        "social": {
+          "type": "object",
+          "properties": {
+            "instagram": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._]{1,30}$"
+            },
+            "facebook": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9.-]{3,50}$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "registration": {
+          "type": "object",
+          "properties": {
+            "council": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 20
+            },
+            "number": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 30
+            }
+          },
+          "required": [
+            "council",
+            "number"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "category",
+        "family",
+        "description",
+        "contact",
+        "address",
+        "serviceArea",
+        "openingHours",
+        "social"
+      ],
+      "additionalProperties": false
+    },
+    "brand": {
+      "type": "object",
+      "properties": {
+        "logoAsset": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "brandColors": {
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          }
+        },
+        "feelings": {
+          "maxItems": 2,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "acolhedor",
+              "elegante",
+              "moderno",
+              "robusto",
+              "ousado"
+            ]
+          }
+        }
+      },
+      "required": [
+        "logoAsset",
+        "brandColors",
+        "feelings"
+      ],
+      "additionalProperties": false
+    },
+    "design": {
+      "type": "object",
+      "properties": {
+        "seed": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "round": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "identity": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "personality": {
+                  "type": "string",
+                  "enum": [
+                    "acolhedor",
+                    "elegante",
+                    "moderno",
+                    "robusto",
+                    "ousado"
+                  ]
+                },
+                "heroVariant": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+                },
+                "fontPair": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+                },
+                "palette": {
+                  "type": "object",
+                  "properties": {
+                    "background": {
+                      "type": "string",
+                      "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "surface": {
+                      "type": "string",
+                      "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "text": {
+                      "type": "string",
+                      "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "textMuted": {
+                      "type": "string",
+                      "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "primary": {
+                      "type": "string",
+                      "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "onPrimary": {
+                      "type": "string",
+                      "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "accent": {
+                      "type": "string",
+                      "pattern": "^#[0-9A-Fa-f]{6}$"
+                    }
+                  },
+                  "required": [
+                    "background",
+                    "surface",
+                    "text",
+                    "textMuted",
+                    "primary",
+                    "onPrimary",
+                    "accent"
+                  ],
+                  "additionalProperties": false
+                },
+                "shape": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+                },
+                "ornamentSet": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+                },
+                "pattern": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+                },
+                "imageTreatment": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+                },
+                "dividerStyle": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+                },
+                "markStyle": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+                },
+                "sectionVariants": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                    "enum": [
+                      "hero",
+                      "sobre",
+                      "servicos",
+                      "como-funciona",
+                      "diferenciais",
+                      "galeria",
+                      "depoimentos",
+                      "faq",
+                      "cta-final",
+                      "contato"
+                    ]
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+                  }
+                },
+                "rhythm": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+                },
+                "motionPreset": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+                },
+                "fingerprint": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{16,64}$"
+                }
+              },
+              "required": [
+                "personality",
+                "heroVariant",
+                "fontPair",
+                "palette",
+                "shape",
+                "ornamentSet",
+                "pattern",
+                "imageTreatment",
+                "dividerStyle",
+                "markStyle",
+                "sectionVariants",
+                "rhythm",
+                "motionPreset",
+                "fingerprint"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "directionStatus": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "approved"
+          ]
+        },
+        "approvedDirectionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lockedFields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "personality",
+              "heroVariant",
+              "fontPair",
+              "palette",
+              "shape",
+              "ornamentSet",
+              "pattern",
+              "imageTreatment",
+              "dividerStyle",
+              "markStyle",
+              "sectionVariants",
+              "rhythm",
+              "motionPreset"
+            ]
+          }
+        },
+        "overrides": {
+          "type": "object",
+          "properties": {
+            "colors": {
+              "type": "object",
+              "properties": {
+                "background": {
+                  "type": "string",
+                  "pattern": "^#[0-9A-Fa-f]{6}$"
+                },
+                "surface": {
+                  "type": "string",
+                  "pattern": "^#[0-9A-Fa-f]{6}$"
+                },
+                "text": {
+                  "type": "string",
+                  "pattern": "^#[0-9A-Fa-f]{6}$"
+                },
+                "textMuted": {
+                  "type": "string",
+                  "pattern": "^#[0-9A-Fa-f]{6}$"
+                },
+                "primary": {
+                  "type": "string",
+                  "pattern": "^#[0-9A-Fa-f]{6}$"
+                },
+                "onPrimary": {
+                  "type": "string",
+                  "pattern": "^#[0-9A-Fa-f]{6}$"
+                },
+                "accent": {
+                  "type": "string",
+                  "pattern": "^#[0-9A-Fa-f]{6}$"
+                }
+              },
+              "additionalProperties": false
+            },
+            "fontPair": {
+              "type": "string",
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "seed",
+        "round",
+        "identity",
+        "directionStatus",
+        "approvedDirectionId",
+        "lockedFields",
+        "overrides"
+      ],
+      "additionalProperties": false
+    },
+    "sections": {
+      "minItems": 1,
+      "maxItems": 10,
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "const": "hero"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "image": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "assetId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "alt": {
+                            "type": "string",
+                            "maxLength": 160
+                          }
+                        },
+                        "required": [
+                          "assetId",
+                          "alt"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "cta": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 30
+                      },
+                      "action": {
+                        "type": "string",
+                        "enum": [
+                          "whatsapp",
+                          "phone",
+                          "email",
+                          "directions",
+                          "section"
+                        ]
+                      },
+                      "section": {
+                        "type": "string",
+                        "enum": [
+                          "hero",
+                          "sobre",
+                          "servicos",
+                          "como-funciona",
+                          "diferenciais",
+                          "galeria",
+                          "depoimentos",
+                          "faq",
+                          "cta-final",
+                          "contato"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "action"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "title",
+                  "image"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "enabled",
+              "content"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "const": "sobre"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "text": {
+                    "type": "string",
+                    "maxLength": 800
+                  },
+                  "image": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "assetId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "alt": {
+                            "type": "string",
+                            "maxLength": 160
+                          }
+                        },
+                        "required": [
+                          "assetId",
+                          "alt"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "title",
+                  "text",
+                  "image"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "enabled",
+              "content"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "const": "servicos"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "items": {
+                    "maxItems": 9,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 50
+                        },
+                        "description": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "price": {
+                          "type": "string",
+                          "maxLength": 30
+                        },
+                        "icon": {
+                          "type": "string",
+                          "enum": [
+                            "bread",
+                            "cake",
+                            "coffee",
+                            "star",
+                            "check",
+                            "menu",
+                            "chat",
+                            "phone",
+                            "mail",
+                            "pin",
+                            "clock",
+                            "instagram",
+                            "facebook"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "title",
+                  "items"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "enabled",
+              "content"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "const": "como-funciona"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "steps": {
+                    "maxItems": 6,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 60
+                        },
+                        "text": {
+                          "type": "string",
+                          "maxLength": 200
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "text"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "title",
+                  "steps"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "enabled",
+              "content"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "const": "diferenciais"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "items": {
+                    "maxItems": 8,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 60
+                        },
+                        "text": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "icon": {
+                          "type": "string",
+                          "enum": [
+                            "bread",
+                            "cake",
+                            "coffee",
+                            "star",
+                            "check",
+                            "menu",
+                            "chat",
+                            "phone",
+                            "mail",
+                            "pin",
+                            "clock",
+                            "instagram",
+                            "facebook"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "icon"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "title",
+                  "items"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "enabled",
+              "content"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "const": "galeria"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "images": {
+                    "maxItems": 12,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "assetId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "alt": {
+                          "type": "string",
+                          "maxLength": 160
+                        }
+                      },
+                      "required": [
+                        "assetId",
+                        "alt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "title",
+                  "images"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "enabled",
+              "content"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "const": "depoimentos"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "items": {
+                    "maxItems": 6,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 60
+                        },
+                        "context": {
+                          "type": "string",
+                          "maxLength": 60
+                        },
+                        "text": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 300
+                        },
+                        "authorized": {
+                          "type": "boolean",
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "text",
+                        "authorized"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "title",
+                  "items"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "enabled",
+              "content"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "const": "faq"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "items": {
+                    "maxItems": 10,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "question": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 120
+                        },
+                        "answer": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 400
+                        }
+                      },
+                      "required": [
+                        "question",
+                        "answer"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "title",
+                  "items"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "enabled",
+              "content"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "const": "cta-final"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "maxLength": 160
+                  },
+                  "cta": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 30
+                      },
+                      "action": {
+                        "type": "string",
+                        "enum": [
+                          "whatsapp",
+                          "phone",
+                          "email",
+                          "directions",
+                          "section"
+                        ]
+                      },
+                      "section": {
+                        "type": "string",
+                        "enum": [
+                          "hero",
+                          "sobre",
+                          "servicos",
+                          "como-funciona",
+                          "diferenciais",
+                          "galeria",
+                          "depoimentos",
+                          "faq",
+                          "cta-final",
+                          "contato"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "action"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "title",
+                  "cta"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "enabled",
+              "content"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "const": "contato"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "showHours": {
+                    "type": "boolean"
+                  },
+                  "showMapLink": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "title",
+                  "showHours",
+                  "showMapLink"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "enabled",
+              "content"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "navigation": {
+      "type": "object",
+      "properties": {
+        "sticky": {
+          "type": "boolean"
+        },
+        "ctaLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        }
+      },
+      "required": [
+        "sticky",
+        "ctaLabel"
+      ],
+      "additionalProperties": false
+    },
+    "seo": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 70
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "keywords": {
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        }
+      },
+      "required": [
+        "title",
+        "description",
+        "keywords"
+      ],
+      "additionalProperties": false
+    },
+    "integrations": {
+      "type": "object",
+      "properties": {
+        "whatsappFloatingButton": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "whatsappFloatingButton"
+      ],
+      "additionalProperties": false
+    },
+    "ai": {
+      "type": "object",
+      "properties": {
+        "tone": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 40
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "generatedFields": {
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$"
+          }
+        },
+        "userEditedFields": {
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$"
+          }
+        },
+        "promptVersion": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 40
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "playbookVersion": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 40
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "modelId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 80
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "tone",
+        "generatedFields",
+        "userEditedFields",
+        "promptVersion",
+        "playbookVersion",
+        "modelId"
+      ],
+      "additionalProperties": false
+    },
+    "review": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "notReviewed",
+            "passed",
+            "changesNeeded",
+            "needsAttention"
+          ]
+        },
+        "reviewerReportId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "humanDecision": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "approved",
+                "changesRequested",
+                "suspended"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "reviewerReportId",
+        "humanDecision"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "site",
+    "business",
+    "brand",
+    "design",
+    "sections",
+    "navigation",
+    "seo",
+    "integrations",
+    "ai",
+    "review"
+  ],
+  "additionalProperties": false,
+  "title": "BrotaSites site configuration 1.2"
+}
