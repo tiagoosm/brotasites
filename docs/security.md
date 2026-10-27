@@ -54,3 +54,27 @@ Collect the minimum. Privacy policy and deletion on request (legal text with a l
 - CSP and headers checked on the Worker's responses.
 - Rate limits working.
 - External pentest before opening sales (owner step).
+
+## Implementation (E7)
+
+- **Image pipeline:** `packages/generator/src/image-pipeline.ts`, `cleanImage()`.
+  - The format is read from the bytes. JPEG, PNG and WebP pass; SVG, GIF, HTML and anything else are refused.
+  - Limits: 10 MB and 40 megapixels (decompression bombs are refused before decoding).
+  - Each photo is decoded and encoded again as WebP, at most 2000 px, turned upright. All metadata (EXIF, GPS) is dropped, and anything appended to the file does not survive.
+  - It warns about small (under 1200 px, shown smaller by the variants) and blurry photos. Refusals and warnings are in pt-BR.
+  - Tested with real and hostile files: SVG with `onload`, HTML renamed to `.jpg`, a JPEG header over other content, a polyglot with a script after the image data, EXIF with GPS, a 48-megapixel bomb.
+  - It is wired into the upload flow in E10. Today the form still shrinks photos in the browser and stores them in the public `site-images` bucket used by the 1.1 product. Moving originals to a private bucket is part of E10.
+- **Minors:** an image may say `showsMinor`; then `minorConsent: true` is required (schema 1.2).
+- **Text:** `cleanText()` (schema 1.2) removes control characters and bidirectional overrides from every string of a 1.2 config when it is read. All text is escaped by Astro at build time, and the JSON-LD block escapes `<`. `packages/templates/test/xss.test.ts` builds a site with script, event-handler, title-breaking and template-injection payloads in every text field and checks that none of them becomes markup.
+- **Links:** every link of a 1.2 site goes through `isSafeHref()`, which allows only https, `tel:` with digits, `mailto:` and in-page anchors. Anything else (`javascript:`, `data:`, `http:`) becomes `#`.
+- **Variant dialect:** `packages/reviewer/src/dialect.ts` refuses, in a variant's markup or CSS:
+  - scripts, `on*` attributes, inline `style`, `javascript:` and `data:` URLs, external resources, forms, iframes and other embeds, client-side components and raw HTML;
+  - `@import`, `url()`, `@keyframes`, `transition`, `animation`, `@font-face` and legacy CSS hooks.
+
+  Every variant in the catalog is checked in CI. The restricted code layer is the switch `AI_CODE_VARIANTS` (off) plus an entry point that refuses everything while it is off.
+- **Headers:** `apps/sites-worker/src/headers.ts`.
+  - Strict CSP for 1.2 sites: `default-src 'none'`, self-only images, styles, fonts and scripts, nothing framed or framing, no forms, no connections, `upgrade-insecure-requests`. The generator marks their files with R2 metadata `csp: strict`.
+  - 1.1 sites, which inline their stylesheet and small scripts, get the same policy plus `'unsafe-inline'` for style and script, until they are rebuilt as 1.2.
+  - Every response also gets `Permissions-Policy` (every device feature off), `nosniff`, `Referrer-Policy`, `X-Frame-Options`, COOP, CORP and HSTS.
+
+Still to come: the prompt-injection corpus (E8), RLS and rate-limit tests and the private bucket (E10), and the external pentest (owner).
