@@ -4,7 +4,9 @@ Form-to-landing-page platform for small businesses. The client fills out a short
 
 > **Status:** in development. The public site and the form are online at **https://brotasites.vercel.app** (Vercel, Hobby plan, testing only). The seven-question form, accounts (magic link), photo uploads, the publishing queue, the static site generator and the Worker that serves client sites are built and covered by tests. Not online yet: the live preview server, site generation and publishing (Cloudflare), and the `brotasites.com` domain.
 >
-> Repository: https://github.com/tiagoosm/brotasites (private)
+> Repository: https://github.com/tiagoosm/brotasites (currently public; visibility to be decided by the owner, see `docs/owner-steps.md`).
+>
+> **Next:** the product is moving to an identity engine with three art directions, asynchronous generation and an automatic reviewer, with no live preview. The steps are in [`PLAN.md`](PLAN.md).
 
 ## Platform hosting
 
@@ -129,13 +131,21 @@ The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec p
 
 ## Documentation
 
-- [`docs/site-config.schema.json`](docs/site-config.schema.json): configuration JSON format (v1.1)
-- [`docs/site-config.example.json`](docs/site-config.example.json): filled-in example (a bakery)
-- [`docs/form-flow.md`](docs/form-flow.md): form steps and the fields each one fills in
-- [`docs/platform-design.md`](docs/platform-design.md): platform art direction (Herbarium)
-- [`docs/platform-copy.md`](docs/platform-copy.md): slogan, marketing copy and the seven form questions
+- [`PLAN.md`](PLAN.md): build plan, one step and one pull request at a time
 - [`CLAUDE.md`](CLAUDE.md): project conventions, decisions and AI rules
+- [`docs/product.md`](docs/product.md): pricing, what is included, site statuses
+- [`docs/form-flow.md`](docs/form-flow.md): the 7 form steps (target flow)
+- [`docs/schema-1.2.md`](docs/schema-1.2.md): configuration JSON (v1.2); v1.1 in [`docs/legacy/`](docs/legacy/)
+- [`docs/site-config.example.json`](docs/site-config.example.json): filled-in example (a bakery), v1.1 until step E2
+- [`docs/categories.md`](docs/categories.md): families, categories and blocked categories
+- [`docs/art-direction.md`](docs/art-direction.md) and [`docs/default-motion.md`](docs/default-motion.md): how client sites look and move
+- [`docs/ai-and-reviewer.md`](docs/ai-and-reviewer.md): AI layer and reviewer
+- [`docs/security.md`](docs/security.md) and [`docs/abuse-and-content.md`](docs/abuse-and-content.md): security and abuse policy
+- [`docs/hosting.md`](docs/hosting.md): client site hosting
+- [`docs/catalog-promotion.md`](docs/catalog-promotion.md) and [`docs/blind-test.md`](docs/blind-test.md): how the catalog grows and how quality is judged
+- [`docs/owner-steps.md`](docs/owner-steps.md): accounts and decisions that depend on the owner
+- [`docs/platform-design.md`](docs/platform-design.md) and [`docs/platform-copy.md`](docs/platform-copy.md): the platform's own look and copy
 
 ## License
 
-Proprietary. All rights reserved. This repository is private and is not licensed for use, copying or distribution.
+Proprietary. All rights reserved. This repository is not licensed for use, copying or distribution.
