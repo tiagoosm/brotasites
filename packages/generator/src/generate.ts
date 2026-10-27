@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { templatesRoot } from "@brotasites/templates";
@@ -30,36 +30,45 @@ function astroBin(): string {
   return join(dirname(pkgPath), pkg.bin.astro);
 }
 
-/** Runs `astro build` in a child process so each build gets its own config and environment. */
-function runAstroBuild(
+/**
+ * Runs `astro build` in a child process so each build gets its own config and environment.
+ * With an outDir outside its working directory Astro writes its prerender build to
+ * `<cwd>/.astro`, so each build runs from its own scratch directory inside the templates
+ * package: two builds at the same time never share it, and the prerendered chunks still
+ * resolve the templates' dependencies.
+ */
+async function runAstroBuild(
   configPath: string,
   outDir: string,
   base?: string,
 ): Promise<{ ok: boolean; log: string }> {
-  return new Promise((resolvePromise) => {
-    // The working directory is the output's parent, not the templates package: with an outDir
-    // outside its working directory Astro writes its build scratch to `<cwd>/.astro`, which two
-    // builds at the same time would share and break.
-    const args = [astroBin(), "build", "--root", templatesRoot, "--outDir", outDir];
-    const child = spawn(process.execPath, args, {
-      cwd: dirname(outDir),
-      env: {
-        ...process.env,
-        BROTASITES_CONFIG: configPath,
-        BROTASITES_BASE: base ?? "",
-        ASTRO_TELEMETRY_DISABLED: "1",
-      },
+  await mkdir(join(templatesRoot, ".builds"), { recursive: true });
+  const scratch = await mkdtemp(join(templatesRoot, ".builds", "build-"));
+  try {
+    return await new Promise((resolvePromise) => {
+      const args = [astroBin(), "build", "--root", templatesRoot, "--outDir", outDir];
+      const child = spawn(process.execPath, args, {
+        cwd: scratch,
+        env: {
+          ...process.env,
+          BROTASITES_CONFIG: configPath,
+          BROTASITES_BASE: base ?? "",
+          ASTRO_TELEMETRY_DISABLED: "1",
+        },
+      });
+      let log = "";
+      child.stdout.on("data", (chunk) => {
+        log += chunk;
+      });
+      child.stderr.on("data", (chunk) => {
+        log += chunk;
+      });
+      child.on("error", (error) => resolvePromise({ ok: false, log: `${log}\n${error.message}` }));
+      child.on("close", (code) => resolvePromise({ ok: code === 0, log }));
     });
-    let log = "";
-    child.stdout.on("data", (chunk) => {
-      log += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      log += chunk;
-    });
-    child.on("error", (error) => resolvePromise({ ok: false, log: `${log}\n${error.message}` }));
-    child.on("close", (code) => resolvePromise({ ok: code === 0, log }));
-  });
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
 }
 
 /** Validates the config and builds the static site. */
@@ -76,7 +85,6 @@ export async function generateSite(options: GenerateOptions): Promise<GenerateRe
 
   // With downloaded photos, the build reads a copy of the config that points to them.
   const resolvedPath = join(baseDir, RESOLVED_CONFIG);
-  await mkdir(dirname(outDir), { recursive: true });
   const usesCopy = remote.downloaded > 0 || remote.warnings.length > 0;
   if (usesCopy) await writeFile(resolvedPath, JSON.stringify(remote.config, null, 2));
   try {
