@@ -5,7 +5,7 @@ import { PREVIEW_URL } from "../playwright.config";
 // The preview server on its own: what it accepts, what it refuses and who may frame it.
 
 const example = readFileSync(
-  new URL("../../../docs/site-config.example.json", import.meta.url),
+  new URL("../../../docs/legacy/site-config.example.v1.1.json", import.meta.url),
   "utf8",
 );
 

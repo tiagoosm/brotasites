@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { siteConfigSchema } from "../src/index.js";
 
-const examplePath = new URL("../../../docs/site-config.example.json", import.meta.url);
+const examplePath = new URL("../../../docs/legacy/site-config.example.v1.1.json", import.meta.url);
 const example: unknown = JSON.parse(readFileSync(examplePath, "utf8"));
 
 // biome-ignore lint/suspicious/noExplicitAny: the example is edited as loose JSON in the failure cases.

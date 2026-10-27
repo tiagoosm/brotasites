@@ -12,7 +12,7 @@ import {
 
 // The generator sets BROTASITES_CONFIG; `astro dev` / `astro build` here use the docs example.
 process.env.BROTASITES_CONFIG ??= fileURLToPath(
-  new URL("../../docs/site-config.example.json", import.meta.url),
+  new URL("../../docs/legacy/site-config.example.v1.1.json", import.meta.url),
 );
 
 const { config, baseDir } = loadSiteConfig();
