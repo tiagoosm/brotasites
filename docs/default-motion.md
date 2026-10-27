@@ -21,3 +21,21 @@ One choreography for every client site, written by us, with no animation library
 ## Motion Lab
 
 Internal route, outside the client site build, listing every behavior with a reduced-motion switch, for the owner to approve the motion.
+
+## Implementation (E5)
+
+In `packages/templates/src/v12/motion/`:
+
+- `motion.css` holds every behavior. Elements wait hidden only under `@media (scripting: enabled) and (prefers-reduced-motion: no-preference)`. The script sets `data-motion-ready` on `<html>` as soon as it runs; if it never runs, a failsafe shows everything after 2.5 s. Elements enter when the script marks them `data-anim-in`.
+- `motion.ts` (about 1 KB gzip with the opening-hours script) watches `[data-anim]` with one IntersectionObserver, marks each element once, and counts up `[data-anim="count"]` from 0 to the number already in the page. With reduced motion, or without IntersectionObserver, everything is marked at once.
+- The sites' CSP forbids inline styles, so positions and delays are attributes, not `style`: `data-i` on split words (up to 30), `:nth-child` for stagger children (up to 13), `data-anim-delay` in steps of 100 ms (up to 400).
+- Split text keeps a visually hidden full copy for screen readers; the word spans are `aria-hidden`.
+- `words-lit` and `expand` use CSS scroll-driven animations under `@supports (animation-timeline: view())`; elsewhere the content is simply shown.
+
+**Motion Lab:** `src/lab/MotionLab.astro`, added as `/motion-lab` only when `BROTASITES_LAB=1` and the config is 1.2, so it never ships with a client site:
+
+```
+BROTASITES_LAB=1 BROTASITES_CONFIG=$PWD/docs/site-config.example.json pnpm --filter @brotasites/templates dev
+```
+
+Then open http://localhost:4321/motion-lab. The "Reduzir movimento" button replays the page with motion off.
