@@ -86,7 +86,7 @@ The config is validated first, with error messages in Portuguese; missing images
 
 To work on the form, run `pnpm dev` (or the platform and preview apps on their own) and open http://localhost:3000. The live preview comes from `apps/preview` on port 4400: an Astro server that renders the real template from the draft the form posts. The draft is saved in the browser, and in the account once the person signs in.
 
-To work on the templates with live reload, run `pnpm --filter @brotasites/templates dev`. It renders `docs/site-config.example.json` by default, or the file set in `BROTASITES_CONFIG`.
+To work on the templates with live reload, run `pnpm --filter @brotasites/templates dev`. It renders the v1.1 example `docs/legacy/site-config.example.v1.1.json` by default, or the file set in `BROTASITES_CONFIG`.
 
 ## Publishing
 
@@ -140,7 +140,7 @@ The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec p
 - [`docs/product.md`](docs/product.md): pricing, what is included, site statuses
 - [`docs/form-flow.md`](docs/form-flow.md): the 7 form steps (target flow)
 - [`docs/schema-1.2.md`](docs/schema-1.2.md): configuration JSON (v1.2); v1.1 in [`docs/legacy/`](docs/legacy/)
-- [`docs/site-config.example.json`](docs/site-config.example.json): filled-in example (a bakery), v1.1 until step E2
+- [`docs/site-config.example.json`](docs/site-config.example.json): filled-in example (a bakery), v1.2, and [`docs/site-config.schema.json`](docs/site-config.schema.json), its JSON Schema generated from Zod
 - [`docs/categories.md`](docs/categories.md): families, categories and blocked categories
 - [`docs/art-direction.md`](docs/art-direction.md) and [`docs/default-motion.md`](docs/default-motion.md): how client sites look and move
 - [`docs/ai-and-reviewer.md`](docs/ai-and-reviewer.md): AI layer and reviewer

@@ -113,7 +113,7 @@ brotasites/
 - `product.md`: pricing, what is included, site statuses, payments.
 - `form-flow.md`: the 7 form steps, minimum to generate, missing data.
 - `schema-1.2.md`: the configuration JSON (replaces v1.1, kept in `docs/legacy/`).
-- `site-config.example.json`: filled-in example (Padaria do Zé). Still v1.1 until E2.
+- `site-config.example.json`: filled-in example (Padaria do Zé), v1.2. `site-config.schema.json`: JSON Schema generated from Zod (`pnpm --filter @brotasites/schema json-schema`).
 - `categories.md`: families, categories, blocked categories and per-topic rules.
 - `art-direction.md`: personalities, design tokens, typography, heroes, variant tests.
 - `default-motion.md`: the single motion choreography of generated sites.

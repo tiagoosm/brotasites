@@ -5,7 +5,7 @@ Check each step when done. One branch (`step-N-name`) and one pull request per s
 This plan comes from the owner's master file (2026-10-27) and is adapted to the code that already exists: the platform, form, sign-in, Supabase tables with RLS tests, the v1.1 schema, the Astro template, the generator and the sites Worker are built. Each step says what it reuses and what it replaces.
 
 - [x] E1 Repository baseline, quality and security basics
-- [ ] E2 Schema 1.2 (Zod), example and tests
+- [x] E2 Schema 1.2 (Zod), example and tests
 - [ ] E3 Catalog and design grammar (tokens, typography, ornaments)
 - [ ] E4 Identity engine (3 directions, AA contrast, diversity, fingerprint)
 - [ ] E5 Base Astro template + default motion + Motion Lab
@@ -27,7 +27,7 @@ Already in place: pnpm + Turborepo monorepo, strict TypeScript, Biome, Vitest, P
 
 ### E2 Schema 1.2
 
-Implement in `packages/schema` as described in `docs/schema-1.2.md`, replacing v1.1. Update `docs/site-config.example.json` (Padaria do Zé, fictional, with structured opening hours) and everything that reads it (generator, templates, platform example build). Tests: the example is valid; one invalid case for each rule (hex, subdomain with `xn--`, reserved name, WhatsApp, overlapping hours, no contact channel, testimonials enabled with no item, no address and no service area). Also export a JSON Schema generated from Zod. Keep a v1.1 to v1.2 converter only if it is simple. Criterion: every rule in the document is covered.
+Implement in `packages/schema` as described in `docs/schema-1.2.md`. Schema 1.2 lives in `packages/schema/src/v1.2` (import `@brotasites/schema/v1.2`) next to v1.1, which the live form, templates and generator keep using until they move in E5 and E10; v1.1 is removed then. `docs/site-config.example.json` becomes the 1.2 example (Padaria do Zé, fictional, with structured opening hours); the v1.1 example moves to `docs/legacy/site-config.example.v1.1.json` and its readers (generator, templates, platform example build) point there. Tests: the example is valid; one invalid case for each rule (hex, subdomain with `xn--`, reserved name, WhatsApp, overlapping hours, no contact channel, testimonials enabled with no item, no address and no service area). Also export a JSON Schema generated from Zod. Keep a v1.1 to v1.2 converter only if it is simple (it is not: v1.1 has free-text hours and no identity, so what happens to existing v1.1 drafts is decided in E10). Criterion: every rule in the document is covered.
 
 ### E3 Catalog and grammar
 
