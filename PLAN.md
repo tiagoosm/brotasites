@@ -61,7 +61,7 @@ As in `docs/ai-and-reviewer.md`. Deterministic checks (contrast, overflow at 360
 
 Rework the existing Next.js platform:
 - Remove the live preview: the preview panel in the form, `apps/preview`, its e2e tests, and the home page copy and pictures that promise "veja o site tomar forma enquanto responde".
-- Form in 7 steps as in `docs/form-flow.md` (draft saved at every step), blocked category check, guide to taking photos in step 4 (short, still screens, no external images).
+- Sign-in required before creating a site (decision of 2026-10-27). Form in 7 steps as in `docs/form-flow.md` (draft saved in the account at every step), blocked category check, guide to taking photos in step 4 (short, still screens, no external images).
 - "Meus sites" dashboard with status and timeline, the screen to choose among the 3 directions (cards rendered by the real components), the finished-site screen (private address with a token, not indexed, no download), dashboard edits that respect locks, approval, and a payment interface with a stub (no real charge).
 - Uniqueness registry: a table of design fingerprints per site (family, city, fingerprint) connected to the engine, applying the minimum distance between sites of the same family and city (drafts included).
 - ASK THE OWNER to choose the queue (Inngest or Trigger.dev), with cost, limits and execution model checked.

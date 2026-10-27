@@ -13,7 +13,7 @@ UI copy shown to the client is in pt-BR; labels quoted below are the actual pt-B
 
 ## Sign-in
 
-Sign-in is by magic link (email, no password). Steps 1 to 5 can be answered before signing in, with the draft kept on the device (decision of 2026-10-21). Sending the answers for generation requires signing in, because the directions and the finished site appear on the client's dashboard. Owner to confirm.
+Signing in is required to create a site (decision of 2026-10-27, replacing the decision of 2026-10-21 that left it optional until publishing). Sign-in is by magic link (email, no password) and comes before step 1. The draft is saved in the account at every step, and the directions and the finished site appear on the client's dashboard.
 
 ## Steps
 
