@@ -38,13 +38,12 @@ describe("composeDirections", () => {
         ? { ...choice, heroVariant: "hero-made-up", fontPair: "comic-sans", shape: "zigzag-x" }
         : choice,
     );
-    const error = (() => {
-      try {
-        composeDirections(input, fixtureVariants, broken);
-      } catch (caught) {
-        return caught as CompositionRejected;
-      }
-    })();
+    let error: CompositionRejected | undefined;
+    try {
+      composeDirections(input, fixtureVariants, broken);
+    } catch (caught) {
+      error = caught as CompositionRejected;
+    }
     expect(error).toBeInstanceOf(CompositionRejected);
     expect(error?.reasons.join("\n")).toMatch(/hero hero-made-up/);
     expect(error?.reasons.join("\n")).toMatch(/font pair comic-sans/);
