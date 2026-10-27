@@ -1,0 +1,62 @@
+---
+// como-funciona-steps: numbered steps; on large screens the big number stays in view while its
+// step scrolls by (position: sticky, the scroll is never held).
+import SectionShell from "../components/SectionShell.astro";
+import type { VariantProps } from "./types";
+
+type Props = VariantProps<"como-funciona">;
+const { content, tone, previousTone, divider } = Astro.props;
+---
+
+<SectionShell id="como-funciona" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Passo a passo">
+  <ol class="steps">
+    {
+      content.steps.map((step, index) => (
+        <li class="step" data-anim="reveal">
+          <span class="step-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+          <div>
+            <h3 class="step-title">{step.title}</h3>
+            <p class="step-text">{step.text}</p>
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+</SectionShell>
+
+<style>
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+  .step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem 2rem;
+    align-items: start;
+  }
+  .step-number {
+    font-family: var(--font-heading);
+    font-size: var(--step-5);
+    line-height: 1;
+    color: var(--fg);
+  }
+  @media (min-width: 900px) {
+    .step-number {
+      position: sticky;
+      top: 6rem;
+    }
+  }
+  .step-title {
+    font-size: var(--step-2);
+    margin: 0.25rem 0;
+  }
+  .step-text {
+    margin: 0;
+    color: var(--fg-muted);
+    max-width: 52ch;
+  }
+</style>

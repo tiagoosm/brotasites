@@ -1,0 +1,57 @@
+---
+// faq-accordion: native <details>, so it opens and closes without any script.
+import SectionShell from "../components/SectionShell.astro";
+import type { VariantProps } from "./types";
+
+type Props = VariantProps<"faq">;
+const { content, tone, previousTone, divider } = Astro.props;
+---
+
+<SectionShell id="faq" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Dúvidas">
+  <div class="faq" data-anim="reveal">
+    {
+      content.items.map((item) => (
+        <details class="faq-item">
+          <summary>{item.question}</summary>
+          <p>{item.answer}</p>
+        </details>
+      ))
+    }
+  </div>
+</SectionShell>
+
+<style>
+  .faq {
+    max-width: 48rem;
+    border-top: 1px solid color-mix(in oklab, var(--fg) 25%, transparent);
+  }
+  .faq-item {
+    border-bottom: 1px solid color-mix(in oklab, var(--fg) 25%, transparent);
+  }
+  summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 0;
+    min-height: 44px;
+    font-weight: 700;
+    font-size: var(--step-1);
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary::after {
+    content: "+";
+    font-family: var(--font-heading);
+  }
+  details[open] summary::after {
+    content: "−";
+  }
+  .faq-item p {
+    margin: 0 0 1.25rem;
+    color: var(--fg-muted);
+    max-width: 60ch;
+  }
+</style>

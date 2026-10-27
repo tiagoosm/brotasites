@@ -1,0 +1,157 @@
+---
+import { loadAnyConfig } from "../lib/config";
+// Motion Lab (docs/default-motion.md): every motion behavior of client sites on one page, with
+// a reduced-motion switch, for the owner to approve the motion. Internal: astro.config.ts only
+// adds the route with BROTASITES_LAB=1 and a 1.2 config, so it never ships with a client site.
+//   BROTASITES_LAB=1 BROTASITES_CONFIG=docs/site-config.example.json pnpm --filter @brotasites/templates dev
+// then open http://localhost:4321/motion-lab
+import Ornament from "../v12/components/Ornament.astro";
+import Words from "../v12/components/Words.astro";
+import "../v12/site.css";
+import "../v12/motion/motion.css";
+
+const loaded = loadAnyConfig();
+if (loaded.version !== "1.2") throw new Error("O Motion Lab precisa de uma config 1.2.");
+const { config } = loaded;
+const set = config.design.identity?.ornamentSet ?? "organic";
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+const items = ["Pães", "Bolos", "Café", "Tortas", "Salgados", "Encomendas"];
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Motion Lab</title>
+    <link rel="stylesheet" href={`${base}assets/site.css`} />
+  </head>
+  <body>
+    <header class="site-header tone-base is-sticky">
+      <div class="container header-row">
+        <strong>Motion Lab</strong>
+        <button type="button" class="btn" data-toggle-motion aria-pressed="false">Reduzir movimento</button>
+      </div>
+    </header>
+    <main>
+      <section class="section tone-base">
+        <div class="container lab">
+          <h2 class="section-title">reveal</h2>
+          <p data-anim="reveal">Sobe e aparece, uma vez, ao entrar na tela.</p>
+          <p data-anim="reveal" data-anim-delay="200">Com atraso de 200 ms (data-anim-delay).</p>
+        </div>
+      </section>
+      <section class="section tone-surface">
+        <div class="container lab">
+          <h2 class="section-title">stagger</h2>
+          <ul class="lab-list" data-anim="stagger">{items.map((item) => <li>{item}</li>)}</ul>
+        </div>
+      </section>
+      <section class="section tone-base">
+        <div class="container lab">
+          <h2 class="section-title">words</h2>
+          <Words as="p" anim="words" class="lab-big" text="Pão quentinho todo dia, feito com calma." />
+        </div>
+      </section>
+      <section class="section tone-inverse">
+        <div class="container lab">
+          <h2 class="section-title">words-lit</h2>
+          <Words as="p" anim="words-lit" class="lab-big" text="A Padaria do Zé abriu as portas em 1998. Os pães saem do forno todas as manhãs, e os bolos são feitos por encomenda." />
+        </div>
+      </section>
+      <section class="section tone-base">
+        <div class="container lab">
+          <h2 class="section-title">count</h2>
+          <p class="lab-big"><span data-anim="count">1998</span> (só com um número dado pelo cliente)</p>
+        </div>
+      </section>
+      <section class="section tone-brand">
+        <div class="container lab">
+          <h2 class="section-title">marquee</h2>
+          <div class="lab-marquee" data-anim="marquee">
+            <p>{items.join(" · ")} · </p>
+            <p aria-hidden="true">{items.join(" · ")} · </p>
+          </div>
+        </div>
+      </section>
+      <section class="section tone-base">
+        <div class="container lab">
+          <h2 class="section-title">expand</h2>
+          <div class="lab-expand gradient-bg" data-anim="expand"></div>
+        </div>
+      </section>
+      <section class="section tone-surface">
+        <div class="container lab">
+          <h2 class="section-title">float</h2>
+          <span class="lab-float" data-anim="float"><Ornament set={set} seed={config.design.seed} /></span>
+        </div>
+      </section>
+    </main>
+    <script>
+      import "../v12/motion/motion";
+
+      // Reduced-motion switch: replays the page with motion off or on.
+      const toggle = document.querySelector<HTMLButtonElement>("[data-toggle-motion]");
+      const root = document.documentElement;
+      if (sessionStorage.getItem("lab-reduce") === "1") {
+        root.setAttribute("data-reduce-motion", "");
+        toggle?.setAttribute("aria-pressed", "true");
+      }
+      toggle?.addEventListener("click", () => {
+        sessionStorage.setItem("lab-reduce", root.hasAttribute("data-reduce-motion") ? "0" : "1");
+        location.reload();
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  .lab {
+    display: grid;
+    gap: 1rem;
+  }
+  .lab-big {
+    font-family: var(--font-heading);
+    font-size: var(--step-3);
+    line-height: 1.2;
+    margin: 0;
+  }
+  .lab-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    list-style: none;
+    padding: 0;
+  }
+  .lab-list li {
+    background: var(--card);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+  }
+  .lab-marquee {
+    display: flex;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: var(--step-3);
+    font-family: var(--font-heading);
+  }
+  .lab-marquee p {
+    margin: 0;
+    padding-right: 1rem;
+    flex: none;
+  }
+  .lab-expand {
+    height: 18rem;
+    border-radius: var(--radius-lg);
+  }
+  .lab-float {
+    display: block;
+    width: 8rem;
+    color: var(--ornament);
+  }
+  .lab-float :global(svg) {
+    width: 100%;
+    height: auto;
+  }
+</style>

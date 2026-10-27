@@ -107,7 +107,7 @@ describe("dividers, patterns and treatments", () => {
     for (const treatment of imageTreatments) {
       expect(treatment.css).not.toMatch(/@import|https?:|javascript:|@keyframes|transition/);
       for (const url of treatment.css.match(/url\([^)]*\)/g) ?? []) {
-        expect(url).toBe('url("/assets/grain.svg")');
+        expect(url).toBe('url("grain.svg")');
       }
     }
   });
@@ -166,5 +166,20 @@ describe("the 1.2 example", () => {
     expect(isCatalogId("markStyle", identity.markStyle)).toBe(true);
     expect(isCatalogId("rhythm", identity.rhythm)).toBe(true);
     expect(isCatalogId("motionPreset", identity.motionPreset)).toBe(true);
+    const { variants } = await import("../src/index.js");
+    const ids = variants.map((variant) => variant.id);
+    expect(ids).toContain(identity.heroVariant);
+    for (const id of Object.values(identity.sectionVariants)) expect(ids).toContain(id);
+  });
+});
+
+describe("variants", () => {
+  it("have unique ids and one base variant per section", async () => {
+    const { variants } = await import("../src/index.js");
+    const { sectionIds } = await import("@brotasites/schema/v1.2");
+    expect(new Set(variants.map((variant) => variant.id)).size).toBe(variants.length);
+    for (const section of sectionIds) {
+      expect(variants.some((variant) => variant.section === section)).toBe(true);
+    }
   });
 });

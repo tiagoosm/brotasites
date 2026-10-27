@@ -1,0 +1,131 @@
+---
+import Button from "../components/Button.astro";
+// hero-split: text on one side, the photo framed on the other. Without a photo the frame
+// becomes a seeded gradient with an ornament (and a "Desde" seal when the client gave the year).
+import Ornament from "../components/Ornament.astro";
+import Photo from "../components/Photo.astro";
+import { findAsset } from "../lib/assets";
+import { hoursSummary } from "../lib/hours";
+import { ctaLink, primaryContact } from "../lib/links";
+import type { VariantProps } from "./types";
+
+type Props = Omit<VariantProps<"hero">, "previousTone" | "divider" | "index">;
+
+const { config, theme, content } = Astro.props;
+const { business } = config;
+const image = findAsset(content.image?.assetId);
+const link = content.cta ? ctaLink(content.cta, business) : primaryContact(business);
+const label = content.cta?.label ?? config.navigation.ctaLabel;
+const summary = hoursSummary(business.openingHours);
+const seed = config.design.seed;
+---
+
+<section id="abertura" aria-labelledby="abertura-title" class="hero-split section-hero tone-base">
+  <div class="container hero-grid">
+    <div class="hero-text">
+      <p class="label" data-anim="reveal">{business.name} · {business.address.city}</p>
+      <h1 id="abertura-title" class="hero-title">{content.title}</h1>
+      {content.subtitle && <p class="hero-subtitle" data-anim="reveal" data-anim-delay="100">{content.subtitle}</p>}
+      <div class="hero-actions">
+        <Button link={link} label={label} />
+        <p class="today" data-open-status hidden></p>
+        {summary && <p class="today">{summary}</p>}
+      </div>
+    </div>
+    <div class="hero-visual" data-anim="reveal" data-anim-delay="200">
+      {
+        image ? (
+          <Photo
+            image={image}
+            alt={content.image?.alt ?? ""}
+            treatment={theme.identity.imageTreatment}
+            sizes="(min-width: 900px) 45vw, 100vw"
+            priority
+          />
+        ) : (
+          <div class="hero-panel gradient-bg">
+            <span class="hero-ornament" data-anim="float">
+              <Ornament set={theme.identity.ornamentSet} seed={seed} />
+            </span>
+            {business.foundedYear && (
+              <p class="hero-seal">
+                <span>Desde</span>
+                <strong>{business.foundedYear}</strong>
+              </p>
+            )}
+          </div>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero-grid {
+    display: grid;
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+    padding-block: clamp(2.5rem, 7vw, 6rem);
+  }
+  @media (min-width: 900px) {
+    .hero-grid {
+      grid-template-columns: 1.1fr 1fr;
+    }
+  }
+  .hero-title {
+    font-size: var(--step-5);
+    margin: 0.2em 0 0;
+  }
+  .hero-subtitle {
+    font-size: var(--step-1);
+    color: var(--fg-muted);
+    max-width: 36ch;
+    margin: 1rem 0 0;
+  }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    align-items: center;
+    margin-top: 2rem;
+  }
+  .today {
+    margin: 0;
+    font-size: var(--step--1);
+    color: var(--fg-muted);
+  }
+  .hero-panel {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--radius-image);
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+  .hero-ornament {
+    width: min(60%, 18rem);
+    color: var(--color-accent);
+  }
+  .hero-ornament :global(svg) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .hero-seal {
+    position: absolute;
+    inset: auto 1.5rem 1.5rem auto;
+    margin: 0;
+    padding: 1rem 1.25rem;
+    border-radius: 999px;
+    background: var(--color-background);
+    color: var(--color-text);
+    display: grid;
+    text-align: center;
+    line-height: 1.1;
+    font-size: var(--step--1);
+  }
+  .hero-seal strong {
+    font-family: var(--font-heading);
+    font-size: var(--step-2);
+  }
+</style>

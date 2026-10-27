@@ -1,0 +1,58 @@
+---
+// servicos-cards: one card per service, with its icon, description and price when given.
+import Icon from "../../components/Icon.astro";
+import SectionShell from "../components/SectionShell.astro";
+import type { VariantProps } from "./types";
+
+type Props = VariantProps<"servicos">;
+const { content, tone, previousTone, divider, theme } = Astro.props;
+---
+
+<SectionShell id="servicos" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="O que fazemos" pattern={theme.identity.pattern !== "none"}>
+  <ul class="cards" data-anim="stagger">
+    {
+      content.items.map((item) => (
+        <li class="card">
+          {item.icon && <Icon name={item.icon} class="card-icon" />}
+          <h3 class="card-title">{item.name}</h3>
+          {item.description && <p class="card-text">{item.description}</p>}
+          {item.price && <p class="card-price">{item.price}</p>}
+        </li>
+      ))
+    }
+  </ul>
+</SectionShell>
+
+<style>
+  .cards {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  }
+  .card {
+    background: var(--card);
+    color: var(--fg);
+    border-radius: var(--radius-lg);
+    padding: clamp(1.25rem, 3vw, 2rem);
+  }
+  :global(.card-icon) {
+    width: 2.25rem;
+    height: 2.25rem;
+    color: var(--fg);
+  }
+  .card-title {
+    font-size: var(--step-2);
+    margin: 0.75rem 0 0.25rem;
+  }
+  .card-text {
+    margin: 0;
+    color: var(--fg-muted);
+  }
+  .card-price {
+    margin: 0.75rem 0 0;
+    font-weight: 700;
+  }
+</style>

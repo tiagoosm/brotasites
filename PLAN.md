@@ -10,7 +10,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E2 Schema 1.2 (Zod), example and tests
 - [x] E3 Catalog and design grammar (tokens, typography, ornaments)
 - [x] E4 Identity engine (3 directions, AA contrast, diversity, fingerprint)
-- [ ] E5 Base Astro template + default motion + Motion Lab
+- [x] E5 Base Astro template + default motion + Motion Lab
 - [ ] E6 Variant factory: food, beauty, events and creatives (with a taste calibration)
 - [ ] E7 Image pipeline and content security
 - [ ] E8 AI layer: art director, copy, playbooks, evaluations

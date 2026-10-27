@@ -38,6 +38,7 @@ out/
 
 # Playwright
 dist-e2e/
+dist-e2e-v12/
 
 # Next.js
 .next/

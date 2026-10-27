@@ -86,7 +86,7 @@ The config is validated first, with error messages in Portuguese; missing images
 
 To work on the form, run `pnpm dev` (or the platform and preview apps on their own) and open http://localhost:3000. The live preview comes from `apps/preview` on port 4400: an Astro server that renders the real template from the draft the form posts. The draft is saved in the browser, and in the account once the person signs in.
 
-To work on the templates with live reload, run `pnpm --filter @brotasites/templates dev`. It renders the v1.1 example `docs/legacy/site-config.example.v1.1.json` by default, or the file set in `BROTASITES_CONFIG`.
+To work on the templates with live reload, run `pnpm --filter @brotasites/templates dev`. It renders the v1.1 example `docs/legacy/site-config.example.v1.1.json` by default, or the file set in `BROTASITES_CONFIG`. A 1.2 config (`BROTASITES_CONFIG=$PWD/docs/site-config.example.json`) renders the catalog template in `src/v12`; add `BROTASITES_LAB=1` for the Motion Lab at `/motion-lab`.
 
 ## Publishing
 
@@ -129,7 +129,7 @@ Dashboard settings (Authentication):
 ## Tests
 
 - **Unit (Vitest):** the Zod schema, the generator's validation and build, and the template helpers (opening hours, contrast, links, theme, fonts).
-- **End-to-end (Playwright):** builds a fixture site with every section on (`packages/templates/e2e/fixture`) and checks it at desktop and 375px widths: section order, SEO metadata, images, navigation and mobile menu, FAQ, WhatsApp links, the open/closed door sign at fixed times, and reduced motion. External requests are blocked so the run is hermetic.
+- **End-to-end (Playwright):** builds a fixture site with every section on (`packages/templates/e2e/fixture`) and checks it at desktop and 375px widths: section order, SEO metadata, images, navigation and mobile menu, FAQ, WhatsApp links, the open/closed door sign at fixed times, and reduced motion. A second fixture (`e2e/fixture-v12`) covers the 1.2 template at 1280 and 360px under the sites' CSP, with axe, the JS budget, no-JS and reduced-motion checks. External requests are blocked so the run is hermetic.
 
 The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec playwright install chromium`. GitHub Actions runs lint, build, type-check, unit and e2e tests on every push and pull request, plus a dependency audit (fails on high and critical advisories) and a secret scan of the whole history (gitleaks). Dependabot opens weekly update pull requests.
 

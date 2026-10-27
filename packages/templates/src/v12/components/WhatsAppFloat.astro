@@ -1,0 +1,15 @@
+---
+import Icon from "../../components/Icon.astro";
+import { whatsappHref } from "../lib/links";
+
+interface Props {
+  number: string;
+}
+
+const { number } = Astro.props;
+---
+
+<a href={whatsappHref(number)} class="whatsapp-float" target="_blank" rel="noopener noreferrer">
+  <Icon name="chat" class="icon" />
+  <span class="sr-only">Conversar pelo WhatsApp</span>
+</a>

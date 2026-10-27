@@ -111,3 +111,24 @@ Hero and section variants are not in the catalog yet: they arrive with the varia
 - **Provider:** `EngineProvider`, with `DeterministicEngine` as its implementation. The AI art director (E8) will sit behind `AiProvider` and fall back to the engine.
 
 Until the variant factory (E6) ships real heroes and sections, the engine is tested with stand-in variants and 30 fictional businesses (10 each of food, beauty, events and creatives).
+
+## The 1.2 template (E5)
+
+`packages/templates/src/v12` renders 1.2 configs; 1.1 configs still render with "classico" until the platform moves to 1.2 (E10). `astro.config.ts` picks the page by `schemaVersion` (alias `@site-page`), so a site only ships its own CSS.
+
+- **Tokens:** the identity (with the client's overrides) becomes `/assets/site.css`, with the font faces, color, type, radius and motion variables, the section tones, the pattern, the gradient and the photo treatment. Fonts are copied from the catalog into `/fonts/<id>/` with their `OFL.txt`; the grain is `/assets/grain.svg`. No Google Fonts and no network at build time.
+- **CSP:** no inline `style` or `<style>`, no inline scripts other than the JSON-LD data block, no `data:` URIs. Stylesheets and scripts are files.
+- **Base variants**, one per section, for every family and personality, listed in the catalog and mapped to components in `src/v12/variants/index.ts`: `hero-split`, `sobre-split`, `servicos-cards`, `como-funciona-steps`, `diferenciais-grid`, `galeria-mosaic`, `depoimentos-cards`, `faq-accordion`, `cta-final-band`, `contato-columns`. Without a photo the hero shows a seeded gradient with an ornament, plus a "Desde" seal only when the client gave the year. A gallery whose photos are missing is left out.
+- **Photos** are `assets/<assetId>.<ext>` next to the config. They go through Astro's image pipeline at 480, 800, 1280 and 1920 px, in AVIF and WebP with a JPEG fallback.
+- **Tested** in `e2e/v12.spec.ts` at 1280 and 360 px:
+  - the page is served under the Worker's CSP;
+  - no external request;
+  - at most 8 KB of JS (gzip);
+  - no sideways scroll at 360, 768 and 1280 px;
+  - axe (WCAG A and AA);
+  - content visible without JavaScript and at once with reduced motion;
+  - 44 px touch targets;
+  - "open now" and today's hours;
+  - fonts with their licenses.
+
+  Lighthouse on the fixture: mobile 98 performance and 100 accessibility and SEO; desktop 100 in every category.
