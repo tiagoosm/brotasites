@@ -86,11 +86,14 @@ test("its text keeps at least 4.5:1 at rest, on hover and with the light under t
 test("the light follows the mouse and rests when it leaves", async ({ page }) => {
   test.skip((page.viewportSize()?.width ?? 0) < 768, "the light follows a mouse");
   await page.goto("/");
+  // The hero title moves the button when its font arrives: measure only after that.
+  await page.evaluate(() => document.fonts.ready);
   const button = heroButton(page);
-  const box = await button.boundingBox();
-  if (!box) throw new Error("no button");
-  // The button only follows the mouse once the page's script has loaded; retry until it does.
+  // The button only follows the mouse once the page's script has loaded; retry until it does,
+  // measuring it again each time.
   await expect(async () => {
+    const box = await button.boundingBox();
+    if (!box) throw new Error("no button");
     await page.mouse.move(box.x + box.width * 0.1, box.y + box.height * 0.5);
     await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.9, { steps: 4 });
     expect(await button.evaluate((el) => el.style.getPropertyValue("--spec-x"))).not.toBe("");
