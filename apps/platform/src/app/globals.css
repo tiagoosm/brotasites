@@ -641,3 +641,24 @@ html:has([data-wizard]) {
     --glow-strength: 0.4;
   }
 }
+
+/* ---------- Phone menu (site-header.tsx) ----------
+   The sheet settles in, then the items come up one after the other, the main button last.
+   The whole entrance is over in about 0.65s, and the menu can be used from the start. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .phone-menu {
+    animation: menu-in var(--motion-micro) var(--ease-out) both;
+  }
+
+  .phone-menu-item {
+    animation: enter-rise 360ms var(--ease-out) both;
+    animation-delay: calc(60ms + var(--item, 0) * 45ms);
+  }
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+  }
+}

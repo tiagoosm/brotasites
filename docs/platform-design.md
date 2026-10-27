@@ -67,6 +67,7 @@ Nothing runs over 900ms, except what follows the scroll.
 - Form stem: drawing (stroke-dashoffset, 900ms ease-in-out) and leaf unfurling (700ms ease-out).
 - Question content rises in with a short stagger when the step changes.
 - The live marker pings slowly; the bud breathes.
+- Phone menu: the sheet fades in and its items rise in one after the other, the main button last (about 0.65s in all). It is rendered in the body, outside the header, whose backdrop blur would otherwise squeeze the fixed sheet into the header's height.
 - Buttons press to 0.97. The hero's "Criar meu site" alone has a specular finish: a cream light on its rim that follows the mouse (still, on the top-left, on touch screens and with reduced motion). Inside, the sheen stays at 4% so the white text keeps at least 4.5:1.
 - Everything is disabled under `prefers-reduced-motion`.
 
