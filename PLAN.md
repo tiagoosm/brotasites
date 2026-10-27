@@ -1,12 +1,14 @@
 # Build plan
 
-Check each step when done. One branch (`step-N-name`) and one pull request per step, never merged without the owner's OK. Stop at the end of each step.
+Check each step when done. One branch (`step-N-name`) and one pull request per step, with a short summary at the end of each step.
+
+Decision of 2026-10-27: the owner no longer approves each task. A step's pull request is merged once CI is green, and work goes on to the next step. Where a step says ASK THE OWNER, the recommended option is taken and recorded under "Decisions to review" in `docs/owner-steps.md`; the owner can reverse it. Accounts, purchases and paid actions still belong to the owner.
 
 This plan comes from the owner's master file (2026-10-27) and is adapted to the code that already exists: the platform, form, sign-in, Supabase tables with RLS tests, the v1.1 schema, the Astro template, the generator and the sites Worker are built. Each step says what it reuses and what it replaces.
 
 - [x] E1 Repository baseline, quality and security basics
 - [x] E2 Schema 1.2 (Zod), example and tests
-- [ ] E3 Catalog and design grammar (tokens, typography, ornaments)
+- [x] E3 Catalog and design grammar (tokens, typography, ornaments)
 - [ ] E4 Identity engine (3 directions, AA contrast, diversity, fingerprint)
 - [ ] E5 Base Astro template + default motion + Motion Lab
 - [ ] E6 Variant factory: food, beauty, events and creatives (with a taste calibration)
@@ -31,7 +33,7 @@ Implement in `packages/schema` as described in `docs/schema-1.2.md`. Schema 1.2 
 
 ### E3 Catalog and grammar
 
-In `packages/catalog`, implement the tokens described in `docs/art-direction.md`: 5 personalities, font pairs (local woff2, license checked and recorded in `THIRD_PARTY_LICENSES.md`), type scales, OKLCH palette generation with AA contrast, shapes, dividers (SVG masks), patterns, original SVG ornaments, CSS photo treatments, seeded gradient-with-grain backgrounds. ASK THE OWNER: show the list of fonts with checked licenses for approval.
+In `packages/catalog`, implement the tokens described in `docs/art-direction.md`: 5 personalities, font pairs (local woff2, license checked and recorded in `THIRD_PARTY_LICENSES.md`), type scales, OKLCH palette generation with AA contrast, shapes, dividers (inline SVG: the sites' CSP blocks data: URIs in masks), patterns, original SVG ornaments, CSS photo treatments, seeded gradient-with-grain backgrounds. ASK THE OWNER: show the list of fonts with checked licenses for approval (taken under the 2026-10-27 rule: see "Decisions to review" in `docs/owner-steps.md`).
 
 ### E4 Engine
 
