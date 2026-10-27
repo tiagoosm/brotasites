@@ -12,6 +12,10 @@
     "./hours": {
       "types": "./dist/hours.d.ts",
       "default": "./dist/hours.js"
+    },
+    "./v1.2": {
+      "types": "./dist/v1.2/index.d.ts",
+      "default": "./dist/v1.2/index.js"
     }
   },
   "files": [
@@ -20,7 +24,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "json-schema": "tsc -p tsconfig.build.json && node scripts/write-json-schema.mjs"
   },
   "dependencies": {
     "zod": "4.6.7"

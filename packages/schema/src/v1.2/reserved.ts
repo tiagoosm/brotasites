@@ -1,0 +1,101 @@
+// Subdomains no client can take (docs/schema-1.2.md, docs/security.md).
+// - `reservedSubdomains`: names the platform uses or may use, refused as the whole address.
+// - `imitationWords`: banks, government bodies and well-known brands, refused anywhere in the
+//   address as a hyphen-separated word ("pix-gratis", "banco-do-ze"). Words that are also
+//   ordinary Portuguese (receita, caixa, inter) are only in the first list, so a business like
+//   "receita-da-vovo" can still use them.
+
+export const reservedSubdomains: ReadonlySet<string> = new Set([
+  "www",
+  "app",
+  "admin",
+  "api",
+  "ajuda",
+  "help",
+  "mail",
+  "email",
+  "smtp",
+  "ver",
+  "status",
+  "blog",
+  "suporte",
+  "support",
+  "login",
+  "entrar",
+  "conta",
+  "account",
+  "painel",
+  "dashboard",
+  "cdn",
+  "assets",
+  "static",
+  "media",
+  "img",
+  "files",
+  "dev",
+  "staging",
+  "test",
+  "teste",
+  "preview",
+  "docs",
+  "denuncia",
+  "abuse",
+  "security",
+  "seguranca",
+  "billing",
+  "pagamento",
+  "pagamentos",
+  "checkout",
+  "ns1",
+  "ns2",
+  "receita",
+  "caixa",
+  "inter",
+  "bb",
+  "meta",
+  "prefeitura",
+  "tribunal",
+]);
+
+export const imitationWords: ReadonlySet<string> = new Set([
+  "brotasites",
+  "banco",
+  "bank",
+  "pix",
+  "boleto",
+  "gov",
+  "governo",
+  "receitafederal",
+  "inss",
+  "detran",
+  "bradesco",
+  "itau",
+  "santander",
+  "nubank",
+  "sicoob",
+  "sicredi",
+  "serasa",
+  "correios",
+  "policia",
+  "google",
+  "apple",
+  "microsoft",
+  "facebook",
+  "instagram",
+  "whatsapp",
+  "mercadolivre",
+  "mercadopago",
+  "paypal",
+  "picpay",
+  "shopee",
+  "amazon",
+  "netflix",
+  "ifood",
+]);
+
+/** True when the subdomain is reserved, or contains a word that imitates a bank, body or brand. */
+export function isReservedSubdomain(subdomain: string): boolean {
+  if (reservedSubdomains.has(subdomain) || imitationWords.has(subdomain)) return true;
+  if (subdomain.includes("receita-federal")) return true;
+  return subdomain.split("-").some((word) => imitationWords.has(word));
+}
