@@ -493,3 +493,79 @@ html:has([data-wizard]) {
     border-radius: 1.5rem;
   }
 }
+
+/* ---------- Specular finish on the hero's main button (specular-link.tsx) ----------
+   A cream highlight on the rim, centered on the cursor, over the solid green button. Inside,
+   only a sheen kept at 4%: white text on leaf is 5.25:1, and anything brighter under the
+   text would take it below 4.5:1. At rest (touch, reduced motion, no JavaScript) the light
+   sits still on the top-left of the rim. */
+
+@property --spec-x {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 16%;
+}
+
+@property --spec-y {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 0%;
+}
+
+.specular {
+  position: relative;
+  isolation: isolate;
+}
+
+.specular::before,
+.specular::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.specular::before {
+  padding: 2px;
+  background: radial-gradient(
+    4.5rem circle at var(--spec-x) var(--spec-y),
+    rgb(250 244 222 / 0.95),
+    rgb(205 232 192 / 0.5) 45%,
+    transparent 75%
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: 0.75;
+  transition: opacity var(--motion-micro) var(--ease-out);
+}
+
+.specular::after {
+  background: radial-gradient(
+    8rem circle at var(--spec-x) var(--spec-y),
+    rgb(250 244 222 / 0.04),
+    transparent 70%
+  );
+}
+
+.specular:hover::before {
+  opacity: 1;
+}
+
+.specular:focus-visible {
+  outline: 2px solid var(--leaf-deep);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .specular {
+    transition:
+      transform 150ms ease-out,
+      background-color 150ms ease-out,
+      box-shadow 150ms ease-out,
+      --spec-x var(--motion-micro) var(--ease-out),
+      --spec-y var(--motion-micro) var(--ease-out);
+  }
+}

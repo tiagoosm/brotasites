@@ -6,6 +6,7 @@ import { ExampleShowcase } from "@/components/site/home/example-showcase";
 import { HeroDemo } from "@/components/site/home/hero-demo";
 import { HeroRays } from "@/components/site/home/hero-rays";
 import { PriceSection } from "@/components/site/home/price-section";
+import { SpecularLink } from "@/components/site/home/specular-link";
 import { CREATE_HREF } from "@/components/site/nav";
 import { SplitWords } from "@/components/site/split-words";
 import { Stem } from "@/components/site/stem/stem";
@@ -88,14 +89,13 @@ export default function HomePage() {
             </p>
             <div className="grid justify-items-start gap-5">
               <div className="flex flex-wrap items-center gap-3">
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="border-line-strong bg-card/70"
-                >
-                  <Link href="/exemplo">Ver um site de exemplo</Link>
-                </Button>
+                <SpecularLink href={CREATE_HREF} prefetch={false}>
+                  Criar meu site
+                  <ArrowRight
+                    aria-hidden="true"
+                    className="transition-transform duration-200 group-hover:translate-x-0.5"
+                  />
+                </SpecularLink>
               </div>
               <Link
                 href="#como-funciona"
