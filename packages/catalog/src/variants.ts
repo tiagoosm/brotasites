@@ -2,9 +2,8 @@ import type { Family, SectionId } from "@brotasites/schema/v1.2";
 import type { Personality } from "./personality.js";
 
 // Section variants (heroes and the other sections). Each one declares what it suits and what
-// it needs, so the engine only offers variants the client's material can fill. The variant
-// factory (E6) fills `variants`; until then the list is empty and the engine is tested with
-// its own fixtures.
+// it needs, so the engine only offers variants the client's material can fill. The
+// templates (E5) ship one base variant per section; the variant factory (E6) adds the rest.
 
 export type PhotoRequirement = "none" | "optional" | "required";
 
@@ -25,7 +24,38 @@ export interface Variant {
   version: number;
 }
 
-export const variants: readonly Variant[] = [];
+const everyPersonality: readonly Personality[] = [
+  "acolhedor",
+  "elegante",
+  "moderno",
+  "robusto",
+  "ousado",
+];
+
+/** One base variant per section, for every family and personality (E5). */
+function base(id: string, section: SectionId, photo: PhotoRequirement): Variant {
+  return {
+    id,
+    section,
+    families: "all",
+    personalities: everyPersonality,
+    requires: { photo },
+    version: 1,
+  };
+}
+
+export const variants: readonly Variant[] = [
+  base("hero-split", "hero", "optional"),
+  base("sobre-split", "sobre", "optional"),
+  base("servicos-cards", "servicos", "none"),
+  base("como-funciona-steps", "como-funciona", "none"),
+  base("diferenciais-grid", "diferenciais", "none"),
+  base("galeria-mosaic", "galeria", "required"),
+  base("depoimentos-cards", "depoimentos", "none"),
+  base("faq-accordion", "faq", "none"),
+  base("cta-final-band", "cta-final", "none"),
+  base("contato-columns", "contato", "none"),
+];
 
 /**
  * Variants of a section that suit the family and the personality (any personality when it is

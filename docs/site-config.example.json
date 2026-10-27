@@ -51,7 +51,7 @@
     "round": 0,
     "identity": {
       "personality": "acolhedor",
-      "heroVariant": "food-hero-arch",
+      "heroVariant": "hero-split",
       "fontPair": "fraunces-manrope",
       "typeScale": "gentle",
       "palette": {
@@ -74,7 +74,7 @@
         "servicos": "servicos-cards",
         "galeria": "galeria-mosaic",
         "faq": "faq-accordion",
-        "cta-final": "cta-band",
+        "cta-final": "cta-final-band",
         "contato": "contato-columns"
       },
       "rhythm": "aba",

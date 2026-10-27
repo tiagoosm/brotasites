@@ -9,8 +9,11 @@ export interface ImageTreatment {
   css: string;
 }
 
-/** Path where the generator writes `GRAIN_SVG` in every site. */
-export const GRAIN_ASSET_PATH = "/assets/grain.svg";
+/**
+ * Where the grain file is, relative to the site stylesheet (both live in /assets/), so the
+ * same CSS works when a site is served under a sub-path.
+ */
+export const GRAIN_ASSET_PATH = "grain.svg";
 
 /** Film grain as a tiny SVG noise file (an image, so it runs no script). */
 export const GRAIN_SVG =
@@ -24,7 +27,7 @@ export const imageTreatments: readonly ImageTreatment[] = [
   {
     id: "offset-frame",
     needsGoodPhoto: false,
-    css: '.photo-offset-frame::before{content:"";position:absolute;inset:0;translate:14px 14px;border:2px solid var(--color-accent);border-radius:var(--radius-image);z-index:-1}',
+    css: '.photo-offset-frame::before{content:"";position:absolute;inset:0;translate:min(14px,3vw) min(14px,3vw);border:2px solid var(--color-accent);border-radius:var(--radius-image);z-index:-1}',
   },
   {
     id: "color-block",
