@@ -2,7 +2,7 @@ import { z } from "zod";
 import { hexColorSchema, subdomainSchema, whatsappSchema } from "./primitives.js";
 import { sectionSchema } from "./sections.js";
 
-// Mirrors docs/site-config.schema.json (v1.1). Only the root object rejects unknown keys,
+// Mirrors docs/legacy/site-config.schema.v1.1.json (v1.1). Only the root object rejects unknown keys,
 // as in the JSON schema; nested objects strip them.
 
 export const SCHEMA_VERSION = "1.1";

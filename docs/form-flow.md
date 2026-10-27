@@ -1,74 +1,50 @@
-# Form flow (landing pages)
+# Form flow (7 steps)
 
-Goal: the client answers in a few minutes and gets the site live, without seeing any code. Each step fills in one part of the configuration JSON (`site-config.schema.json`).
+Target flow from the master plan (2026-10-27), built in step E10. It replaces the previous flow (business, template, colors, sections, content, contact, address) and removes the live preview: the client no longer sees the site while answering.
 
 UI copy shown to the client is in pt-BR; labels quoted below are the actual pt-BR texts.
 
 ## Principles
 
-- 7 short steps, one main decision per screen.
-- Live preview of the site beside the form (or above it, on mobile) on every step, updated on each change.
-- Autosave on every step: the client can close the page and come back later.
+- One main question per screen. Plain, informal language.
+- Draft saved at every step: the client can close the page and come back later.
 - Per-step validation with the schema, with clear error messages in Portuguese.
-- Everything the AI generates is shown as an editable suggestion, never as something already approved.
-- Mobile-first layout, since many clients will fill it out on their phones.
+- No live preview. Generation is asynchronous: after sending, the client follows the status on "Meus sites".
+
+## Sign-in
+
+Signing in is required to create a site (decision of 2026-10-27, replacing the decision of 2026-10-21 that left it optional until publishing). Sign-in is by magic link (email, no password) and comes before step 1. The draft is saved in the account at every step, and the directions and the finished site appear on the client's dashboard.
 
 ## Steps
 
-### 0. Sign-in
-- Email sign-in (magic link), no password.
-- Creates the user record and a draft site.
-- Decision (2026-10-21): sign-in is **optional until publishing**. Anyone can start answering right away; the draft is saved on the device. Signing in (offered in the questions rail and header) keeps the draft in the account and on every device. Publishing will require it. This keeps the first screen free of friction.
+1. **Negócio (business):** name, category (searchable list from `docs/categories.md`), city and state, short description (up to 500), founding year (optional). A blocked category stops here, with a kind explanation and no charge. Optional but encouraged questions that make the site specific: how it started, what only they do, what clients praise most, a detail of the neighborhood or city, the most requested item or service.
+2. **Marca e sensação (brand and feeling):** logo upload (optional), brand colors (optional, up to 3), up to 2 feelings among acolhedor, elegante, moderno, robusto and ousado. Without a logo, the system generates a monogram.
+3. **Seções (sections):** the system suggests the family's sections; the client turns them on or off. Testimonials only turn on with a real testimonial.
+4. **Conteúdo (content):** services or products (name, short description, up to 9), differentiators (up to 8, short), FAQ (optional), real testimonials with name and authorization, photos (up to 12, with a guide on how to take them). Image authorization confirmation when people appear, and parents' or guardians' authorization when minors appear.
+5. **Contato (contact):** WhatsApp, phone, email (at least one channel). Full address, or "não tenho endereço fixo" with a list of neighborhoods or cities served. Structured opening hours: day chips, shortcuts ("Seg a Sex", "Seg a Sáb", "Todos os dias"), "copiar para os outros dias", "sob agendamento" and "24 horas" options. Instagram and Facebook. Professional registration when the family requires it.
+6. **Escolha da direção (direction choice, asynchronous):** the client sends the answers and can close the page. When the 3 directions are ready, the dashboard shows the "Escolha uma das 3" card. Unlimited redos. Choosing one locks the identity.
+7. **Endereço e revisão (address and review):** subdomain choice (validation and availability in real time), summary of the answers, the finished-site screen, change requests, approval and payment (stub).
 
-### 1. Your business
-- Fields: business name, type/category (list with an "other" option), city.
-- JSON: `business.name`, `business.category`, `business.contact.address.city`.
-- The selected category preselects the template, palette and suggested sections.
+## Minimum to generate
 
-### 2. Template
-- Cards for 4 templates (`classico`, `moderno`, `minimalista`, `vibrante`), each previewed with the business name already filled in.
-- JSON: `design.template`.
+Name, category, city, at least one contact channel, and (one service, or a description of 60 characters or more).
 
-### 3. Colors and fonts
-- Ready-made palettes suggested for the category, plus a free color picker for those who want it.
-- Font pairings from a closed list (heading + body).
-- Automatic poor-contrast warning (text unreadable on the background) before moving on.
-- JSON: `design.colors.*`, `design.fonts.*`, `design.style.*`.
+## Missing data
 
-### 4. Sections
-- List with on/off toggles and adjustable order: hero, about, services, gallery, testimonials, FAQ, final call to action, contact.
-- Sections recommended for the category come enabled by default.
-- JSON: `sections[].enabled` and the order of the array.
+Nothing is invented and nothing shows up empty:
 
-### 5. Content
-- One enabled section at a time, with its text fields.
-- A "Sugerir com IA" ("Suggest with AI") button on each text field: the client describes it in one sentence and the AI proposes the text (using the tone chosen in `ai.tone`).
-- Fields edited by hand go into `ai.userEditedFields` and are not overwritten on regeneration.
-- JSON: `business.tagline`, `business.description`, `sections[].content`, `seo.*`.
-
-### 6. Contact and images
-- WhatsApp, phone, email, address, opening hours, Instagram.
-- Logo and photo upload, with size and format limits, and automatic resizing.
-- JSON: `business.contact.*`, `business.social.*`, `business.logo`, section images.
-
-### 7. Site address and review
-- Subdomain choice, with real-time availability check.
-- Final summary with a full-screen preview and a payment button.
-- JSON: `site.subdomain`.
-
-### 8. Tracking
-- Status screen: "gerando" (generating) → "publicando" (publishing) → "no ar" (live), or "em revisão" (in review) if something fails.
-- On completion: site link, a share-on-WhatsApp button and a "pedir ajuste" ("request a change") shortcut.
-
-## AI rules (important)
-
-- Never invent testimonials, reviews, numbers, awards, certifications or contact details. These fields only contain what the client provided.
-- The testimonials section can only be enabled if the client provides at least one real testimonial.
-- Factual content (prices, opening hours, address, years in business) comes only from the form; the AI only rewrites and organizes it.
-- AI output is always JSON validated by the schema; if it fails, retry once and then flag the site for review.
-
-## Open questions
-
-- How many templates to ship at launch (starting with 2 or 3 polished ones may be better than 4).
-- Payment before or after generation (before reduces the cost of test runs without a purchase; after lets the client see the result before paying).
-- Policy for included adjustments after publishing.
+| Missing data | Behavior |
+| --- | --- |
+| WhatsApp | The main button becomes "Ligar"; without a phone, "Enviar e-mail" |
+| Phone | No call button |
+| No channel at all | Blocks |
+| Full address | The address block and "Como chegar" disappear |
+| Service area only | "Atendemos em {list}" |
+| Opening hours | The block does not appear |
+| Logo | Generated monogram |
+| Photos | No gallery; typographic hero, gradient with grain or a pattern; never a generated photo |
+| Photo for "Sobre" | Text only, with an adjusted layout |
+| Social networks | The icon does not appear |
+| Description | The AI writes only from the facts given; without enough facts, "Sobre" is turned off |
+| Tagline | Suggested by the AI (marked as generated) |
+| Testimonials | Section turned off |

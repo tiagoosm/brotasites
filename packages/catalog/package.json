@@ -1,0 +1,26 @@
+{
+  "name": "@brotasites/catalog",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Design catalog for client sites: tokens, families, personalities, ornaments and variants (docs/art-direction.md).",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}
