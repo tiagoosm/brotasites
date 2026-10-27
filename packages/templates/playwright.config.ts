@@ -2,9 +2,12 @@ import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 4322;
+const PORT_V12 = 4323;
 const fixtureConfig = fileURLToPath(new URL("./e2e/fixture/site-config.json", import.meta.url));
+const fixtureV12 = fileURLToPath(new URL("./e2e/fixture-v12/site-config.json", import.meta.url));
 
-// Builds the fixture site (every section on, placeholder photos) and serves the static output.
+// Builds the fixture sites (every section on, placeholder photos), 1.1 and 1.2, and serves the
+// static output of each.
 export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
@@ -20,10 +23,32 @@ export default defineConfig({
   projects: [
     {
       name: "desktop",
+      testIgnore: /v12\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
     },
     {
+      name: "v12-desktop",
+      testMatch: /v12\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1280, height: 900 },
+        baseURL: `http://localhost:${PORT_V12}`,
+      },
+    },
+    {
+      name: "v12-mobile",
+      testMatch: /v12\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 360, height: 780 },
+        isMobile: true,
+        hasTouch: true,
+        baseURL: `http://localhost:${PORT_V12}`,
+      },
+    },
+    {
       name: "mobile",
+      testIgnore: /v12\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 375, height: 812 },
@@ -33,11 +58,24 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: `pnpm exec astro build --outDir dist-e2e && pnpm exec astro preview --outDir dist-e2e --port ${PORT}`,
-    url: `http://localhost:${PORT}`,
-    env: { BROTASITES_CONFIG: fixtureConfig, ASTRO_TELEMETRY_DISABLED: "1" },
-    reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
-  },
+  // Astro builds of the same project must not run at the same time, so the first server builds
+  // both sites in turn and serves the 1.1 one; the second waits for the 1.2 build to be marked
+  // ready and serves it. A plain static server (e2e/serve.mjs) replaces astro preview, which
+  // allows one server per project and may move itself to the background.
+  webServer: [
+    {
+      command: `pnpm exec astro build --outDir dist-e2e && BROTASITES_CONFIG=${fixtureV12} pnpm exec astro build --outDir dist-e2e-v12 && node e2e/ready.mjs mark dist-e2e-v12 && node e2e/serve.mjs dist-e2e ${PORT}`,
+      url: `http://localhost:${PORT}`,
+      env: { BROTASITES_CONFIG: fixtureConfig, ASTRO_TELEMETRY_DISABLED: "1" },
+      reuseExistingServer: !process.env.CI,
+      timeout: 240_000,
+    },
+    {
+      command: `node e2e/ready.mjs wait dist-e2e-v12 && node e2e/serve.mjs dist-e2e-v12 ${PORT_V12}`,
+      url: `http://localhost:${PORT_V12}`,
+      env: { BROTASITES_CONFIG: fixtureV12, ASTRO_TELEMETRY_DISABLED: "1" },
+      reuseExistingServer: !process.env.CI,
+      timeout: 240_000,
+    },
+  ],
 });
