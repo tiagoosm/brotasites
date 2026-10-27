@@ -151,9 +151,9 @@ Until the variant factory (E6) ships real heroes and sections, the engine is tes
 | contato | `contato-columns`, `contato-card`, `contato-split` |
 
 Heroes per family this round:
-- food: 5 (`hero-feast`, `hero-split`, `hero-poster`, `hero-fullbleed`, `hero-bento`, plus `hero-collage`);
+- food: 6 (`hero-feast`, `hero-split`, `hero-poster`, `hero-fullbleed`, `hero-bento`, `hero-collage`);
 - beauty: 4 (`hero-split`, `hero-poster`, `hero-fullbleed`, `hero-arch`);
-- events and creatives: 5 (`hero-split`, `hero-poster`, `hero-arch`, `hero-bento`, `hero-collage`, plus `hero-fullbleed`).
+- events and creatives: 6 (`hero-split`, `hero-poster`, `hero-fullbleed`, `hero-arch`, `hero-bento`, `hero-collage`).
 
 Rules every variant follows:
 - **Weak photos:** a photo under 1200 px on its long side is "weak" (`isStrongPhoto`). Variants show it smaller (a framed print) instead of stretching it.
