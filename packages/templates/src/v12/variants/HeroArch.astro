@@ -1,0 +1,129 @@
+---
+import Button from "../components/Button.astro";
+import Ornament from "../components/Ornament.astro";
+import Photo from "../components/Photo.astro";
+import { heroParts } from "../lib/hero";
+import type { VariantProps } from "./types";
+
+// hero-arch (beauty, events): asymmetric. The title is anchored at the bottom left and a tall
+// arched photo stands on the right, with a thin outline arch behind it. Without a photo the arch
+// holds the gradient and an ornament.
+
+type Props = Omit<VariantProps<"hero">, "previousTone" | "divider" | "index">;
+const { config, theme, content } = Astro.props;
+const parts = heroParts(config, theme, content);
+---
+
+<section id="abertura" aria-labelledby="abertura-title" class="hero-arch section-hero tone-base">
+  <div class="container arch-grid">
+    <div class="arch-text">
+      <p class="label" data-anim="reveal">{parts.business.name}</p>
+      <h1 id="abertura-title" class="arch-title">
+        {parts.lead}{parts.accent && " "}{parts.accent && <span class:list={["arch-accent", parts.italic && "is-italic"]}>{parts.accent}</span>}
+      </h1>
+      {content.subtitle && <p class="arch-subtitle" data-anim="reveal" data-anim-delay="100">{content.subtitle}</p>}
+      <div class="arch-actions" data-anim="reveal" data-anim-delay="200">
+        <Button link={parts.link} label={parts.label} />
+        <p class="arch-today" data-open-status hidden></p>
+        {parts.summary && <p class="arch-today">{parts.summary}</p>}
+      </div>
+    </div>
+    <div class="arch-visual" data-anim="reveal" data-anim-delay="200">
+      <span class="arch-outline" aria-hidden="true"></span>
+      <div class:list={["arch-frame", !parts.image && "gradient-bg"]}>
+        {
+          parts.image ? (
+            <Photo image={parts.image} alt={parts.alt} treatment="none" sizes="(min-width: 900px) 34vw, 80vw" priority />
+          ) : (
+            <span class="arch-ornament" aria-hidden="true">
+              <Ornament set={theme.identity.ornamentSet} seed={parts.seed} />
+            </span>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .arch-grid {
+    display: grid;
+    gap: clamp(2rem, 6vw, 4rem);
+    padding-block: clamp(2.5rem, 7vw, 6rem);
+  }
+  @media (min-width: 900px) {
+    .arch-grid {
+      grid-template-columns: 1.4fr 1fr;
+      align-items: end;
+    }
+  }
+  .arch-title {
+    font-size: var(--step-display);
+    margin: 0.1em 0 0;
+    max-width: 13ch;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  .arch-accent {
+    color: var(--color-primary);
+  }
+  .arch-accent.is-italic {
+    font-style: italic;
+  }
+  .arch-subtitle {
+    font-size: var(--step-1);
+    color: var(--fg-muted);
+    max-width: 36ch;
+    margin: 1.25rem 0 0;
+  }
+  .arch-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    margin-top: 2rem;
+  }
+  .arch-today {
+    margin: 0;
+    font-size: var(--step--1);
+    color: var(--fg-muted);
+  }
+  .arch-visual {
+    position: relative;
+    width: min(100%, 24rem);
+    justify-self: center;
+  }
+  .arch-outline {
+    position: absolute;
+    inset: -1rem 1rem 1rem -1rem;
+    border: 1.5px solid var(--color-accent);
+    border-radius: 999px 999px var(--radius-sm) var(--radius-sm);
+  }
+  .arch-frame {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    border-radius: 999px 999px var(--radius-sm) var(--radius-sm);
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+  .arch-frame :global(.photo),
+  .arch-frame :global(picture),
+  .arch-frame :global(img) {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+  .arch-frame :global(img) {
+    object-fit: cover;
+  }
+  .arch-ornament {
+    width: 45%;
+    color: var(--color-accent);
+  }
+  .arch-ornament :global(svg) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+</style>

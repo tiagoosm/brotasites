@@ -1,0 +1,43 @@
+---
+import SectionShell from "../components/SectionShell.astro";
+import type { VariantProps } from "./types";
+
+// faq-columns: every answer open, in two columns, for a short FAQ that reads at a glance.
+
+type Props = VariantProps<"faq">;
+const { content, tone, previousTone, divider } = Astro.props;
+---
+
+<SectionShell id="faq" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Dúvidas">
+  <dl class="faq-columns" data-anim="stagger">
+    {
+      content.items.map((item) => (
+        <div class="faq-entry">
+          <dt>{item.question}</dt>
+          <dd>{item.answer}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</SectionShell>
+
+<style>
+  .faq-columns {
+    margin: 0;
+    display: grid;
+    gap: 2rem 3rem;
+  }
+  @media (min-width: 768px) {
+    .faq-columns {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  dt {
+    font-weight: 700;
+    font-size: var(--step-1);
+  }
+  dd {
+    margin: 0.5rem 0 0;
+    color: var(--fg-muted);
+  }
+</style>

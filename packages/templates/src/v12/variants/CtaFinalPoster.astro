@@ -1,0 +1,43 @@
+---
+import Button from "../components/Button.astro";
+import SectionShell from "../components/SectionShell.astro";
+import { ctaLink } from "../lib/links";
+import type { VariantProps } from "./types";
+
+// cta-final-poster: the last call centered on the seeded gradient, very large. It always takes
+// the base tone: the gradient is checked against the page's text color.
+
+type Props = VariantProps<"cta-final">;
+const { config, content, previousTone, divider } = Astro.props;
+---
+
+<SectionShell id="cta-final" title={content.title} tone="base" previousTone={previousTone} divider={divider} class="cta-poster gradient-bg">
+  <div class="cta-poster-body">
+    {content.subtitle && <p class="cta-poster-subtitle" data-anim="reveal">{content.subtitle}</p>}
+    <Button link={ctaLink(content.cta, config.business)} label={content.cta.label} />
+  </div>
+</SectionShell>
+
+<style>
+  .cta-poster {
+    text-align: center;
+    background-color: var(--color-background);
+    color: var(--color-text);
+  }
+  .cta-poster :global(.section-head) {
+    margin-inline: auto;
+  }
+  .cta-poster :global(.section-title) {
+    font-size: var(--step-display);
+  }
+  .cta-poster-body {
+    display: grid;
+    justify-items: center;
+    gap: 1.5rem;
+  }
+  .cta-poster-subtitle {
+    margin: 0;
+    font-size: var(--step-1);
+    max-width: 40ch;
+  }
+</style>

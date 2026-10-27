@@ -331,7 +331,7 @@ a {
   line-height: 0.85;
   letter-spacing: -0.04em;
   white-space: nowrap;
-  opacity: 0.18;
+  /* Full strength (it is text, so it keeps AA); the cut at the bottom makes it an ornament. */
   padding-inline: clamp(1rem, 4vw, 2.5rem);
 }
 

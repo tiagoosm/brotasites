@@ -1,0 +1,91 @@
+---
+import Ornament from "../components/Ornament.astro";
+import Photo from "../components/Photo.astro";
+import SectionShell from "../components/SectionShell.astro";
+import { findAsset, isStrongPhoto } from "../lib/assets";
+import type { VariantProps } from "./types";
+
+// sobre-card: a wide photo with a colored card overlapping its lower edge, holding the story.
+// The card never covers the photo's subject: it sits below it on small screens. With a weak or
+// no photo, the card stands alone next to an ornament.
+
+type Props = VariantProps<"sobre">;
+const { config, theme, content, tone, previousTone, divider, index } = Astro.props;
+const image = findAsset(content.image?.assetId);
+const wide = isStrongPhoto(image);
+---
+
+<SectionShell id="sobre" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Quem somos">
+  <div class:list={["sobre-card-wrap", wide && "has-photo"]}>
+    {
+      image && wide ? (
+        <div data-anim="reveal">
+          <Photo image={image} alt={content.image?.alt ?? ""} treatment="none" sizes="(min-width: 1200px) 1100px, 100vw" class="sobre-card-photo" />
+        </div>
+      ) : (
+        <span class="sobre-card-ornament" data-anim="float" aria-hidden="true">
+          <Ornament set={theme.identity.ornamentSet} index={index} seed={config.design.seed} />
+        </span>
+      )
+    }
+    <div class="sobre-card tone-brand" data-anim="reveal" data-anim-delay="100">
+      <p>{content.text}</p>
+      {image && !wide && <Photo image={image} alt={content.image?.alt ?? ""} treatment="polaroid" sizes="12rem" class="sobre-card-print" />}
+    </div>
+  </div>
+</SectionShell>
+
+<style>
+  .sobre-card-wrap {
+    display: grid;
+  }
+  .sobre-card-wrap :global(.sobre-card-photo img) {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+  }
+  .sobre-card {
+    background: var(--bg);
+    color: var(--fg);
+    border-radius: var(--radius-lg);
+    padding: clamp(1.5rem, 4vw, 3rem);
+    max-width: 40rem;
+    font-size: var(--step-1);
+    line-height: 1.5;
+    display: grid;
+    gap: 1.5rem;
+  }
+  .sobre-card p {
+    margin: 0;
+  }
+  @media (min-width: 900px) {
+    .has-photo .sobre-card {
+      margin: -8rem 0 0 auto;
+      position: relative;
+      width: 60%;
+    }
+    .sobre-card-wrap:not(.has-photo) {
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 3rem;
+    }
+  }
+  .has-photo .sobre-card {
+    margin-top: 1rem;
+  }
+  .sobre-card-ornament {
+    display: block;
+    width: clamp(5rem, 14vw, 10rem);
+    color: var(--ornament);
+    margin-bottom: 1.5rem;
+  }
+  .sobre-card-ornament :global(svg) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .sobre-card :global(.sobre-card-print) {
+    width: min(70%, 12rem);
+  }
+</style>

@@ -1,13 +1,14 @@
 ---
 import Button from "../components/Button.astro";
-// hero-split: text on one side, the photo framed on the other. Without a photo the frame
-// becomes a seeded gradient with an ornament (and a "Desde" seal when the client gave the year).
 import Ornament from "../components/Ornament.astro";
 import Photo from "../components/Photo.astro";
 import { findAsset } from "../lib/assets";
 import { hoursSummary } from "../lib/hours";
 import { ctaLink, primaryContact } from "../lib/links";
 import type { VariantProps } from "./types";
+
+// hero-split: text on one side, the photo framed on the other. Without a photo the frame
+// becomes a seeded gradient with an ornament (and a "Desde" seal when the client gave the year).
 
 type Props = Omit<VariantProps<"hero">, "previousTone" | "divider" | "index">;
 

@@ -1,0 +1,161 @@
+---
+import Icon from "../../components/Icon.astro";
+import Button from "../components/Button.astro";
+import SectionShell from "../components/SectionShell.astro";
+import { hoursRows, hoursSummary } from "../lib/hours";
+import {
+  addressLine,
+  directionsHref,
+  emailHref,
+  formatPhone,
+  phoneHref,
+  whatsappHref,
+} from "../lib/links";
+import type { VariantProps } from "./types";
+
+// contato-card: one big card with each channel as a large button, then the address with
+// "Como chegar" and the hours. Contact details never wait for an animation.
+
+type Props = VariantProps<"contato">;
+const { config, content, tone, previousTone, divider } = Astro.props;
+const { business } = config;
+const { contact, address } = business;
+const rows = hoursRows(business.openingHours);
+const summary = hoursSummary(business.openingHours);
+---
+
+<SectionShell id="contato" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Fale com a gente">
+  <div class="contact-card">
+    <div class="contact-buttons">
+      {contact.whatsapp && (
+        <a class="contact-button" href={whatsappHref(contact.whatsapp)} target="_blank" rel="noopener noreferrer">
+          <Icon name="chat" class="contact-icon" />
+          <span><small>WhatsApp</small>{formatPhone(contact.whatsapp)}</span>
+        </a>
+      )}
+      {contact.phone && (
+        <a class="contact-button" href={phoneHref(contact.phone)}>
+          <Icon name="phone" class="contact-icon" />
+          <span><small>Telefone</small>{formatPhone(contact.phone)}</span>
+        </a>
+      )}
+      {contact.email && (
+        <a class="contact-button" href={emailHref(contact.email)}>
+          <Icon name="mail" class="contact-icon" />
+          <span><small>E-mail</small>{contact.email}</span>
+        </a>
+      )}
+    </div>
+    <div class="contact-details">
+      <div>
+        {address.hasFixedAddress ? (
+          <>
+            <h3 class="contact-heading">Endereço</h3>
+            <address>{addressLine(business)}</address>
+            {content.showMapLink && (
+              <Button link={{ href: directionsHref(business), external: true }} label="Como chegar" kind="ghost" class="contact-map" />
+            )}
+          </>
+        ) : (
+          <>
+            <h3 class="contact-heading">Onde atendemos</h3>
+            <p>{business.serviceArea.join(", ")}</p>
+          </>
+        )}
+      </div>
+      {content.showHours && (
+        <div>
+          <h3 class="contact-heading">Horário</h3>
+          <p class="contact-status" data-open-status hidden />
+          {summary ? (
+            <p>{summary}</p>
+          ) : (
+            <dl class="contact-hours">
+              {rows.map((row) => (
+                <div class="hours-row" data-days={row.days.join(",")}>
+                  <dt>{row.label}</dt>
+                  <dd>{row.hours}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
+</SectionShell>
+
+<style>
+  .contact-card {
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    padding: clamp(1.25rem, 4vw, 3rem);
+    display: grid;
+    gap: 2rem;
+  }
+  .contact-buttons {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  }
+  .contact-button {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-height: 64px;
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--radius-md);
+    background: var(--button-bg);
+    color: var(--button-fg);
+    text-decoration: none;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .contact-button small {
+    display: block;
+    font-weight: 400;
+    font-size: var(--step--1);
+  }
+  :global(.contact-icon) {
+    width: 1.75rem;
+    height: 1.75rem;
+    flex: none;
+  }
+  .contact-details {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  }
+  .contact-heading {
+    font-size: var(--step-1);
+    margin: 0 0 0.5rem;
+  }
+  address {
+    font-style: normal;
+  }
+  .contact-details :global(.contact-map) {
+    margin-top: 1rem;
+  }
+  .contact-status {
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+  }
+  .contact-hours {
+    margin: 0;
+  }
+  .hours-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--radius-sm);
+  }
+  .hours-row[data-today] {
+    font-weight: 700;
+    outline: 2px solid currentColor;
+  }
+  .hours-row dt,
+  .hours-row dd {
+    margin: 0;
+  }
+</style>

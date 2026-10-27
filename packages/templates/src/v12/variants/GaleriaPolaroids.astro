@@ -1,0 +1,74 @@
+---
+import Photo from "../components/Photo.astro";
+import SectionShell from "../components/SectionShell.astro";
+import { findAsset } from "../lib/assets";
+import type { VariantProps } from "./types";
+
+// galeria-polaroids: the photos as prints, each slightly tilted, with its description written
+// below in the handwritten font. Weak photos look at home here.
+
+type Props = VariantProps<"galeria">;
+const { content, tone, previousTone, divider } = Astro.props;
+const photos = content.images.flatMap((image) => {
+  const file = findAsset(image.assetId);
+  return file ? [{ file, alt: image.alt }] : [];
+});
+---
+
+{
+  photos.length > 0 && (
+    <SectionShell id="galeria" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Fotos" wide>
+      <ul class="prints" data-anim="stagger">
+        {photos.map((photo, index) => (
+          <li class={`print print-${index % 4}`}>
+            <figure class="print-frame">
+              <Photo image={photo.file} alt={photo.alt} treatment="none" sizes="(min-width: 900px) 25vw, 80vw" />
+              {photo.alt && <figcaption aria-hidden="true">{photo.alt}</figcaption>}
+            </figure>
+          </li>
+        ))}
+      </ul>
+    </SectionShell>
+  )
+}
+
+<style>
+  .prints {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: clamp(1.5rem, 4vw, 2.5rem);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  }
+  .print-frame {
+    margin: 0;
+    background: var(--color-background);
+    color: var(--color-text);
+    padding: 0.75rem 0.75rem 0.5rem;
+    box-shadow: 0 10px 28px rgb(0 0 0 / 0.14);
+  }
+  .print-0 .print-frame {
+    rotate: -2deg;
+  }
+  .print-1 .print-frame {
+    rotate: 1.5deg;
+  }
+  .print-2 .print-frame {
+    rotate: -1deg;
+  }
+  .print-3 .print-frame {
+    rotate: 2.5deg;
+  }
+  .print-frame :global(img) {
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 0;
+  }
+  figcaption {
+    font-family: var(--font-label);
+    font-size: var(--step-1);
+    line-height: 1.2;
+    padding: 0.6rem 0.25rem 0.25rem;
+  }
+</style>

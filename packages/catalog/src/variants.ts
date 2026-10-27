@@ -44,6 +44,24 @@ function base(id: string, section: SectionId, photo: PhotoRequirement): Variant 
   };
 }
 
+function variant(
+  id: string,
+  section: SectionId,
+  families: readonly Family[] | "all",
+  personalities: readonly Personality[],
+  photo: PhotoRequirement,
+  goodPhoto = false,
+): Variant {
+  return {
+    id,
+    section,
+    families,
+    personalities,
+    requires: goodPhoto ? { photo, goodPhoto } : { photo },
+    version: 1,
+  };
+}
+
 export const variants: readonly Variant[] = [
   base("hero-split", "hero", "optional"),
   base("sobre-split", "sobre", "optional"),
@@ -55,31 +73,68 @@ export const variants: readonly Variant[] = [
   base("faq-accordion", "faq", "none"),
   base("cta-final-band", "cta-final", "none"),
   base("contato-columns", "contato", "none"),
-  // Food (E6).
-  {
-    id: "hero-feast",
-    section: "hero",
-    families: ["food"],
-    personalities: ["acolhedor", "elegante", "robusto", "ousado"],
-    requires: { photo: "optional" },
-    version: 1,
-  },
-  {
-    id: "sobre-manifesto",
-    section: "sobre",
-    families: "all",
-    personalities: ["acolhedor", "elegante", "robusto"],
-    requires: { photo: "optional" },
-    version: 1,
-  },
-  {
-    id: "servicos-menu",
-    section: "servicos",
-    families: ["food", "beauty"],
-    personalities: ["acolhedor", "elegante", "robusto", "moderno"],
-    requires: { photo: "none" },
-    version: 1,
-  },
+  // Variant factory (E6). Heroes per family: food 5, beauty 4, events and creatives 5.
+  variant(
+    "hero-feast",
+    "hero",
+    ["food"],
+    ["acolhedor", "elegante", "robusto", "ousado"],
+    "optional",
+  ),
+  variant("hero-poster", "hero", "all", everyPersonality, "none"),
+  variant(
+    "hero-fullbleed",
+    "hero",
+    ["food", "beauty", "events-creative", "automotive", "home-services"],
+    ["elegante", "moderno", "robusto"],
+    "required",
+    true,
+  ),
+  variant(
+    "hero-arch",
+    "hero",
+    ["beauty", "events-creative", "health", "professionals"],
+    ["acolhedor", "elegante", "ousado"],
+    "optional",
+  ),
+  variant(
+    "hero-bento",
+    "hero",
+    ["food", "events-creative", "retail"],
+    ["moderno", "ousado", "acolhedor"],
+    "optional",
+  ),
+  variant(
+    "hero-collage",
+    "hero",
+    ["events-creative", "food"],
+    ["ousado", "acolhedor", "moderno"],
+    "optional",
+  ),
+  variant("sobre-manifesto", "sobre", "all", ["acolhedor", "elegante", "robusto"], "optional"),
+  variant("sobre-card", "sobre", "all", ["moderno", "ousado", "robusto"], "optional"),
+  variant(
+    "servicos-menu",
+    "servicos",
+    ["food", "beauty"],
+    ["acolhedor", "elegante", "robusto", "moderno"],
+    "none",
+  ),
+  variant("servicos-list", "servicos", "all", ["elegante", "moderno", "robusto"], "none"),
+  variant("como-funciona-cards", "como-funciona", "all", everyPersonality, "none"),
+  variant("como-funciona-path", "como-funciona", "all", ["acolhedor", "ousado", "moderno"], "none"),
+  variant("diferenciais-split", "diferenciais", "all", ["elegante", "robusto", "moderno"], "none"),
+  variant("diferenciais-ribbon", "diferenciais", "all", ["ousado", "moderno", "acolhedor"], "none"),
+  variant("galeria-polaroids", "galeria", "all", ["acolhedor", "ousado"], "required"),
+  variant("galeria-grid", "galeria", "all", ["elegante", "moderno", "robusto"], "required"),
+  variant("depoimentos-quote", "depoimentos", "all", ["elegante", "robusto", "moderno"], "none"),
+  variant("depoimentos-notes", "depoimentos", "all", ["acolhedor", "ousado"], "none"),
+  variant("faq-columns", "faq", "all", ["moderno", "elegante", "robusto"], "none"),
+  variant("faq-split", "faq", "all", ["acolhedor", "ousado", "moderno"], "none"),
+  variant("cta-final-poster", "cta-final", "all", everyPersonality, "none"),
+  variant("cta-final-stamp", "cta-final", "all", ["robusto", "ousado", "acolhedor"], "none"),
+  variant("contato-card", "contato", "all", ["acolhedor", "ousado", "moderno"], "none"),
+  variant("contato-split", "contato", "all", ["elegante", "robusto", "moderno"], "none"),
 ];
 
 /**

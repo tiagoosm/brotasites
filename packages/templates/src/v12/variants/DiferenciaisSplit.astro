@@ -1,0 +1,61 @@
+---
+import Icon from "../../components/Icon.astro";
+import SectionShell from "../components/SectionShell.astro";
+import type { VariantProps } from "./types";
+
+// diferenciais-split: a checklist in two columns, each reason with a check mark and its text.
+
+type Props = VariantProps<"diferenciais">;
+const { content, tone, previousTone, divider } = Astro.props;
+---
+
+<SectionShell id="diferenciais" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Diferenciais">
+  <ul class="checks" data-anim="stagger">
+    {
+      content.items.map((item) => (
+        <li class="check">
+          <Icon name="check" class="check-icon" />
+          <div>
+            <h3 class="check-title">{item.title}</h3>
+            {item.text && <p class="check-text">{item.text}</p>}
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</SectionShell>
+
+<style>
+  .checks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1.5rem 3rem;
+  }
+  @media (min-width: 768px) {
+    .checks {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .check {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid color-mix(in oklab, var(--fg) 25%, transparent);
+  }
+  :global(.check-icon) {
+    width: 1.75rem;
+    height: 1.75rem;
+    color: var(--fg);
+  }
+  .check-title {
+    font-size: var(--step-1);
+    margin: 0;
+  }
+  .check-text {
+    margin: 0.35rem 0 0;
+    color: var(--fg-muted);
+  }
+</style>

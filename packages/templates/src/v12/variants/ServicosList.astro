@@ -1,0 +1,67 @@
+---
+import SectionShell from "../components/SectionShell.astro";
+import type { VariantProps } from "./types";
+
+// servicos-list: an editorial list, one service per row with a large number, the name, the
+// description and the price (when given), separated by thin rules.
+
+type Props = VariantProps<"servicos">;
+const { content, tone, previousTone, divider } = Astro.props;
+---
+
+<SectionShell id="servicos" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Serviços">
+  <ol class="rows" data-anim="stagger">
+    {
+      content.items.map((item, index) => (
+        <li class="row">
+          <span class="row-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+          <h3 class="row-name">{item.name}</h3>
+          {item.description && <p class="row-text">{item.description}</p>}
+          {item.price && <p class="row-price">{item.price}</p>}
+        </li>
+      ))
+    }
+  </ol>
+</SectionShell>
+
+<style>
+  .rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid color-mix(in oklab, var(--fg) 30%, transparent);
+  }
+  .row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 1.5rem;
+    padding-block: clamp(1.25rem, 3vw, 2rem);
+    border-bottom: 1px solid color-mix(in oklab, var(--fg) 30%, transparent);
+  }
+  @media (min-width: 900px) {
+    .row {
+      grid-template-columns: 5rem 1.2fr 2fr auto;
+      align-items: baseline;
+    }
+  }
+  .row-number {
+    font-family: var(--font-heading);
+    font-size: var(--step-2);
+    color: var(--fg-muted);
+    grid-row: span 3;
+  }
+  .row-name {
+    font-size: var(--step-2);
+    margin: 0;
+    overflow-wrap: break-word;
+  }
+  .row-text {
+    margin: 0;
+    color: var(--fg-muted);
+  }
+  .row-price {
+    margin: 0;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+</style>

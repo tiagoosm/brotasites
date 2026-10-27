@@ -1,0 +1,187 @@
+---
+import Icon from "../../components/Icon.astro";
+import Button from "../components/Button.astro";
+import Ornament from "../components/Ornament.astro";
+import Photo from "../components/Photo.astro";
+import { heroParts } from "../lib/hero";
+import type { VariantProps } from "./types";
+
+// hero-bento (food, events): a grid of rounded blocks. The title block leads; the others hold
+// the photo (or an ornament), up to three services the client listed and the founding year or
+// the city. Every block shows a fact from the form; nothing is made up.
+
+type Props = Omit<VariantProps<"hero">, "previousTone" | "divider" | "index">;
+const { config, theme, content } = Astro.props;
+const parts = heroParts(config, theme, content);
+const services = parts.services.slice(0, 3);
+---
+
+<section id="abertura" aria-labelledby="abertura-title" class="hero-bento section-hero tone-base">
+  <div class="container bento">
+    <div class="bento-cell bento-title-cell">
+      <p class="label" data-anim="reveal">{parts.business.name}</p>
+      <h1 id="abertura-title" class="bento-title">{content.title}</h1>
+      {content.subtitle && <p class="bento-subtitle">{content.subtitle}</p>}
+      <div class="bento-actions">
+        <Button link={parts.link} label={parts.label} />
+        <p class="bento-today" data-open-status hidden></p>
+        {parts.summary && <p class="bento-today">{parts.summary}</p>}
+      </div>
+    </div>
+    <div class:list={["bento-cell bento-photo-cell", !parts.image && "gradient-bg"]} data-anim="reveal" data-anim-delay="100">
+      {
+        parts.image ? (
+          <Photo image={parts.image} alt={parts.alt} treatment="none" sizes="(min-width: 900px) 40vw, 100vw" priority />
+        ) : (
+          <span class="bento-ornament" aria-hidden="true">
+            <Ornament set={theme.identity.ornamentSet} seed={parts.seed} />
+          </span>
+        )
+      }
+    </div>
+    {
+      services.length > 0 && (
+        <ul class="bento-cell bento-services tone-brand" data-anim="reveal" data-anim-delay="200">
+          {services.map((name) => (
+            <li>
+              <Icon name="check" class="bento-check" />
+              {name}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+    <p class="bento-cell bento-fact tone-inverse" data-anim="reveal" data-anim-delay="300">
+      {
+        parts.business.foundedYear ? (
+          <>
+            <span>desde</span>
+            <strong>{parts.business.foundedYear}</strong>
+          </>
+        ) : (
+          <>
+            <span>em</span>
+            <strong>{parts.business.address.city}</strong>
+          </>
+        )
+      }
+    </p>
+  </div>
+</section>
+
+<style>
+  .bento {
+    display: grid;
+    gap: 0.75rem;
+    padding-block: clamp(1.5rem, 4vw, 3rem) clamp(3rem, 7vw, 5rem);
+  }
+  @media (min-width: 900px) {
+    .bento {
+      grid-template-columns: 1.3fr 1fr 0.8fr;
+      grid-template-rows: auto auto;
+    }
+    .bento-title-cell {
+      grid-row: span 2;
+    }
+    .bento-photo-cell {
+      grid-column: span 2;
+    }
+  }
+  .bento-cell {
+    border-radius: var(--radius-lg);
+    padding: clamp(1.25rem, 3vw, 2rem);
+    background: var(--color-surface);
+    color: var(--color-text);
+    margin: 0;
+    min-width: 0;
+  }
+  .bento-title-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: clamp(18rem, 40vw, 30rem);
+  }
+  .bento-title {
+    font-size: var(--step-5);
+    margin: 0.15em 0 0;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  .bento-subtitle {
+    color: var(--color-text-muted);
+    margin: 1rem 0 0;
+    max-width: 36ch;
+  }
+  .bento-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    margin-top: 1.5rem;
+  }
+  .bento-today {
+    margin: 0;
+    font-size: var(--step--1);
+    color: var(--color-text-muted);
+  }
+  .bento-photo-cell {
+    padding: 0;
+    overflow: hidden;
+    min-height: 14rem;
+    display: grid;
+    place-items: center;
+  }
+  .bento-photo-cell :global(.photo),
+  .bento-photo-cell :global(picture),
+  .bento-photo-cell :global(img) {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+  .bento-photo-cell :global(img) {
+    object-fit: cover;
+    max-height: 26rem;
+  }
+  .bento-ornament {
+    width: 30%;
+    color: var(--color-accent);
+  }
+  .bento-ornament :global(svg) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .bento-services {
+    list-style: none;
+    display: grid;
+    gap: 0.5rem;
+    align-content: center;
+    background: var(--bg);
+    color: var(--fg);
+    font-weight: 700;
+  }
+  .bento-services li {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    overflow-wrap: anywhere;
+  }
+  :global(.bento-check) {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: none;
+    margin-top: 0.15em;
+  }
+  .bento-fact {
+    background: var(--bg);
+    color: var(--fg);
+    display: grid;
+    align-content: center;
+    line-height: 1.05;
+  }
+  .bento-fact strong {
+    font-family: var(--font-heading);
+    font-size: var(--step-3);
+    overflow-wrap: anywhere;
+  }
+</style>
