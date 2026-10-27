@@ -9,4 +9,4 @@ Keep this list up to date during the project. Claude Code does not create accoun
 - [ ] Legal review: Terms, Privacy, guarantee and refund. Invoicing with an accountant.
 - [ ] External pentest before selling.
 - [ ] Check INPI before investing in the brand.
-- [ ] Decide the repository's visibility: the master plan assumes a private repository, and `tiagoosm/brotasites` is public (the README says private). Adapted React Bits code (`side-rays.tsx`, `vine-trail.tsx`) is visible while it is public.
+- [ ] Decide the repository's visibility: the master plan assumes a private repository, and `tiagoosm/brotasites` is public. Adapted React Bits code (`side-rays.tsx`, `vine-trail.tsx`) is visible while it is public.
