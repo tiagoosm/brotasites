@@ -42,10 +42,14 @@ export function MotionReveal() {
     const inFull = new IntersectionObserver(enter, { threshold: 1 });
     observers.push(sections, questions, inFull);
 
-    for (const element of document.querySelectorAll<HTMLElement>("[data-reveal]")) {
-      if (element.dataset.entry) continue;
+    // Read every position first, then write: alternating the two would make the browser lay
+    // out the whole page again for each element.
+    const pending = [...document.querySelectorAll<HTMLElement>("[data-reveal]")]
+      .filter((element) => !element.dataset.entry)
+      .map((element) => ({ element, top: element.getBoundingClientRect().top }));
+    for (const { element, top } of pending) {
       // Already on screen (a reload halfway down, a link to a section): shown as it is.
-      if (element.getBoundingClientRect().top < window.innerHeight) {
+      if (top < window.innerHeight) {
         element.dataset.entry = "done";
         continue;
       }
