@@ -132,3 +132,37 @@ Until the variant factory (E6) ships real heroes and sections, the engine is tes
   - fonts with their licenses.
 
   Lighthouse on the fixture: mobile 98 performance and 100 accessibility and SEO; desktop 100 in every category.
+
+## The variant factory (E6)
+
+34 variants, listed in `packages/catalog/src/variants.ts` (what each suits and needs) and drawn by `packages/templates/src/v12/variants/` (HTML and CSS only, motion through `data-anim`):
+
+| Section | Variants |
+| --- | --- |
+| hero | `hero-split` (every family), `hero-poster` (every family, no photo needed), `hero-feast` (food), `hero-fullbleed` (good photo only), `hero-arch` (beauty, events), `hero-bento` (food, events, retail), `hero-collage` (events, food) |
+| sobre | `sobre-split`, `sobre-manifesto`, `sobre-card` |
+| servicos | `servicos-cards`, `servicos-menu` (food, beauty), `servicos-list` |
+| como-funciona | `como-funciona-steps`, `como-funciona-cards`, `como-funciona-path` |
+| diferenciais | `diferenciais-grid`, `diferenciais-split`, `diferenciais-ribbon` |
+| galeria | `galeria-mosaic`, `galeria-polaroids`, `galeria-grid` |
+| depoimentos | `depoimentos-cards`, `depoimentos-quote`, `depoimentos-notes` |
+| faq | `faq-accordion`, `faq-columns`, `faq-split` |
+| cta-final | `cta-final-band`, `cta-final-poster`, `cta-final-stamp` |
+| contato | `contato-columns`, `contato-card`, `contato-split` |
+
+Heroes per family this round:
+- food: 5 (`hero-feast`, `hero-split`, `hero-poster`, `hero-fullbleed`, `hero-bento`, plus `hero-collage`);
+- beauty: 4 (`hero-split`, `hero-poster`, `hero-fullbleed`, `hero-arch`);
+- events and creatives: 5 (`hero-split`, `hero-poster`, `hero-arch`, `hero-bento`, `hero-collage`, plus `hero-fullbleed`).
+
+Rules every variant follows:
+- **Weak photos:** a photo under 1200 px on its long side is "weak" (`isStrongPhoto`). Variants show it smaller (a framed print) instead of stretching it.
+- **Missing photos:** every variant that can be offered without photos has an intentional no-photo state: gradient, ornaments, or a ribbon of the services' names. A gallery with no photos leaves the page.
+- **Facts only from the form:** seals and blocks show only facts the client gave (founding year, city, services).
+- **Readable text:** text never sits on a photo. Light-on-dark and dark-on-light sections use the palette pairs that are already AA.
+
+How variants are checked:
+- **Four states:** `node packages/templates/scripts/variant-states.mjs --out <dir> --hero <id> --sobre <id> ...` renders any variants in the four mandatory states (good photo, weak photo, no photo, long text) at 360 and 1280 px, with an `index.html` to compare them.
+- **Matrix e2e:** `e2e/variants.spec.ts` builds a matrix of fixture sites that together use every variant, each with another personality and light mode, and checks every site at 360 and 1280 px: no sideways scroll, axe (WCAG A and AA, contrast included), no CSP violation, and 44 px touch targets.
+
+Taste calibration: the food hero, "sobre" and "serviços" were rendered and sent to the owner before the rest was produced (see `docs/owner-steps.md`, "Decisions to review").

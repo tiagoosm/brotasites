@@ -129,7 +129,7 @@ Dashboard settings (Authentication):
 ## Tests
 
 - **Unit (Vitest):** the Zod schema, the generator's validation and build, and the template helpers (opening hours, contrast, links, theme, fonts).
-- **End-to-end (Playwright):** builds a fixture site with every section on (`packages/templates/e2e/fixture`) and checks it at desktop and 375px widths: section order, SEO metadata, images, navigation and mobile menu, FAQ, WhatsApp links, the open/closed door sign at fixed times, and reduced motion. A second fixture (`e2e/fixture-v12`) covers the 1.2 template at 1280 and 360px under the sites' CSP, with axe, the JS budget, no-JS and reduced-motion checks. External requests are blocked so the run is hermetic.
+- **End-to-end (Playwright):** builds a fixture site with every section on (`packages/templates/e2e/fixture`) and checks it at desktop and 375px widths: section order, SEO metadata, images, navigation and mobile menu, FAQ, WhatsApp links, the open/closed door sign at fixed times, and reduced motion. A second fixture (`e2e/fixture-v12`) covers the 1.2 template at 1280 and 360px under the sites' CSP, with axe, the JS budget, no-JS and reduced-motion checks; a matrix of sites (`e2e/build-matrix.mjs`) runs every catalog variant through axe, CSP, sideways-scroll and touch-target checks. External requests are blocked so the run is hermetic.
 
 The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec playwright install chromium`. GitHub Actions runs lint, build, type-check, unit and e2e tests on every push and pull request, plus a dependency audit (fails on high and critical advisories) and a secret scan of the whole history (gitleaks). Dependabot opens weekly update pull requests.
 
