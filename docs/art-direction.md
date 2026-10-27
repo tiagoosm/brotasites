@@ -93,3 +93,21 @@ Per family: 4 heroes. Shared sections: 3 variants each (sobre, servicos, como-fu
 - **Specimen**: `pnpm --filter @brotasites/catalog specimen` writes `packages/catalog/dist/specimen/index.html` with every font pair, palettes, ornaments, dividers and patterns.
 
 Hero and section variants are not in the catalog yet: they arrive with the variant factory (E6).
+
+## The identity engine (E4)
+
+`packages/engine` turns the form answers into the 3 directions of a round, with no AI and no network.
+
+- **Seed:** name, city, category and round, normalized (case, accents, spaces), so the same answers always give the same directions and a redo (round + 1) gives new ones.
+- **Directions:**
+  - "Fiel à marca" starts from the first feeling (or the family's default personality) and keeps the client's brand color as the primary when it reads on the page.
+  - "Evolução" uses the second feeling and turns the hue 25 to 60 degrees.
+  - "Contraste" takes the opposite personality, the opposite light mode when it has one, and a hue 120 to 240 degrees away.
+- **Choices:** every token comes from the catalog grammar of the direction's personality, with its weights. Variants and photo treatments that need photos the client does not have are never offered. A client with a logo gets the "logo" mark; otherwise a monogram style.
+- **Distance:** designs are compared on weighted features (personality, font pair, hero, scale, shape, ornaments, pattern, divider, photo treatment, rhythm, mark, light or dark, and the primary hue). 0 is the same design, 1 nothing in common. The 3 directions must be at least 0.45 apart, and each must be at least 0.3 from every site of the same family in the same city. A direction that misses is redrawn with a sub-seed (still deterministic), up to 24 times; if none reaches it, the best one is kept with a warning for the admin.
+- **Fingerprint:** 16 hex characters from the features, stored in `design.identity.fingerprint`.
+- **Uniqueness registry:** an interface with an in-memory version. The platform stores it in a Supabase table in E10. The approved direction is recorded at approval, before publishing, so drafts count.
+- **Lock:** approving a direction copies its identity into the site and locks every identity field. Afterwards only overrides change the look: colors that keep AA (or are pulled to the nearest passing ones on request) and font pairs that suit the personality.
+- **Provider:** `EngineProvider`, with `DeterministicEngine` as its implementation. The AI art director (E8) will sit behind `AiProvider` and fall back to the engine.
+
+Until the variant factory (E6) ships real heroes and sections, the engine is tested with stand-in variants and 30 fictional businesses (10 each of food, beauty, events and creatives).

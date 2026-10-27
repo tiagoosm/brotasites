@@ -9,7 +9,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E1 Repository baseline, quality and security basics
 - [x] E2 Schema 1.2 (Zod), example and tests
 - [x] E3 Catalog and design grammar (tokens, typography, ornaments)
-- [ ] E4 Identity engine (3 directions, AA contrast, diversity, fingerprint)
+- [x] E4 Identity engine (3 directions, AA contrast, diversity, fingerprint)
 - [ ] E5 Base Astro template + default motion + Motion Lab
 - [ ] E6 Variant factory: food, beauty, events and creatives (with a taste calibration)
 - [ ] E7 Image pipeline and content security
