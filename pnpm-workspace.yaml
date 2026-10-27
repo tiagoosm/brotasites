@@ -9,3 +9,8 @@ saveExact: true
 allowBuilds:
   esbuild: true
   workerd: true
+
+# Security fixes for transitive dependencies, until their parents ship them.
+overrides:
+  # GHSA-xjj6-f33q-929c (high): wrangler 4.151 pulls miniflare with undici 7.29.
+  "miniflare>undici": "7.30.1"

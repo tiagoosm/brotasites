@@ -1,0 +1,17 @@
+# Weekly update pull requests. Versions stay pinned: Dependabot proposes the new exact
+# version, and CI must pass before a merge.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -7,6 +7,7 @@ Keep this list up to date during the project. Claude Code does not create accoun
 - [ ] Set up a custom SMTP in Supabase (the default only delivers to the project team and has a low limit).
 - [ ] Choose the queue (Inngest or Trigger.dev) and the AI model (proposals in steps E10 and E8).
 - [ ] Legal review: Terms, Privacy, guarantee and refund. Invoicing with an accountant.
+- [ ] GitHub settings (Settings > Advanced Security): turn on Dependabot alerts and security updates, and secret scanning with push protection (free on public repositories; check the plan if the repository becomes private). CI also scans for secrets with gitleaks and audits dependencies on every push.
 - [ ] External pentest before selling.
 - [ ] Check INPI before investing in the brand.
 - [ ] Decide the repository's visibility: the master plan assumes a private repository, and `tiagoosm/brotasites` is public. Adapted React Bits code (`side-rays.tsx`, `vine-trail.tsx`) is visible while it is public.

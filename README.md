@@ -42,12 +42,16 @@ The product UI and the generated sites are in Brazilian Portuguese (pt-BR).
 ```
 apps/
   platform/      Next.js: dashboard, form, API
-  preview/       Astro server that renders the live preview
+  preview/       Astro server that renders the live preview (removed in step E10)
   sites-worker/  Cloudflare Worker serving every client site from R2
 packages/
   schema/        Zod schema and types (single source of truth)
+  catalog/       design tokens, families, personalities, ornaments, variants (E3)
+  engine/        deterministic identity engine (E4)
   templates/     Astro landing page templates
   generator/     builds the static site, uploads it to R2, runs the job worker
+  ai/            AI providers, playbooks and evaluations (E8)
+  reviewer/      deterministic checks and the reviewer agent (E9)
 docs/            specification
 ```
 
@@ -127,7 +131,7 @@ Dashboard settings (Authentication):
 - **Unit (Vitest):** the Zod schema, the generator's validation and build, and the template helpers (opening hours, contrast, links, theme, fonts).
 - **End-to-end (Playwright):** builds a fixture site with every section on (`packages/templates/e2e/fixture`) and checks it at desktop and 375px widths: section order, SEO metadata, images, navigation and mobile menu, FAQ, WhatsApp links, the open/closed door sign at fixed times, and reduced motion. External requests are blocked so the run is hermetic.
 
-The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec playwright install chromium`. GitHub Actions runs lint, build, type-check, unit and e2e tests on every push and pull request.
+The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec playwright install chromium`. GitHub Actions runs lint, build, type-check, unit and e2e tests on every push and pull request, plus a dependency audit (fails on high and critical advisories) and a secret scan of the whole history (gitleaks). Dependabot opens weekly update pull requests.
 
 ## Documentation
 

@@ -4,7 +4,7 @@ Check each step when done. One branch (`step-N-name`) and one pull request per s
 
 This plan comes from the owner's master file (2026-10-27) and is adapted to the code that already exists: the platform, form, sign-in, Supabase tables with RLS tests, the v1.1 schema, the Astro template, the generator and the sites Worker are built. Each step says what it reuses and what it replaces.
 
-- [ ] E1 Repository baseline, quality and security basics
+- [x] E1 Repository baseline, quality and security basics
 - [ ] E2 Schema 1.2 (Zod), example and tests
 - [ ] E3 Catalog and design grammar (tokens, typography, ornaments)
 - [ ] E4 Identity engine (3 directions, AA contrast, diversity, fingerprint)
