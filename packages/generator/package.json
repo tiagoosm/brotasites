@@ -27,8 +27,9 @@
   "dependencies": {
     "@brotasites/schema": "workspace:*",
     "@brotasites/templates": "workspace:*",
-    "zod": "4.6.7",
-    "@supabase/supabase-js": "2.118.0"
+    "@supabase/supabase-js": "2.118.0",
+    "sharp": "0.35.5",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "24.19.2",

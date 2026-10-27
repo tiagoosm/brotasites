@@ -91,6 +91,26 @@ describe("deployToR2", () => {
     );
   });
 
+  it("marks the files of a strict-CSP site, but not the pointer", async () => {
+    const metas: { url: string; csp: string | undefined }[] = [];
+    const fakeFetch: typeof fetch = async (input, init) => {
+      const headers = init?.headers as Record<string, string>;
+      metas.push({ url: String(input), csp: headers["x-amz-meta-csp"] });
+      return new Response(null, { status: 200 });
+    };
+    await deployToR2(dir as string, { site: { subdomain: "padaria-do-ze" } } as SiteConfig, {
+      accountId: "conta",
+      accessKeyId: "chave",
+      secretAccessKey: "segredo",
+      bucket: "brotasites-sites",
+      deployId: "d2",
+      fetch: fakeFetch,
+      strictCsp: true,
+    });
+    expect(metas.filter((m) => m.url.includes("/d2/")).every((m) => m.csp === "strict")).toBe(true);
+    expect(metas.find((m) => m.url.endsWith("/current"))?.csp).toBeUndefined();
+  });
+
   it("stops without switching when an upload fails", async () => {
     const urls: string[] = [];
     const failing: typeof fetch = async (input) => {

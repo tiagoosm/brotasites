@@ -15,6 +15,11 @@ export interface R2Options {
   fetch?: typeof fetch;
   /** Fixed deploy id (tests). */
   deployId?: string;
+  /**
+   * The site has no inline style or script (a 1.2 site): its files are marked so the sites
+   * Worker serves them under the strict content security policy (apps/sites-worker/src/headers.ts).
+   */
+  strictCsp?: boolean;
 }
 
 const CONCURRENCY = 6;
@@ -162,6 +167,8 @@ export async function deployToR2(
       const path = relative(outDir, file).split(sep).join("/");
       await putObject(options, `sites/${subdomain}/${deployId}/${path}`, await readFile(file), {
         "content-type": contentTypeFor(path),
+        // R2 keeps x-amz-meta-* headers as the object's custom metadata.
+        ...(options.strictCsp ? { "x-amz-meta-csp": "strict" } : {}),
       });
     }
   };
