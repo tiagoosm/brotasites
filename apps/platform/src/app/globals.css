@@ -22,8 +22,18 @@
   --pollen: #e2b23c;
   --danger: #b42318;
 
+  /* Motion language, shared by every animation on the platform. Two curves: a soft ease-out
+     for anything entering or answering a touch, and an ease-in-out for things that travel.
+     Micro-interactions stay at 150 to 250ms, entrances at 400 to 700ms, nothing over 900ms. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --motion-micro: 180ms;
+  --motion-enter: 560ms;
+  --motion-unfurl: 720ms;
+  --motion-word: 400ms;
+  --motion-stagger: 70ms;
+  --motion-shift: 16px;
+  --motion-blur: 3px;
 
   /* shadcn/ui tokens */
   --background: var(--paper);
@@ -295,21 +305,18 @@ html:has([data-wizard]) {
       color 300ms var(--ease-out);
   }
 
-  /* The hero settles in once, on load. */
-  .hero-rise > * {
-    animation: step-enter 800ms var(--ease-out) both;
+  /* The hero settles in once, on load: the text and the buttons rise in under the title.
+     The title itself stays still, so the largest paint is never delayed. */
+  .hero-enter > :not(h1) {
+    animation: enter-rise var(--motion-enter) var(--ease-out) both;
   }
 
-  .hero-rise > :nth-child(2) {
-    animation-delay: 90ms;
+  .hero-enter > :nth-child(2) {
+    animation-delay: 140ms;
   }
 
-  .hero-rise > :nth-child(3) {
-    animation-delay: 180ms;
-  }
-
-  .hero-rise > :nth-child(4) {
-    animation-delay: 270ms;
+  .hero-enter > :nth-child(3) {
+    animation-delay: 210ms;
   }
 
   @supports (animation-timeline: view()) {
@@ -323,19 +330,14 @@ html:has([data-wizard]) {
       animation-timeline: --stem-line;
       animation-range: cover 35vh cover calc(100% - 65vh);
     }
+  }
+}
 
-    .stem-leaf,
-    .stem-bud {
-      animation: leaf-open linear both;
-      animation-timeline: view();
-      animation-range: entry 70% cover 40%;
-    }
-
-    .stem-node > :not(:first-child) {
-      animation: node-rise linear both;
-      animation-timeline: view();
-      animation-range: entry 10% cover 30%;
-    }
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-shift));
+    filter: blur(var(--motion-blur));
   }
 }
 
@@ -345,23 +347,318 @@ html:has([data-wizard]) {
   }
 }
 
-@keyframes leaf-open {
-  from {
+/* ---------- Section entrances: once per element, as it reaches the screen ----------
+   The HTML always carries the content in its final state. Only motion-reveal.tsx moves an
+   element to "waiting" (below the screen, JavaScript running, motion allowed) and then to
+   "done" when it arrives. Without JavaScript, or with reduced motion, nothing is ever hidden.
+   Transforms, opacity and blur only, so nothing around it moves (no layout shift). */
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal=""][data-entry="waiting"],
+  [data-reveal="stem"][data-entry="waiting"] > :not(.stem-anchor) {
     opacity: 0;
-    transform: scale(0.15) rotate(-35deg);
+    transform: translateY(var(--motion-shift));
+    filter: blur(var(--motion-blur));
+  }
+
+  [data-reveal=""][data-entry="done"],
+  [data-reveal="stem"][data-entry="done"] > :not(.stem-anchor) {
+    transition:
+      opacity var(--motion-enter) var(--ease-out),
+      transform var(--motion-enter) var(--ease-out),
+      filter var(--motion-enter) var(--ease-out);
+    transition-delay: calc(var(--entry-index, 0) * var(--motion-stagger));
+  }
+
+  /* A question enters when the tip of the ink reaches it: its leaf unfurls from the stem,
+     then the text and the picture rise in, one after the other. */
+  [data-reveal="stem"] > :nth-child(2) {
+    --entry-index: 1;
+  }
+
+  [data-reveal="stem"] > :nth-child(3) {
+    --entry-index: 2;
+  }
+
+  .stem-leaf,
+  .stem-bud {
+    transform-box: fill-box;
+    transition:
+      transform var(--motion-unfurl) var(--ease-out),
+      opacity calc(var(--motion-unfurl) / 2) var(--ease-out);
+  }
+
+  [data-entry="waiting"] .stem-leaf,
+  [data-entry="waiting"] .stem-bud {
+    opacity: 0;
+    transform: scale(0.2) rotate(-28deg);
+    transition: none;
+  }
+
+  /* Titles revealed word by word (split-words.tsx): each word rises a third of a line. The
+     words are inline blocks, so the title wraps exactly as plain text and never reflows. */
+  [data-reveal="words"][data-entry="waiting"] .word {
+    opacity: 0;
+    transform: translateY(0.3em);
+    filter: blur(2px);
+  }
+
+  [data-reveal="words"][data-entry="done"] .word {
+    transition:
+      opacity var(--motion-word) var(--ease-out),
+      transform var(--motion-word) var(--ease-out),
+      filter var(--motion-word) var(--ease-out);
+    transition-delay: calc(var(--word-index) * var(--word-stagger));
   }
 }
 
-/* Movement only: the text keeps its full contrast while a question is still ahead. The
-   "not reached yet" cue is the closed leaf and the dashed stem below the ink. */
-@keyframes node-rise {
-  from {
-    transform: translateY(24px);
-  }
+.word {
+  display: inline-block;
 }
 
 @keyframes caret-blink {
   50% {
+    opacity: 0;
+  }
+}
+
+/* ---------- Example site frame (example-showcase.tsx) ----------
+   The window always spans almost the whole screen, so its layout never changes and the page
+   inside never reflows. On wide screens it starts scaled down to about the width of the text
+   column and grows to full size as it comes into view, driven by the scroll position: the
+   scroll is never held, the frame only follows it. Phones, browsers without scroll-driven
+   animations and reduced motion get the full-size frame. */
+
+.example-frame {
+  padding-inline: 1.25rem;
+}
+
+.example-window {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 34rem;
+  max-height: 80vh;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: 0 32px 64px -44px rgb(20 36 27 / 0.5);
+}
+
+@media (min-width: 769px) {
+  .example-frame {
+    padding-inline: 1rem;
+  }
+
+  .example-window {
+    /* The text column (72rem with a 2rem gutter) over the window, at common widths. */
+    --frame-start: 0.95;
+    height: clamp(30rem, 74vh, 46rem);
+    max-height: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .example-window {
+    --frame-start: 0.92;
+  }
+}
+
+@media (min-width: 1280px) {
+  .example-window {
+    --frame-start: 0.87;
+  }
+}
+
+@media (min-width: 1440px) {
+  .example-window {
+    --frame-start: 0.8;
+  }
+}
+
+@media (min-width: 769px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .example-window {
+      transform-origin: 50% 0;
+      animation: frame-open linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 50%;
+    }
+  }
+}
+
+@keyframes frame-open {
+  from {
+    transform: scale(var(--frame-start));
+    border-radius: 1.5rem;
+  }
+}
+
+/* ---------- Specular finish on the hero's main button (specular-link.tsx) ----------
+   A cream highlight on the rim, centered on the cursor, over the solid green button. Inside,
+   only a sheen kept at 4%: white text on leaf is 5.25:1, and anything brighter under the
+   text would take it below 4.5:1. At rest (touch, reduced motion, no JavaScript) the light
+   sits still on the top-left of the rim. */
+
+@property --spec-x {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 16%;
+}
+
+@property --spec-y {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 0%;
+}
+
+.specular {
+  position: relative;
+  isolation: isolate;
+}
+
+.specular::before,
+.specular::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.specular::before {
+  padding: 2px;
+  background: radial-gradient(
+    4.5rem circle at var(--spec-x) var(--spec-y),
+    rgb(250 244 222 / 0.95),
+    rgb(205 232 192 / 0.5) 45%,
+    transparent 75%
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: 0.75;
+  transition: opacity var(--motion-micro) var(--ease-out);
+}
+
+.specular::after {
+  background: radial-gradient(
+    8rem circle at var(--spec-x) var(--spec-y),
+    rgb(250 244 222 / 0.04),
+    transparent 70%
+  );
+}
+
+.specular:hover::before {
+  opacity: 1;
+}
+
+.specular:focus-visible {
+  outline: 2px solid var(--leaf-deep);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .specular {
+    transition:
+      transform 150ms ease-out,
+      background-color 150ms ease-out,
+      box-shadow 150ms ease-out,
+      --spec-x var(--motion-micro) var(--ease-out),
+      --spec-y var(--motion-micro) var(--ease-out);
+  }
+}
+
+/* ---------- Border glow on the price card (glow-card.tsx) ----------
+   A ring of the brand greens with a short arc of the example's amber (Padaria do Zé), lit
+   around the angle of the cursor. At rest (touch, reduced motion, no JavaScript) it is a soft,
+   still light on the top-left. It only touches the rim and a halo outside the card, so the
+   text inside keeps its contrast. On phones the halo is left out. */
+
+@property --glow-angle {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: -45deg;
+}
+
+@property --glow-strength {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.5;
+}
+
+.glow-card {
+  --glow-amber: #b45309;
+  --glow-light: #8fcb9f;
+  position: relative;
+}
+
+.glow-card::before,
+.glow-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(
+    from calc(var(--glow-angle) - 70deg),
+    transparent 0deg,
+    var(--leaf) 25deg,
+    var(--glow-light) 55deg,
+    var(--glow-amber) 72deg,
+    var(--glow-light) 88deg,
+    var(--leaf) 115deg,
+    transparent 140deg
+  );
+  opacity: var(--glow-strength);
+  transition: opacity 250ms var(--ease-out);
+}
+
+/* The lit rim, drawn over the card's own border. */
+.glow-card::before {
+  padding: 1.5px;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+
+/* A soft halo behind the card: its background hides the part under it, so only the outside
+   shows. The card's parent isolates it, so the halo stays above the section's background. */
+.glow-card::after {
+  z-index: -1;
+  inset: -2px;
+  filter: blur(14px);
+  opacity: calc(var(--glow-strength) * 0.35);
+}
+
+@media (max-width: 767px) {
+  .glow-card::after {
+    content: none;
+  }
+
+  .glow-card {
+    --glow-strength: 0.4;
+  }
+}
+
+/* ---------- Phone menu (site-header.tsx) ----------
+   The sheet settles in, then the items come up one after the other, the main button last.
+   The whole entrance is over in about 0.65s, and the menu can be used from the start. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .phone-menu {
+    animation: menu-in var(--motion-micro) var(--ease-out) both;
+  }
+
+  .phone-menu-item {
+    animation: enter-rise 360ms var(--ease-out) both;
+    animation-delay: calc(60ms + var(--item, 0) * 45ms);
+  }
+}
+
+@keyframes menu-in {
+  from {
     opacity: 0;
   }
 }

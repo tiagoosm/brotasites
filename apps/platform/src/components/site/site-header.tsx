@@ -1,13 +1,14 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { ArrowRight, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CREATE_HREF, headerLinks } from "./nav";
+import { CREATE_HREF, headerLinks, phoneMenuLinks } from "./nav";
 
 /** Quiet sticky header: brand, two links, sign in and the one primary action. */
 export function SiteHeader() {
@@ -73,17 +74,36 @@ export function SiteHeader() {
   );
 }
 
-/** Full-width sheet for phones. Keeps focus inside while open and closes with Escape. */
+/**
+ * Full-screen sheet for phones. Focus moves in and stays inside while it is open, the rest of
+ * the page is inert and does not scroll, and Escape or any link closes it and brings focus
+ * back to the button. The items come in one after the other (".phone-menu" in globals.css).
+ */
 function PhoneMenu({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     const panel = ref.current;
-    panel?.querySelector<HTMLElement>("a, button")?.focus();
+    if (!panel) return;
+    panel.querySelector<HTMLElement>("a, button")?.focus();
+
+    // Everything around the menu, up to the body, becomes inert while it is open.
+    const inert: HTMLElement[] = [];
+    for (let node: HTMLElement | null = panel; node && node !== document.body; ) {
+      const parent: HTMLElement | null = node.parentElement;
+      for (const sibling of parent?.children ?? []) {
+        if (sibling !== node && sibling instanceof HTMLElement && !sibling.inert) {
+          sibling.inert = true;
+          inert.push(sibling);
+        }
+      }
+      node = parent;
+    }
+
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
-      if (event.key !== "Tab" || !panel) return;
+      if (event.key !== "Tab") return;
       const items = [...panel.querySelectorAll<HTMLElement>("a, button")];
       const first = items[0];
       const last = items.at(-1);
@@ -96,24 +116,30 @@ function PhoneMenu({ onClose }: { onClose: () => void }) {
       }
     };
     document.addEventListener("keydown", onKey);
+    // Both: iOS Safari keeps scrolling the page when only the body is locked.
+    document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
+      for (const element of inert) element.inert = false;
       opener?.focus();
     };
   }, [onClose]);
 
-  return (
+  // Rendered in the body: the header's backdrop blur would otherwise become the box of this
+  // fixed sheet and squeeze it into the header's 64px.
+  return createPortal(
     <div
       id="menu-celular"
       ref={ref}
       role="dialog"
       aria-modal="true"
       aria-label="Menu"
-      className="fixed inset-0 z-40 flex flex-col bg-paper px-5 pt-3 pb-8 md:hidden"
+      className="phone-menu fixed inset-0 z-40 flex flex-col overflow-y-auto bg-paper px-5 pt-3 pb-8 md:hidden"
     >
-      <div className="flex h-10 items-center justify-between">
+      <div className="flex h-10 shrink-0 items-center justify-between">
         <span className="tag text-stem">Menu</span>
         <Button
           type="button"
@@ -127,26 +153,36 @@ function PhoneMenu({ onClose }: { onClose: () => void }) {
         </Button>
       </div>
       <nav aria-label="Menu" className="mt-8 grid">
-        {[...headerLinks, { href: "/entrar", label: "Entrar" }].map((link) => (
+        {phoneMenuLinks.map((link, index) => (
           <Link
             key={link.href}
             href={link.href}
             // The form and sign-in pages carry the account code; load it only when opened.
             prefetch={link.href === "/entrar" ? false : undefined}
             onClick={onClose}
-            className={cn(
-              "border-b border-line py-4 font-display text-[1.75rem] leading-tight text-ink",
-            )}
+            style={{ "--item": index } as React.CSSProperties}
+            className="phone-menu-item group flex min-h-14 items-center justify-between border-b border-line py-3 font-display text-[1.75rem] leading-tight text-ink transition-colors duration-150 active:text-leaf-deep"
           >
             {link.label}
+            <ArrowRight
+              aria-hidden="true"
+              className="size-5 text-leaf opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+            />
           </Link>
         ))}
       </nav>
-      <Button asChild size="lg" className="mt-auto">
+      <Button
+        asChild
+        size="lg"
+        className="phone-menu-item mt-auto shrink-0"
+        style={{ "--item": phoneMenuLinks.length } as React.CSSProperties}
+      >
         <Link href={CREATE_HREF} prefetch={false} onClick={onClose}>
           Criar meu site
+          <ArrowRight aria-hidden="true" />
         </Link>
       </Button>
-    </div>
+    </div>,
+    document.body,
   );
 }

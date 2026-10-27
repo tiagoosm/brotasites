@@ -10,7 +10,7 @@ import type { Faq } from "@/content/faq";
  * opens. Each answer has its own address (/ajuda#quanto-custa) and opens when the page is
  * reached through it.
  */
-export function FaqAccordion({ items }: { items: Faq[] }) {
+export function FaqAccordion({ items, reveal = false }: { items: Faq[]; reveal?: boolean }) {
   const [open, setOpen] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -41,6 +41,7 @@ export function FaqAccordion({ items }: { items: Faq[] }) {
           key={item.slug}
           item={item}
           expanded={open.has(item.slug)}
+          reveal={reveal}
           onToggle={() => toggle(item.slug)}
         />
       ))}
@@ -51,16 +52,23 @@ export function FaqAccordion({ items }: { items: Faq[] }) {
 function FaqItem({
   item,
   expanded,
+  reveal,
   onToggle,
 }: {
   item: Faq;
   expanded: boolean;
+  /** Enters with the section entrances (home page). */
+  reveal: boolean;
   onToggle: () => void;
 }) {
   const panelId = useId();
   const buttonId = useId();
   return (
-    <div id={item.slug} className="scroll-mt-24 border-b border-line">
+    <div
+      id={item.slug}
+      data-reveal={reveal ? "" : undefined}
+      className="scroll-mt-24 border-b border-line"
+    >
       <h3 className="font-sans text-[1.0625rem] font-semibold tracking-normal">
         <button
           type="button"

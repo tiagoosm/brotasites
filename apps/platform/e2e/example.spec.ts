@@ -3,12 +3,13 @@ import { expect, test } from "@playwright/test";
 // A second way in for visitors who are not ready to start: a real site made by the
 // generator, with a way back.
 
-test("the hero offers an example site and at most three buttons to create", async ({ page }) => {
+test("the hero leads to the form and the example site sits right under it", async ({ page }) => {
   await page.goto("/");
   const main = page.getByRole("main");
-  // Top: the demo's button; then after the seven questions and at the end.
+  // The demo's button, then "Criar meu site" in the hero, after the seven questions and at
+  // the end.
   await expect(main.getByRole("button", { name: "Continuar com este site" })).toHaveCount(1);
-  await expect(main.getByRole("link", { name: "Criar meu site" })).toHaveCount(2);
+  await expect(main.getByRole("link", { name: "Criar meu site" })).toHaveCount(3);
   await expect(page.getByRole("banner").getByRole("link", { name: "Criar meu site" })).toHaveCount(
     0,
   );
@@ -16,7 +17,7 @@ test("the hero offers an example site and at most three buttons to create", asyn
     "href",
     "#como-funciona",
   );
-  await main.getByRole("link", { name: "Ver um site de exemplo" }).click();
+  await main.getByRole("link", { name: "Abrir o site de exemplo completo" }).click();
   await expect(page).toHaveURL(/\/exemplo$/);
 });
 

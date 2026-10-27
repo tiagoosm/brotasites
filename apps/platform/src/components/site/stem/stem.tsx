@@ -3,8 +3,9 @@ import { stemNotes } from "@/content/stem";
 import { excerpts } from "./excerpts";
 
 // The home page's signature: the seven questions hang off one stem that grows as the
-// visitor scrolls, opening a leaf at each question (CSS scroll-driven animations in
-// globals.css; fully grown without support or with reduced motion).
+// visitor scrolls (a CSS scroll-driven animation in globals.css). When the tip of the ink
+// reaches a question, its leaf unfurls and the question enters (motion-reveal.tsx). Fully
+// grown without support, without JavaScript or with reduced motion.
 
 function Leaf() {
   return (
@@ -38,9 +39,10 @@ export function Stem() {
         return (
           <li
             key={step.slug}
+            data-reveal="stem"
             className="stem-node relative grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:gap-14"
           >
-            <span className="absolute top-0 -left-14 sm:-left-20" aria-hidden="true">
+            <span className="stem-anchor absolute top-0 -left-14 sm:-left-20" aria-hidden="true">
               <Leaf />
             </span>
             <div className="grid gap-3">
@@ -56,8 +58,8 @@ export function Stem() {
           </li>
         );
       })}
-      <li className="stem-node relative grid gap-2">
-        <span className="absolute -top-1 -left-14 sm:-left-20" aria-hidden="true">
+      <li data-reveal="stem" className="stem-node relative grid gap-2">
+        <span className="stem-anchor absolute -top-1 -left-14 sm:-left-20" aria-hidden="true">
           <svg viewBox="0 0 24 24" aria-hidden="true" className="stem-bud size-8 text-leaf">
             <path d="M12 13C12 8 8.5 5 3 5c0 5.5 3.5 8 9 8Z" fill="currentColor" />
             <path d="M12 11c0-4.5 3-7.5 9-7.5 0 5-3 7.5-9 7.5Z" fill="currentColor" opacity=".65" />
