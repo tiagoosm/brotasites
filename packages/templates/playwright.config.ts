@@ -3,6 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 4322;
 const PORT_V12 = 4323;
+const PORT_MATRIX = 4324;
 const fixtureConfig = fileURLToPath(new URL("./e2e/fixture/site-config.json", import.meta.url));
 const fixtureV12 = fileURLToPath(new URL("./e2e/fixture-v12/site-config.json", import.meta.url));
 
@@ -23,7 +24,7 @@ export default defineConfig({
   projects: [
     {
       name: "desktop",
-      testIgnore: /v12\.spec\.ts/,
+      testIgnore: /(v12|variants)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
     },
     {
@@ -47,8 +48,13 @@ export default defineConfig({
       },
     },
     {
+      name: "variants",
+      testMatch: /variants\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"], baseURL: `http://localhost:${PORT_MATRIX}` },
+    },
+    {
       name: "mobile",
-      testIgnore: /v12\.spec\.ts/,
+      testIgnore: /(v12|variants)\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 375, height: 812 },
@@ -64,18 +70,25 @@ export default defineConfig({
   // allows one server per project and may move itself to the background.
   webServer: [
     {
-      command: `pnpm exec astro build --outDir dist-e2e && BROTASITES_CONFIG=${fixtureV12} pnpm exec astro build --outDir dist-e2e-v12 && node e2e/ready.mjs mark dist-e2e-v12 && node e2e/serve.mjs dist-e2e ${PORT}`,
+      command: `pnpm exec astro build --outDir dist-e2e && BROTASITES_CONFIG=${fixtureV12} pnpm exec astro build --outDir dist-e2e-v12 && node e2e/ready.mjs mark dist-e2e-v12 && node e2e/build-matrix.mjs && node e2e/ready.mjs mark dist-e2e-matrix && node e2e/serve.mjs dist-e2e ${PORT}`,
       url: `http://localhost:${PORT}`,
       env: { BROTASITES_CONFIG: fixtureConfig, ASTRO_TELEMETRY_DISABLED: "1" },
       reuseExistingServer: !process.env.CI,
-      timeout: 240_000,
+      timeout: 360_000,
     },
     {
       command: `node e2e/ready.mjs wait dist-e2e-v12 && node e2e/serve.mjs dist-e2e-v12 ${PORT_V12}`,
       url: `http://localhost:${PORT_V12}`,
       env: { BROTASITES_CONFIG: fixtureV12, ASTRO_TELEMETRY_DISABLED: "1" },
       reuseExistingServer: !process.env.CI,
-      timeout: 240_000,
+      timeout: 360_000,
+    },
+    {
+      command: `node e2e/ready.mjs wait dist-e2e-matrix && node e2e/serve.mjs dist-e2e-matrix ${PORT_MATRIX}`,
+      url: `http://localhost:${PORT_MATRIX}/0/`,
+      env: { ASTRO_TELEMETRY_DISABLED: "1" },
+      reuseExistingServer: !process.env.CI,
+      timeout: 360_000,
     },
   ],
 });

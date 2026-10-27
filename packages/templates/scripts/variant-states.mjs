@@ -3,7 +3,8 @@
 // per section, state and width plus an index.html to review them side by side.
 //
 //   node scripts/variant-states.mjs --out /tmp/states --hero hero-feast --sobre sobre-manifesto \
-//     --servicos servicos-menu [--personality robusto] [--mode dark]
+//     --servicos servicos-menu [--faq faq-split ...] [--personality robusto] [--mode dark]
+// Any section id is a flag; its value is the variant to render.
 //
 // Uses the 1.2 e2e fixture (Padaria do Zé). Set PW_CHROMIUM to use a specific Chromium binary.
 import { spawn, spawnSync } from "node:child_process";
@@ -17,9 +18,10 @@ import {
   writeFileSync,
 } from "node:fs";
 import { createRequire } from "node:module";
+import { createServer } from "node:net";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createRandom, generatePalette } from "@brotasites/catalog";
+import { compatibleFontPairs, createRandom, generatePalette } from "@brotasites/catalog";
 import { chromium } from "@playwright/test";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -31,7 +33,19 @@ const args = Object.fromEntries(
   }, []),
 );
 const out = resolve(args.out ?? join(root, "dist-states"));
-const sections = ["hero", "sobre", "servicos"].filter((id) => args[id]);
+const sectionIds = [
+  "hero",
+  "sobre",
+  "servicos",
+  "como-funciona",
+  "diferenciais",
+  "galeria",
+  "depoimentos",
+  "faq",
+  "cta-final",
+  "contato",
+];
+const sections = sectionIds.filter((id) => args[id]);
 const fixtureDir = join(root, "e2e/fixture-v12");
 const base = JSON.parse(readFileSync(join(fixtureDir, "site-config.json"), "utf8"));
 const sharp = createRequire(realpathSync(join(root, "node_modules/astro/package.json")))("sharp");
@@ -40,9 +54,10 @@ function configFor(state) {
   const config = structuredClone(base);
   const identity = config.design.identity;
   if (args.hero) identity.heroVariant = args.hero;
-  for (const id of ["sobre", "servicos"]) if (args[id]) identity.sectionVariants[id] = args[id];
+  for (const id of sectionIds.slice(1)) if (args[id]) identity.sectionVariants[id] = args[id];
   if (args.personality) {
     identity.personality = args.personality;
+    identity.fontPair = compatibleFontPairs(args.personality)[0].id;
     identity.palette = generatePalette({
       personality: args.personality,
       mode: args.mode,
@@ -118,7 +133,16 @@ const pictures = [];
 const browser = await chromium.launch(
   process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {},
 );
-let port = 4500;
+/** A free port, so a server left over from an earlier run never answers for this one. */
+function freePort() {
+  return new Promise((resolvePort) => {
+    const probe = createServer().listen(0, () => {
+      const { port } = probe.address();
+      probe.close(() => resolvePort(port));
+    });
+  });
+}
+
 for (const state of states) {
   const siteDir = join(out, state, "site");
   mkdirSync(siteDir, { recursive: true });
@@ -136,6 +160,7 @@ for (const state of states) {
   });
   if (build.status !== 0)
     throw new Error(`Build failed for ${state}:\n${build.stdout}\n${build.stderr}`);
+  const port = await freePort();
   const server = spawn("node", [join(root, "e2e/serve.mjs"), dist, String(port)], {
     stdio: "ignore",
   });
@@ -151,13 +176,14 @@ for (const state of states) {
     for (const section of sections) {
       const selector = section === "hero" ? "#abertura" : `#${section}`;
       const file = join(out, `${section}-${state}-${width}.png`);
+      // A gallery with no photos is left out of the page: nothing to picture.
+      if ((await page.locator(selector).count()) === 0) continue;
       await page.locator(selector).screenshot({ path: file });
       pictures.push({ section, state, width, file, overflow });
     }
     await page.close();
   }
   server.kill();
-  port++;
 }
 await browser.close();
 
@@ -168,7 +194,10 @@ const rows = sections
         .map(
           (state) =>
             `<figure><figcaption>${state}</figcaption>${[360, 1280]
-              .map((w) => `<img src="${section}-${state}-${w}.png" class="w${w}" alt="">`)
+              .map(
+                (w) =>
+                  `<img src="${section}-${state}-${w}.png" class="w${w}" alt="(sem esta seção)">`,
+              )
               .join("")}</figure>`,
         )
         .join("")}</div>`,
