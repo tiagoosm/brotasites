@@ -78,6 +78,8 @@ test("opening hours show the sign the site will display", async ({ page }) => {
   await expect(sign).toContainText("Fecha às 19:00");
 
   await hours.getByRole("button", { name: "Adicionar horário" }).click();
+  // Focus moves to the new row on the next frame; typing before that lands elsewhere.
+  await expect(hours.getByLabel("Dias").nth(1)).toBeFocused();
   await page.keyboard.type("Sábado");
   await hours.getByLabel("Horário", { exact: true }).nth(1).fill("de manhã");
   await expect(hours.getByText(/Use horários como/)).toBeVisible();
