@@ -48,13 +48,24 @@ export interface Direction {
 
 export class EngineError extends Error {}
 
-type Weighted = readonly (readonly [string, number])[];
+export type Weighted = readonly (readonly [string, number])[];
 
 function weighted(random: Random, list: Weighted): string {
   return random.weighted(list, ([, weight]) => weight)[0];
 }
 
-/** A variant for the section; any personality when none fits the direction's exactly. */
+/** The variants a section may use: the direction's personality, else any personality. */
+export function allowedVariants(
+  variants: readonly Variant[],
+  section: SectionId,
+  input: EngineInput,
+  personality: Personality,
+): Variant[] {
+  const exact = variantsFor(variants, section, input.family, personality, input.photos);
+  if (exact.length > 0) return exact;
+  return variantsFor(variants, section, input.family, undefined, input.photos);
+}
+
 function pickVariant(
   random: Random,
   variants: readonly Variant[],
@@ -62,14 +73,21 @@ function pickVariant(
   input: EngineInput,
   personality: Personality,
 ): string | undefined {
-  const exact = variantsFor(variants, section, input.family, personality, input.photos);
-  if (exact.length > 0) return random.pick(exact).id;
-  const anyPersonality = variantsFor(variants, section, input.family, undefined, input.photos);
-  if (anyPersonality.length > 0) return random.pick(anyPersonality).id;
-  return undefined;
+  const allowed = allowedVariants(variants, section, input, personality);
+  return allowed.length > 0 ? random.pick(allowed).id : undefined;
 }
 
-interface DrawOptions {
+/** Image treatments the personality allows for the photos the client has. */
+export function allowedTreatments(input: EngineInput, personality: Personality): Weighted {
+  if (input.photos === "none") return [["none", 1]];
+  const allowed = grammar[personality].imageTreatments.filter(([id]) => {
+    const treatment = imageTreatments.find((item) => item.id === id);
+    return input.photos === "good" || !treatment?.needsGoodPhoto;
+  });
+  return allowed.length > 0 ? allowed : [["none", 1]];
+}
+
+export interface DrawOptions {
   personality: Personality;
   mode?: PaletteMode;
   keepBrandColor: boolean;
@@ -85,13 +103,6 @@ function drawIdentity(
   const { personality } = options;
   const rules = grammar[personality];
   const fontPairs = compatibleFontPairs(personality);
-  const treatments =
-    input.photos === "none"
-      ? [["none", 1] as const]
-      : rules.imageTreatments.filter(([id]) => {
-          const treatment = imageTreatments.find((item) => item.id === id);
-          return input.photos === "good" || !treatment?.needsGoodPhoto;
-        });
 
   const heroVariant = pickVariant(random, variants, "hero", input, personality);
   if (!heroVariant) throw new EngineError(`No hero variant for the family ${input.family}`);
@@ -119,7 +130,7 @@ function drawIdentity(
     shape: weighted(random, rules.shapes),
     ornamentSet: weighted(random, rules.ornamentSets),
     pattern: weighted(random, rules.patterns),
-    imageTreatment: weighted(random, treatments.length > 0 ? treatments : [["none", 1]]),
+    imageTreatment: weighted(random, allowedTreatments(input, personality)),
     dividerStyle: weighted(random, rules.dividers),
     markStyle: input.hasLogo ? "logo" : weighted(random, rules.marks),
     sectionVariants,
@@ -129,7 +140,8 @@ function drawIdentity(
   return { ...identity, fingerprint: fingerprintOf(featuresOf(identity)) };
 }
 
-function optionsFor(
+/** Palette options of a direction: brand color kept, hue moved, or the opposite mode. */
+export function optionsFor(
   id: DirectionId,
   personality: Personality,
   random: Random,

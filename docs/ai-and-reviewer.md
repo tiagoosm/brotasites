@@ -20,6 +20,21 @@ Client text goes in as delimited data, never as an instruction. The AI has no to
 
 A fixed set of 30 fictional businesses. Metrics: JSON validity, no invented facts, no banned phrases, diversity across directions, distance between sites. When a playbook or a prompt changes, CI shows the effect on the 30 cases.
 
+## Implementation (E8)
+
+In `packages/ai`. The rest of this document is the specification; this section says where each part lives.
+
+- **Providers.** `AiDirector` implements the engine's `EngineProvider`, so the platform calls it like the engine, plus `writeCopy` for the text. Models sit behind `ModelClient`: `AnthropicModelClient` (Claude through `@anthropic-ai/sdk`), `SimulatedModelClient` (no API call: the engine's choices and the client's own text) and `ScriptedModelClient` (fixed answers, for tests). `aiProviderFromEnv` builds it from `AI_MODE`, `AI_MODEL_ID`, `AI_EFFORT` and the limits in `.env.example`.
+- **Request.** One Messages request per task: the instructions as a cached system block, the client data in a `<client_data>` block (JSON, with `<`, `>` and `&` escaped so the data cannot close the block), structured outputs with the task's JSON schema, adaptive thinking at the configured effort, server-side refusal fallbacks (`fallbacks: "default"`). No tools, no sampling parameters. Refusals, cut-off answers and API errors become `ModelError`.
+- **Art director** (`composition.ts`). The answer schema is built per site: every value is an enum of the catalog ids this site may use. The engine's `composeDirections` then checks personality fit, builds the palettes (AA always holds) and the distances; any problem rejects the whole proposal with its reasons.
+- **Copy** (`copy.ts`, `playbooks/`). The schema follows the site's enabled sections; service names, prices, icons, photos, contacts, hours and testimonials are not in the answer, so the AI cannot change them. `applyCopy` keeps every path in `ai.userEditedFields`, records `generatedFields` and the prompt, playbook and model versions. Playbooks: `common.md` plus one per family of this round (`food.md`, `beauty.md`, `events-creative.md`), `general.md` for the others; each has a version in its front matter.
+- **Checks.** `checkFacts` (`facts.ts`): numbers, number words, emails, @handles and proper names must be in the client's data; links and claims such as awards, rankings and certifications are refused. `checkStyle` (`style.ts`): banned phrases of the playbooks, a hero with no fact of the business, exclamation marks, markup. Both run on every answer; the final config is validated against schema 1.2.
+- **Fallback.** Rejected answer: one retry, with the reasons; rejected again, the engine alone (`draftCopy` for the text: the client's own words). The engine fails too: `NeedsAttention`, for the caller to set the site to "needs attention" and alert the admin (E10, E11).
+- **Limits and cost** (`limits.ts`, `prices.ts`). `SpendingGuard`: rounds per site and per account per day per task (defaults 20 and 40), a global daily budget (default US$ 20) with one alert per day at 80%. Past a limit the engine works alone. The cost of every call is computed from the token usage and the checked price table. In memory now; Supabase tables in E10.
+- **Cache** (`cache.ts`). Keyed by the hash of task, model, prompt version, playbook version and input. A cached composition is checked again against the current neighbors.
+- **Prompts** (`prompts.ts`): versioned (`ART_DIRECTOR_PROMPT_VERSION`, `COPY_PROMPT_VERSION`); change the version with the wording.
+- **Evaluations** (`src/evals`). The 30 businesses (`businesses.ts`), the injection corpus (`injection.ts`) and `evaluate`, which reports JSON validity, answers with invented facts, banned phrases or a generic hero, how many results came from the AI, diversity across directions, distance between sites of the same family, and cost. CI runs it in simulated mode and prints the summary (`test/evals.test.ts`); `pnpm --filter @brotasites/ai eval` runs it with the model in the environment.
+
 ## Reviewer
 
 1. **Deterministic:** AA contrast, overflow at 360, 768 and 1280 px (Playwright), valid links, no external requests, axe, weight, schema, 44 px touch targets, empty sections, cut-off text, broken image requests, `prefers-reduced-motion`.

@@ -40,6 +40,7 @@ out/
 dist-e2e/
 dist-e2e-v12/
 dist-e2e-matrix/
+.builds/
 
 # Next.js
 .next/

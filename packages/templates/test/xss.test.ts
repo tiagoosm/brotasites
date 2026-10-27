@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,6 +25,7 @@ let html = "";
 /** The page with every quoted attribute value emptied: text inside a value is never markup. */
 let markup = "";
 let dir = "";
+let scratch = "";
 
 beforeAll(() => {
   dir = mkdtempSync(join(tmpdir(), "brotasites-xss-"));
@@ -66,8 +67,15 @@ beforeAll(() => {
   }
   writeFileSync(join(dir, "site-config.json"), JSON.stringify(config));
   cpSync(join(fixture, "assets"), join(dir, "assets"), { recursive: true });
-  const build = spawnSync("pnpm", ["exec", "astro", "build", "--outDir", join(dir, "dist")], {
-    cwd: root,
+  // Its own scratch directory inside the package: with an outDir outside its working directory
+  // Astro writes its prerender build to `<cwd>/.astro`, which other builds running at the same
+  // time would share (see runAstroBuild in packages/generator).
+  mkdirSync(join(root, ".builds"), { recursive: true });
+  scratch = mkdtempSync(join(root, ".builds", "xss-"));
+  const astro = join(root, "node_modules/astro/bin/astro.mjs");
+  const args = [astro, "build", "--root", root, "--outDir", join(dir, "dist")];
+  const build = spawnSync(process.execPath, args, {
+    cwd: scratch,
     env: {
       ...process.env,
       BROTASITES_CONFIG: join(dir, "site-config.json"),
@@ -80,7 +88,10 @@ beforeAll(() => {
   markup = html.replace(/="[^"]*"/g, '=""');
 }, 180_000);
 
-afterAll(() => rmSync(dir, { recursive: true, force: true }));
+afterAll(() => {
+  rmSync(dir, { recursive: true, force: true });
+  if (scratch) rmSync(scratch, { recursive: true, force: true });
+});
 
 describe("malicious text in every field", () => {
   it("shows up as escaped text", () => {

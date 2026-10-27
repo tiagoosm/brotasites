@@ -88,6 +88,14 @@ To work on the form, run `pnpm dev` (or the platform and preview apps on their o
 
 To work on the templates with live reload, run `pnpm --filter @brotasites/templates dev`. It renders the v1.1 example `docs/legacy/site-config.example.v1.1.json` by default, or the file set in `BROTASITES_CONFIG`. A 1.2 config (`BROTASITES_CONFIG=$PWD/docs/site-config.example.json`) renders the catalog template in `src/v12`; add `BROTASITES_LAB=1` for the Motion Lab at `/motion-lab`.
 
+## AI layer
+
+`packages/ai` proposes the 3 art directions (catalog ids only, checked by the engine) and rewrites the site's text with the family playbooks in `packages/ai/playbooks`. Every answer is validated JSON; facts that are not in the form, banned phrases and links are thrown away, with one retry and then the engine alone. By default it runs in simulated mode, with no API call; `AI_MODE=live` with `AI_MODEL_ID` and `ANTHROPIC_API_KEY` calls Claude. To see the evaluation of the 30 fictional businesses:
+
+```bash
+pnpm --filter @brotasites/ai eval
+```
+
 ## Publishing
 
 The last question reserves the site address and queues a generation job (`request_publication` in [`supabase/migrations`](supabase/migrations)). The worker takes queued jobs, turns the draft into the final config (the Zod schema has the last word), builds the site with the generator and records the result; the client follows it at `/meu-site`.
