@@ -116,7 +116,11 @@ test("with reduced motion the menu appears at once", async ({ browser }) => {
   const page = await context.newPage();
   await page.goto("/");
   const { menu } = await openMenu(page);
-  expect(await menu.evaluate((el) => el.getAnimations({ subtree: true }).length)).toBe(0);
+  // The entrance is keyframe animations; a button's short focus-ring transition is not part of it.
+  const entrances = await menu.evaluate(
+    (el) => el.getAnimations({ subtree: true }).filter((a) => a instanceof CSSAnimation).length,
+  );
+  expect(entrances).toBe(0);
   await context.close();
 });
 

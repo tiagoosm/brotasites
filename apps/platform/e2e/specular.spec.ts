@@ -89,10 +89,12 @@ test("the light follows the mouse and rests when it leaves", async ({ page }) =>
   const button = heroButton(page);
   const box = await button.boundingBox();
   if (!box) throw new Error("no button");
-  await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.9, { steps: 4 });
-  await expect
-    .poll(() => button.evaluate((el) => el.style.getPropertyValue("--spec-x")))
-    .not.toBe("");
+  // The button only follows the mouse once the page's script has loaded; retry until it does.
+  await expect(async () => {
+    await page.mouse.move(box.x + box.width * 0.1, box.y + box.height * 0.5);
+    await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.9, { steps: 4 });
+    expect(await button.evaluate((el) => el.style.getPropertyValue("--spec-x"))).not.toBe("");
+  }).toPass();
   await page.mouse.move(0, 0);
   await expect.poll(() => button.evaluate((el) => el.style.getPropertyValue("--spec-x"))).toBe("");
 });
