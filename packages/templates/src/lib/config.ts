@@ -2,9 +2,22 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { type SiteConfig, siteConfigSchema } from "@brotasites/schema";
 import {
+  cleanText,
   type SiteConfig as SiteConfig12,
   siteConfigSchema as siteConfig12Schema,
 } from "@brotasites/schema/v1.2";
+
+/** Every string of a config, cleaned of control characters and bidirectional overrides. */
+function cleanStrings(value: unknown): unknown {
+  if (typeof value === "string") return cleanText(value);
+  if (Array.isArray(value)) return value.map(cleanStrings);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, cleanStrings(item)]),
+    );
+  }
+  return value;
+}
 
 export interface LoadedSiteConfig {
   config: SiteConfig;
@@ -41,7 +54,12 @@ export function loadAnyConfig(): AnyLoadedConfig {
   const raw = JSON.parse(readFileSync(configPath, "utf8"));
   const baseDir = dirname(configPath);
   if (raw?.schemaVersion === "1.2") {
-    return { version: "1.2", config: siteConfig12Schema.parse(raw), configPath, baseDir };
+    return {
+      version: "1.2",
+      config: siteConfig12Schema.parse(cleanStrings(raw)),
+      configPath,
+      baseDir,
+    };
   }
   return { version: "1.1", config: siteConfigSchema.parse(raw), configPath, baseDir };
 }
