@@ -1,4 +1,4 @@
-// Site reviewer: deterministic checks and the reviewer agent (docs/ai-and-reviewer.md).
-// Built in step E9 of PLAN.md.
+// Site reviewer (docs/ai-and-reviewer.md). This step: the variant dialect validator (E7).
 
-export {};
+export * from "./code-variants.js";
+export * from "./dialect.js";
