@@ -19,3 +19,4 @@ export * from "./rhythm.js";
 export * from "./scale.js";
 export * from "./shapes.js";
 export * from "./treatments.js";
+export * from "./variants.js";
