@@ -4,11 +4,16 @@ Notices for third-party work that the BrotaSites platform uses or draws on. npm 
 
 ## React Bits
 
-The animations on the BrotaSites marketing site (home page) were designed after these React Bits components: SplitText, AnimatedContent, ScrollExpand, SpecularButton, BorderGlow and StaggeredMenu (https://reactbits.dev, https://github.com/DavidHDev/react-bits).
+React Bits (https://reactbits.dev, https://github.com/DavidHDev/react-bits) is used on the BrotaSites platform in two ways.
 
-No React Bits source code is copied into this repository: each effect is written from scratch in CSS and in our own components, and none of them adds a dependency. If React Bits code is ever copied or adapted here, list the file below and keep this notice with it.
+Files adapted from React Bits (their code, ported to TypeScript and changed), each with a header comment naming the component:
 
-Files adapted from React Bits: none.
+- `apps/platform/src/components/site/side-rays.tsx`: SideRays (the light rays behind the home page hero).
+- `apps/platform/src/components/site/vine-trail.tsx`: the stems come from Ribbons (the vine that follows the cursor).
+
+Effects designed after React Bits components, written from scratch in CSS and our own components, with no React Bits code and no added dependency: SplitText, AnimatedContent, ScrollExpand, SpecularButton, BorderGlow and StaggeredMenu (the home page animations).
+
+When React Bits code is copied or adapted, list the file above and keep this notice with it.
 
 Rules for this project:
 
