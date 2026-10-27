@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { GlowCard } from "@/components/site/home/glow-card";
 import { SplitWords } from "@/components/site/split-words";
 import { formatBRL, LEGAL_REVIEW_PENDING, pricing } from "@/config/pricing";
 
@@ -47,8 +48,8 @@ export function PriceSection() {
           </p>
         </header>
 
-        <div className="grid gap-6">
-          <div
+        <div className="isolate grid gap-6">
+          <GlowCard
             data-reveal=""
             className="grid gap-5 rounded-2xl border border-line bg-card p-6 sm:p-8"
           >
@@ -73,7 +74,7 @@ export function PriceSection() {
                 ))}
               </ul>
             </div>
-          </div>
+          </GlowCard>
 
           <dl className="grid gap-5 sm:grid-cols-3 sm:gap-6">
             <div data-reveal="" className="grid content-start gap-1.5">

@@ -569,3 +569,75 @@ html:has([data-wizard]) {
       --spec-y var(--motion-micro) var(--ease-out);
   }
 }
+
+/* ---------- Border glow on the price card (glow-card.tsx) ----------
+   A ring of the brand greens with a short arc of the example's amber (Padaria do Zé), lit
+   around the angle of the cursor. At rest (touch, reduced motion, no JavaScript) it is a soft,
+   still light on the top-left. It only touches the rim and a halo outside the card, so the
+   text inside keeps its contrast. On phones the halo is left out. */
+
+@property --glow-angle {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: -45deg;
+}
+
+@property --glow-strength {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.5;
+}
+
+.glow-card {
+  --glow-amber: #b45309;
+  --glow-light: #8fcb9f;
+  position: relative;
+}
+
+.glow-card::before,
+.glow-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(
+    from calc(var(--glow-angle) - 70deg),
+    transparent 0deg,
+    var(--leaf) 25deg,
+    var(--glow-light) 55deg,
+    var(--glow-amber) 72deg,
+    var(--glow-light) 88deg,
+    var(--leaf) 115deg,
+    transparent 140deg
+  );
+  opacity: var(--glow-strength);
+  transition: opacity 250ms var(--ease-out);
+}
+
+/* The lit rim, drawn over the card's own border. */
+.glow-card::before {
+  padding: 1.5px;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+
+/* A soft halo behind the card: its background hides the part under it, so only the outside
+   shows. The card's parent isolates it, so the halo stays above the section's background. */
+.glow-card::after {
+  z-index: -1;
+  inset: -2px;
+  filter: blur(14px);
+  opacity: calc(var(--glow-strength) * 0.35);
+}
+
+@media (max-width: 767px) {
+  .glow-card::after {
+    content: none;
+  }
+
+  .glow-card {
+    --glow-strength: 0.4;
+  }
+}
