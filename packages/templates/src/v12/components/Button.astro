@@ -1,0 +1,23 @@
+---
+// A link styled as a button. External links (WhatsApp, maps, social) open in a new tab.
+import type { Link } from "../lib/links";
+
+interface Props {
+  link: Link;
+  label: string;
+  kind?: "primary" | "ghost";
+  class?: string;
+}
+
+const { link, label, kind = "primary", class: className } = Astro.props;
+---
+
+<a
+  href={link.href}
+  class:list={["btn", `btn-${kind}`, className]}
+  target={link.external ? "_blank" : undefined}
+  rel={link.external ? "noopener noreferrer" : undefined}
+>
+  <slot name="icon" />
+  <span>{label}</span>
+</a>

@@ -1,0 +1,35 @@
+---
+import { Image } from "astro:assets";
+// How the business signs the header and footer: its logo, its name, or a monogram.
+import { monogramLetters } from "@brotasites/catalog";
+import { findAsset } from "../lib/assets";
+
+interface Props {
+  name: string;
+  style: string;
+  logoAsset: string | null;
+  size?: "small" | "large";
+}
+
+const { name, style, logoAsset, size = "small" } = Astro.props;
+const logo = style === "logo" ? findAsset(logoAsset) : undefined;
+const letters = monogramLetters(name);
+const shape = style.startsWith("monogram-") ? style.replace("monogram-", "") : null;
+---
+
+<span class:list={["mark", `mark-${size}`]}>
+  {
+    logo ? (
+      <Image src={logo} alt={name} height={size === "large" ? 96 : 44} class="mark-logo" />
+    ) : (
+      <>
+        {shape && letters && (
+          <span class:list={["monogram", `monogram-${shape}`]} aria-hidden="true">
+            {letters}
+          </span>
+        )}
+        <span class="mark-name">{name}</span>
+      </>
+    )
+  }
+</span>

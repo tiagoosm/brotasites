@@ -1,0 +1,134 @@
+---
+// The page of a 1.2 site: the approved identity's tokens, the header, the hero and the enabled
+// sections in the client's order (each drawn by its variant and toned by the rhythm), the
+// footer and the floating WhatsApp button. No inline styles or scripts: the sites' CSP only
+// allows files from the site itself.
+import { getImage } from "astro:assets";
+import { timeZoneForState } from "@brotasites/schema/hours";
+import type { SiteConfig } from "@brotasites/schema/v1.2";
+import { siteUrl12 } from "../lib/config";
+import Footer from "./components/Footer.astro";
+import Header from "./components/Header.astro";
+import WhatsAppFloat from "./components/WhatsAppFloat.astro";
+import { findAsset } from "./lib/assets";
+import { weekSchedule } from "./lib/hours";
+import { facebookHref, instagramHref } from "./lib/links";
+import { dividerFor, resolveTheme, tonesFor } from "./lib/theme";
+import { componentFor } from "./variants";
+import "./site.css";
+import "./motion/motion.css";
+
+interface Props {
+  config: SiteConfig;
+}
+
+const { config } = Astro.props;
+const { business, seo, design } = config;
+const theme = resolveTheme(config);
+const url = siteUrl12(config);
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+
+const enabled = config.sections.filter((section) => {
+  if (!section.enabled) return false;
+  // A gallery whose photos are all missing is left out instead of rendering empty.
+  if (section.id === "galeria")
+    return section.content.images.some((image) => findAsset(image.assetId));
+  return true;
+});
+const hero = enabled.find((section) => section.id === "hero");
+const rest = enabled.filter((section) => section.id !== "hero");
+const tones = tonesFor(theme, rest.length);
+const divider = dividerFor(theme);
+const week = weekSchedule(business.openingHours);
+
+const heroImage = hero?.id === "hero" ? findAsset(hero.content.image?.assetId) : undefined;
+const ogImage = heroImage
+  ? new URL((await getImage({ src: heroImage, width: 1200, format: "jpg" })).src, url).href
+  : undefined;
+
+const sameAs = [
+  business.social.instagram && instagramHref(business.social.instagram),
+  business.social.facebook && facebookHref(business.social.facebook),
+].filter(Boolean);
+
+// Structured data from facts the client gave, and nothing else.
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  name: business.name,
+  description: business.description || undefined,
+  url,
+  image: ogImage,
+  telephone: business.contact.phone ? `+55${business.contact.phone.slice(-11)}` : undefined,
+  email: business.contact.email,
+  foundingDate: business.foundedYear ? String(business.foundedYear) : undefined,
+  address: business.address.hasFixedAddress
+    ? {
+        "@type": "PostalAddress",
+        streetAddress: [business.address.street, business.address.number]
+          .filter(Boolean)
+          .join(", "),
+        addressLocality: business.address.city,
+        addressRegion: business.address.state,
+        postalCode: business.address.zip,
+        addressCountry: "BR",
+      }
+    : undefined,
+  areaServed: business.address.hasFixedAddress ? undefined : business.serviceArea,
+  sameAs: sameAs.length ? sameAs : undefined,
+};
+const HeroComponent = componentFor("hero", design.identity?.heroVariant);
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{seo.title}</title>
+    <meta name="description" content={seo.description || business.description} />
+    {seo.keywords.length > 0 && <meta name="keywords" content={seo.keywords.join(", ")} />}
+    <link rel="canonical" href={`${url}/`} />
+    <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
+    <meta name="theme-color" content={theme.palette.background} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content={seo.title} />
+    <meta property="og:description" content={seo.description || business.description} />
+    <meta property="og:url" content={`${url}/`} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <link rel="stylesheet" href={`${base}assets/site.css`} />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, "\\u003c")} />
+  </head>
+  <body>
+    <a href="#inicio" class="skip-link">Pular para o conteúdo</a>
+    <Header config={config} markStyle={theme.identity.markStyle} />
+    <main id="inicio">
+      {hero ? <HeroComponent config={config} theme={theme} content={hero.content} tone="base" week={week} /> : <h1 class="sr-only">{business.name}</h1>}
+      {
+        rest.map((section, index) => {
+          const Component = componentFor(section.id, design.identity?.sectionVariants[section.id]);
+          return (
+            <Component
+              config={config}
+              theme={theme}
+              content={section.content}
+              tone={tones[index]}
+              previousTone={index === 0 ? "base" : tones[index - 1]}
+              divider={divider}
+              index={index}
+              week={week}
+            />
+          );
+        })
+      }
+    </main>
+    <Footer config={config} markStyle={theme.identity.markStyle} personality={theme.personality} />
+    {config.integrations.whatsappFloatingButton && business.contact.whatsapp && <WhatsAppFloat number={business.contact.whatsapp} />}
+    <div hidden data-schedule data-week={JSON.stringify(week)} data-tz={timeZoneForState(business.address.state)}></div>
+    <script>
+      import "./motion/motion";
+      import "./hours-client";
+    </script>
+  </body>
+</html>

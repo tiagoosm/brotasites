@@ -1,0 +1,45 @@
+---
+// Every section after the hero: its tone from the rhythm, the divider that joins it to the
+// section above, the optional pattern, and the heading with a handwritten label.
+import { type Divider, dividerSvg } from "@brotasites/catalog";
+
+interface Props {
+  id: string;
+  title: string;
+  tone: string;
+  previousTone: string;
+  divider: Divider;
+  label?: string;
+  pattern?: boolean;
+  wide?: boolean;
+  class?: string;
+}
+
+const {
+  id,
+  title,
+  tone,
+  previousTone,
+  divider,
+  label,
+  pattern = false,
+  wide = false,
+  class: className,
+} = Astro.props;
+const showDivider = divider.height > 0 && tone !== previousTone;
+---
+
+<section
+  id={id}
+  aria-labelledby={`${id}-title`}
+  class:list={["section", `tone-${tone}`, pattern && "has-pattern", className]}
+>
+  {showDivider && <div class:list={["divider-wrap", `tone-${previousTone}`]} set:html={dividerSvg(divider)} />}
+  <div class:list={["container", wide && "container-wide"]}>
+    <header class="section-head" data-anim="reveal">
+      {label && <p class="label">{label}</p>}
+      <h2 id={`${id}-title`} class="section-title">{title}</h2>
+    </header>
+    <slot />
+  </div>
+</section>

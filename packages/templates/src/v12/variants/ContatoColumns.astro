@@ -1,0 +1,169 @@
+---
+// contato-columns: every way to reach the business, the address with "Como chegar", and the
+// opening hours with today marked. Contact details never wait for an animation.
+import Icon from "../../components/Icon.astro";
+import Button from "../components/Button.astro";
+import SectionShell from "../components/SectionShell.astro";
+import { hoursRows, hoursSummary } from "../lib/hours";
+import {
+  addressLine,
+  directionsHref,
+  emailHref,
+  formatPhone,
+  phoneHref,
+  whatsappHref,
+} from "../lib/links";
+import type { VariantProps } from "./types";
+
+type Props = VariantProps<"contato">;
+const { config, content, tone, previousTone, divider } = Astro.props;
+const { business } = config;
+const { contact, address } = business;
+const rows = hoursRows(business.openingHours);
+const summary = hoursSummary(business.openingHours);
+---
+
+<SectionShell id="contato" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Fale com a gente">
+  <div class="contact-grid">
+    <ul class="channels">
+      {
+        contact.whatsapp && (
+          <li>
+            <a href={whatsappHref(contact.whatsapp)} target="_blank" rel="noopener noreferrer" class="channel">
+              <Icon name="chat" class="channel-icon" />
+              <span>WhatsApp {formatPhone(contact.whatsapp)}</span>
+            </a>
+          </li>
+        )
+      }
+      {
+        contact.phone && (
+          <li>
+            <a href={phoneHref(contact.phone)} class="channel">
+              <Icon name="phone" class="channel-icon" />
+              <span>{formatPhone(contact.phone)}</span>
+            </a>
+          </li>
+        )
+      }
+      {
+        contact.email && (
+          <li>
+            <a href={emailHref(contact.email)} class="channel">
+              <Icon name="mail" class="channel-icon" />
+              <span>{contact.email}</span>
+            </a>
+          </li>
+        )
+      }
+    </ul>
+    <div class="place">
+      {
+        address.hasFixedAddress ? (
+          <>
+            <h3 class="col-title">Endereço</h3>
+            <address>{addressLine(business)}</address>
+            {content.showMapLink && (
+              <Button link={{ href: directionsHref(business), external: true }} label="Como chegar" kind="ghost" class="map-link" />
+            )}
+          </>
+        ) : (
+          <>
+            <h3 class="col-title">Onde atendemos</h3>
+            <p>{business.serviceArea.join(", ")}</p>
+          </>
+        )
+      }
+    </div>
+    {
+      content.showHours && (
+        <div class="hours">
+          <h3 class="col-title">Horário</h3>
+          <p class="open-status" data-open-status hidden />
+          {summary ? (
+            <p>{summary}</p>
+          ) : (
+            <dl class="hours-list">
+              {rows.map((row) => (
+                <div class="hours-row" data-days={row.days.join(",")}>
+                  <dt>{row.label}</dt>
+                  <dd>{row.hours}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {business.openingHours.note && <p class="hours-note">{business.openingHours.note}</p>}
+        </div>
+      )
+    }
+  </div>
+</SectionShell>
+
+<style>
+  .contact-grid {
+    display: grid;
+    gap: clamp(2rem, 5vw, 3rem);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  }
+  .channels {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .channel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 44px;
+    color: var(--fg);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    overflow-wrap: anywhere;
+  }
+  :global(.channel-icon) {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: none;
+  }
+  .col-title {
+    font-size: var(--step-1);
+    margin: 0 0 0.5rem;
+  }
+  address {
+    font-style: normal;
+  }
+  .place :global(.map-link) {
+    margin-top: 1rem;
+  }
+  .hours-list {
+    margin: 0;
+    display: grid;
+    gap: 0.25rem;
+  }
+  .hours-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: var(--radius-sm);
+  }
+  .hours-row[data-today] {
+    font-weight: 700;
+    outline: 2px solid currentColor;
+  }
+  .hours-row dt,
+  .hours-row dd {
+    margin: 0;
+  }
+  .open-status {
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+  }
+  .hours-note {
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+  }
+</style>

@@ -1,0 +1,38 @@
+---
+// Text split into words at build time for the word-by-word motion. Screen readers get the
+// whole text once from a visually hidden copy (aria-label is not allowed on a paragraph); the
+// word spans are hidden from them.
+interface Props {
+  text: string;
+  as?: "h1" | "h2" | "p" | "span";
+  anim: "words" | "words-lit";
+  id?: string;
+  class?: string;
+}
+
+const { text, as: Tag = "p", anim, id, class: className } = Astro.props;
+const words = text.trim().split(/\s+/);
+// Splitting has a cost: past 30 words the text is shown whole, with a plain reveal.
+const split = words.length <= 30;
+---
+
+{
+  split ? (
+    <Tag id={id} class={className} data-anim={anim}>
+      <span class="sr-only">{text}</span>
+      <span aria-hidden="true">
+        {words.map((word, index) => (
+          <>
+            <span class="word" data-i={index}>
+              {word}
+            </span>{" "}
+          </>
+        ))}
+      </span>
+    </Tag>
+  ) : (
+    <Tag id={id} class={className} data-anim="reveal">
+      {text}
+    </Tag>
+  )
+}

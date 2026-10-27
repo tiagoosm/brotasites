@@ -1,0 +1,59 @@
+---
+// cta-final-band: one last invitation, big, with the main button and an ornament.
+import Button from "../components/Button.astro";
+import Ornament from "../components/Ornament.astro";
+import SectionShell from "../components/SectionShell.astro";
+import { ctaLink } from "../lib/links";
+import type { VariantProps } from "./types";
+
+type Props = VariantProps<"cta-final">;
+const { config, theme, content, tone, previousTone, divider, index } = Astro.props;
+---
+
+<SectionShell id="cta-final" title={content.title} tone={tone} previousTone={previousTone} divider={divider} class="cta-band">
+  <div class="cta-body">
+    {content.subtitle && <p class="cta-subtitle" data-anim="reveal">{content.subtitle}</p>}
+    <Button link={ctaLink(content.cta, config.business)} label={content.cta.label} />
+  </div>
+  <span class="cta-ornament" data-anim="float">
+    <Ornament set={theme.identity.ornamentSet} index={index + 2} seed={config.design.seed} />
+  </span>
+</SectionShell>
+
+<style>
+  .cta-band :global(.section-title) {
+    font-size: var(--step-4);
+    max-width: 20ch;
+  }
+  .cta-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    align-items: center;
+  }
+  .cta-subtitle {
+    margin: 0;
+    font-size: var(--step-1);
+    color: var(--fg-muted);
+    max-width: 40ch;
+  }
+  .cta-ornament {
+    position: absolute;
+    right: clamp(1rem, 6vw, 6rem);
+    top: 50%;
+    width: clamp(4rem, 12vw, 9rem);
+    color: var(--ornament);
+    opacity: 0.9;
+    pointer-events: none;
+  }
+  .cta-ornament :global(svg) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  @media (max-width: 899px) {
+    .cta-ornament {
+      display: none;
+    }
+  }
+</style>

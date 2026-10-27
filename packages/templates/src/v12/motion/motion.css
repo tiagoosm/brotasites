@@ -1,0 +1,306 @@
+/* Default motion of client sites (docs/default-motion.md). Elements wait hidden only when
+   scripting is on and the visitor accepts motion; the script marks them [data-anim-in] as they
+   enter the screen. If the script never runs, a fallback shows everything after 2.5 s. Numbers
+   come from the motion preset (--anim-*). Only transform, opacity and a short blur. */
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  :root:not([data-reduce-motion]) [data-anim="reveal"]:not([data-anim-in]),
+  :root:not([data-reduce-motion]) [data-anim="stagger"]:not([data-anim-in]) > *,
+  :root:not([data-reduce-motion]) [data-anim="words"]:not([data-anim-in]) .word {
+    opacity: 0;
+    translate: 0 var(--anim-shift);
+  }
+
+  /* The script sets [data-motion-ready] as soon as it runs; if it never does, show everything.
+     Order matters more than specificity here: the entrance rules above win once in view. */
+  :root:not([data-motion-ready])
+  :is([data-anim="reveal"], [data-anim="stagger"] > *, [data-anim="words"] .word) {
+    animation: anim-failsafe 0s 2.5s forwards;
+  }
+
+  :root:not([data-reduce-motion]) [data-anim="reveal"][data-anim-in],
+  :root:not([data-reduce-motion]) [data-anim="stagger"][data-anim-in] > *,
+  :root:not([data-reduce-motion]) [data-anim="words"][data-anim-in] .word {
+    animation: anim-enter var(--anim-enter) var(--anim-ease) both;
+    animation-delay: calc(var(--anim-delay, 0ms) + var(--i, 0) * var(--anim-stagger));
+  }
+
+  :root:not([data-reduce-motion]) [data-anim="words"][data-anim-in] .word {
+    animation-name: anim-enter-blur;
+  }
+
+  :root:not([data-reduce-motion]) [data-anim="float"] {
+    animation: anim-float 7s ease-in-out infinite alternate;
+  }
+
+  /* Words that light up with the scroll (the "sobre" manifesto), only where CSS scroll-driven
+     animations exist; elsewhere the text is simply shown. */
+  @supports (animation-timeline: view()) {
+    :root:not([data-reduce-motion]) [data-anim="words-lit"] {
+      view-timeline: --lit block;
+    }
+    :root:not([data-reduce-motion]) [data-anim="words-lit"] .word {
+      animation: anim-lit linear both;
+      animation-timeline: --lit;
+      animation-range: cover calc(10% + var(--p, 0) * 40%) cover calc(20% + var(--p, 0) * 40%);
+    }
+  }
+
+  /* The scrolling ribbon (pure CSS; the duplicated half is hidden from screen readers). */
+  /* biome-ignore lint/style/noDescendingSpecificity: marquee children never match the stagger rules */
+  :root:not([data-reduce-motion]) [data-anim="marquee"] > * {
+    animation: anim-marquee 30s linear infinite;
+  }
+
+  /* A frame that grows to full width as it scrolls in, without holding the scroll. */
+  @supports (animation-timeline: view()) {
+    :root:not([data-reduce-motion]) [data-anim="expand"] {
+      animation: anim-expand linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 40%;
+    }
+  }
+}
+
+@keyframes anim-enter {
+  from {
+    opacity: 0;
+    translate: 0 var(--anim-shift);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes anim-enter-blur {
+  from {
+    opacity: 0;
+    translate: 0 calc(var(--anim-shift) / 2);
+    filter: blur(var(--anim-blur));
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    filter: blur(0);
+  }
+}
+
+@keyframes anim-failsafe {
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes anim-float {
+  from {
+    translate: 0 -6px;
+    rotate: -2deg;
+  }
+  to {
+    translate: 0 6px;
+    rotate: 2deg;
+  }
+}
+
+@keyframes anim-lit {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes anim-marquee {
+  /* Each of the two copies moves its own width, so the ribbon loops seamlessly. */
+  to {
+    translate: -100% 0;
+  }
+}
+
+@keyframes anim-expand {
+  from {
+    scale: 0.88;
+    border-radius: var(--radius-lg);
+  }
+  to {
+    scale: 1;
+    border-radius: 0;
+  }
+}
+
+/* Positions and delays come from attributes (the sites' CSP allows no inline styles). */
+[data-i="0"] {
+  --i: 0;
+  --p: 0;
+}
+[data-i="1"] {
+  --i: 1;
+  --p: 0.033;
+}
+[data-i="2"] {
+  --i: 2;
+  --p: 0.067;
+}
+[data-i="3"] {
+  --i: 3;
+  --p: 0.1;
+}
+[data-i="4"] {
+  --i: 4;
+  --p: 0.133;
+}
+[data-i="5"] {
+  --i: 5;
+  --p: 0.167;
+}
+[data-i="6"] {
+  --i: 6;
+  --p: 0.2;
+}
+[data-i="7"] {
+  --i: 7;
+  --p: 0.233;
+}
+[data-i="8"] {
+  --i: 8;
+  --p: 0.267;
+}
+[data-i="9"] {
+  --i: 9;
+  --p: 0.3;
+}
+[data-i="10"] {
+  --i: 10;
+  --p: 0.333;
+}
+[data-i="11"] {
+  --i: 11;
+  --p: 0.367;
+}
+[data-i="12"] {
+  --i: 12;
+  --p: 0.4;
+}
+[data-i="13"] {
+  --i: 13;
+  --p: 0.433;
+}
+[data-i="14"] {
+  --i: 14;
+  --p: 0.467;
+}
+[data-i="15"] {
+  --i: 15;
+  --p: 0.5;
+}
+[data-i="16"] {
+  --i: 16;
+  --p: 0.533;
+}
+[data-i="17"] {
+  --i: 17;
+  --p: 0.567;
+}
+[data-i="18"] {
+  --i: 18;
+  --p: 0.6;
+}
+[data-i="19"] {
+  --i: 19;
+  --p: 0.633;
+}
+[data-i="20"] {
+  --i: 20;
+  --p: 0.667;
+}
+[data-i="21"] {
+  --i: 21;
+  --p: 0.7;
+}
+[data-i="22"] {
+  --i: 22;
+  --p: 0.733;
+}
+[data-i="23"] {
+  --i: 23;
+  --p: 0.767;
+}
+[data-i="24"] {
+  --i: 24;
+  --p: 0.8;
+}
+[data-i="25"] {
+  --i: 25;
+  --p: 0.833;
+}
+[data-i="26"] {
+  --i: 26;
+  --p: 0.867;
+}
+[data-i="27"] {
+  --i: 27;
+  --p: 0.9;
+}
+[data-i="28"] {
+  --i: 28;
+  --p: 0.933;
+}
+[data-i="29"] {
+  --i: 29;
+  --p: 0.967;
+}
+[data-i="30"] {
+  --i: 30;
+  --p: 1;
+}
+[data-anim="stagger"] > :nth-child(2) {
+  --i: 1;
+}
+[data-anim="stagger"] > :nth-child(3) {
+  --i: 2;
+}
+[data-anim="stagger"] > :nth-child(4) {
+  --i: 3;
+}
+[data-anim="stagger"] > :nth-child(5) {
+  --i: 4;
+}
+[data-anim="stagger"] > :nth-child(6) {
+  --i: 5;
+}
+[data-anim="stagger"] > :nth-child(7) {
+  --i: 6;
+}
+[data-anim="stagger"] > :nth-child(8) {
+  --i: 7;
+}
+[data-anim="stagger"] > :nth-child(9) {
+  --i: 8;
+}
+[data-anim="stagger"] > :nth-child(10) {
+  --i: 9;
+}
+[data-anim="stagger"] > :nth-child(11) {
+  --i: 10;
+}
+[data-anim="stagger"] > :nth-child(12) {
+  --i: 11;
+}
+[data-anim="stagger"] > :nth-child(13) {
+  --i: 12;
+}
+[data-anim-delay="100"] {
+  --anim-delay: 100ms;
+}
+[data-anim-delay="200"] {
+  --anim-delay: 200ms;
+}
+[data-anim-delay="300"] {
+  --anim-delay: 300ms;
+}
+[data-anim-delay="400"] {
+  --anim-delay: 400ms;
+}

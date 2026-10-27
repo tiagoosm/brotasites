@@ -17,6 +17,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@brotasites/catalog": "workspace:*",
     "@brotasites/schema": "workspace:*",
     "@tailwindcss/vite": "4.3.3",
     "astro": "7.4.0",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
+    "@axe-core/playwright": "4.14.0",
     "@playwright/test": "1.64.1",
     "@types/node": "24.19.2",
     "typescript": "6.0.3",

@@ -1,16 +1,15 @@
 ---
-import { loadSiteConfig } from "../lib/config";
-import ClassicoPage from "../templates/classico/ClassicoPage.astro";
+// The page of the config's version, resolved by the "@site-page" alias (astro.config.ts):
+// 1.2 renders the catalog template (src/v12), 1.1 the "classico" template.
+import Page from "@site-page";
+import { loadAnyConfig } from "../lib/config";
 
-const { config } = loadSiteConfig();
+const loaded = loadAnyConfig();
 
-// Only "classico" exists so far; the generator rejects other templates before building.
-const pages = { classico: ClassicoPage } as const;
-const template = config.design.template;
-if (!(template in pages)) {
-  throw new Error(`O modelo "${template}" ainda não está disponível.`);
+// 1.1 configs: only "classico" exists; the generator rejects other templates before building.
+if (loaded.version === "1.1" && loaded.config.design.template !== "classico") {
+  throw new Error(`O modelo "${loaded.config.design.template}" ainda não está disponível.`);
 }
-const Page = pages[template as keyof typeof pages];
 ---
 
-<Page config={config} />
+<Page config={loaded.config} />

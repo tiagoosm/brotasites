@@ -1,0 +1,21 @@
+---
+// A decorative ornament from the identity's set, drawn from the site's seed.
+import { buildOrnament, createRandom, ornamentSets, ornamentSvg } from "@brotasites/catalog";
+
+interface Props {
+  set: string;
+  /** Which ornament of the set (wraps around). */
+  index?: number;
+  seed: string;
+  class?: string;
+}
+
+const { set, index = 0, seed, class: className = "" } = Astro.props;
+const ornaments = ornamentSets.find((item) => item.id === set)?.ornaments ?? [];
+const id = ornaments[index % Math.max(1, ornaments.length)];
+const svg = id
+  ? ornamentSvg(buildOrnament(id, createRandom(`${seed}|${id}|${index}`)), className)
+  : "";
+---
+
+<Fragment set:html={svg} />
