@@ -1,0 +1,75 @@
+---
+import SectionShell from "../components/SectionShell.astro";
+import type { VariantProps } from "./types";
+
+// depoimentos-notes: each testimonial as a note pinned at a slight angle, the name signed in
+// the handwritten font. Real, authorized testimonials only.
+
+type Props = VariantProps<"depoimentos">;
+const { content, tone, previousTone, divider } = Astro.props;
+---
+
+<SectionShell id="depoimentos" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Recados">
+  <ul class="notes" data-anim="stagger">
+    {
+      content.items.map((item, index) => (
+        <li class={`note note-${index % 3}`}>
+          <blockquote>
+            <p>{item.text}</p>
+          </blockquote>
+          <p class="note-author">
+            {item.name}
+            {item.context && <span class="note-context">{item.context}</span>}
+          </p>
+        </li>
+      ))
+    }
+  </ul>
+</SectionShell>
+
+<style>
+  .notes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: clamp(1.5rem, 4vw, 2.5rem);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  }
+  .note {
+    background: var(--card);
+    color: var(--fg);
+    font-size: var(--step-1);
+    line-height: 1.45;
+    padding: 1.75rem 1.5rem 1.25rem;
+    box-shadow: 0 10px 26px rgb(0 0 0 / 0.12);
+    border-top: 0.6rem solid var(--color-accent);
+  }
+  .note-0 {
+    rotate: -1.5deg;
+  }
+  .note-1 {
+    rotate: 1deg;
+  }
+  .note-2 {
+    rotate: -0.5deg;
+  }
+  blockquote {
+    margin: 0;
+  }
+  blockquote p {
+    margin: 0;
+  }
+  .note-author {
+    margin: 1rem 0 0;
+    font-family: var(--font-label);
+    font-size: var(--step-2);
+    line-height: 1.1;
+    display: grid;
+  }
+  .note-context {
+    font-family: var(--font-body);
+    font-size: var(--step--1);
+    color: var(--fg-muted);
+  }
+</style>

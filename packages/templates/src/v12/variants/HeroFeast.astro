@@ -1,0 +1,215 @@
+---
+// hero-feast (food): a giant centered title over a wide photo strip, like the first page of a
+// menu. A weak photo becomes a tilted print over a gradient; with no photo, the strip turns into
+// a ribbon that scrolls the names of the services.
+import Button from "../components/Button.astro";
+import Ornament from "../components/Ornament.astro";
+import Photo from "../components/Photo.astro";
+import { findAsset, isStrongPhoto } from "../lib/assets";
+import { hoursSummary } from "../lib/hours";
+import { ctaLink, primaryContact } from "../lib/links";
+import type { VariantProps } from "./types";
+
+type Props = Omit<VariantProps<"hero">, "previousTone" | "divider" | "index">;
+
+const { config, theme, content } = Astro.props;
+const { business } = config;
+const image = findAsset(content.image?.assetId);
+const strong = isStrongPhoto(image);
+const link = content.cta ? ctaLink(content.cta, business) : primaryContact(business);
+const label = content.cta?.label ?? config.navigation.ctaLabel;
+const summary = hoursSummary(business.openingHours);
+const services = config.sections.find((s) => s.id === "servicos" && s.enabled);
+const serviceNames =
+  services?.id === "servicos" ? services.content.items.map((item) => item.name) : [];
+const ribbon = serviceNames.length >= 2 ? serviceNames : [business.name, business.address.city];
+
+// The last word carries the accent: in italics when the title font has a real italic.
+const words = content.title.trim().split(/\s+/);
+const lead = words.length > 1 ? words.slice(0, -1).join(" ") : content.title;
+const accent = words.length > 1 ? words.at(-1) : undefined;
+const italic = theme.highlights.includes("italic");
+---
+
+<section id="abertura" aria-labelledby="abertura-title" class="hero-feast section-hero tone-base">
+  <div class="container feast-head">
+    <p class="label" data-anim="reveal">{business.address.district ?? business.address.city}</p>
+    <h1 id="abertura-title" class="feast-title">
+      {lead}{accent && " "}{accent && <span class:list={["feast-accent", italic && "is-italic"]}>{accent}</span>}
+    </h1>
+    {content.subtitle && <p class="feast-subtitle" data-anim="reveal" data-anim-delay="100">{content.subtitle}</p>}
+    <div class="feast-actions" data-anim="reveal" data-anim-delay="200">
+      <Button link={link} label={label} />
+      {services && <Button link={{ href: "#servicos", external: false }} label="Ver o que tem" kind="ghost" />}
+    </div>
+    <p class="feast-today" data-open-status hidden></p>
+    {summary && <p class="feast-today">{summary}</p>}
+  </div>
+
+  <div class="container feast-stage">
+    {
+      image && strong ? (
+        <div class="feast-strip" data-anim="reveal" data-anim-delay="200">
+          <Photo image={image} alt={content.image?.alt ?? ""} treatment="none" sizes="(min-width: 1200px) 1150px, 100vw" priority class="feast-photo" />
+        </div>
+      ) : image ? (
+        <div class="feast-board gradient-bg" data-anim="reveal" data-anim-delay="200">
+          <Photo image={image} alt={content.image?.alt ?? ""} treatment="polaroid" sizes="320px" priority class="feast-print" />
+          <span class="feast-board-ornament" aria-hidden="true">
+            <Ornament set={theme.identity.ornamentSet} seed={config.design.seed} />
+          </span>
+        </div>
+      ) : (
+        <div class="feast-ribbon tone-brand" data-anim="marquee" aria-hidden="true">
+          <p>{ribbon.map((name) => <span>{name}<span class="dot">•</span></span>)}</p>
+          <p>{ribbon.map((name) => <span>{name}<span class="dot">•</span></span>)}</p>
+        </div>
+      )
+    }
+    {
+      business.foundedYear && (
+        <p class:list={["feast-seal", !image && "is-above"]}>
+          <span>Desde</span>
+          <strong>{business.foundedYear}</strong>
+        </p>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .hero-feast {
+    padding-block: clamp(2.5rem, 6vw, 5rem) clamp(3rem, 7vw, 6rem);
+    overflow: hidden;
+  }
+  .feast-head {
+    text-align: center;
+    display: grid;
+    justify-items: center;
+  }
+  .feast-title {
+    font-size: var(--step-display);
+    line-height: var(--heading-line-height);
+    margin: 0.15em 0 0;
+    max-width: 16ch;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  .feast-accent {
+    color: var(--color-primary);
+  }
+  .feast-accent.is-italic {
+    font-style: italic;
+  }
+  .feast-subtitle {
+    font-size: var(--step-1);
+    color: var(--fg-muted);
+    max-width: 40ch;
+    margin: 1.25rem 0 0;
+  }
+  .feast-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+  .feast-today {
+    margin: 1rem 0 0;
+    font-size: var(--step--1);
+    color: var(--fg-muted);
+  }
+  .feast-stage {
+    position: relative;
+    margin-top: clamp(2.5rem, 6vw, 4rem);
+  }
+  .feast-strip :global(img) {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+  }
+  @media (min-width: 768px) {
+    .feast-strip :global(img) {
+      aspect-ratio: 21 / 9;
+    }
+  }
+  .feast-board {
+    border-radius: var(--radius-lg);
+    min-height: 18rem;
+    display: grid;
+    place-items: center;
+    padding: 2.5rem 1rem;
+  }
+  .feast-board :global(.feast-print) {
+    width: min(78%, 20rem);
+  }
+  .feast-board-ornament {
+    position: absolute;
+    left: 6%;
+    top: 12%;
+    width: clamp(3.5rem, 10vw, 7rem);
+    color: var(--color-accent);
+  }
+  .feast-board-ornament :global(svg) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .feast-ribbon {
+    display: flex;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    padding-block: clamp(1.5rem, 4vw, 2.75rem);
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-heading);
+    font-size: var(--step-3);
+    white-space: nowrap;
+  }
+  .feast-ribbon p {
+    margin: 0;
+    flex: none;
+    display: flex;
+  }
+  .feast-ribbon .dot {
+    padding-inline: 0.6em;
+    font-size: 0.6em;
+    vertical-align: middle;
+  }
+  .feast-seal {
+    position: absolute;
+    right: clamp(1.5rem, 6vw, 4rem);
+    bottom: -1.5rem;
+    margin: 0;
+    width: clamp(5.5rem, 14vw, 8rem);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    background: var(--color-text);
+    color: var(--color-background);
+    line-height: 1.05;
+    rotate: -8deg;
+    font-size: var(--step--1);
+  }
+  .feast-seal.is-above {
+    bottom: auto;
+    top: -4.5rem;
+  }
+  @media (max-width: 767px) {
+    .feast-seal.is-above {
+      top: auto;
+      bottom: -3.5rem;
+    }
+    .feast-board-ornament {
+      top: 4%;
+      left: 4%;
+    }
+  }
+  .feast-seal strong {
+    font-family: var(--font-heading);
+    font-size: var(--step-2);
+  }
+</style>

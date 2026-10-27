@@ -1,0 +1,164 @@
+---
+import Button from "../components/Button.astro";
+import Ornament from "../components/Ornament.astro";
+import Photo from "../components/Photo.astro";
+import { findAsset } from "../lib/assets";
+import { heroParts } from "../lib/hero";
+import type { VariantProps } from "./types";
+
+// hero-collage (events and creatives): tilted prints of the client's photos (the hero one and
+// up to two from the gallery) pinned with stamps around the title, with a handwritten note.
+// With no photos, coloured paper cut-outs carry the identity's ornaments instead.
+
+type Props = Omit<VariantProps<"hero">, "previousTone" | "divider" | "index">;
+const { config, theme, content } = Astro.props;
+const parts = heroParts(config, theme, content);
+const gallery = config.sections.find((s) => s.id === "galeria" && s.enabled);
+const extra =
+  gallery?.id === "galeria"
+    ? gallery.content.images.flatMap((image) => {
+        const file = findAsset(image.assetId);
+        return file ? [{ file, alt: image.alt }] : [];
+      })
+    : [];
+const prints = [...(parts.image ? [{ file: parts.image, alt: parts.alt }] : []), ...extra].slice(
+  0,
+  3,
+);
+---
+
+<section id="abertura" aria-labelledby="abertura-title" class="hero-collage section-hero tone-base">
+  <div class="container collage-grid">
+    <div class="collage-text">
+      <p class="label" data-anim="reveal">{parts.business.name}</p>
+      <h1 id="abertura-title" class="collage-title">{content.title}</h1>
+      {content.subtitle && <p class="collage-subtitle" data-anim="reveal" data-anim-delay="100">{content.subtitle}</p>}
+      <div class="collage-actions" data-anim="reveal" data-anim-delay="200">
+        <Button link={parts.link} label={parts.label} />
+        <p class="collage-today" data-open-status hidden></p>
+        {parts.summary && <p class="collage-today">{parts.summary}</p>}
+      </div>
+    </div>
+    <div class="collage-board" data-anim="stagger">
+      {
+        prints.length > 0
+          ? prints.map((print, index) => (
+              <div class={`collage-print collage-print-${index}`}>
+                <Photo image={print.file} alt={print.alt} treatment="polaroid" sizes="(min-width: 900px) 22vw, 60vw" priority={index === 0} />
+              </div>
+            ))
+          : [0, 1, 2].map((index) => (
+              <div class={`collage-print collage-print-${index} collage-paper`} aria-hidden="true">
+                <Ornament set={theme.identity.ornamentSet} index={index} seed={parts.seed} />
+              </div>
+            ))
+      }
+      <span class="collage-stamp" aria-hidden="true">
+        <Ornament set="seals" seed={parts.seed} />
+      </span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .collage-grid {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 4rem);
+    padding-block: clamp(2.5rem, 7vw, 6rem);
+    align-items: center;
+  }
+  @media (min-width: 900px) {
+    .collage-grid {
+      grid-template-columns: 1fr 1.1fr;
+    }
+  }
+  .collage-title {
+    font-size: var(--step-5);
+    margin: 0.15em 0 0;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  .collage-subtitle {
+    font-size: var(--step-1);
+    color: var(--fg-muted);
+    max-width: 36ch;
+    margin: 1.25rem 0 0;
+  }
+  .collage-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    margin-top: 2rem;
+  }
+  .collage-today {
+    margin: 0;
+    font-size: var(--step--1);
+    color: var(--fg-muted);
+  }
+  .collage-board {
+    position: relative;
+    min-height: clamp(20rem, 60vw, 30rem);
+  }
+  .collage-print {
+    position: absolute;
+    width: 58%;
+  }
+  .collage-print-0 {
+    left: 2%;
+    top: 4%;
+    rotate: -6deg;
+    z-index: 2;
+  }
+  .collage-print-1 {
+    right: 2%;
+    top: 0;
+    rotate: 5deg;
+    width: 48%;
+  }
+  .collage-print-2 {
+    right: 10%;
+    bottom: 0;
+    rotate: -2deg;
+    width: 46%;
+    z-index: 3;
+  }
+  .collage-print :global(.photo-polaroid) {
+    rotate: 0deg;
+  }
+  .collage-print :global(img) {
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+  .collage-paper {
+    aspect-ratio: 1;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: 18%;
+    color: var(--color-accent);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.12);
+  }
+  .collage-paper:nth-child(2) {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+  .collage-paper :global(svg) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .collage-stamp {
+    position: absolute;
+    left: 40%;
+    bottom: 8%;
+    width: clamp(4rem, 10vw, 6.5rem);
+    color: var(--color-accent);
+    rotate: 12deg;
+    z-index: 4;
+  }
+  .collage-stamp :global(svg) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+</style>

@@ -1,0 +1,85 @@
+---
+import Icon from "../../components/Icon.astro";
+import SectionShell from "../components/SectionShell.astro";
+import type { VariantProps } from "./types";
+
+// diferenciais-ribbon: the reasons scroll by on a tilted ribbon (pure CSS, a copy hidden from
+// screen readers), with the full list below for reading.
+
+type Props = VariantProps<"diferenciais">;
+const { content, tone, previousTone, divider } = Astro.props;
+const titles = content.items.map((item) => item.title);
+---
+
+<SectionShell id="diferenciais" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Por que a gente" wide class="ribbon-section">
+  <div class="ribbon tone-brand" data-anim="marquee" aria-hidden="true">
+    <p>{titles.map((title) => <span>{title} <span class="ribbon-star">•</span> </span>)}</p>
+    <p>{titles.map((title) => <span>{title} <span class="ribbon-star">•</span> </span>)}</p>
+  </div>
+  <ul class="ribbon-list">
+    {
+      content.items.map((item) => (
+        <li>
+          <Icon name={item.icon} class="ribbon-icon" />
+          <div>
+            <h3 class="ribbon-title">{item.title}</h3>
+            {item.text && <p class="ribbon-text">{item.text}</p>}
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</SectionShell>
+
+<style>
+  /* The tilted ribbon runs past the edges; the section trims it. */
+  :global(.ribbon-section) {
+    overflow-x: clip;
+  }
+  .ribbon {
+    display: flex;
+    overflow: hidden;
+    white-space: nowrap;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-heading);
+    font-size: var(--step-3);
+    padding-block: 1rem;
+    rotate: -2deg;
+    margin-inline: -2rem;
+  }
+  .ribbon p {
+    margin: 0;
+    flex: none;
+    padding-right: 0.5em;
+  }
+  .ribbon-star {
+    font-size: 0.6em;
+    padding-inline: 0.4em;
+  }
+  .ribbon-list {
+    list-style: none;
+    margin: clamp(2.5rem, 6vw, 4rem) 0 0;
+    padding: 0;
+    display: grid;
+    gap: 1.5rem 2.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  }
+  .ribbon-list li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.9rem;
+  }
+  :global(.ribbon-icon) {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+  .ribbon-title {
+    font-size: var(--step-1);
+    margin: 0;
+  }
+  .ribbon-text {
+    margin: 0.3rem 0 0;
+    color: var(--fg-muted);
+  }
+</style>

@@ -1,0 +1,140 @@
+---
+import Button from "../components/Button.astro";
+import SectionShell from "../components/SectionShell.astro";
+import { hoursRows, hoursSummary } from "../lib/hours";
+import {
+  addressLine,
+  directionsHref,
+  emailHref,
+  formatPhone,
+  phoneHref,
+  whatsappHref,
+} from "../lib/links";
+import type { VariantProps } from "./types";
+
+// contato-split: the hours set large on one side (the question most visitors have), the
+// channels and the address on the other.
+
+type Props = VariantProps<"contato">;
+const { config, content, tone, previousTone, divider } = Astro.props;
+const { business } = config;
+const { contact, address } = business;
+const rows = hoursRows(business.openingHours);
+const summary = hoursSummary(business.openingHours);
+---
+
+<SectionShell id="contato" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Visite a gente">
+  <div class="contact-split">
+    {
+      content.showHours && (
+        <div class="split-hours">
+          <p class="split-status" data-open-status hidden />
+          {summary ? (
+            <p class="split-summary">{summary}</p>
+          ) : (
+            <dl>
+              {rows.map((row) => (
+                <div class="hours-row" data-days={row.days.join(",")}>
+                  <dt>{row.label}</dt>
+                  <dd>{row.hours}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
+      )
+    }
+    <div class="split-channels">
+      <ul>
+        {contact.whatsapp && (
+          <li>
+            <a href={whatsappHref(contact.whatsapp)} target="_blank" rel="noopener noreferrer">WhatsApp {formatPhone(contact.whatsapp)}</a>
+          </li>
+        )}
+        {contact.phone && (
+          <li>
+            <a href={phoneHref(contact.phone)}>{formatPhone(contact.phone)}</a>
+          </li>
+        )}
+        {contact.email && (
+          <li>
+            <a href={emailHref(contact.email)}>{contact.email}</a>
+          </li>
+        )}
+      </ul>
+      {address.hasFixedAddress ? (
+        <>
+          <address>{addressLine(business)}</address>
+          {content.showMapLink && (
+            <Button link={{ href: directionsHref(business), external: true }} label="Como chegar" />
+          )}
+        </>
+      ) : (
+        <p>Atendemos em {business.serviceArea.join(", ")}.</p>
+      )}
+    </div>
+  </div>
+</SectionShell>
+
+<style>
+  .contact-split {
+    display: grid;
+    gap: 2.5rem 4rem;
+  }
+  @media (min-width: 900px) {
+    .contact-split {
+      grid-template-columns: 1.3fr 1fr;
+    }
+  }
+  .split-hours dl {
+    margin: 0;
+    display: grid;
+    gap: 0.25rem;
+  }
+  .hours-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid color-mix(in oklab, var(--fg) 25%, transparent);
+    font-family: var(--font-heading);
+    font-size: var(--step-2);
+  }
+  .hours-row[data-today] {
+    background: var(--button-bg);
+    color: var(--button-fg);
+    border-radius: var(--radius-sm);
+  }
+  .hours-row dt,
+  .hours-row dd {
+    margin: 0;
+  }
+  .split-status {
+    font-weight: 700;
+    margin: 0 0 0.75rem;
+  }
+  .split-summary {
+    font-family: var(--font-heading);
+    font-size: var(--step-3);
+    margin: 0;
+  }
+  .split-channels ul {
+    list-style: none;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    display: grid;
+    gap: 0.25rem;
+  }
+  .split-channels a:not(.btn) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-weight: 700;
+    font-size: var(--step-1);
+    overflow-wrap: anywhere;
+  }
+  address {
+    font-style: normal;
+    margin-bottom: 1rem;
+  }
+</style>

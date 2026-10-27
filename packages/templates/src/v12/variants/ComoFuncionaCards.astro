@@ -1,0 +1,58 @@
+---
+import SectionShell from "../components/SectionShell.astro";
+import type { VariantProps } from "./types";
+
+// como-funciona-cards: the steps side by side as cards, each with its number in a circle.
+
+type Props = VariantProps<"como-funciona">;
+const { content, tone, previousTone, divider } = Astro.props;
+---
+
+<SectionShell id="como-funciona" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Passo a passo">
+  <ol class="step-cards" data-anim="stagger">
+    {
+      content.steps.map((step, index) => (
+        <li class="step-card">
+          <span class="step-card-number" aria-hidden="true">{index + 1}</span>
+          <h3 class="step-card-title">{step.title}</h3>
+          <p class="step-card-text">{step.text}</p>
+        </li>
+      ))
+    }
+  </ol>
+</SectionShell>
+
+<style>
+  .step-cards {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  }
+  .step-card {
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    padding: clamp(1.25rem, 3vw, 2rem);
+  }
+  .step-card-number {
+    display: inline-grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--button-bg);
+    color: var(--button-fg);
+    font-family: var(--font-heading);
+    font-size: var(--step-1);
+  }
+  .step-card-title {
+    font-size: var(--step-1);
+    margin: 1rem 0 0.35rem;
+  }
+  .step-card-text {
+    margin: 0;
+    color: var(--fg-muted);
+  }
+</style>

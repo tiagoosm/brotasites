@@ -1,0 +1,94 @@
+---
+import SectionShell from "../components/SectionShell.astro";
+import type { VariantProps } from "./types";
+
+// depoimentos-quote: the first testimonial set large as a pull quote, the others below in a
+// smaller list. Real, authorized testimonials only (the schema refuses any other).
+
+type Props = VariantProps<"depoimentos">;
+const { content, tone, previousTone, divider } = Astro.props;
+const [first, ...rest] = content.items;
+---
+
+<SectionShell id="depoimentos" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Quem já veio">
+  {
+    first && (
+      <figure class="pull" data-anim="reveal">
+        <blockquote>
+          <p>{first.text}</p>
+        </blockquote>
+        <figcaption>
+          {first.name}
+          {first.context && <span>, {first.context}</span>}
+        </figcaption>
+      </figure>
+    )
+  }
+  {
+    rest.length > 0 && (
+      <ul class="more" data-anim="stagger">
+        {rest.map((item) => (
+          <li>
+            <blockquote>
+              <p>{item.text}</p>
+            </blockquote>
+            <p class="more-author">
+              {item.name}
+              {item.context && <span>, {item.context}</span>}
+            </p>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</SectionShell>
+
+<style>
+  .pull {
+    margin: 0;
+    max-width: 52rem;
+  }
+  .pull blockquote {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: var(--step-3);
+    line-height: 1.25;
+  }
+  .pull blockquote p {
+    margin: 0;
+  }
+  .pull blockquote p::before {
+    content: "“";
+    color: var(--ornament);
+  }
+  .pull blockquote p::after {
+    content: "”";
+  }
+  .pull figcaption {
+    margin-top: 1.25rem;
+    font-weight: 700;
+  }
+  .pull figcaption span,
+  .more-author span {
+    font-weight: 400;
+    color: var(--fg-muted);
+  }
+  .more {
+    list-style: none;
+    margin: clamp(2rem, 5vw, 3rem) 0 0;
+    padding: 0;
+    display: grid;
+    gap: 1.5rem 2.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  }
+  .more blockquote {
+    margin: 0;
+  }
+  .more blockquote p {
+    margin: 0;
+  }
+  .more-author {
+    margin: 0.5rem 0 0;
+    font-weight: 700;
+  }
+</style>

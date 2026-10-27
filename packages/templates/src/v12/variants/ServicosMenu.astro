@@ -1,0 +1,89 @@
+---
+// servicos-menu (food): a menu board. Each item has its name, a dotted leader and the price
+// the client gave (no price, no leader), with the description underneath.
+import Icon from "../../components/Icon.astro";
+import SectionShell from "../components/SectionShell.astro";
+import type { VariantProps } from "./types";
+
+type Props = VariantProps<"servicos">;
+const { content, tone, previousTone, divider } = Astro.props;
+const twoColumns = content.items.length > 4;
+---
+
+<SectionShell id="servicos" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Cardápio">
+  <ul class:list={["menu", twoColumns && "menu-two"]} data-anim="stagger">
+    {
+      content.items.map((item) => (
+        <li class="menu-item">
+          <div class="menu-line">
+            {item.icon && <Icon name={item.icon} class="menu-icon" />}
+            <h3 class="menu-name">{item.name}</h3>
+            {item.price && (
+              <>
+                <span class="menu-leader" aria-hidden="true" />
+                <span class="menu-price">{item.price}</span>
+              </>
+            )}
+          </div>
+          {item.description && <p class="menu-text">{item.description}</p>}
+        </li>
+      ))
+    }
+  </ul>
+</SectionShell>
+
+<style>
+  .menu {
+    list-style: none;
+    margin: 0;
+    padding: clamp(1.5rem, 5vw, 3.5rem);
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    /* A thin inner frame, like a printed menu. */
+    outline: 1px solid color-mix(in oklab, var(--fg) 30%, transparent);
+    outline-offset: -0.6rem;
+    display: grid;
+    gap: 1.75rem clamp(2rem, 6vw, 5rem);
+    max-width: 44rem;
+  }
+  @media (min-width: 900px) {
+    .menu-two {
+      grid-template-columns: 1fr 1fr;
+      max-width: none;
+    }
+  }
+  .menu-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+  :global(.menu-icon) {
+    width: 1.4rem;
+    height: 1.4rem;
+    flex: none;
+    align-self: flex-start;
+    margin-top: 0.35em;
+  }
+  .menu-name {
+    font-size: var(--step-1);
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+  .menu-leader {
+    flex: 1;
+    min-width: 1.5rem;
+    border-bottom: 2px dotted color-mix(in oklab, var(--fg) 45%, transparent);
+    translate: 0 -0.3em;
+  }
+  .menu-price {
+    font-family: var(--font-heading);
+    font-size: var(--step-1);
+    white-space: nowrap;
+  }
+  .menu-text {
+    margin: 0.35rem 0 0;
+    color: var(--fg-muted);
+    max-width: 48ch;
+  }
+</style>

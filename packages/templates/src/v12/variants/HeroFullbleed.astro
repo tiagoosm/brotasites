@@ -1,0 +1,116 @@
+---
+import Button from "../components/Button.astro";
+import Photo from "../components/Photo.astro";
+import { heroParts } from "../lib/hero";
+import type { VariantProps } from "./types";
+
+// hero-fullbleed: the photo fills the screen and the title sits on a solid panel cut into its
+// bottom edge, never on the photo itself (no text over a photo without a computed background).
+// Needs a good photo: the engine only offers it then. Without one it falls back to a panel
+// on the gradient, so the page still works if the photo goes missing.
+
+type Props = Omit<VariantProps<"hero">, "previousTone" | "divider" | "index">;
+const { config, theme, content } = Astro.props;
+const parts = heroParts(config, theme, content);
+---
+
+<section id="abertura" aria-labelledby="abertura-title" class="hero-fullbleed section-hero tone-base">
+  <div class:list={["fullbleed-media", !parts.strong && "gradient-bg"]}>
+    {parts.image && parts.strong && <Photo image={parts.image} alt={parts.alt} treatment="none" sizes="100vw" priority class="fullbleed-photo" />}
+  </div>
+  <div class="container fullbleed-panel-wrap">
+    <div class:list={["fullbleed-panel", parts.image && !parts.strong && "has-print"]} data-anim="reveal">
+      {
+        // A weak photo would blur when stretched across the screen: it becomes a small print.
+        parts.image && !parts.strong && (
+          <Photo image={parts.image} alt={parts.alt} treatment="polaroid" sizes="12rem" priority class="fullbleed-print" />
+        )
+      }
+      <p class="label">{parts.business.name} · {parts.business.address.city}</p>
+      <h1 id="abertura-title" class="fullbleed-title">{content.title}</h1>
+      {content.subtitle && <p class="fullbleed-subtitle">{content.subtitle}</p>}
+      <div class="fullbleed-actions">
+        <Button link={parts.link} label={parts.label} />
+        <p class="fullbleed-today" data-open-status hidden></p>
+        {parts.summary && <p class="fullbleed-today">{parts.summary}</p>}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero-fullbleed {
+    padding-bottom: clamp(2rem, 6vw, 5rem);
+  }
+  .fullbleed-media {
+    height: clamp(20rem, 70vh, 46rem);
+    overflow: hidden;
+  }
+  .fullbleed-media :global(.photo),
+  .fullbleed-media :global(picture),
+  .fullbleed-media :global(img) {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+  .fullbleed-media :global(img) {
+    object-fit: cover;
+  }
+  .fullbleed-panel-wrap {
+    margin-top: clamp(-10rem, -14vw, -4rem);
+    position: relative;
+  }
+  .fullbleed-panel {
+    background: var(--color-background);
+    color: var(--color-text);
+    border-radius: var(--radius-lg);
+    padding: clamp(1.5rem, 5vw, 3.5rem);
+    max-width: 46rem;
+    box-shadow: 0 20px 50px rgb(0 0 0 / 0.12);
+  }
+  .fullbleed-panel :global(.fullbleed-print) {
+    width: min(60%, 12rem);
+    margin-bottom: 1.25rem;
+  }
+  @media (min-width: 900px) {
+    .fullbleed-panel.has-print {
+      max-width: 60rem;
+      display: grid;
+      grid-template-columns: 1fr 12rem;
+      column-gap: 2.5rem;
+    }
+    .fullbleed-panel.has-print > :not(:global(.fullbleed-print)) {
+      grid-column: 1;
+    }
+    .fullbleed-panel :global(.fullbleed-print) {
+      grid-column: 2;
+      grid-row: 1 / span 4;
+      width: 100%;
+      margin: 0;
+    }
+  }
+  .fullbleed-title {
+    font-size: var(--step-5);
+    margin: 0.2em 0 0;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  .fullbleed-subtitle {
+    font-size: var(--step-1);
+    color: var(--color-text-muted);
+    margin: 1rem 0 0;
+    max-width: 40ch;
+  }
+  .fullbleed-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    margin-top: 1.75rem;
+  }
+  .fullbleed-today {
+    margin: 0;
+    font-size: var(--step--1);
+    color: var(--color-text-muted);
+  }
+</style>

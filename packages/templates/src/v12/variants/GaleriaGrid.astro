@@ -1,0 +1,50 @@
+---
+import Photo from "../components/Photo.astro";
+import SectionShell from "../components/SectionShell.astro";
+import { findAsset } from "../lib/assets";
+import type { VariantProps } from "./types";
+
+// galeria-grid: an even grid of square photos with their descriptions as captions.
+
+type Props = VariantProps<"galeria">;
+const { content, tone, previousTone, divider } = Astro.props;
+const photos = content.images.flatMap((image) => {
+  const file = findAsset(image.assetId);
+  return file ? [{ file, alt: image.alt }] : [];
+});
+---
+
+{
+  photos.length > 0 && (
+    <SectionShell id="galeria" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Fotos" wide>
+      <ul class="grid-photos" data-anim="stagger">
+        {photos.map((photo) => (
+          <li>
+            <Photo image={photo.file} alt={photo.alt} treatment="none" sizes="(min-width: 900px) 25vw, 50vw" />
+          </li>
+        ))}
+      </ul>
+    </SectionShell>
+  )
+}
+
+<style>
+  .grid-photos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 900px) {
+    .grid-photos {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  .grid-photos :global(img) {
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+  }
+</style>

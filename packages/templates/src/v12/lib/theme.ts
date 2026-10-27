@@ -74,9 +74,14 @@ export function resolveTheme(config: SiteConfig): Theme {
       "../fonts/",
     ),
     ...Object.entries(tones).map(([tone, vars]) => `.tone-${tone}{${vars}}`),
-    pattern.background === "none" ? "" : `.has-pattern{background:${pattern.background},var(--bg)}`,
-    `.gradient-bg{background:${gradient.background}}.gradient-bg::after{${gradient.grain}}`,
+    pattern.background === "none"
+      ? ""
+      : `.section.has-pattern{background:${pattern.background},var(--bg)}`,
+    // Doubled class: this file loads before the page's own CSS, where .section sets a plain background.
+    `.gradient-bg.gradient-bg{background:${gradient.background}}.gradient-bg::after{${gradient.grain}}`,
+    // Every treatment ships (about 2 KB): some variants frame their photos their own way.
     treatmentCss(treatment),
+    ...imageTreatments.filter((item) => item.id !== treatment.id).map((item) => item.css),
   ].join("\n");
 
   return {

@@ -1,0 +1,79 @@
+---
+import Button from "../components/Button.astro";
+import SectionShell from "../components/SectionShell.astro";
+import { primaryContact } from "../lib/links";
+import type { VariantProps } from "./types";
+
+// faq-split: the questions in an accordion on the right; on the left, an invitation to ask
+// anything else through the main contact channel.
+
+type Props = VariantProps<"faq">;
+const { config, content, tone, previousTone, divider } = Astro.props;
+---
+
+<SectionShell id="faq" title={content.title} tone={tone} previousTone={previousTone} divider={divider} label="Dúvidas">
+  <div class="faq-split">
+    <div class="faq-aside">
+      <p>Não achou sua pergunta?</p>
+      <Button link={primaryContact(config.business)} label="Pergunte pra gente" kind="ghost" />
+    </div>
+    <div class="faq-list" data-anim="reveal">
+      {
+        content.items.map((item) => (
+          <details class="faq-item">
+            <summary>{item.question}</summary>
+            <p>{item.answer}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</SectionShell>
+
+<style>
+  .faq-split {
+    display: grid;
+    gap: 2rem 4rem;
+  }
+  @media (min-width: 900px) {
+    .faq-split {
+      grid-template-columns: 1fr 2fr;
+    }
+    .faq-aside {
+      order: 0;
+    }
+  }
+  .faq-aside p {
+    margin: 0 0 1rem;
+    font-size: var(--step-1);
+  }
+  .faq-item {
+    background: var(--card);
+    border-radius: var(--radius-md);
+    margin-bottom: 0.5rem;
+    padding-inline: 1.25rem;
+  }
+  summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 0;
+    min-height: 44px;
+    font-weight: 700;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary::after {
+    content: "+";
+  }
+  details[open] summary::after {
+    content: "−";
+  }
+  .faq-item p {
+    margin: 0 0 1.25rem;
+    color: var(--fg-muted);
+  }
+</style>

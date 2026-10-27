@@ -1,0 +1,105 @@
+---
+import Button from "../components/Button.astro";
+import Ornament from "../components/Ornament.astro";
+import { heroParts } from "../lib/hero";
+import type { VariantProps } from "./types";
+
+// hero-poster (every family): pure typography over a seeded gradient with grain, like a
+// poster. It needs no photo, so it is as good for a client without photos as for anyone.
+// Ornaments from the identity's set sit in two corners.
+
+type Props = Omit<VariantProps<"hero">, "previousTone" | "divider" | "index">;
+const { config, theme, content } = Astro.props;
+const parts = heroParts(config, theme, content);
+---
+
+<section id="abertura" aria-labelledby="abertura-title" class="hero-poster section-hero tone-base">
+  <div class="poster gradient-bg">
+    <span class="poster-ornament poster-ornament-a" data-anim="float" aria-hidden="true">
+      <Ornament set={theme.identity.ornamentSet} seed={parts.seed} />
+    </span>
+    <span class="poster-ornament poster-ornament-b" aria-hidden="true">
+      <Ornament set={theme.identity.ornamentSet} index={1} seed={parts.seed} />
+    </span>
+    <div class="container poster-body">
+      <p class="label" data-anim="reveal">{parts.business.name}</p>
+      <h1 id="abertura-title" class="poster-title">
+        {parts.lead}{parts.accent && " "}{parts.accent && <span class:list={["poster-accent", parts.italic && "is-italic"]}>{parts.accent}</span>}
+      </h1>
+      {content.subtitle && <p class="poster-subtitle" data-anim="reveal" data-anim-delay="100">{content.subtitle}</p>}
+      <div class="poster-actions" data-anim="reveal" data-anim-delay="200">
+        <Button link={parts.link} label={parts.label} />
+        <p class="poster-today" data-open-status hidden></p>
+        {parts.summary && <p class="poster-today">{parts.summary}</p>}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .poster {
+    min-height: min(88vh, 52rem);
+    display: grid;
+    align-items: center;
+    overflow: hidden;
+    padding-block: clamp(4rem, 10vw, 8rem);
+  }
+  .poster-title {
+    font-size: var(--step-display);
+    margin: 0.1em 0 0;
+    max-width: 14ch;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  .poster-accent {
+    text-decoration: underline;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.12em;
+    text-decoration-color: var(--color-accent);
+  }
+  .poster-accent.is-italic {
+    font-style: italic;
+  }
+  .poster-subtitle {
+    font-size: var(--step-1);
+    max-width: 38ch;
+    margin: 1.25rem 0 0;
+  }
+  .poster-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    margin-top: 2rem;
+  }
+  .poster-today {
+    margin: 0;
+    font-size: var(--step--1);
+  }
+  .poster-ornament {
+    position: absolute;
+    color: var(--color-accent);
+    pointer-events: none;
+  }
+  .poster-ornament :global(svg) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .poster-ornament-a {
+    width: clamp(5rem, 16vw, 13rem);
+    right: clamp(1rem, 7vw, 7rem);
+    top: clamp(1.5rem, 8vw, 6rem);
+  }
+  .poster-ornament-b {
+    width: clamp(3rem, 8vw, 6rem);
+    right: clamp(6rem, 30vw, 24rem);
+    bottom: clamp(1rem, 5vw, 4rem);
+    opacity: 0.7;
+  }
+  @media (max-width: 640px) {
+    .poster-ornament-b {
+      display: none;
+    }
+  }
+</style>

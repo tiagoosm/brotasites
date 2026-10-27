@@ -1,0 +1,73 @@
+---
+import Button from "../components/Button.astro";
+import Ornament from "../components/Ornament.astro";
+import SectionShell from "../components/SectionShell.astro";
+import { ctaLink } from "../lib/links";
+import type { VariantProps } from "./types";
+
+// cta-final-stamp: a big stamp from the identity's seals beside the last call. The stamp shows
+// the founding year only when the client gave it.
+
+type Props = VariantProps<"cta-final">;
+const { config, content, tone, previousTone, divider } = Astro.props;
+const year = config.business.foundedYear;
+---
+
+<SectionShell id="cta-final" title={content.title} tone={tone} previousTone={previousTone} divider={divider} class="cta-stamp">
+  <div class="cta-stamp-body">
+    <div>
+      {content.subtitle && <p class="cta-stamp-subtitle" data-anim="reveal">{content.subtitle}</p>}
+      <Button link={ctaLink(content.cta, config.business)} label={content.cta.label} />
+    </div>
+    <div class="stamp" aria-hidden="true">
+      <Ornament set="seals" seed={config.design.seed} />
+      {year && <span class="stamp-text">desde<strong>{year}</strong></span>}
+    </div>
+  </div>
+</SectionShell>
+
+<style>
+  .cta-stamp-body {
+    display: grid;
+    gap: 2rem;
+    align-items: center;
+  }
+  @media (min-width: 768px) {
+    .cta-stamp-body {
+      grid-template-columns: 1fr auto;
+    }
+  }
+  .cta-stamp-subtitle {
+    margin: 0 0 1.5rem;
+    font-size: var(--step-1);
+    color: var(--fg-muted);
+    max-width: 40ch;
+  }
+  .stamp {
+    position: relative;
+    width: clamp(8rem, 22vw, 13rem);
+    color: var(--button-bg);
+    rotate: -10deg;
+    justify-self: center;
+  }
+  .stamp :global(svg) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .stamp-text {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    color: var(--button-fg);
+    font-size: var(--step--1);
+    line-height: 1;
+  }
+  .stamp-text strong {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: var(--step-3);
+  }
+</style>
