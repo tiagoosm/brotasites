@@ -35,7 +35,7 @@ Replaces version 1.1 (kept in `docs/legacy/site-config.schema.v1.1.json`). Main 
 ## design
 
 - `seed` (string), `round` (integer).
-- `identity`: `personality`, `heroVariant`, `fontPair`, `palette` (colors with computed hex and guaranteed AA contrast), `shape`, `ornamentSet`, `pattern`, `imageTreatment`, `dividerStyle`, `markStyle`, `sectionVariants` (map of section to variant id), `rhythm`, `motionPreset`, `fingerprint`.
+- `identity`: `personality`, `heroVariant`, `fontPair`, `typeScale`, `palette` (colors with computed hex and guaranteed AA contrast), `shape`, `ornamentSet`, `pattern`, `imageTreatment`, `dividerStyle`, `markStyle`, `sectionVariants` (map of section to variant id), `rhythm`, `motionPreset`, `fingerprint`.
 - `directionStatus`: `"draft"` | `"approved"`. `approvedDirectionId`.
 - `lockedFields: string[]`: after approval includes personality, heroVariant, sectionVariants, motionPreset, markStyle.
 - `overrides` (editable after approval): `colors` (only with AA contrast) and `fontPair` (only among compatible pairs).
