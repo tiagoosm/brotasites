@@ -42,27 +42,36 @@ export function MotionReveal() {
     const inFull = new IntersectionObserver(enter, { threshold: 1 });
     observers.push(sections, questions, inFull);
 
-    // Read every position first, then write: alternating the two would make the browser lay
-    // out the whole page again for each element.
-    const pending = [...document.querySelectorAll<HTMLElement>("[data-reveal]")]
-      .filter((element) => !element.dataset.entry)
-      .map((element) => ({ element, top: element.getBoundingClientRect().top }));
-    for (const { element, top } of pending) {
-      // Already on screen (a reload halfway down, a link to a section): shown as it is.
-      if (top < window.innerHeight) {
-        element.dataset.entry = "done";
-        continue;
+    const prepare = () => {
+      // Read every position first, then write: alternating the two would make the browser lay
+      // out the whole page again for each element.
+      const pending = [...document.querySelectorAll<HTMLElement>("[data-reveal]")]
+        .filter((element) => !element.dataset.entry)
+        .map((element) => ({ element, top: element.getBoundingClientRect().top }));
+      for (const { element, top } of pending) {
+        // Already on screen (a reload halfway down, a link to a section): shown as it is.
+        if (top < window.innerHeight) {
+          element.dataset.entry = "done";
+          continue;
+        }
+        element.dataset.entry = "waiting";
+        if (element.dataset.reveal === "stem") {
+          questions.observe(element);
+        } else {
+          sections.observe(element);
+          inFull.observe(element);
+        }
       }
-      element.dataset.entry = "waiting";
-      if (element.dataset.reveal === "stem") {
-        questions.observe(element);
-      } else {
-        sections.observe(element);
-        inFull.observe(element);
-      }
-    }
+    };
+
+    // Once the page is idle, so it does not lengthen the first load. Only elements below the
+    // screen ever wait, so starting a little later changes nothing the visitor can see.
+    const idle = window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 200));
+    const cancelIdle = window.cancelIdleCallback ?? window.clearTimeout;
+    const task = idle(prepare, { timeout: 1000 });
 
     return () => {
+      cancelIdle(task);
       for (const observer of observers) observer.disconnect();
     };
   }, [pathname]);

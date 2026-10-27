@@ -14,6 +14,8 @@ test("the frame describes the example and links to it, and its page is out of re
   await expect(
     section.getByRole("img", { name: /site de exemplo da Padaria do Zé/ }),
   ).toBeVisible();
+  // The page inside is created as the frame comes near the screen.
+  await section.locator(".example-window").scrollIntoViewIfNeeded();
   const frame = section.locator("iframe");
   await expect(frame).toHaveAttribute("inert", "");
   await expect(frame).toHaveAttribute("tabindex", "-1");
@@ -83,8 +85,8 @@ test("the example page loads only when the frame is about to show", async ({ bro
   const page = await context.newPage();
   await page.goto("/");
   const frame = page.locator(".example-window iframe");
-  await expect(frame).not.toHaveAttribute("src");
-  await frame.scrollIntoViewIfNeeded();
+  await expect(frame).toHaveCount(0);
+  await page.locator(".example-window").scrollIntoViewIfNeeded();
   await expect(frame).toHaveAttribute("src", "/exemplo-site/index.html");
   await context.close();
 });

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// The example site inside the frame, loaded only when the frame is about to reach the screen.
+// The example site inside the frame, created only when the frame is about to reach the screen.
 // The browser's own loading="lazy" still fetched it during the first load (the frame sits
 // right under the hero), competing with the fonts of the first screen. Without JavaScript the
 // noscript copy loads it as usual. The page inside is a picture: inert and out of the tab order.
@@ -16,12 +16,12 @@ const frameProps = {
 } as const;
 
 export function ExampleFrame({ src }: { src: string }) {
-  const ref = useRef<HTMLIFrameElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const [near, setNear] = useState(false);
 
   useEffect(() => {
-    const frame = ref.current;
-    if (!frame) return;
+    const area = ref.current;
+    if (!area) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (!entries.some((entry) => entry.isIntersecting)) return;
@@ -30,13 +30,14 @@ export function ExampleFrame({ src }: { src: string }) {
       },
       { rootMargin: "400px 0px" },
     );
-    observer.observe(frame);
+    observer.observe(area);
     return () => observer.disconnect();
   }, []);
 
+  // Until then, no iframe at all: even an empty one costs the browser a whole document.
   return (
-    <div className="relative">
-      <iframe ref={ref} src={near ? src : undefined} {...frameProps} />
+    <div ref={ref} className="relative">
+      {near && <iframe src={src} {...frameProps} />}
       <noscript>
         <iframe src={src} {...frameProps} />
       </noscript>
