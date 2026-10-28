@@ -185,6 +185,27 @@ describe("pipeline", { timeout: 240_000 }, () => {
     }
   });
 
+  it("keeps each composition's key and carries the admin's change request to the copy step", async () => {
+    const { store, siteId, deps } = setup();
+    store.enqueue(siteId, "directions");
+    await runNext(deps, store);
+    const directions = store.directions.filter((d) => d.siteId === siteId);
+    expect(directions.every((d) => /^[0-9a-f]{16}$/.test(d.compositionKey ?? ""))).toBe(true);
+
+    const notes: string[][] = [];
+    const writeCopy = deps.ai.writeCopy.bind(deps.ai);
+    deps.ai.writeCopy = (config, caller, options) => {
+      notes.push(options?.notes ?? []);
+      return writeCopy(config, caller, options);
+    };
+    await store.updateSite(siteId, { status: "building" });
+    const record = store.sites.get(siteId);
+    if (record) record.approvedDirection = directions[0]?.id ?? null;
+    store.enqueue(siteId, "build", { rebuild: true, adminNotes: ["O título repete o nome."] });
+    expect(await runNext(deps, store)).toBe("done");
+    expect(notes[0]).toEqual(["O título repete o nome."]);
+  });
+
   it("retries a failed job once, then sends the site to needs attention", async () => {
     const { store, siteId, deps } = setup();
     await store.updateSite(siteId, { status: "publishing" });

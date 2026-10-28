@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { MemoryCache, MemoryUsageStore } from "@brotasites/ai";
-import { MemoryRegistry } from "@brotasites/engine";
+import { type CatalogWeights, MemoryRegistry, NO_WEIGHTS } from "@brotasites/engine";
 import type {
   AssetRecord,
   DirectionRecord,
@@ -22,6 +22,7 @@ export class MemoryStore implements PipelineStore {
     [];
   readonly events: { siteId: string; kind: string; message: string }[] = [];
   readonly directions: DirectionRecord[] = [];
+  weights: CatalogWeights = NO_WEIGHTS;
   readonly assets = new Map<string, { record: AssetRecord; data: Uint8Array }>();
   readonly renders = new Map<string, Uint8Array>();
   readonly reports: { siteId: string; status: string; report: unknown }[] = [];
@@ -84,6 +85,9 @@ export class MemoryStore implements PipelineStore {
     const saved = items.map((item) => ({ ...item, id: randomUUID(), siteId, round }));
     this.directions.push(...saved);
     return saved;
+  }
+  async catalogWeights() {
+    return this.weights;
   }
   async getDirection(directionId: string) {
     return this.directions.find((item) => item.id === directionId) ?? null;

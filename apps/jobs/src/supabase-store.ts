@@ -1,5 +1,11 @@
 import type { AiCache, UsageStore } from "@brotasites/ai";
-import { type DesignSignature, normalizeText } from "@brotasites/engine";
+import {
+  type CatalogState,
+  type CatalogWeights,
+  type CompositionChoices,
+  type DesignSignature,
+  normalizeText,
+} from "@brotasites/engine";
 import type { Family, FormDraft, SiteConfig } from "@brotasites/schema/v1.2";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
@@ -210,6 +216,7 @@ export function supabaseStore(db: SupabaseClient): PipelineStore {
               features: item.features,
               source: item.source,
               screenshots: item.screenshots,
+              composition_key: item.compositionKey ?? null,
             })),
             { onConflict: "site_id,round,direction" },
           )
@@ -217,6 +224,21 @@ export function supabaseStore(db: SupabaseClient): PipelineStore {
         "save directions",
       ) as Record<string, unknown>[];
       return rows.map(toDirection);
+    },
+    async catalogWeights() {
+      const rows = check(
+        await db.from("catalog_weights").select("kind, ref, state, choices"),
+        "catalog weights",
+      ) as { kind: string; ref: string; state: CatalogState; choices: unknown }[];
+      const weights: CatalogWeights = { variants: {}, compositions: {}, recommended: [] };
+      for (const row of rows) {
+        if (row.kind === "variant") weights.variants[row.ref] = row.state;
+        else weights.compositions[row.ref] = row.state;
+        if (row.kind === "composition" && row.state === "recommended" && row.choices) {
+          weights.recommended.push(row.choices as CompositionChoices);
+        }
+      }
+      return weights;
     },
     async getDirection(directionId) {
       const rows = check(
