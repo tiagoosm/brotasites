@@ -3,6 +3,15 @@
 Keep this list up to date during the project. Claude Code does not create accounts and does not deploy.
 
 - [ ] Choose the `BASE_DOMAIN` for client sites and register it; turn on the transfer lock; request inclusion in the Public Suffix List.
+- [ ] Cloudflare, for the client sites (E12; nothing was deployed). In order:
+  1. Create the account with 2FA.
+  2. R2: create the bucket `brotasites-sites` and an R2 API token with Object Read & Write on it only (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` in the jobs' environment).
+  3. Workers KV: create a namespace (for example `brotasites-hosting`), put its id in `apps/sites-worker/wrangler.jsonc` (`kv_namespaces`, replacing the zeros), and create an API token with "Workers KV Storage: Edit" only; put `CLOUDFLARE_KV_NAMESPACE_ID` and `CLOUDFLARE_KV_API_TOKEN` in the jobs' and in Vercel's environment.
+  4. Choose and register `BASE_DOMAIN` (see the item above), add it as a zone in Cloudflare, set `BASE_DOMAIN` in `wrangler.jsonc` and `NEXT_PUBLIC_BASE_DOMAIN` and `NEXT_PUBLIC_PREVIEW_ORIGIN=https://previa.<BASE_DOMAIN>` in Vercel.
+  5. Generate a long random `EXPORT_SECRET` (for example `openssl rand -hex 32`); put it in Vercel and in the Worker with `pnpm --filter @brotasites/sites-worker exec wrangler secret put EXPORT_SECRET`.
+  6. Deploy the Worker: `pnpm --filter @brotasites/sites-worker deploy`, then uncomment the route `*.<BASE_DOMAIN>/*` in `wrangler.jsonc` and deploy again. Add a proxied wildcard DNS record `*` (it also covers `previa.`). Check `https://previa.<BASE_DOMAIN>/` answers the Worker's 404.
+  7. Move to Workers Paid ($5/month) before the sites near 100,000 requests a day: on Free, the Worker and its KV reads fail past that (`docs/hosting.md`, Costs).
+  8. Later, with the custom-domain product: Cloudflare for SaaS on the `BASE_DOMAIN` zone (fallback origin and custom hostnames), and `domain:<host>` → subdomain in KV for each client domain.
 - [ ] Accounts: Supabase, Vercel (Pro plan before charging clients), Cloudflare, email/SMTP provider, Asaas, GitHub (2FA).
 - [ ] Set up a custom SMTP in Supabase (the default only delivers to the project team and has a low limit). Suggestion to verify: Resend.
 - [ ] Apply the E10 migrations to the Supabase project (`supabase/migrations/20261028000000_platform_v12.sql` and `20261028010000_approval.sql`), for example with `supabase db push`, after checking them on a branch or a copy. They were tested only on a local Postgres (`bash supabase/tests/local/run.sh`). Then run the checks in `supabase/tests` in the SQL editor: each one must end with "ALL CHECKS PASSED".
@@ -46,5 +55,6 @@ Since 2026-10-27 the owner does not approve each task. Choices the plan reserved
   - Sites wait in "in review" for a person (CLAUDE.md: at first every site is reviewed by hand). The admin queue comes in E11; until then `REVIEW_SKIP_HUMAN=true` sends finished sites straight to the client, in development only.
   - E11, admin panel: decisions go through `server_admin_decide` and are logged in `admin_decisions`, which not even the server can rewrite. Asking for changes or suspending needs a note (the change note goes to the copy step; the suspension reason is shown to the client). Suspending today only changes the status on the platform; taking the site offline in the Worker comes with E12.
   - E11, catalog weights: a recommended variant weighs 3 times more (the cap); a recommended composition is used by Fiel à marca or Evolução 60% of the time when it fits the site, and never by Contraste, so at least a third of the suggestions explore (the docs ask for 20%). Retired compositions and variants are not drawn and the art director's proposals with them are refused; a section never loses its last variant. To change these numbers, edit `packages/engine/src/weights.ts`.
+  - E12, hosting: the preview host is `previa.<BASE_DOMAIN>` (the design doc said `ver.`), previews expire 30 days after each build, the .zip export link lasts 10 minutes, and suspended sites answer 503 with a neutral page ("Site indisponível"). Nobody sets `grace` or `offline` yet: renewal (R$ 99/year) is not built. The `CLAUDE.md` row "Workers KV: to verify" can now point to `docs/hosting.md`, Costs (Claude Code cannot edit `CLAUDE.md`).
   - Payments: one `PaymentProvider` interface with a stub (`apps/platform/src/lib/server/payments.ts`). The amount always comes from `config/pricing.ts`.
 

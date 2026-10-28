@@ -184,6 +184,15 @@ export async function fakeSupabase(
     if (state.site) state.site = { ...state.site, status, ...extra };
   };
 
+  // The sites Worker's export link (apps/sites-worker), answered with a tiny zip.
+  await context.route("https://previa.sites.localhost/_export/**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/zip",
+      headers: { "content-disposition": 'attachment; filename="site.zip"' },
+      body: Buffer.from("PK\u0005\u0006".padEnd(22, "\u0000"), "binary"),
+    }),
+  );
   await context.route(`${SUPABASE}/auth/v1/user`, (route) => route.fulfill(json(user)));
 
   await context.route(`${SUPABASE}/rest/v1/rpc/**`, (route) => {
@@ -315,6 +324,13 @@ export async function fakeSupabase(
       return route.fulfill(json(urls));
     }
     if (url.pathname.endsWith("/approve")) return route.fulfill(json({ paymentId: PAYMENT }));
+    if (url.pathname.endsWith("/export")) {
+      return route.fulfill(
+        json({
+          url: `https://previa.sites.localhost/_export/${state.site?.subdomain}?exp=1&sig=ab`,
+        }),
+      );
+    }
     if (url.pathname.endsWith("/confirm-stub")) {
       setStatus("publishing");
       event("payment_confirmed", "Pagamento confirmado.");

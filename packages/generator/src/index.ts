@@ -6,6 +6,7 @@ export {
 } from "./generate.js";
 export * from "./image-pipeline.js";
 export { checkImages } from "./images.js";
+export * from "./kv.js";
 export {
   contentTypeFor,
   deployToR2,
@@ -24,3 +25,4 @@ export {
   supabaseJobStore,
   type WorkerOptions,
 } from "./worker.js";
+export { zipDir } from "./zip.js";

@@ -332,10 +332,17 @@ function Decision({
     setBusy(true);
     setMessage(null);
     try {
-      await adminPost(`/api/admin/sites/${siteId}/decide`, { action, note });
+      const result = await adminPost<{ hosting?: string }>(`/api/admin/sites/${siteId}/decide`, {
+        action,
+        note,
+      });
       setNote("");
       await onDone();
-      setMessage("Decisão registrada.");
+      setMessage(
+        result.hosting === "off" || result.hosting === "failed"
+          ? "Decisão registrada, mas o site publicado ainda não mudou: a hospedagem não respondeu. Tente de novo ou mude o estado no Cloudflare."
+          : "Decisão registrada.",
+      );
     } catch (caught) {
       setMessage((caught as Error).message);
     }
