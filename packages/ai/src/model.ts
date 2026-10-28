@@ -4,7 +4,14 @@ import type { Usage } from "./prices.js";
 // calls Claude (anthropic.ts); the simulated one answers without any API call (simulated.ts).
 // The model gets no tools and no secrets: only the prompt, the delimited data and the schema.
 
-export type AiTask = "art-director" | "copy";
+export type AiTask = "art-director" | "copy" | "reviewer";
+
+/** A PNG or JPEG the model looks at (the reviewer's screenshots). */
+export interface ModelImage {
+  mediaType: "image/png" | "image/jpeg";
+  /** Base64, without a data: prefix. */
+  data: string;
+}
 
 export interface ModelRequest {
   task: AiTask;
@@ -12,6 +19,8 @@ export interface ModelRequest {
   system: string;
   /** The user turn: the task and the delimited client data. */
   prompt: string;
+  /** Images sent before the prompt, in order. */
+  images?: ModelImage[];
   /** JSON Schema of the answer (structured outputs). */
   schema: Record<string, unknown>;
   maxTokens: number;

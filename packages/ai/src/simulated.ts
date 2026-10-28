@@ -3,7 +3,7 @@ import { choiceOf, drawDirections, type EngineInput } from "@brotasites/engine";
 import { compositionOf } from "./composition.js";
 import type { CopyInput } from "./copy.js";
 import { draftCopy } from "./draft.js";
-import type { ModelClient, ModelRequest, ModelResponse } from "./model.js";
+import { type ModelClient, ModelError, type ModelRequest, type ModelResponse } from "./model.js";
 
 // The "simulated" mode (docs/ai-and-reviewer.md, Providers): answers in the shape of the real
 // model without any API call, for tests, development and CI. The art director answers with
@@ -27,8 +27,11 @@ export class SimulatedModelClient implements ModelClient {
       const shifted = { ...payload.input, name: `${payload.input.name}|simulated` };
       const drawn = drawDirections(shifted, this.variants);
       answer = compositionOf(drawn.directions.map(choiceOf));
-    } else {
+    } else if (payload.task === "copy") {
       answer = draftCopy(payload.input);
+    } else {
+      // The reviewer has its own simulated agent (packages/reviewer).
+      throw new ModelError(`The simulated model does not answer ${request.task}`, false);
     }
     const text = JSON.stringify(answer);
     return {
