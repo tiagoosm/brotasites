@@ -1,5 +1,10 @@
 import type { AiCache, UsageStore } from "@brotasites/ai";
-import type { DesignFeatures, DirectionId, UniquenessRegistry } from "@brotasites/engine";
+import type {
+  CatalogWeights,
+  DesignFeatures,
+  DirectionId,
+  UniquenessRegistry,
+} from "@brotasites/engine";
 import type { FormDraft, Identity, SiteConfig } from "@brotasites/schema/v1.2";
 
 // What the jobs need from the database, behind an interface so the pipeline runs the same on
@@ -51,6 +56,8 @@ export interface DirectionRecord {
   features: DesignFeatures;
   source: "ai" | "engine";
   screenshots: string[];
+  /** The composition's key, for the admin's metrics per composition. */
+  compositionKey?: string;
 }
 
 export interface AssetRecord {
@@ -95,6 +102,8 @@ export interface PipelineStore {
   saveReport(siteId: string, status: string, report: unknown): Promise<void>;
   /** True when the site has a confirmed payment to publish. */
   hasPaidPublish(siteId: string): Promise<boolean>;
+  /** The admin's recommended and retired compositions and variants (E11). */
+  catalogWeights(): Promise<CatalogWeights>;
 
   registry: UniquenessRegistry & { markApproved(siteId: string): Promise<void> };
   usage: UsageStore;

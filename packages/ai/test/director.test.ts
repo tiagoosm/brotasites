@@ -1,5 +1,13 @@
 import { variants } from "@brotasites/catalog";
-import { choiceOf, drawDirections, MemoryRegistry } from "@brotasites/engine";
+import {
+  choiceOf,
+  choicesOfIdentity,
+  compositionKey,
+  type Direction,
+  drawDirections,
+  MemoryRegistry,
+  NO_WEIGHTS,
+} from "@brotasites/engine";
 import { describe, expect, it } from "vitest";
 import { engineInputOf } from "../src/evals/businesses.js";
 import {
@@ -50,6 +58,28 @@ describe("art director", () => {
     expect(again.source).toBe("ai");
     expect(again.costUsd).toBe(0);
     expect(model.requests).toHaveLength(1);
+  });
+
+  it("refuses a retired composition and tells the model what clients liked", async () => {
+    const proposal = drawDirections({ ...input, name: "outro" }, variants).directions;
+    const retired = compositionKey(choicesOfIdentity((proposal[0] as Direction).identity));
+    const recommended = choicesOfIdentity((proposal[1] as Direction).identity);
+    const model = new ScriptedModelClient([goodComposition(), goodComposition()]);
+    const result = await director(model).generateDirections({
+      siteId: "s1",
+      input,
+      weights: {
+        ...NO_WEIGHTS,
+        compositions: { [retired]: "retired", [compositionKey(recommended)]: "recommended" },
+        recommended: [recommended],
+      },
+    });
+    expect(result.source).toBe("engine");
+    expect(model.requests[0]?.prompt).toContain("<recommended>");
+    expect(model.requests[1]?.prompt).toContain("this composition was retired");
+    expect(
+      result.directions.map((d) => compositionKey(choicesOfIdentity(d.identity))),
+    ).not.toContain(retired);
   });
 
   it("retries once with the reasons, then falls back to the engine", async () => {

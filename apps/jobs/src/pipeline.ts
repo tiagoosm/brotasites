@@ -1,7 +1,12 @@
 import { randomBytes } from "node:crypto";
 import { join } from "node:path";
 import type { AiDirector } from "@brotasites/ai";
-import { applyOverrides, type EngineInput } from "@brotasites/engine";
+import {
+  applyOverrides,
+  choicesOfIdentity,
+  compositionKey,
+  type EngineInput,
+} from "@brotasites/engine";
 import { buildStaticSite } from "@brotasites/generator";
 import { type BrowserResult, type ReviewerAgent, reviewSite } from "@brotasites/reviewer";
 import {
@@ -98,6 +103,7 @@ export async function runDirections(deps: PipelineDeps, job: Job): Promise<void>
       siteId: site.id,
       accountId: site.ownerId,
       input,
+      weights: await store.catalogWeights(),
     });
 
     const saved = [];
@@ -121,6 +127,7 @@ export async function runDirections(deps: PipelineDeps, job: Job): Promise<void>
         features: direction.features,
         source: result.source,
         screenshots,
+        compositionKey: compositionKey(choicesOfIdentity(direction.identity)),
       });
     }
     await store.saveDirections(site.id, site.round, saved);
@@ -179,7 +186,11 @@ export async function runBuild(deps: PipelineDeps, job: Job): Promise<void> {
     });
     await store.registry.markApproved(site.id);
 
-    const copy = await deps.ai.writeCopy(form, caller);
+    // A person's change request (admin queue) reaches the copy step as notes.
+    const adminNotes = Array.isArray(job.payload.adminNotes)
+      ? job.payload.adminNotes.filter((note): note is string => typeof note === "string")
+      : [];
+    const copy = await deps.ai.writeCopy(form, caller, { notes: adminNotes });
     let reviewBuilds = 0;
     const report = await reviewSite({
       config: copy.config,

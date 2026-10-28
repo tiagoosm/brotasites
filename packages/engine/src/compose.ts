@@ -23,6 +23,7 @@ import {
 } from "./directions.js";
 import { type DesignFeatures, designDistance, featuresOf, fingerprintOf } from "./features.js";
 import { type EngineInput, seedFor } from "./input.js";
+import { activeVariants, type CatalogWeights, compositionKey, NO_WEIGHTS } from "./weights.js";
 
 // The engine's check of a composition proposed by someone else (the AI art director, E8). The
 // proposal names catalog ids only; the engine still owns everything that must hold: every id
@@ -120,12 +121,19 @@ export function composeDirections(
   variants: readonly Variant[],
   choices: readonly DirectionChoice[],
   neighbors: readonly DesignFeatures[] = [],
+  weights: CatalogWeights = NO_WEIGHTS,
 ): DirectionsResult {
   const ids = choices.map((choice) => choice.id);
   if (ids.length !== 3 || directionIds.some((id) => !ids.includes(id))) {
     throw new CompositionRejected(["the 3 directions must be fiel-a-marca, evolucao, contraste"]);
   }
-  const reasons = choices.flatMap((choice) => checkChoice(choice, input, variants));
+  const active = activeVariants(variants, weights);
+  const reasons = choices.flatMap((choice) => [
+    ...checkChoice(choice, input, active),
+    ...(weights.compositions[compositionKey(choice)] === "retired"
+      ? [`${choice.id}: this composition was retired`]
+      : []),
+  ]);
   if (reasons.length > 0) throw new CompositionRejected(reasons);
 
   const seed = seedFor(input);

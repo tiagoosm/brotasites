@@ -1,5 +1,7 @@
 import { variants as catalogVariants, type Variant } from "@brotasites/catalog";
 import {
+  activeVariants,
+  type CatalogWeights,
   CompositionRejected,
   composeDirections,
   DeterministicEngine,
@@ -8,6 +10,7 @@ import {
   type DirectionsResponse,
   type EngineInput,
   type EngineProvider,
+  NO_WEIGHTS,
   type UniquenessRegistry,
 } from "@brotasites/engine";
 import { type Family, type SiteConfig, siteConfigSchema } from "@brotasites/schema/v1.2";
@@ -162,6 +165,11 @@ export class AiDirector implements EngineProvider {
 
   async generateDirections(request: AiDirectionsRequest): Promise<AiDirectionsResponse> {
     const { siteId, input } = request;
+    // The admin's catalog decisions: retired variants are not offered at all.
+    const weights = request.weights ?? NO_WEIGHTS;
+    const variants = activeVariants(this.variants, weights);
+    const weighted =
+      Object.keys(weights.compositions).length + Object.keys(weights.variants).length > 0;
     const caller = { siteId, accountId: request.accountId ?? siteId };
     const neighbors = (await this.options.registry.near(input.family, input.city, siteId)).map(
       (item) => item.features,
@@ -172,10 +180,11 @@ export class AiDirector implements EngineProvider {
       model: this.modelId,
       prompt: ART_DIRECTOR_PROMPT_VERSION,
       input,
+      ...(weighted ? { weights } : {}),
     });
     let schema: ReturnType<typeof compositionSchema> | undefined;
     try {
-      schema = compositionSchema(input, this.variants);
+      schema = compositionSchema(input, variants);
     } catch {
       // The catalog has nothing this site can use: only the engine can say why.
       schema = undefined;
@@ -183,7 +192,7 @@ export class AiDirector implements EngineProvider {
 
     type Answer = z.infer<ReturnType<typeof compositionSchema>>;
     const tryCompose = (value: Answer) =>
-      composeDirections(input, this.variants, choicesOf(value), neighbors);
+      composeDirections(input, this.variants, choicesOf(value), neighbors, weights);
 
     const cached = schema ? ((await this.cache.get(key)) as Answer | undefined) : undefined;
     if (cached) {
@@ -201,7 +210,7 @@ export class AiDirector implements EngineProvider {
       ? await this.admitted("art-director", caller)
       : "O catálogo não tem variantes para este site.";
     if (schema && !skipped) {
-      const basePrompt = this.directionsPrompt(input);
+      const basePrompt = this.directionsPrompt(input, variants, weights);
       let problems: string[] = [];
       for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
         const answer = await this.ask(
@@ -238,7 +247,7 @@ export class AiDirector implements EngineProvider {
     }
 
     try {
-      const result = await this.engine.generateDirections({ siteId, input });
+      const result = await this.engine.generateDirections({ siteId, input, weights });
       return {
         ...result,
         warnings: [...result.warnings, "Direções feitas só pelo motor (a IA não foi usada)."],
@@ -252,14 +261,28 @@ export class AiDirector implements EngineProvider {
     }
   }
 
-  private directionsPrompt(input: EngineInput): string {
+  private directionsPrompt(
+    input: EngineInput,
+    variants: readonly Variant[],
+    weights: CatalogWeights,
+  ): string {
     const { name, city, category, family, feelings, brandColors, hasLogo, photos, round } = input;
+    const recommended = weights.recommended.filter((choices) => choices.heroVariant);
+    const advice =
+      recommended.length > 0
+        ? `
+<recommended>
+${JSON.stringify(recommended)}
+</recommended>
+Compositions that clients approved often. Fiel à marca or Evolução may reuse one when it suits this business; Contraste always explores something else.
+`
+        : "";
     return `Propose the 3 art directions for this site (round ${round}).
 
 <catalog>
-${JSON.stringify(catalogMenu(input, this.variants))}
+${JSON.stringify(catalogMenu(input, variants))}
 </catalog>
-
+${advice}
 ${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos })}`;
   }
 

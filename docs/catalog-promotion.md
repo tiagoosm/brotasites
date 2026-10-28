@@ -14,6 +14,13 @@ Composition = the set of choices in one direction (the variant of each section, 
 
 Rules: weights have a cap, and there is a minimum exploration quota (for example, at least 20% of suggestions drawn outside the recommended ones). The minimum distance between sites of the same family and city always applies. Weights never override contrast, photo requirements or review.
 
+## Implementation (E11)
+
+- Metrics: `apps/platform/src/lib/admin/metrics.ts`, from `site_directions` (each with its `composition_key`), `sites`, `review_reports`, `admin_decisions` and `site_events`. Change requests count the admin's and the client's. Review time goes from each finished build to the next approval by an admin.
+- Weights: the table `catalog_weights`, read by the directions job; `packages/engine/src/weights.ts` applies them in the engine and in the check of the art director's proposals. Cap: 3 times the normal weight. Exploration: Contraste never uses a recommended composition, and the other two use one 60% of the time when it fits, so at least a third of the suggestions stay outside them.
+- Requests to the factory: the table `variant_requests`, from the admin's catalog page.
+- Pages: `/admin` (review queue), `/admin/sites/<id>` (one site and the decision), `/admin/catalogo`.
+
 ## New variants
 
 Only through the factory: four mandatory states, automated tests, the reviewer agent and the owner's approval. Each variant has a version and a fingerprint.

@@ -5,7 +5,13 @@ import { allBefore, padaria, SITE, siteRow, threeDirections, withSite } from "./
 // Every text on the public pages meets WCAG AA contrast, at every point of the scroll and
 // with or without motion.
 
-const signedIn = [`/criar/${SITE}/negocio`, `/criar/${SITE}/contato`, `/meus-sites/${SITE}`];
+const signedIn = [
+  `/criar/${SITE}/negocio`,
+  `/criar/${SITE}/contato`,
+  `/meus-sites/${SITE}`,
+  `/admin/sites/${SITE}`,
+  "/admin/catalogo",
+];
 
 for (const path of ["/", "/ajuda", ...signedIn]) {
   test(`text on ${path} meets the minimum contrast`, async ({ page, context }) => {
@@ -16,6 +22,7 @@ for (const path of ["/", "/ajuda", ...signedIn]) {
         draft: padaria,
         completed: allBefore("endereco"),
         directions: threeDirections,
+        admin: path.startsWith("/admin"),
       });
     }
     await page.goto(path);
