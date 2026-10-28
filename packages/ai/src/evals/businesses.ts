@@ -6,7 +6,7 @@ import type { Family, Feeling, SiteConfigInput } from "@brotasites/schema/v1.2";
 // 10 per family of this round, with the answers a client would give in the form. Same names,
 // cities and looks as the engine's fixtures; every fact here is invented for the tests.
 
-interface Facts {
+export interface Facts {
   family: Family;
   category: string;
   name: string;
@@ -653,7 +653,7 @@ export const facts: Facts[] = [
 
 const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
-function slug(text: string): string {
+export function slug(text: string): string {
   return text
     .normalize("NFD")
     .replace(/\p{M}/gu, "")

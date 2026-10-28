@@ -18,7 +18,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
-    "dev:local": "pnpm run build && node dist/local.js"
+    "dev:local": "pnpm run build && node dist/local.js",
+    "blind-test": "pnpm run build && node dist/blind-test/cli.js"
   },
   "dependencies": {
     "@brotasites/ai": "workspace:*",
