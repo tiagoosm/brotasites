@@ -272,8 +272,16 @@ ${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos
     return this.engine.recordApproved(siteId, family, city, direction);
   }
 
-  /** Rewrites the site's text; the client's own text when the AI cannot be used. */
-  async writeCopy(config: SiteConfig, caller: Caller): Promise<CopyResult> {
+  /**
+   * Rewrites the site's text; the client's own text when the AI cannot be used. `notes` are
+   * the reviewer's findings to address (our own text, never the client's).
+   */
+  async writeCopy(
+    config: SiteConfig,
+    caller: Caller,
+    options: { notes?: string[] } = {},
+  ): Promise<CopyResult> {
+    const notes = (options.notes ?? []).slice(0, 20);
     const input = copyInputFrom(config);
     const playbook = playbookFor(config.business.family);
     const schema = copySchema(config) as unknown as z.ZodType<Copy>;
@@ -311,6 +319,7 @@ ${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos
 
     const key = cacheKey({
       task: "copy",
+      notes,
       model: this.modelId,
       prompt: COPY_PROMPT_VERSION,
       playbook: playbook.version,
@@ -329,7 +338,11 @@ ${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos
     const skipped = await this.admitted("copy", caller);
     if (!skipped) {
       const system = copySystem(playbook.text);
-      const basePrompt = `Rewrite the text of this site. Sections in page order: ${input.pageOrder.join(", ")}.\n\n${delimit(input)}`;
+      const reviewerNotes =
+        notes.length > 0
+          ? `\n\nA reviewer read the current version. Address these points:\n${notes.map((note) => `- ${note}`).join("\n")}`
+          : "";
+      const basePrompt = `Rewrite the text of this site. Sections in page order: ${input.pageOrder.join(", ")}.${reviewerNotes}\n\n${delimit(input)}`;
       let problems: string[] = [];
       for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
         const answer = await this.ask(
