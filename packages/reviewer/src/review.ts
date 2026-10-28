@@ -88,7 +88,7 @@ export function engineInputOf(config: SiteConfig): EngineInput {
 function withFix(finding: Finding): Finding {
   if (finding.fix || finding.security) return finding;
   if (
-    ["overflow", "cut-off-text", "touch-target"].includes(finding.check) &&
+    ["overflow", "cut-off-text", "broken-word", "touch-target"].includes(finding.check) &&
     finding.where !== "page"
   ) {
     return { ...finding, fix: { type: "swap-variant", section: finding.where } };
