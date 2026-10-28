@@ -39,6 +39,8 @@ export function BusinessStep() {
         if (notOpen) return notOpen;
         const parsed = businessAnswersSchema.safeParse({
           ...business,
+          name: business.name ?? "",
+          city: business.city ?? "",
           description: business.description ?? "",
         });
         return parsed.success ? null : (parsed.error.issues[0]?.message ?? "Confira as respostas.");

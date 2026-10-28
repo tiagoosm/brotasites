@@ -154,6 +154,7 @@ export function AddressStep() {
               <Button
                 type="button"
                 variant="outline"
+                size="lg"
                 className="justify-self-start"
                 disabled={availability.state !== "available" || saving}
                 onClick={() => void keepAddress()}

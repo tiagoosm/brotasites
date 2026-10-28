@@ -109,7 +109,7 @@ export type PhotoAnswer = z.infer<typeof photoAnswerSchema>;
 export const businessAnswersSchema = z.object({
   name: z.string().trim().min(2, "Informe o nome do negócio.").max(80, "Use até 80 caracteres."),
   category: z.enum(categoryIds as [string, ...string[]], "Escolha o tipo de negócio."),
-  city: z.string().trim().min(2, "Informe a cidade.").max(80),
+  city: z.string().trim().min(2, "Informe a cidade.").max(80, "Use até 80 caracteres."),
   state: stateSchema,
   description: text(500, "Use até 500 caracteres."),
   foundedYear: z
@@ -150,22 +150,47 @@ export const contentAnswersSchema = z
       )
       .max(9, "Use até 9 serviços."),
     highlights: z
-      .array(z.object({ title: z.string().trim().min(1).max(60), text: text(200).optional() }))
+      .array(
+        z.object({
+          title: z
+            .string()
+            .trim()
+            .min(1, "Dê um título ao diferencial.")
+            .max(60, "Use até 60 caracteres."),
+          text: text(200).optional(),
+        }),
+      )
       .max(8, "Use até 8 diferenciais."),
     faq: z
       .array(
         z.object({
-          question: z.string().trim().min(1).max(120),
-          answer: z.string().trim().min(1).max(400),
+          question: z
+            .string()
+            .trim()
+            .min(1, "Escreva a pergunta.")
+            .max(120, "Use até 120 caracteres."),
+          answer: z
+            .string()
+            .trim()
+            .min(1, "Escreva a resposta da pergunta.")
+            .max(400, "Use até 400 caracteres."),
         }),
       )
       .max(10, "Use até 10 perguntas."),
     testimonials: z
       .array(
         z.object({
-          name: z.string().trim().min(1, "Informe o nome.").max(60),
+          name: z
+            .string()
+            .trim()
+            .min(1, "Informe o nome de quem deu o depoimento.")
+            .max(60, "Use até 60 caracteres."),
           context: text(60).optional(),
-          text: z.string().trim().min(1, "Escreva o depoimento.").max(300),
+          text: z
+            .string()
+            .trim()
+            .min(1, "Escreva o depoimento.")
+            .max(300, "Use até 300 caracteres."),
           authorized: z.literal(true, "Confirme que a pessoa autorizou o uso do depoimento."),
         }),
       )
@@ -202,15 +227,29 @@ export const contactAnswersSchema = z
     district: text(80).optional(),
     zip: zipSchema.optional(),
     serviceArea: z
-      .array(z.string().trim().min(2).max(60))
+      .array(
+        z
+          .string()
+          .trim()
+          .min(2, "Escreva o nome do bairro ou da cidade.")
+          .max(60, "Use até 60 caracteres por bairro ou cidade."),
+      )
       .max(10, "Use até 10 bairros ou cidades."),
     openingHours: openingHoursSchema,
     instagram: instagramSchema.optional(),
     facebook: facebookSchema.optional(),
     registration: z
       .object({
-        council: z.string().trim().min(2).max(20),
-        number: z.string().trim().min(1).max(30),
+        council: z
+          .string()
+          .trim()
+          .min(2, "Informe o conselho, como CRP ou CRO.")
+          .max(20, "Use até 20 caracteres."),
+        number: z
+          .string()
+          .trim()
+          .min(1, "Informe o número do registro.")
+          .max(30, "Use até 30 caracteres."),
       })
       .optional(),
   })

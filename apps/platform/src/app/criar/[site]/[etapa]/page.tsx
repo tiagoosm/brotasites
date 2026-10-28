@@ -1,7 +1,7 @@
 "use client";
 
 import { type FormStepSlug12, formSteps12 } from "@brotasites/schema/v1.2";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Loading, Notice } from "@/components/shared/page-state";
 import { AddressStep } from "@/components/steps/address-step";
@@ -25,13 +25,21 @@ const steps: Record<FormStepSlug12, () => React.ReactNode> = {
 
 export default function StepPage() {
   const { etapa } = useParams<{ etapa: string }>();
-  const { ready, missing } = useForm12();
+  const router = useRouter();
+  const { ready, missing, siteId, completed, isReachable } = useForm12();
   const step = formSteps12.find((s) => s.slug === etapa);
+  const ahead = Boolean(step && ready && !missing && !isReachable(step.slug));
   useEffect(() => {
     if (step) document.title = `${step.title} · BrotaSites`;
   }, [step]);
+  // A step ahead of the person's progress sends them to the first one still open.
+  useEffect(() => {
+    if (!ahead) return;
+    const open = formSteps12.find((s) => !completed.includes(s.slug)) ?? formSteps12[0];
+    router.replace(`/criar/${siteId}/${open.slug}`);
+  }, [ahead, completed, router, siteId]);
   if (!step) notFound();
-  if (!ready) return <Loading />;
+  if (!ready || ahead) return <Loading />;
   if (missing) {
     return (
       <Notice

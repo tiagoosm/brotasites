@@ -32,7 +32,7 @@ export const faqGroups: FaqGroup[] = [
         slug: "preciso-entender-de-tecnologia",
         question: "Preciso entender de tecnologia?",
         answer:
-          "Não. Se você manda mensagem no WhatsApp, consegue criar o seu site. São sete perguntas, uma por tela, e a prévia mostra o resultado enquanto você responde.",
+          "Não. Se você manda mensagem no WhatsApp, consegue criar o seu site. São sete perguntas, uma por tela. Depois, você escolhe uma de 3 direções para o visual e confere o site pronto antes de publicar.",
         main: true,
       },
       {
@@ -45,7 +45,7 @@ export const faqGroups: FaqGroup[] = [
         slug: "preciso-de-conta",
         question: "Preciso criar uma conta?",
         answer:
-          "Para começar, não. As respostas ficam salvas neste aparelho. Para guardar na sua conta, enviar fotos e publicar, você entra com o seu e-mail: mandamos um link de acesso, sem senha.",
+          "Sim, mas é rápido: você entra com o seu e-mail antes da primeira pergunta. Mandamos um link de acesso, sem senha. Assim as respostas, as fotos e os seus sites ficam guardados na sua conta.",
       },
     ],
   },
@@ -57,7 +57,7 @@ export const faqGroups: FaqGroup[] = [
         slug: "posso-voltar-e-mudar",
         question: "Posso voltar e mudar uma resposta?",
         answer:
-          "Pode. Use o caminho das perguntas ao lado do formulário ou o botão Voltar. A prévia acompanha cada mudança.",
+          "Pode. Use o caminho das perguntas ao lado do formulário ou o botão Voltar. Depois de escolher a direção, textos, fotos, contato e seções ainda mudam; cores e estilo ficam como você aprovou.",
       },
       {
         slug: "sem-fotos",
@@ -67,10 +67,10 @@ export const faqGroups: FaqGroup[] = [
         main: true,
       },
       {
-        slug: "o-que-e-a-previa",
-        question: "O que é a prévia?",
+        slug: "o-que-sao-as-direcoes",
+        question: "O que são as 3 direções?",
         answer:
-          "É o seu site de verdade, montado com as suas respostas. No computador ela fica ao lado do formulário; no celular, abre no botão de prévia.",
+          "São 3 caminhos para o visual do site, criados com as suas respostas: Fiel à marca, Evolução e Contraste. Você escolhe um, ou pede outros 3, quantas vezes quiser. Não precisa esperar com a página aberta: elas aparecem em Meus sites quando ficam prontas.",
       },
     ],
   },
@@ -89,7 +89,7 @@ export const faqGroups: FaqGroup[] = [
         slug: "quem-ve-o-rascunho",
         question: "Quem vê o meu rascunho?",
         answer:
-          "Só você. Antes de entrar, ele fica guardado neste aparelho. Depois de entrar, fica na sua conta, e só a sua conta tem acesso a ele.",
+          "Só você. Ele fica na sua conta, e só a sua conta tem acesso a ele. O site pronto fica num endereço particular, que não aparece no Google, até você publicar.",
       },
       {
         slug: "apagar-conta",
@@ -106,7 +106,7 @@ export const faqGroups: FaqGroup[] = [
       {
         slug: "quanto-custa",
         question: "Quanto custa?",
-        answer: `Criar, editar e ver a prévia é grátis. Para publicar, você paga ${launchNote} uma vez só, com ${pricing.hostingMonths} meses de hospedagem, ajustes pelo painel nos primeiros ${pricing.adjustmentsDays} dias e o direito de baixar o site quando quiser. Depois de ${pricing.hostingMonths} meses, manter no ar custa ${formatBRL(pricing.renewalPerYear)} por ano, se você quiser.`,
+        answer: `Criar, editar, ver as direções e o site pronto é grátis. Para publicar, você paga ${launchNote} uma vez só, com ${pricing.hostingMonths} meses de hospedagem, ajustes pelo painel nos primeiros ${pricing.adjustmentsDays} dias e o direito de baixar o site quando quiser. Depois de ${pricing.hostingMonths} meses, manter no ar custa ${formatBRL(pricing.renewalPerYear)} por ano, se você quiser.`,
         main: true,
       },
       {

@@ -76,7 +76,7 @@ export function HoursEditor({
               key={mode.value}
               className={cn(
                 chipClass({ checked: value.mode === mode.value }),
-                "cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-leaf",
+                "touch-target cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-leaf",
               )}
             >
               <input

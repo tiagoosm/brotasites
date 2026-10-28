@@ -17,7 +17,7 @@ import { PLATFORM_URL } from "@/lib/site-url";
 export const metadata: Metadata = {
   title: { absolute: "BrotaSites · Sete perguntas e seu site pronto" },
   description:
-    "Responda sete perguntas e veja o site do seu negócio ficar pronto enquanto escreve. Com WhatsApp, mapa e horário de funcionamento. Sem código.",
+    "Responda sete perguntas, escolha uma de 3 direções para o visual e receba o site do seu negócio pronto. Com WhatsApp, horários e botão Como chegar. Sem código.",
   alternates: { canonical: "/" },
 };
 
@@ -84,8 +84,8 @@ export default function HomePage() {
               Sete perguntas <span className="block text-stem">e seu site pronto.</span>
             </h1>
             <p className="max-w-[34ch] text-[1.1875rem] text-ink-soft">
-              Conte o que você faz, escolha cores e fotos e veja o site tomar forma enquanto
-              responde. Sem código.
+              Conte o que você faz e escolha uma de 3 direções para o visual. A gente monta o site e
+              você só aprova. Sem código.
             </p>
             <div className="grid justify-items-start gap-5">
               <div className="flex flex-wrap items-center gap-3">
@@ -128,8 +128,8 @@ export default function HomePage() {
               segments={[{ text: "Sete perguntas, uma de cada vez." }]}
             />
             <p data-reveal="" className="max-w-[46ch] text-[1.125rem] text-ink-soft">
-              Cada resposta aparece na prévia na hora. Você pode voltar e mudar o que quiser antes
-              de publicar.
+              Suas respostas ficam salvas na sua conta. Pode fechar a página e voltar depois: o
+              andamento aparece em Meus sites.
             </p>
           </header>
           <Stem />
@@ -209,7 +209,7 @@ export default function HomePage() {
             segments={[{ text: "Seu site está a sete perguntas de distância." }]}
           />
           <p className="max-w-[40ch] text-[1.0625rem] text-ink-soft">
-            Comece agora e veja a prévia na hora. Você só publica quando gostar do resultado.
+            Comece agora. Criar e ver o site pronto é grátis; você só paga para colocar no ar.
           </p>
           <CreateButton />
         </div>

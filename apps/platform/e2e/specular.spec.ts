@@ -11,7 +11,7 @@ test("it is a real link to the form, at least 44px tall, with a visible focus ou
 }) => {
   await page.goto("/");
   const button = heroButton(page);
-  await expect(button).toHaveAttribute("href", "/criar/negocio");
+  await expect(button).toHaveAttribute("href", "/criar");
   const box = await button.boundingBox();
   expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   await button.focus();

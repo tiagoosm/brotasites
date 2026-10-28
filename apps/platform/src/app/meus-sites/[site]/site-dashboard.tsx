@@ -132,7 +132,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
       <header className="grid gap-3">
         <Link
           href="/meus-sites"
-          className="text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
+          className="touch-target justify-self-start text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
         >
           ← Meus sites
         </Link>
@@ -193,6 +193,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <Button
               variant="outline"
+              size="lg"
               disabled={acting !== null}
               onClick={() =>
                 act("redo", async () => {
@@ -204,7 +205,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
             </Button>
             <Link
               href={`/criar/${site.id}/marca`}
-              className="text-sm font-semibold text-leaf-deep underline underline-offset-4"
+              className="touch-target text-sm font-semibold text-leaf-deep underline underline-offset-4"
             >
               Mudar cores ou sensação antes
             </Link>
@@ -301,6 +302,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           </div>
           <Button
             variant="outline"
+            size="lg"
             className="justify-self-start"
             disabled={acting !== null}
             onClick={() =>
@@ -400,16 +402,16 @@ function DirectionCard({
         <div className="grid gap-2">
           <p className="text-sm">Escolher “{label}”? A identidade fica fixa depois disso.</p>
           <div className="flex gap-2">
-            <Button size="sm" disabled={busy} onClick={onChoose}>
+            <Button size="lg" disabled={busy} onClick={onChoose}>
               {choosing ? "Escolhendo…" : "Sim, escolher"}
             </Button>
-            <Button size="sm" variant="ghost" disabled={busy} onClick={() => setConfirming(false)}>
+            <Button size="lg" variant="ghost" disabled={busy} onClick={() => setConfirming(false)}>
               Voltar
             </Button>
           </div>
         </div>
       ) : (
-        <Button disabled={busy} onClick={() => setConfirming(true)}>
+        <Button size="lg" disabled={busy} onClick={() => setConfirming(true)}>
           Escolher esta
         </Button>
       )}

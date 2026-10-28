@@ -52,7 +52,7 @@ export const privacySections: LegalSection[] = [
     blocks: [
       {
         list: [
-          "Montar e mostrar a prévia do seu site enquanto você responde.",
+          "Criar as 3 direções para o visual e montar o seu site com as suas respostas.",
           "Guardar o seu rascunho na sua conta, para você continuar de qualquer aparelho.",
           "Enviar o link de acesso para o seu e-mail.",
           "Gerar e publicar o seu site, quando você pedir.",
@@ -65,7 +65,7 @@ export const privacySections: LegalSection[] = [
     id: "publico",
     title: "O que fica público",
     blocks: [
-      "Enquanto você responde, o rascunho é só seu. Quando você publica, o site fica aberto a qualquer pessoa na internet, com as informações e fotos que você escolheu colocar nele, como endereço, telefone e WhatsApp do negócio.",
+      "Enquanto você responde, o rascunho é só seu. O site pronto fica num endereço particular, que não aparece em buscadores, até você publicar. Quando você publica, o site fica aberto a qualquer pessoa na internet, com as informações e fotos que você escolheu colocar nele, como endereço, telefone e WhatsApp do negócio.",
     ],
   },
   {
@@ -75,8 +75,9 @@ export const privacySections: LegalSection[] = [
       {
         list: [
           "Supabase: guarda as contas, os rascunhos e as fotos, em servidores em São Paulo.",
-          "Google Fonts: para mostrar as fontes na prévia do site, o seu navegador carrega fontes dos servidores do Google, que recebem dados técnicos como o endereço IP.",
-          "Cloudflare: quando a publicação estiver disponível, os sites publicados serão hospedados por ela.",
+          "Anthropic (modelo de IA Claude): recebe as respostas que você escreve, sem a sua senha nem o seu e-mail, para organizar e revisar os textos do site e conferir o resultado.",
+          "Trigger.dev: executa as tarefas que criam as direções e montam o site.",
+          "Cloudflare: hospeda o site pronto para você conferir e, quando a publicação estiver disponível, os sites publicados.",
         ],
       },
       "Esses serviços tratam os dados apenas para fazer o BrotaSites funcionar. Alguns podem processar dados fora do Brasil, com as garantias exigidas pela lei.",
@@ -89,10 +90,10 @@ export const privacySections: LegalSection[] = [
       {
         list: [
           "Um cookie de sessão, para manter você conectado depois de entrar.",
-          "O rascunho do formulário, guardado no próprio navegador, para que nada se perca se você fechar a página.",
+          "Uma cópia do rascunho no próprio navegador, para que nada se perca se a internet cair enquanto você responde.",
         ],
       },
-      "Você pode apagar esses dados nas configurações do seu navegador. Se apagar antes de entrar na sua conta, o rascunho guardado só no aparelho é perdido.",
+      "Você pode apagar esses dados nas configurações do seu navegador. As respostas continuam guardadas na sua conta.",
     ],
   },
   {
@@ -148,8 +149,8 @@ export const termsSections: LegalSection[] = [
     id: "servico",
     title: "O serviço",
     blocks: [
-      "O BrotaSites ajuda você a criar o site do seu negócio respondendo sete perguntas, com uma prévia que mostra o resultado enquanto você responde.",
-      `Criar, editar e ver a prévia é grátis. Publicar o site custa ${publishPriceText}, em pagamento único, e você só paga se decidir publicar.`,
+      "O BrotaSites ajuda você a criar o site do seu negócio respondendo sete perguntas. Com as respostas, criamos 3 direções para o visual; você escolhe uma e confere o site pronto antes de publicar.",
+      `Criar, editar, ver as direções e o site pronto é grátis. Publicar o site custa ${publishPriceText}, em pagamento único, e você só paga se decidir publicar.`,
       "O serviço está em desenvolvimento: funções podem mudar, ser incluídas ou retiradas.",
     ],
   },
@@ -181,7 +182,7 @@ export const termsSections: LegalSection[] = [
     title: "Seu conteúdo",
     blocks: [
       "Você é responsável pelas informações, textos e fotos que coloca no site. Ao enviar, você declara que as informações são verdadeiras e que tem o direito de usar as fotos.",
-      "O conteúdo continua sendo seu. Você nos autoriza a guardá-lo, processá-lo e exibi-lo apenas para prestar o serviço: montar a prévia, guardar o rascunho e publicar o site quando você pedir.",
+      "O conteúdo continua sendo seu. Você nos autoriza a guardá-lo, processá-lo e exibi-lo apenas para prestar o serviço: criar as direções, montar o site, guardar o rascunho e publicar o site quando você pedir.",
       "O BrotaSites não inventa informações sobre o seu negócio. Preços, horários, endereço, contatos e depoimentos vêm só do que você informar.",
     ],
   },

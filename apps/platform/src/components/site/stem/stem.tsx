@@ -1,4 +1,4 @@
-import { formSteps } from "@brotasites/schema";
+import { formSteps12 as formSteps } from "@brotasites/schema/v1.2";
 import { stemNotes } from "@/content/stem";
 import { excerpts } from "./excerpts";
 

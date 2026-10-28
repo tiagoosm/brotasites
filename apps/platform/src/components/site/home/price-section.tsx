@@ -44,7 +44,8 @@ export function PriceSection() {
             segments={[{ text: "Quanto custa" }]}
           />
           <p data-reveal="" className="text-[1.0625rem] text-ink-soft">
-            Criar, editar e ver a prévia é grátis. Você só paga se quiser colocar o site no ar.
+            Criar, editar, ver as direções e o site pronto é grátis. Você só paga se quiser colocar
+            o site no ar.
           </p>
         </header>
 

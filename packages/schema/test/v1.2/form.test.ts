@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   blockedTopic,
+  businessAnswersSchema,
   categoryNotOpen,
   contactAnswersSchema,
   contentAnswersSchema,
@@ -160,5 +161,29 @@ describe("form checks", () => {
     expect(content.error?.issues[0]?.message).toBe(
       "Confirme que as pessoas da foto autorizaram o uso.",
     );
+  });
+
+  it("explains every problem in Portuguese", () => {
+    const long = "x".repeat(900);
+    const issues = [
+      businessAnswersSchema.safeParse({ name: "", city: long, description: long }),
+      contentAnswersSchema.safeParse({
+        services: [{ name: "", price: long }],
+        highlights: [{ title: "" }, { title: long }],
+        faq: [{ question: "", answer: "" }],
+        testimonials: [{ name: "", text: "" }],
+        photos: [],
+      }),
+      contactAnswersSchema.safeParse({
+        hasFixedAddress: false,
+        serviceArea: ["x"],
+        openingHours: { mode: "always", rules: [] },
+        registration: { council: "", number: "" },
+      }),
+    ].flatMap((result) => result.error?.issues ?? []);
+    expect(issues.length).toBeGreaterThan(8);
+    for (const issue of issues) {
+      expect(issue.message, issue.path.join(".")).not.toMatch(/expected|too (big|small)|invalid/i);
+    }
   });
 });

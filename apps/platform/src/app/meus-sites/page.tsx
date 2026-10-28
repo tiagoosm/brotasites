@@ -45,7 +45,7 @@ export default function MySitesPage() {
     <div className="grid gap-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="font-display text-[2.5rem] leading-[1.05]">Meus sites</h1>
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" size="lg">
           <Link href="/criar?novo=1">
             <Plus aria-hidden="true" />
             Criar outro site
