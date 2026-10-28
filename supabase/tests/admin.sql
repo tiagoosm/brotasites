@@ -59,7 +59,7 @@ begin
   perform set_config('role', 'service_role', true);
   perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
   insert into public.site_directions (site_id, round, direction, identity, features, source, composition_key)
-    values (site, 0, 'evolucao', '{}', '{}', 'ai', '0123456789abcdef') returning id into dir;
+    values (site, 0, 'evolucao', '{}', '{}', 'ai', 'c0ffee00c0ffee00') returning id into dir;
   update public.sites
     set status = 'in_review', approved_direction = dir, preview_token = repeat('t', 32)
     where id = site;

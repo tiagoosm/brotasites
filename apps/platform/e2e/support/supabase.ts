@@ -416,7 +416,7 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
         site: state.site,
         draft: state.draft,
         ownerEmail: USER.email,
-        direction: { direction: "evolucao", composition_key: "0123456789abcdef", source: "ai" },
+        direction: { direction: "evolucao", composition_key: "c0ffee00c0ffee00", source: "ai" },
         screenshots: [],
         reports: [
           {
@@ -453,7 +453,7 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
     return route.fulfill(
       json({
         metrics: {
-          compositions: [{ key: "0123456789abcdef", ...metrics }],
+          compositions: [{ key: "c0ffee00c0ffee00", ...metrics }],
           variants: [{ id: "hero-feast", ...metrics }],
         },
         weights: [{ kind: "variant", ref: "hero-feast", state: "recommended" }],

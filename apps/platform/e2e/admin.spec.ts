@@ -80,8 +80,8 @@ test("the catalog shows the metrics and records recommendations and requests", a
   const state = await withSite(context, { ...inReview, admin: true });
   await page.goto("/admin/catalogo");
   const compositions = page.getByRole("region", { name: "Composições" });
-  await expect(compositions.getByRole("row", { name: /0123456789abcdef/ })).toContainText("1.5");
-  await compositions.getByRole("button", { name: "Aposentar 0123456789abcdef" }).click();
+  await expect(compositions.getByRole("row", { name: /c0ffee00c0ffee00/ })).toContainText("1.5");
+  await compositions.getByRole("button", { name: "Aposentar c0ffee00c0ffee00" }).click();
   await expect(
     page.getByText("Catálogo atualizado. Vale para as próximas direções."),
   ).toBeVisible();
@@ -93,7 +93,7 @@ test("the catalog shows the metrics and records recommendations and requests", a
   await page.getByRole("button", { name: "Registrar pedido" }).click();
   await expect(page.getByText("Pedido registrado.")).toBeVisible();
   expect(state.adminPosts.map((post) => post.body)).toEqual([
-    { kind: "composition", ref: "0123456789abcdef", state: "retired" },
+    { kind: "composition", ref: "c0ffee00c0ffee00", state: "retired" },
     { family: "food", section: "galeria", note: "Uma galeria em mosaico para padarias." },
   ]);
 });
