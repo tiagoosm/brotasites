@@ -23,6 +23,8 @@ export default defineConfig({
     locale: "pt-BR",
     timezoneId: "America/Sao_Paulo",
     trace: "retain-on-failure",
+    // A Chromium installed elsewhere (a container with its own browsers), when given.
+    launchOptions: process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {},
   },
   projects: [
     {
