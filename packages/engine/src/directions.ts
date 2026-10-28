@@ -16,6 +16,15 @@ import { type DesignFeatures, designDistance, featuresOf, fingerprintOf } from "
 import type { EngineInput } from "./input.js";
 import { seedFor } from "./input.js";
 import { directionPersonalities } from "./personality.js";
+import {
+  activeVariants,
+  type CatalogWeights,
+  type CompositionChoices,
+  isRetired,
+  NO_WEIGHTS,
+  RECOMMENDED_SHARE,
+  variantWeight,
+} from "./weights.js";
 
 // The 3 directions of a round: "Fiel à marca" keeps the client's brand color and first
 // feeling, "Evolução" moves the hue and uses the second feeling, "Contraste" takes the opposite
@@ -72,9 +81,42 @@ function pickVariant(
   section: SectionId,
   input: EngineInput,
   personality: Personality,
+  weights: CatalogWeights,
 ): string | undefined {
   const allowed = allowedVariants(variants, section, input, personality);
-  return allowed.length > 0 ? random.pick(allowed).id : undefined;
+  if (allowed.length === 0) return undefined;
+  // With no recommendation every weight is 1, which draws exactly like random.pick.
+  return random.weighted(allowed, (variant) => Math.max(variantWeight(variant.id, weights), 0.0001))
+    .id;
+}
+
+/** A recommended composition this direction can use as it is, or undefined. */
+function fittingRecommended(
+  input: EngineInput,
+  variants: readonly Variant[],
+  personality: Personality,
+  weights: CatalogWeights,
+): CompositionChoices[] {
+  const sections = (input.sections ?? familyInfo[input.family].defaultSections).filter(
+    (section) => section !== "hero",
+  );
+  const fits = (section: SectionId, id: string | undefined) =>
+    id !== undefined &&
+    allowedVariants(variants, section, input, personality).some((variant) => variant.id === id);
+  return weights.recommended.filter(
+    (choices) =>
+      choices.personality === personality &&
+      fits("hero", choices.heroVariant) &&
+      sections.every(
+        (section) =>
+          allowedVariants(variants, section, input, personality).length === 0 ||
+          fits(section, choices.sectionVariants[section]),
+      ) &&
+      compatibleFontPairs(personality).some((pair) => pair.id === choices.fontPair) &&
+      grammar[personality].ornamentSets.some(
+        ([id, weight]) => id === choices.ornamentSet && weight > 0,
+      ),
+  );
 }
 
 /** Image treatments the personality allows for the photos the client has. */
@@ -99,25 +141,31 @@ function drawIdentity(
   input: EngineInput,
   variants: readonly Variant[],
   options: DrawOptions,
+  weights: CatalogWeights = NO_WEIGHTS,
+  base?: CompositionChoices,
 ): Identity {
   const { personality } = options;
   const rules = grammar[personality];
   const fontPairs = compatibleFontPairs(personality);
 
-  const heroVariant = pickVariant(random, variants, "hero", input, personality);
+  const heroVariant =
+    base?.heroVariant ?? pickVariant(random, variants, "hero", input, personality, weights);
   if (!heroVariant) throw new EngineError(`No hero variant for the family ${input.family}`);
   const sections = input.sections ?? familyInfo[input.family].defaultSections;
   const sectionVariants: Identity["sectionVariants"] = {};
   for (const section of sections) {
     if (section === "hero") continue;
-    const variant = pickVariant(random, variants, section, input, personality);
+    const variant =
+      base?.sectionVariants[section] ??
+      pickVariant(random, variants, section, input, personality, weights);
     if (variant) sectionVariants[section] = variant;
   }
 
+  const fontPair = base?.fontPair ?? random.pick(fontPairs).id;
   const identity: Omit<Identity, "fingerprint"> = {
     personality,
     heroVariant,
-    fontPair: random.pick(fontPairs).id,
+    fontPair,
     typeScale: weighted(random, rules.scales),
     palette: generatePalette({
       personality,
@@ -128,7 +176,7 @@ function drawIdentity(
       hueShift: options.hueShift,
     }),
     shape: weighted(random, rules.shapes),
-    ornamentSet: weighted(random, rules.ornamentSets),
+    ornamentSet: base?.ornamentSet ?? weighted(random, rules.ornamentSets),
     pattern: weighted(random, rules.patterns),
     imageTreatment: weighted(random, allowedTreatments(input, personality)),
     dividerStyle: weighted(random, rules.dividers),
@@ -177,9 +225,11 @@ export interface DirectionsResult {
  */
 export function drawDirections(
   input: EngineInput,
-  variants: readonly Variant[],
+  catalog: readonly Variant[],
   neighbors: readonly DesignFeatures[] = [],
+  weights: CatalogWeights = NO_WEIGHTS,
 ): DirectionsResult {
+  const variants = activeVariants(catalog, weights);
   const seed = seedFor(input);
   const personalities = directionPersonalities(input);
   const directions: Direction[] = [];
@@ -192,12 +242,15 @@ export function drawDirections(
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       const subSeed = `${seed}|${id}|${attempt}`;
       const random = createRandom(subSeed);
-      const identity = drawIdentity(
-        random,
-        input,
-        variants,
-        optionsFor(id, personality, random, firstMode),
-      );
+      const options = optionsFor(id, personality, random, firstMode);
+      // "Contraste" always explores; the others take a recommended composition part of the time.
+      const recommended =
+        id === "contraste" ? [] : fittingRecommended(input, variants, personality, weights);
+      const base =
+        recommended.length > 0 && random.next() < RECOMMENDED_SHARE
+          ? random.pick(recommended)
+          : undefined;
+      const identity = drawIdentity(random, input, variants, options, weights, base);
       const features = featuresOf(identity);
       const toDirections = Math.min(
         1,
@@ -205,7 +258,10 @@ export function drawDirections(
       );
       const toSites = Math.min(1, ...neighbors.map((other) => designDistance(features, other)));
       // Normalized so 1 means both minimums are met; the best attempt wins if none meets them.
-      const score = Math.min(toDirections / MIN_DIRECTION_DISTANCE, toSites / MIN_SITE_DISTANCE);
+      // A retired composition never wins over one that is not.
+      const score =
+        Math.min(toDirections / MIN_DIRECTION_DISTANCE, toSites / MIN_SITE_DISTANCE) -
+        (isRetired(identity, weights) ? 2 : 0);
       const direction = { id, label: directionLabels[id], seed: subSeed, identity, features };
       if (!best || score > best.score) best = { direction, score };
       if (score >= 1) break;

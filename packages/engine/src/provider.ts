@@ -3,6 +3,7 @@ import type { Family } from "@brotasites/schema/v1.2";
 import { type Direction, drawDirections } from "./directions.js";
 import type { EngineInput } from "./input.js";
 import type { UniquenessRegistry } from "./registry.js";
+import type { CatalogWeights } from "./weights.js";
 
 // The engine behind an interface, so the platform can call it the same way it will call the AI
 // art director (`AiProvider`, E8), and fall back to it when the AI fails.
@@ -10,6 +11,8 @@ import type { UniquenessRegistry } from "./registry.js";
 export interface DirectionsRequest {
   siteId: string;
   input: EngineInput;
+  /** The admin's catalog decisions (recommended and retired), applied to the draw. */
+  weights?: CatalogWeights;
 }
 
 export interface DirectionsResponse {
@@ -30,12 +33,17 @@ export class DeterministicEngine implements EngineProvider {
     private readonly variants: readonly Variant[] = catalogVariants,
   ) {}
 
-  async generateDirections({ siteId, input }: DirectionsRequest): Promise<DirectionsResponse> {
+  async generateDirections({
+    siteId,
+    input,
+    weights,
+  }: DirectionsRequest): Promise<DirectionsResponse> {
     const neighbors = await this.registry.near(input.family, input.city, siteId);
     return drawDirections(
       input,
       this.variants,
       neighbors.map((item) => item.features),
+      weights,
     );
   }
 
