@@ -2,11 +2,11 @@
 
 Form-to-landing-page platform for small businesses. The client fills out a short form, and BrotaSites builds and publishes a static landing page for them automatically. No code, no page builder.
 
-> **Status:** in development. The public site and the form are online at **https://brotasites.vercel.app** (Vercel, Hobby plan, testing only). Built and covered by tests: the 7-step form on schema 1.2 with sign-in first, the "Meus sites" dashboard (3 directions, the finished site, changes, approval and a stub payment), the identity engine, the AI layer, the reviewer, the generation jobs (`apps/jobs`, Trigger.dev), the admin panel with the catalog promotion cycle, and the Worker that serves client sites from R2 and Workers KV (versions, suspension, custom domains, .zip export). Not online yet: the jobs on Trigger.dev, the E10 and E11 database migrations, Cloudflare (R2, KV, Worker) and the client sites' domain (see `docs/owner-steps.md`).
+> **Status:** built and verified (plan steps E1 to E13), not selling yet. The public site and the form are online at **https://brotasites.vercel.app** (Vercel, Hobby plan, testing only). Built and covered by tests: the 7-step form on schema 1.2 with sign-in first, the "Meus sites" dashboard (3 directions, the finished site, changes, approval and a stub payment), the identity engine, the AI layer, the reviewer, the generation jobs (`apps/jobs`, Trigger.dev), the admin panel with the catalog promotion cycle, the Worker that serves client sites from R2 and Workers KV (versions, suspension, custom domains, .zip export) and the blind test kit. Not online yet: the jobs on Trigger.dev, the E10 and E11 database migrations, Cloudflare (R2, KV, Worker), the client sites' domain, the real AI model and payments (see `docs/owner-steps.md`). The final report, with what is in, what was cut and the numbers, is [`docs/final-report.md`](docs/final-report.md).
 >
 > Repository: https://github.com/tiagoosm/brotasites (currently public; visibility to be decided by the owner, see `docs/owner-steps.md`).
 >
-> **Next:** the final verification (E13). The steps are in [`PLAN.md`](PLAN.md).
+> **Next:** the owner steps in `docs/owner-steps.md` (accounts, migrations, the real model), then the blind test with real people; the optional home demo (E14) can come at any time. The steps are in [`PLAN.md`](PLAN.md).
 
 ## Platform hosting
 
@@ -82,7 +82,7 @@ After `pnpm build`, generate a site from a config file. Image paths in the confi
 pnpm --filter @brotasites/generator generate path/to/site-config.json --out ../../out/my-site
 ```
 
-The config is validated first, with error messages in Portuguese; missing images produce warnings and the site is built without them. Photos uploaded in the form are referenced by URL: the generator downloads them before building (only from Supabase Storage by default, see `allowedHosts`), so sites serve optimized local copies. Only the `classico` template is available so far.
+The config is validated first, with error messages in Portuguese; missing images produce warnings and the site is built without them. Photos uploaded in the form are referenced by URL: the generator downloads them before building (only from Supabase Storage by default, see `allowedHosts`), so sites serve optimized local copies. A 1.2 config (`"schemaVersion": "1.2"`, everything the platform makes) is built with the catalog template (`packages/templates/src/v12`, the identity's variants); a 1.1 config with the old `classico` template.
 
 To work on the form and the dashboard, run `pnpm --filter @brotasites/platform dev` and open http://localhost:3000 (it needs a Supabase project, see below; signing in comes first). Sending the answers queues a job; without `TRIGGER_SECRET_KEY` run the jobs locally with `pnpm --filter @brotasites/jobs dev:local`, which also serves the private previews at http://127.0.0.1:4500. With `PAYMENTS_MODE=stub` the payment screen confirms a test payment without charging.
 
@@ -98,7 +98,7 @@ pnpm --filter @brotasites/ai eval
 
 ## Reviewer
 
-`packages/reviewer` checks every site before a person sees it: the config, the built files (no outside requests, no scripts, safe links, weight), the page in Chromium at 360, 768 and 1280 px (overflow, axe, touch targets, reduced motion) and, with `AI_MODE=live`, a reviewer agent that looks at screenshots. Fixable findings go back to the generator for up to 2 rounds. To run the calibration set (20 known defects, 5 clean sites):
+`packages/reviewer` checks every site before a person sees it: the config, the built files (no outside requests, no scripts, safe links, weight), the page in Chromium at 360, 768 and 1280 px (overflow, axe, touch targets, words broken in the middle of large text, reduced motion) and, with `AI_MODE=live`, a reviewer agent that looks at screenshots. Fixable findings go back to the generator for up to 2 rounds. To run the calibration set (20 known defects, 5 clean sites):
 
 ```bash
 pnpm --filter @brotasites/reviewer calibrate
@@ -107,6 +107,17 @@ pnpm --filter @brotasites/reviewer calibrate
 ## Admin panel
 
 `/admin` is for the BrotaSites team only (people in the `admins` table, added by the owner; see `docs/owner-steps.md`). The review queue shows the sites waiting for a person (in review, needing attention, suspended). A site's page shows the finished site, the reviewer's findings, the client's answers and the history, and records the decision: approve for the client, ask for changes (the note goes to the copy step), suspend with a reason, or lift a suspension. Every decision is logged and the log cannot be rewritten. `/admin/catalogo` shows the metrics per composition and per variant, marks compositions and variants as recommended or retired, and records requests to the variant factory (`docs/catalog-promotion.md`).
+
+## Blind test kit
+
+The "does not look like AI" criterion (`docs/blind-test.md`) is measured in pairs: 10 fictional businesses, each one made by BrotaSites and by a designer from the same brief, 20 sites shown to 10 to 20 people who answer which one AI made and which one they would rather have.
+
+```sh
+pnpm --filter @brotasites/jobs blind-test generate   # the BrotaSites half through the real pipeline (AI_MODE=live for the real test)
+pnpm --filter @brotasites/jobs blind-test assemble   # mixes in the hand-made half: anonymized, numbered at random
+pnpm --filter @brotasites/jobs blind-test serve      # serves the participants' pages on :4600
+pnpm --filter @brotasites/jobs blind-test score      # reads the answers and says whether the target was met
+```
 
 ## Publishing
 
@@ -140,9 +151,11 @@ Dashboard settings (Authentication):
 - **Platform (Playwright):** the 7-step form, "Meus sites", the directions, approval and the stub payment, against a fake Supabase answered in the browser (`apps/platform/e2e/support/supabase.ts`), plus WCAG AA contrast and 44px touch targets on the public and signed-in pages. Run with `pnpm --filter @brotasites/platform test:e2e`.
 - **Database:** `bash supabase/tests/local/run.sh` (local Postgres 16 with a Supabase stand-in): every migration and the checks that one person never reaches another's data.
 - **Unit (Vitest):** the Zod schema, the generator's validation and build, and the template helpers (opening hours, contrast, links, theme, fonts).
+- **Reviewer (Vitest + Chromium):** `pnpm --filter @brotasites/reviewer test:e2e` runs the calibration set (20 known defects caught, no false alarm on 5 clean sites), reviews a real build of the fixture end to end and checks the broken-word detection.
+- **Jobs (Vitest + Chromium):** the pipeline from the answers to the live site with the store in memory, the blind test kit (`pnpm --filter @brotasites/jobs test`), and the direction screenshots in a real browser (`test:e2e`).
 - **End-to-end (Playwright):** builds a fixture site with every section on (`packages/templates/e2e/fixture`) and checks it at desktop and 375px widths: section order, SEO metadata, images, navigation and mobile menu, FAQ, WhatsApp links, the open/closed door sign at fixed times, and reduced motion. A second fixture (`e2e/fixture-v12`) covers the 1.2 template at 1280 and 360px under the sites' CSP, with axe, the JS budget, no-JS and reduced-motion checks; a matrix of sites (`e2e/build-matrix.mjs`) runs every catalog variant through axe, CSP, sideways-scroll and touch-target checks. External requests are blocked so the run is hermetic.
 
-The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec playwright install chromium`. GitHub Actions runs lint, build, type-check, unit and e2e tests on every push and pull request, plus a dependency audit (fails on high and critical advisories) and a secret scan of the whole history (gitleaks). Dependabot opens weekly update pull requests.
+The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec playwright install chromium` (or set `PW_CHROMIUM` to a Chromium binary you already have; Turborepo passes it to every task). GitHub Actions runs lint, build, type-check, unit and e2e tests on every push and pull request, plus a dependency audit (fails on high and critical advisories) and a secret scan of the whole history (gitleaks). Dependabot opens weekly update pull requests.
 
 ## Documentation
 
@@ -159,6 +172,7 @@ The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec p
 - [`docs/hosting.md`](docs/hosting.md): client site hosting
 - [`docs/catalog-promotion.md`](docs/catalog-promotion.md) and [`docs/blind-test.md`](docs/blind-test.md): how the catalog grows and how quality is judged
 - [`docs/owner-steps.md`](docs/owner-steps.md): accounts and decisions that depend on the owner
+- [`docs/final-report.md`](docs/final-report.md): the final verification (E13): what is in, what was cut, numbers
 - [`docs/platform-design.md`](docs/platform-design.md) and [`docs/platform-copy.md`](docs/platform-copy.md): the platform's own look and copy
 
 ## License
