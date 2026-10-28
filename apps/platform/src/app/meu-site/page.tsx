@@ -1,15 +1,6 @@
-import type { Metadata } from "next";
-import { SiteStatus } from "./site-status";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Meu site",
-  description: "Acompanhe o seu site sendo gerado e publicado.",
-};
-
+// The old single-site page: sites now live on "Meus sites".
 export default function MySitePage() {
-  return (
-    <main className="min-h-dvh bg-paper px-5 py-8 sm:px-10">
-      <SiteStatus />
-    </main>
-  );
+  redirect("/meus-sites");
 }

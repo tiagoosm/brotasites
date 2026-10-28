@@ -1,8 +1,11 @@
 "use client";
 
-import { type FormStepSlug, formSteps } from "@brotasites/schema";
+import {
+  type FormStepSlug12 as FormStepSlug,
+  formSteps12 as formSteps,
+} from "@brotasites/schema/v1.2";
 import Link from "next/link";
-import { useDraft } from "@/lib/draft-store";
+import { useForm12 } from "@/lib/form-store";
 import { cn } from "@/lib/utils";
 
 // Herbarium signature: an ink stem drawn along the steps. The inked part grows to the
@@ -44,7 +47,7 @@ function Leaf({ y, side, grown }: { y: number; side: "left" | "right"; grown: bo
 }
 
 export function SproutProgress({ current }: { current: FormStepSlug }) {
-  const { completed, isReachable } = useDraft();
+  const { completed, isReachable, siteId } = useForm12();
   const currentIndex = formSteps.findIndex((step) => step.slug === current);
   const rows = formSteps.length;
   const height = rows * ROW;
@@ -57,7 +60,7 @@ export function SproutProgress({ current }: { current: FormStepSlug }) {
   const allDone = completed.length === rows;
 
   return (
-    <nav aria-label="Perguntas do formulário" className="relative">
+    <nav aria-label="Passos do formulário" className="relative">
       <svg
         aria-hidden="true"
         className="pointer-events-none absolute top-0 left-0 overflow-visible"
@@ -106,7 +109,7 @@ export function SproutProgress({ current }: { current: FormStepSlug }) {
           const reachable = isReachable(step.slug);
           const content = (
             <>
-              <span className="tag text-ink-soft">Pergunta {index + 1}</span>
+              <span className="tag text-ink-soft">Passo {index + 1}</span>
               <span
                 className={cn(
                   "text-[0.9375rem] leading-snug",
@@ -121,7 +124,7 @@ export function SproutProgress({ current }: { current: FormStepSlug }) {
             <li key={step.slug} className="flex" style={{ height: ROW }}>
               {reachable && !active ? (
                 <Link
-                  href={`/criar/${step.slug}`}
+                  href={`/criar/${siteId}/${step.slug}`}
                   className="flex flex-col justify-center gap-0.5 rounded-md pl-9 transition-colors hover:text-ink"
                 >
                   {content}
@@ -146,7 +149,7 @@ export function SproutProgress({ current }: { current: FormStepSlug }) {
 
 /** Compact version for small screens: a horizontal stem that grows across the header. */
 export function SproutProgressBar({ current }: { current: FormStepSlug }) {
-  const { completed } = useDraft();
+  const { completed } = useForm12();
   const currentIndex = formSteps.findIndex((step) => step.slug === current);
   const step = formSteps[currentIndex];
   const rows = formSteps.length;
@@ -162,7 +165,7 @@ export function SproutProgressBar({ current }: { current: FormStepSlug }) {
     <div className="grid gap-2">
       <p className="text-sm text-ink-soft">
         <span className="font-semibold text-ink">
-          Pergunta {currentIndex + 1} de {rows}
+          Passo {currentIndex + 1} de {rows}
         </span>
         {step && ` · ${step.title}`}
       </p>

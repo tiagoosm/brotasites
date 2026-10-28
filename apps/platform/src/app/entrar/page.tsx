@@ -4,7 +4,7 @@ import { SignInForm } from "./sign-in-form";
 
 export const metadata: Metadata = {
   title: "Entrar",
-  description: "Entre com um link no seu e-mail para guardar o seu site na sua conta.",
+  description: "Entre com um link no seu e-mail para criar e acompanhar os seus sites.",
 };
 
 export default function SignInPage() {

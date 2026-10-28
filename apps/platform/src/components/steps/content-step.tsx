@@ -1,416 +1,377 @@
 "use client";
 
 import {
-  type Cta,
-  type DraftSection,
-  draftSections,
-  iconSvg,
-  PLACEHOLDER_NAME,
-  placeholderContent,
-  type SectionId,
-  sectionInfo,
-  serviceIcons,
-  setSectionContent,
-  setTestimonials,
-  type Testimonial,
-} from "@brotasites/schema";
+  contentAnswersSchema,
+  type FormDraft,
+  type PhotoAnswer,
+  sectionsOf,
+} from "@brotasites/schema/v1.2";
 import { useId } from "react";
-import { useDraft } from "@/lib/draft-store";
-import { cn } from "@/lib/utils";
+import { useForm12 } from "@/lib/form-store";
+import { PickFiles, Thumb, UploadStatus, useAssetUrls, useUploader } from "./asset-upload";
 import { ItemList, SectionCard, TextField } from "./fields";
 import { StepForm } from "./step-form";
 
-// Question 5: the words of each part of the site, in the order the client chose. Blank
-// fields keep the example text in the preview, so the site never looks empty while typing.
+// Step 4: what the business offers, in the client's words. Prices and facts go to the site as
+// typed; the AI only tidies the text. Blank rows are ignored. Photos need the consent of the
+// people in them, and of a guardian when a minor appears.
 
-const infoById = new Map(sectionInfo.map((info) => [info.id, info]));
+type Content = NonNullable<FormDraft["content"]>;
+type Service = NonNullable<Content["services"]>[number];
+type Highlight = NonNullable<Content["highlights"]>[number];
+type Question = NonNullable<Content["faq"]>[number];
+type Testimonial = Partial<NonNullable<Content["testimonials"]>[number]>;
 
-type Content = Record<string, unknown>;
-interface Service {
-  name: string;
-  description?: string;
-  icon?: string | null;
+const MAX_PHOTOS = 12;
+const filled = (...values: (string | undefined)[]) => values.some((value) => value?.trim());
+
+/** The answers without blank rows, as the step checks them. */
+export function cleanContent(content: Content) {
+  return {
+    services: (content.services ?? []).filter((s) => filled(s.name, s.description, s.price)),
+    highlights: (content.highlights ?? []).filter((h) => filled(h.title, h.text)),
+    faq: (content.faq ?? []).filter((q) => filled(q.question, q.answer)),
+    testimonials: (content.testimonials ?? []).filter((t) => filled(t.name, t.text, t.context)),
+    photos: content.photos ?? [],
+  };
 }
-interface Question {
-  question: string;
-  answer: string;
-}
-
-const text = (value: unknown) => (typeof value === "string" ? value : "");
-const list = <T,>(value: unknown, empty: T): T[] =>
-  Array.isArray(value) && value.length ? (value as T[]) : [empty];
 
 export function ContentStep() {
-  const { draft, updateDraft } = useDraft();
-  const name = draft.business?.name?.trim() || PLACEHOLDER_NAME;
-  const sections = draftSections(draft).filter(shown);
+  const { draft, updateDraft } = useForm12();
+  const content = draft.content ?? {};
+  const on = new Set(sectionsOf(draft));
+  const set = (patch: Partial<Content>) =>
+    updateDraft((d) => ({ ...d, content: { ...d.content, ...patch } }));
+  const rows = <T,>(items: T[] | undefined, empty: T) =>
+    items && items.length > 0 ? items : [empty];
 
   return (
-    <StepForm step="conteudo">
-      {sections.map((section) => {
-        const content: Content = section.content ?? {};
-        const example = placeholderContent(section.id, name) as Content;
-        const set = (patch: Content) => updateDraft((d) => setSectionContent(d, section.id, patch));
-        const title = (maxLength: number, hint?: string) => (
-          <TextField
-            label="Título"
-            value={text(content.title)}
-            placeholder={text(example.title)}
-            maxLength={maxLength}
-            hint={hint}
-            onChange={(value) => set({ title: value })}
+    <StepForm
+      step="conteudo"
+      validate={() => {
+        const parsed = contentAnswersSchema.safeParse(cleanContent(content));
+        return parsed.success ? null : (parsed.error.issues[0]?.message ?? "Confira as respostas.");
+      }}
+    >
+      {on.has("servicos") && (
+        <SectionCard
+          name="Serviços ou produtos"
+          note="Até 9. O preço é opcional e vai para o site do jeito que você escrever."
+        >
+          <ItemList<Service>
+            items={rows(content.services, { name: "" })}
+            max={9}
+            itemName="Serviço"
+            addLabel="Adicionar serviço"
+            newItem={() => ({ name: "" })}
+            onChange={(services) => set({ services })}
+            renderItem={(item, update, index) => (
+              <>
+                <TextField
+                  label="Nome"
+                  value={item.name}
+                  maxLength={50}
+                  placeholder={index === 0 ? "Ex.: Pão de fermentação natural" : undefined}
+                  onChange={(name) => update({ name })}
+                />
+                <TextField
+                  label="Descrição (opcional)"
+                  value={item.description}
+                  maxLength={200}
+                  onChange={(description) => update({ description })}
+                />
+                <TextField
+                  label="Preço (opcional)"
+                  value={item.price}
+                  maxLength={30}
+                  placeholder="Ex.: R$ 12,90 ou a partir de R$ 50"
+                  onChange={(price) => update({ price })}
+                />
+              </>
+            )}
           />
-        );
-        return (
-          <SectionCard
-            key={section.id}
-            name={infoById.get(section.id)?.name ?? section.id}
-            note={notes[section.id]}
-          >
-            {fieldsFor(section.id)}
-          </SectionCard>
-        );
+        </SectionCard>
+      )}
 
-        function fieldsFor(id: SectionId) {
-          switch (id) {
-            case "hero":
-              return (
-                <>
-                  {title(80, "Em branco, o topo mostra o nome do negócio.")}
-                  <TextField
-                    label="Frase de apresentação"
-                    multiline
-                    value={text(content.subtitle)}
-                    placeholder={text(example.subtitle)}
-                    maxLength={200}
-                    onChange={(value) => set({ subtitle: value })}
-                  />
-                  <ButtonFields
-                    cta={content.cta as Partial<Cta> | undefined}
-                    example={example.cta as Cta}
-                    onChange={(cta) => set({ cta })}
-                  />
-                </>
-              );
-            case "sobre":
-              return (
-                <>
-                  {title(60)}
-                  <TextField
-                    label="Texto"
-                    multiline
-                    value={text(content.text)}
-                    placeholder={text(example.text)}
-                    maxLength={800}
-                    onChange={(value) => set({ text: value })}
-                  />
-                </>
-              );
-            case "servicos":
-              return (
-                <>
-                  {title(60)}
-                  <ItemList<Service>
-                    items={list(content.items, { name: "", description: "" })}
-                    max={9}
-                    itemName="Serviço"
-                    addLabel="Adicionar serviço"
-                    newItem={() => ({ name: "", description: "" })}
-                    onChange={(items) => set({ items })}
-                    renderItem={(item, update, index) => (
-                      <>
-                        <TextField
-                          label="Nome"
-                          value={item.name}
-                          placeholder={index === 0 ? "Ex.: Pão de fermentação natural" : undefined}
-                          maxLength={50}
-                          onChange={(value) => update({ name: value })}
-                        />
-                        <TextField
-                          label="Descrição"
-                          value={item.description}
-                          placeholder="Uma linha sobre o serviço"
-                          maxLength={200}
-                          onChange={(value) => update({ description: value })}
-                        />
-                        <IconPicker
-                          label={`Ícone do serviço ${index + 1}`}
-                          value={item.icon ?? "star"}
-                          onChange={(icon) => update({ icon })}
-                        />
-                      </>
-                    )}
-                  />
-                </>
-              );
-            case "galeria":
-              return title(60);
-            case "depoimentos":
-              return (
-                <>
-                  {title(60)}
-                  <ItemList<Testimonial>
-                    items={list(content.items, { name: "", role: "", text: "" })}
-                    max={6}
-                    itemName="Depoimento"
-                    addLabel="Adicionar depoimento"
-                    newItem={() => ({ name: "", role: "", text: "" })}
-                    onChange={(items) => updateDraft((d) => setTestimonials(d, items))}
-                    renderItem={(item, update) => (
-                      <>
-                        <TextField
-                          label="O que a pessoa disse"
-                          multiline
-                          value={item.text}
-                          maxLength={300}
-                          onChange={(value) => update({ text: value })}
-                        />
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <TextField
-                            label="Nome"
-                            value={item.name}
-                            placeholder="Ex.: Maria S."
-                            maxLength={60}
-                            onChange={(value) => update({ name: value })}
-                          />
-                          <TextField
-                            label="Quem é (opcional)"
-                            value={item.role}
-                            placeholder="Ex.: Cliente desde 2019"
-                            maxLength={60}
-                            onChange={(value) => update({ role: value })}
-                          />
-                        </div>
-                      </>
-                    )}
-                  />
-                </>
-              );
-            case "faq":
-              return (
-                <>
-                  {title(60)}
-                  <ItemList<Question>
-                    items={list(content.items, { question: "", answer: "" })}
-                    max={10}
-                    itemName="Pergunta"
-                    addLabel="Adicionar pergunta"
-                    newItem={() => ({ question: "", answer: "" })}
-                    onChange={(items) => set({ items })}
-                    renderItem={(item, update, index) => (
-                      <>
-                        <TextField
-                          label="Pergunta"
-                          value={item.question}
-                          placeholder={index === 0 ? "Ex.: Vocês fazem entrega?" : undefined}
-                          maxLength={120}
-                          onChange={(value) => update({ question: value })}
-                        />
-                        <TextField
-                          label="Resposta"
-                          multiline
-                          value={item.answer}
-                          maxLength={400}
-                          onChange={(value) => update({ answer: value })}
-                        />
-                      </>
-                    )}
-                  />
-                </>
-              );
-            case "cta-final":
-              return (
-                <>
-                  {title(80)}
-                  <TextField
-                    label="Frase"
-                    value={text(content.subtitle)}
-                    placeholder={text(example.subtitle)}
-                    maxLength={160}
-                    onChange={(value) => set({ subtitle: value })}
-                  />
-                  <ButtonFields
-                    cta={content.cta as Partial<Cta> | undefined}
-                    example={example.cta as Cta}
-                    onChange={(cta) => set({ cta })}
-                  />
-                </>
-              );
-            case "contato":
-              return title(60);
-          }
-        }
-      })}
+      {on.has("diferenciais") && (
+        <SectionCard name="Diferenciais" note="Até 8, curtos. A seção aparece com pelo menos 3.">
+          <ItemList<Highlight>
+            items={rows(content.highlights, { title: "" })}
+            max={8}
+            itemName="Diferencial"
+            addLabel="Adicionar diferencial"
+            newItem={() => ({ title: "" })}
+            onChange={(highlights) => set({ highlights })}
+            renderItem={(item, update, index) => (
+              <>
+                <TextField
+                  label="Título"
+                  value={item.title}
+                  maxLength={60}
+                  placeholder={index === 0 ? "Ex.: Entrega no bairro" : undefined}
+                  onChange={(title) => update({ title })}
+                />
+                <TextField
+                  label="Detalhe (opcional)"
+                  value={item.text}
+                  maxLength={200}
+                  onChange={(text) => update({ text })}
+                />
+              </>
+            )}
+          />
+        </SectionCard>
+      )}
+
+      {on.has("faq") && (
+        <SectionCard name="Perguntas frequentes" note="Opcional, até 10.">
+          <ItemList<Question>
+            items={rows(content.faq, { question: "", answer: "" })}
+            max={10}
+            itemName="Pergunta"
+            addLabel="Adicionar pergunta"
+            newItem={() => ({ question: "", answer: "" })}
+            onChange={(faq) => set({ faq })}
+            renderItem={(item, update) => (
+              <>
+                <TextField
+                  label="Pergunta"
+                  value={item.question}
+                  maxLength={120}
+                  onChange={(question) => update({ question })}
+                />
+                <TextField
+                  label="Resposta"
+                  multiline
+                  value={item.answer}
+                  maxLength={400}
+                  onChange={(answer) => update({ answer })}
+                />
+              </>
+            )}
+          />
+        </SectionCard>
+      )}
+
+      {on.has("depoimentos") && draft.business?.category !== "psicologia" && (
+        <SectionCard
+          name="Depoimentos"
+          note="Só depoimentos reais, de clientes que autorizaram. A gente nunca inventa depoimentos."
+        >
+          <ItemList<Testimonial>
+            items={rows(content.testimonials as Testimonial[] | undefined, { name: "", text: "" })}
+            max={6}
+            itemName="Depoimento"
+            addLabel="Adicionar depoimento"
+            newItem={() => ({ name: "", text: "" })}
+            onChange={(testimonials) =>
+              set({ testimonials: testimonials as Content["testimonials"] })
+            }
+            renderItem={(item, update) => (
+              <>
+                <TextField
+                  label="Nome do cliente"
+                  value={item.name}
+                  maxLength={60}
+                  onChange={(name) => update({ name })}
+                />
+                <TextField
+                  label="Quem é (opcional)"
+                  value={item.context}
+                  maxLength={60}
+                  placeholder="Ex.: cliente desde 2019"
+                  onChange={(context) => update({ context })}
+                />
+                <TextField
+                  label="Depoimento"
+                  multiline
+                  value={item.text}
+                  maxLength={300}
+                  onChange={(text) => update({ text })}
+                />
+                <Confirm
+                  checked={item.authorized === true}
+                  onChange={(authorized) => update({ authorized: authorized ? true : undefined })}
+                >
+                  Essa pessoa autorizou o uso do depoimento e do nome no site.
+                </Confirm>
+              </>
+            )}
+          />
+        </SectionCard>
+      )}
+
+      <PhotosCard photos={content.photos ?? []} onChange={(photos) => set({ photos })} />
     </StepForm>
   );
 }
 
-/**
- * Sections switched on in question 4. Testimonials also show while there is none yet,
- * since adding the first real one is what turns that section on.
- */
-function shown(section: DraftSection): boolean {
-  if (section.enabled) return true;
-  if (section.id !== "depoimentos") return false;
-  const items = section.content?.items;
-  return !Array.isArray(items) || !items.some((item: Testimonial) => item.name?.trim());
-}
-
-const notes: Partial<Record<SectionId, React.ReactNode>> = {
-  galeria: "As fotos entram na próxima pergunta.",
-  depoimentos: (
-    <>
-      Só opiniões reais, com a permissão de quem escreveu. A seção aparece no site quando houver
-      pelo menos uma com nome e texto.
-    </>
-  ),
-  contato: "Endereço, horários e WhatsApp entram na próxima pergunta.",
-};
-
-const actions: { id: Cta["action"]; label: string }[] = [
-  { id: "whatsapp", label: "WhatsApp" },
-  { id: "phone", label: "Ligação" },
-  { id: "scroll", label: "Contato no site" },
-  { id: "link", label: "Outro site" },
-];
-
-/** A button: its words and where it leads. */
-function ButtonFields({
-  cta = {},
-  example,
+function PhotosCard({
+  photos,
   onChange,
 }: {
-  cta?: Partial<Cta>;
-  example: Cta;
-  onChange: (cta: Partial<Cta>) => void;
+  photos: PhotoAnswer[];
+  onChange: (photos: PhotoAnswer[]) => void;
 }) {
-  const name = useId();
-  const action = cta.action ?? example.action;
-  const target = cta.target ?? "";
-  const badLink = action === "link" && target.trim() !== "" && !/^https?:\/\/\S+$/i.test(target);
+  const uploader = useUploader("image");
+  const [urls, remember] = useAssetUrls(photos.map((photo) => photo.assetId));
+  const room = MAX_PHOTOS - photos.length;
+  const update = (index: number, patch: Partial<PhotoAnswer>) =>
+    onChange(photos.map((photo, i) => (i === index ? { ...photo, ...patch } : photo)));
 
   return (
-    <div className="grid gap-4">
-      <TextField
-        label="Texto do botão"
-        value={cta.label}
-        placeholder={example.label}
-        maxLength={30}
-        onChange={(label) => onChange({ ...cta, label })}
-      />
-      <fieldset className="grid gap-2.5">
-        <legend className="mb-2.5 text-[0.9375rem] font-semibold">O botão leva para</legend>
-        <div className="flex flex-wrap gap-2">
-          {actions.map((option) => {
-            const checked = action === option.id;
-            return (
-              <label
-                key={option.id}
-                className={cn(
-                  "inline-flex h-10 cursor-pointer items-center rounded-full border px-4 text-[0.9375rem] transition-[background-color,border-color,color] duration-150 select-none",
-                  "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-leaf",
-                  checked
-                    ? "border-leaf bg-leaf-wash font-semibold text-leaf-deep"
-                    : "border-input bg-card text-ink hover:border-ink-soft",
-                )}
-              >
-                <input
-                  type="radio"
-                  name={name}
-                  value={option.id}
-                  checked={checked}
-                  onChange={() =>
-                    onChange({
-                      ...cta,
-                      action: option.id,
-                      target: option.id === "scroll" ? "contato" : null,
-                    })
-                  }
-                  className="sr-only"
+    <SectionCard
+      name="Fotos"
+      note="Até 12. Use fotos suas ou que você tem permissão para usar. Sem fotos, o site usa um topo tipográfico."
+    >
+      <details className="rounded-lg border border-border bg-paper p-4 text-[0.9375rem]">
+        <summary className="cursor-pointer font-semibold">
+          Como tirar boas fotos com o celular
+        </summary>
+        <ul className="mt-3 grid list-disc gap-1.5 pl-5 text-ink-soft">
+          <li>Use luz do dia, perto de uma janela ou na porta. Evite o flash.</li>
+          <li>Segure o celular deitado para a foto do topo.</li>
+          <li>Limpe a lente e arrume o fundo antes de fotografar.</li>
+          <li>Mostre o trabalho de verdade: o balcão, o produto, as mãos fazendo.</li>
+          <li>Prefira fotos com pelo menos 1200 pixels no lado maior.</li>
+        </ul>
+      </details>
+
+      {photos.length > 0 && (
+        <ol className="grid gap-3">
+          {photos.map((photo, index) => (
+            <li
+              key={photo.assetId}
+              className="grid gap-4 rounded-lg border border-border bg-paper p-4 sm:grid-cols-[6rem_minmax(0,1fr)]"
+            >
+              <Thumb
+                url={urls[photo.assetId]}
+                alt={photo.alt || `Foto ${index + 1}`}
+                removeLabel={`Remover a foto ${index + 1}`}
+                onRemove={() => {
+                  uploader.discard(photo.assetId);
+                  onChange(photos.filter((_, i) => i !== index));
+                }}
+              />
+              <div className="grid gap-4">
+                <TextField
+                  label="O que aparece na foto"
+                  value={photo.alt}
+                  maxLength={160}
+                  hint="Ajuda quem usa leitor de tela. Ex.: Balcão com pães e bolos."
+                  onChange={(alt) => update(index, { alt })}
                 />
-                {option.label}
-              </label>
-            );
-          })}
-        </div>
-      </fieldset>
-      {action === "link" && (
-        <TextField
-          label="Endereço do site"
-          type="url"
-          inputMode="url"
-          value={target}
-          placeholder="https://"
-          maxLength={300}
-          error={badLink ? "Use um endereço que comece com http:// ou https://." : undefined}
-          onChange={(value) => onChange({ ...cta, target: value })}
-        />
+                <UseField value={photo.use} onChange={(use) => update(index, { use })} />
+                <Confirm
+                  checked={photo.showsPeople === true}
+                  onChange={(showsPeople) => update(index, { showsPeople })}
+                >
+                  Aparecem pessoas nesta foto
+                </Confirm>
+                {photo.showsPeople && (
+                  <Confirm
+                    checked={photo.peopleConsent === true}
+                    onChange={(peopleConsent) => update(index, { peopleConsent })}
+                  >
+                    As pessoas da foto autorizaram o uso da imagem.
+                  </Confirm>
+                )}
+                <Confirm
+                  checked={photo.showsMinor === true}
+                  onChange={(showsMinor) => update(index, { showsMinor })}
+                >
+                  Aparece alguma criança ou adolescente
+                </Confirm>
+                {photo.showsMinor && (
+                  <Confirm
+                    checked={photo.minorConsent === true}
+                    onChange={(minorConsent) => update(index, { minorConsent })}
+                  >
+                    Os pais ou responsáveis autorizaram o uso da foto.
+                  </Confirm>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
       )}
-      {action === "whatsapp" || action === "phone" ? (
-        <p className="-mt-1 text-sm text-ink-soft">
-          O número você informa na próxima pergunta, uma vez só para o site todo.
-        </p>
-      ) : null}
+
+      {room > 0 ? (
+        <PickFiles
+          label={photos.length > 0 ? "Adicionar mais fotos" : "Enviar fotos"}
+          multiple
+          disabled={uploader.busy > 0}
+          onFiles={(files) => {
+            const added: PhotoAnswer[] = [];
+            void uploader.upload(files.slice(0, room), (assetId, url) => {
+              remember(assetId, url);
+              added.push({ assetId, alt: "" });
+              onChange([...photos, ...added]);
+            });
+          }}
+        />
+      ) : (
+        <p className="text-sm text-ink-soft">Você chegou ao limite de {MAX_PHOTOS} fotos.</p>
+      )}
+      <UploadStatus busy={uploader.busy} error={uploader.error} />
+    </SectionCard>
+  );
+}
+
+const uses: { value: PhotoAnswer["use"] | ""; label: string }[] = [
+  { value: "", label: "A gente escolhe" },
+  { value: "hero", label: "Topo do site" },
+  { value: "sobre", label: "Seção Sobre" },
+  { value: "galeria", label: "Galeria" },
+];
+
+function UseField({
+  value,
+  onChange,
+}: {
+  value: PhotoAnswer["use"];
+  onChange: (use: PhotoAnswer["use"]) => void;
+}) {
+  const id = useId();
+  return (
+    <div className="grid gap-2">
+      <label htmlFor={id} className="text-[0.9375rem] font-semibold">
+        Onde usar
+      </label>
+      <select
+        id={id}
+        value={value ?? ""}
+        onChange={(event) => onChange((event.target.value || undefined) as PhotoAnswer["use"])}
+        className="h-12 w-full min-w-0 rounded-lg border border-input bg-card px-3 text-base text-ink outline-none focus-visible:border-leaf focus-visible:ring-4 focus-visible:ring-leaf/15"
+      >
+        {uses.map((use) => (
+          <option key={use.label} value={use.value}>
+            {use.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
 
-function IconPicker({
-  label,
-  value,
+export function Confirm({
+  checked,
   onChange,
+  children,
 }: {
-  label: string;
-  value: string;
-  onChange: (icon: string) => void;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  children: React.ReactNode;
 }) {
-  const name = useId();
   return (
-    <fieldset>
-      <legend className="mb-2.5 text-[0.9375rem] font-semibold">
-        Ícone <span className="sr-only">· {label}</span>
-      </legend>
-      <div className="flex flex-wrap gap-2">
-        {serviceIcons.map((icon) => {
-          const checked = value === icon.id;
-          return (
-            <label
-              key={icon.id}
-              title={icon.label}
-              className={cn(
-                "inline-flex size-11 cursor-pointer items-center justify-center rounded-full border transition-[background-color,border-color,color] duration-150",
-                "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-leaf",
-                checked
-                  ? "border-leaf bg-leaf-wash text-leaf-deep"
-                  : "border-input bg-card text-ink-soft hover:border-ink-soft hover:text-ink",
-              )}
-            >
-              <input
-                type="radio"
-                name={name}
-                value={icon.id}
-                checked={checked}
-                onChange={() => onChange(icon.id)}
-                className="sr-only"
-                aria-label={icon.label}
-              />
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-                className="size-5"
-                // Fixed icon markup from @brotasites/schema, never user input.
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: see above
-                dangerouslySetInnerHTML={{ __html: iconSvg(icon.id) }}
-              />
-            </label>
-          );
-        })}
-      </div>
-    </fieldset>
+    <label className="flex min-h-11 cursor-pointer items-start gap-3 text-[0.9375rem]">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="mt-0.5 size-5 shrink-0 accent-[var(--color-leaf)]"
+      />
+      <span>{children}</span>
+    </label>
   );
 }

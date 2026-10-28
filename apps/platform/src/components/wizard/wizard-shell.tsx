@@ -1,135 +1,66 @@
 "use client";
 
-import { type FormStepSlug, formSteps } from "@brotasites/schema";
-import { Check, CloudOff, LoaderCircle, X } from "lucide-react";
+import { type FormStepSlug12, formSteps12 } from "@brotasites/schema/v1.2";
+import { Check, CloudOff, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
 import { Brand } from "@/components/brand";
-import { Button } from "@/components/ui/button";
-import { useDraft } from "@/lib/draft-store";
-import { supabaseEnv } from "@/lib/supabase/env";
-import { PreviewPanel } from "./preview-panel";
+import { useForm12 } from "@/lib/form-store";
 import { SproutProgress, SproutProgressBar } from "./sprout-progress";
 
-// Herbarium layout. Desktop: steps rail | form | live preview on the "table".
-// Phones: the form fills the screen; the preview opens over it from the step footer.
-
-const PreviewToggle = createContext<() => void>(() => {});
-export const useOpenPreview = () => useContext(PreviewToggle);
+// Herbarium layout. Desktop: steps rail | form on the "table". Phones: the form fills the
+// screen. There is no live preview (decision of 2026-10-27): the client sees the 3 directions
+// and the finished site on "Meus sites".
 
 export function WizardShell({ children }: { children: React.ReactNode }) {
-  const [previewOpen, setPreviewOpen] = useState(false);
-  // Mount the live preview only where it shows: side panel on wide screens, dialog on phones.
-  const wide = useMediaQuery("(min-width: 1024px)");
   const params = useParams<{ etapa?: string }>();
-  const step = (formSteps.find((s) => s.slug === params.etapa)?.slug ?? "negocio") as FormStepSlug;
-
-  useEffect(() => {
-    if (!previewOpen) return;
-    const close = (event: KeyboardEvent) => event.key === "Escape" && setPreviewOpen(false);
-    window.addEventListener("keydown", close);
-    return () => window.removeEventListener("keydown", close);
-  }, [previewOpen]);
+  const step = (formSteps12.find((s) => s.slug === params.etapa)?.slug ??
+    "negocio") as FormStepSlug12;
 
   return (
-    <PreviewToggle value={() => setPreviewOpen(true)}>
-      <div
-        data-wizard
-        className="grid min-h-dvh lg:grid-cols-[minmax(26rem,30rem)_1fr] xl:grid-cols-[15rem_minmax(26rem,30rem)_1fr]"
-      >
-        <aside className="sticky top-0 hidden h-dvh flex-col gap-12 border-r border-border px-7 py-8 xl:flex">
-          <Brand />
-          <SproutProgress current={step} />
-          <div className="mt-auto grid gap-4">
-            <AccountArea step={step} />
-            <SaveStatus />
-          </div>
-        </aside>
+    <div data-wizard className="grid min-h-dvh bg-table xl:grid-cols-[15rem_minmax(0,1fr)]">
+      <aside className="sticky top-0 hidden h-dvh flex-col gap-12 border-r border-border bg-paper px-7 py-8 xl:flex">
+        <Brand />
+        <SproutProgress current={step} />
+        <div className="mt-auto grid gap-4">
+          <AccountArea />
+          <SaveStatus />
+        </div>
+      </aside>
 
-        <main className="flex min-w-0 flex-col bg-card lg:border-r lg:border-border">
-          <header className="sticky top-0 z-20 grid gap-3 border-b border-border bg-card/95 px-5 pt-4 pb-3 backdrop-blur sm:px-8 xl:hidden">
-            <div className="flex items-center justify-between">
-              <Brand />
-              <div className="flex items-center gap-4">
-                <SaveStatus compact />
-                <AccountArea step={step} compact />
-              </div>
-            </div>
-            <SproutProgressBar current={step} />
-          </header>
-          <div key={step} className="step-enter flex flex-1 flex-col px-5 pt-8 sm:px-10 sm:pt-11">
-            {children}
-          </div>
-        </main>
-
-        <section
-          aria-label="Prévia do site"
-          className="sticky top-0 hidden h-dvh bg-table p-5 lg:block xl:p-7"
-        >
-          {wide && <PreviewPanel />}
-        </section>
-
-        {previewOpen && !wide && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Prévia do site"
-            className="fixed inset-0 z-40 flex flex-col bg-table p-3 lg:hidden"
-          >
-            <div className="flex items-center justify-between px-1 pb-2">
-              <p className="font-display text-xl">Prévia</p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setPreviewOpen(false)}
-                aria-label="Fechar prévia"
-              >
-                <X aria-hidden="true" />
-              </Button>
-            </div>
-            <div className="min-h-0 flex-1">
-              <PreviewPanel compact />
+      <main className="mx-auto flex w-full max-w-[44rem] min-w-0 flex-col bg-card xl:my-6 xl:rounded-2xl xl:border xl:border-border">
+        <header className="sticky top-0 z-20 grid gap-3 border-b border-border bg-card/95 px-5 pt-4 pb-3 backdrop-blur sm:px-8 xl:hidden">
+          <div className="flex items-center justify-between">
+            <Brand />
+            <div className="flex items-center gap-4">
+              <SaveStatus compact />
+              <AccountArea compact />
             </div>
           </div>
-        )}
-      </div>
-    </PreviewToggle>
+          <SproutProgressBar current={step} />
+        </header>
+        <div key={step} className="step-enter flex flex-1 flex-col px-5 pt-8 sm:px-10 sm:pt-11">
+          {children}
+        </div>
+      </main>
+    </div>
   );
 }
 
-function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
-  useEffect(() => {
-    const list = window.matchMedia(query);
-    setMatches(list.matches);
-    const onChange = (event: MediaQueryListEvent) => setMatches(event.matches);
-    list.addEventListener("change", onChange);
-    return () => list.removeEventListener("change", onChange);
-  }, [query]);
-  return matches;
-}
-
-/** Tells the truth about the autosave: where it is saved, or that it is not. */
+/** Tells the truth about the autosave: saved in the account, or not. */
 function SaveStatus({ className, compact = false }: { className?: string; compact?: boolean }) {
-  const { saveState, account } = useDraft();
-  const where = account.status === "signed-in" ? "na sua conta" : "neste aparelho";
+  const { saveState } = useForm12();
   const states = {
-    idle: { icon: Check, text: compact ? "Salvo" : `Rascunho salvo ${where}` },
-    saved: { icon: Check, text: compact ? "Salvo" : `Rascunho salvo ${where}` },
+    idle: { icon: Check, text: compact ? "Salvo" : "Respostas salvas na sua conta" },
+    saved: { icon: Check, text: compact ? "Salvo" : "Respostas salvas na sua conta" },
     saving: { icon: LoaderCircle, text: "Salvando…" },
     failed: {
-      icon: CloudOff,
-      text: compact ? "Não salvo" : "Não foi possível salvar neste aparelho",
-    },
-    "account-failed": {
       icon: CloudOff,
       text: compact ? "Só no aparelho" : "Salvo neste aparelho, mas não na sua conta",
     },
   } as const;
   const { icon: Icon, text } = states[saveState];
-  const problem = saveState === "failed" || saveState === "account-failed";
+  const problem = saveState === "failed";
   return (
     <p
       role="status"
@@ -144,46 +75,31 @@ function SaveStatus({ className, compact = false }: { className?: string; compac
   );
 }
 
-/** Sign in to keep the draft in an account, or show who is signed in. */
-function AccountArea({ step, compact = false }: { step: FormStepSlug; compact?: boolean }) {
-  const { account } = useDraft();
-  const here = `/criar/${step}`;
-  if (!supabaseEnv() || account.status === "unknown") return null;
-
-  if (account.status === "signed-out") {
-    return (
-      <Link
-        href={`/entrar?voltar=${encodeURIComponent(here)}`}
-        className={
-          compact
-            ? "touch-target text-[0.8125rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
-            : "rounded-lg border border-dashed border-line-strong p-3 text-[0.8125rem] text-ink-soft transition-colors hover:border-leaf hover:text-ink"
-        }
-      >
-        {compact ? (
-          "Entrar"
-        ) : (
-          <>
-            <span className="block font-semibold text-leaf-deep">
-              Entrar para salvar na sua conta
-            </span>
-            Assim você continua de qualquer aparelho.
-          </>
-        )}
-      </Link>
-    );
-  }
-
+/** Who is signed in, the way to their sites and out. */
+function AccountArea({ compact = false }: { compact?: boolean }) {
+  const { account } = useForm12();
   return (
-    <form action="/auth/sair" method="post" className="grid gap-1 text-[0.8125rem] text-ink-soft">
-      <input type="hidden" name="voltar" value={here} />
+    <div className="grid gap-1 text-[0.8125rem] text-ink-soft">
       {!compact && <span className="truncate">{account.email}</span>}
-      <button
-        type="submit"
-        className="touch-target justify-self-start font-semibold text-leaf-deep underline-offset-4 hover:underline"
-      >
-        Sair
-      </button>
-    </form>
+      <div className="flex items-center gap-4">
+        <Link
+          href="/meus-sites"
+          className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
+        >
+          Meus sites
+        </Link>
+        {!compact && (
+          <form action="/auth/sair" method="post">
+            <input type="hidden" name="voltar" value="/" />
+            <button
+              type="submit"
+              className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
+            >
+              Sair
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
   );
 }

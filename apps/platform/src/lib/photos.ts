@@ -1,10 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-
 // Photos for the client's site. The browser shrinks each photo to WebP before uploading
-// (phones take 4000px photos; sites never need more than 2000px), then it goes to the
-// "site-images" bucket under "<user id>/<site id>/" (see supabase/migrations).
+// (phones take 4000px photos; sites never need more than 2000px); uploads.ts sends it to the
+// private "site-uploads" bucket under "<user id>/<site id>/".
 
-export const PHOTO_BUCKET = "site-images";
 export const MAX_SIDE = 2000;
 /** Larger originals are refused before reading them, to keep phones responsive. */
 export const MAX_ORIGINAL_BYTES = 25 * 1024 * 1024;
@@ -20,13 +17,6 @@ export function fitWithin(width: number, height: number, max = MAX_SIDE) {
 
 export function photoPath(userId: string, siteId: string, id = crypto.randomUUID()): string {
   return `${userId}/${siteId}/${id}.webp`;
-}
-
-/** The storage path inside the bucket for one of its public URLs, or null for other URLs. */
-export function pathFromPublicUrl(url: string): string | null {
-  const marker = `/storage/v1/object/public/${PHOTO_BUCKET}/`;
-  const index = url.indexOf(marker);
-  return index === -1 ? null : decodeURIComponent(url.slice(index + marker.length));
 }
 
 /** Shrinks and converts a photo in the browser. Errors carry pt-BR messages. */
@@ -54,32 +44,4 @@ export async function preparePhoto(file: File) {
   );
   if (!blob) throw new PhotoError("Não foi possível preparar essa foto. Tente outra.");
   return { blob, ...size };
-}
-
-/** Uploads a photo to the person's folder and records it. Returns its public URL. */
-export async function uploadPhoto(
-  supabase: SupabaseClient,
-  owner: { userId: string; siteId: string },
-  file: File,
-): Promise<string> {
-  const { blob, width, height } = await preparePhoto(file);
-  const path = photoPath(owner.userId, owner.siteId);
-  const upload = await supabase.storage.from(PHOTO_BUCKET).upload(path, blob, {
-    contentType: "image/webp",
-    cacheControl: "31536000",
-  });
-  if (upload.error) throw new PhotoError("Não foi possível enviar a foto. Tente de novo.");
-  // The record only helps cleanup; a failure here does not lose the photo.
-  await supabase
-    .from("assets")
-    .insert({ site_id: owner.siteId, storage_path: path, kind: "image", width, height });
-  return supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
-}
-
-/** Deletes an uploaded photo. Best effort: the draft no longer uses it either way. */
-export async function deletePhoto(supabase: SupabaseClient, url: string): Promise<void> {
-  const path = pathFromPublicUrl(url);
-  if (!path) return;
-  await supabase.storage.from(PHOTO_BUCKET).remove([path]);
-  await supabase.from("assets").delete().eq("storage_path", path);
 }

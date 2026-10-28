@@ -1,8 +1,8 @@
 import { isReservedSubdomain, subdomainSchema, suggestSubdomain } from "@brotasites/schema";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-// The address question and the publish button talk to the database functions in
-// supabase/migrations/20261021180000_publication.sql.
+// The address question (step 7): format, reserved names and availability
+// (subdomain_available in supabase/migrations/20261021190000_publication_private.sql).
 
 export type Availability =
   | { state: "checking" }
@@ -46,40 +46,24 @@ export async function checkSubdomain(
   return data === true;
 }
 
-const publishErrors: Record<string, string> = {
-  subdomain_taken: "Alguém acabou de escolher esse endereço. Escolha outro.",
-  subdomain_invalid: "Esse endereço não pode ser usado. Escolha outro.",
-  already_running: "O seu site já está sendo gerado. Acompanhe na próxima tela.",
-  site_not_found: "Não encontramos o seu site. Entre de novo e tente outra vez.",
-};
+export class AddressError extends Error {}
 
-export class PublishError extends Error {
-  constructor(
-    message: string,
-    readonly code?: string,
-  ) {
-    super(message);
-  }
-}
-
-/** Reserves the address and queues the generation. Errors carry pt-BR messages. */
-export async function requestPublication(
+/**
+ * Keeps the address for the site. Owners may write only this column of their sites (RLS and
+ * column grants); the unique index refuses an address someone else already has.
+ */
+export async function reserveSubdomain(
   supabase: SupabaseClient,
   siteId: string,
   subdomain: string,
-): Promise<string> {
-  const { data, error } = await supabase.rpc("request_publication", {
-    p_site_id: siteId,
-    p_subdomain: subdomain,
-  });
-  if (error) {
-    const code = Object.keys(publishErrors).find((key) => error.message?.includes(key));
-    throw new PublishError(
-      code
-        ? (publishErrors[code] as string)
-        : "Não foi possível publicar agora. Tente de novo em instantes.",
-      code,
-    );
-  }
-  return data as string;
+): Promise<void> {
+  const { error } = await supabase.from("sites").update({ subdomain }).eq("id", siteId);
+  if (!error) return;
+  throw new AddressError(
+    error.code === "23505"
+      ? "Alguém acabou de escolher esse endereço. Escolha outro."
+      : error.code === "23514"
+        ? "Esse endereço não pode ser usado. Escolha outro."
+        : "Não foi possível guardar o endereço agora. Tente de novo em instantes.",
+  );
 }

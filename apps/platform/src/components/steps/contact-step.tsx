@@ -1,141 +1,196 @@
 "use client";
 
+import { formatPhone, formatZip, whatsappDigits } from "@brotasites/schema";
 import {
-  brazilianStates,
-  buildWeek,
-  formatPhone,
-  formatZip,
-  localTime,
-  type OpeningHoursRow,
-  parseDays,
-  parseHours,
-  parseOpeningHours,
-  setAddress,
-  setContact,
-  setOpeningHours,
-  setSocial,
-  statusAt,
-  timeZoneForState,
-  whatsappDigits,
+  contactAnswersSchema,
+  emailSchema,
+  type FormDraft,
+  familyInfo,
+  familyOf,
+  type OpeningHours,
   whatsappSchema,
-} from "@brotasites/schema";
-import { useEffect, useId, useState } from "react";
-import { z } from "zod";
-import { useDraft } from "@/lib/draft-store";
-import { cn } from "@/lib/utils";
-import { ItemList, SectionCard, TextField } from "./fields";
-import { PhotosCard } from "./photos-card";
+} from "@brotasites/schema/v1.2";
+import { useState } from "react";
+import { useForm12 } from "@/lib/form-store";
+import { Confirm } from "./content-step";
+import { SectionCard, TextField } from "./fields";
+import { defaultHours, HoursEditor } from "./hours-editor";
 import { StepForm } from "./step-form";
 
-// Question 6: how customers reach the business. Everything here is factual, so it goes to
-// the site exactly as typed; the form only tidies the format (phone digits, ZIP code).
+// Step 5: how customers reach the business. Everything here is factual and goes to the site
+// as typed; the form only tidies the format (digits, ZIP code, user names).
 
-const emailSchema = z.email();
+type Contact = NonNullable<FormDraft["contact"]>;
+
+const digitsOf = (value: string) => value.replace(/\D/g, "");
+const blank = (value: string | undefined) => (value?.trim() ? value.trim() : undefined);
+/** "@padariadoze" or "instagram.com/padariadoze/" → "padariadoze". */
+const handle = (value: string, site: string) =>
+  value
+    .trim()
+    .replace(new RegExp(`^(https?://)?(www\\.)?${site}\\.com/`, "i"), "")
+    .replace(/^@/, "")
+    .replace(/[/?#].*$/, "");
+
+/** The answers as the step checks them: blanks dropped, hours defaulted. */
+export function contactAnswers(contact: Contact) {
+  return {
+    ...contact,
+    whatsapp: blank(contact.whatsapp),
+    phone: blank(contact.phone),
+    email: blank(contact.email),
+    street: blank(contact.street),
+    number: blank(contact.number),
+    district: blank(contact.district),
+    zip: blank(contact.zip),
+    instagram: blank(contact.instagram),
+    facebook: blank(contact.facebook),
+    hasFixedAddress: contact.hasFixedAddress ?? true,
+    serviceArea: contact.serviceArea ?? [],
+    openingHours: contact.openingHours ?? defaultHours,
+    registration:
+      contact.registration?.council?.trim() || contact.registration?.number?.trim()
+        ? contact.registration
+        : undefined,
+  };
+}
 
 export function ContactStep() {
-  const { draft, updateDraft } = useDraft();
-  const contact = draft.business?.contact ?? {};
-  const address = contact.address ?? {};
-  const social = draft.business?.social ?? {};
+  const { draft, updateDraft } = useForm12();
+  const contact = draft.contact ?? {};
+  const set = (patch: Partial<Contact>) =>
+    updateDraft((d) => ({ ...d, contact: { ...d.contact, ...patch } }));
+  const fixed = contact.hasFixedAddress ?? true;
+  const family = familyOf(draft.business?.category);
+  const needsRegistration = family ? familyInfo[family].requiresRegistration : false;
 
   return (
-    <StepForm step="contato">
-      <SectionCard
-        name="Contato"
-        note="O WhatsApp aparece no botão flutuante e nos botões do site."
-      >
-        <WhatsappField
-          value={contact.whatsapp}
-          onChange={(whatsapp) => updateDraft((d) => setContact(d, { whatsapp }))}
-        />
+    <StepForm
+      step="contato"
+      validate={() => {
+        const answers = contactAnswers(contact);
+        if (
+          needsRegistration &&
+          !(answers.registration?.council?.trim() && answers.registration?.number?.trim())
+        ) {
+          return "Informe o registro profissional: o conselho e o número.";
+        }
+        const parsed = contactAnswersSchema.safeParse(answers);
+        if (!parsed.success) return parsed.error.issues[0]?.message ?? "Confira as respostas.";
+        if (!contact.openingHours || contact.hasFixedAddress === undefined) {
+          set({ openingHours: answers.openingHours, hasFixedAddress: answers.hasFixedAddress });
+        }
+        return null;
+      }}
+    >
+      <SectionCard name="Canais" note="Pelo menos um. O WhatsApp vira o botão principal do site.">
+        <WhatsappField value={contact.whatsapp} onChange={(whatsapp) => set({ whatsapp })} />
         <div className="grid gap-5 sm:grid-cols-2">
-          <TextField
-            label="Telefone (opcional)"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            value={contact.phone}
-            placeholder="(35) 3471-0000"
-            maxLength={20}
-            onChange={(phone) => updateDraft((d) => setContact(d, { phone: formatPhone(phone) }))}
-          />
-          <EmailField
-            value={contact.email}
-            onChange={(email) => updateDraft((d) => setContact(d, { email }))}
-          />
+          <PhoneField value={contact.phone} onChange={(phone) => set({ phone })} />
+          <EmailField value={contact.email} onChange={(email) => set({ email })} />
         </div>
       </SectionCard>
 
-      <SectionCard
-        name="Endereço"
-        note="Aparece no site com o mapa. Deixe em branco o que não quiser mostrar."
-      >
-        <TextField
-          label="Rua e número"
-          autoComplete="street-address"
-          value={address.street}
-          placeholder="Ex.: Rua Direita, 120"
-          maxLength={120}
-          onChange={(street) => updateDraft((d) => setAddress(d, { street }))}
-        />
-        <div className="grid gap-5 sm:grid-cols-2">
-          <TextField
-            label="Bairro"
-            value={address.district}
-            maxLength={60}
-            onChange={(district) => updateDraft((d) => setAddress(d, { district }))}
+      <SectionCard name="Onde fica" note="Com endereço, o site mostra um botão “Como chegar”.">
+        <Confirm checked={!fixed} onChange={(none) => set({ hasFixedAddress: !none })}>
+          Não tenho endereço fixo (atendo em domicílio ou on-line)
+        </Confirm>
+        {fixed ? (
+          <>
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)] gap-5">
+              <TextField
+                label="Rua"
+                autoComplete="address-line1"
+                value={contact.street}
+                maxLength={120}
+                placeholder="Ex.: Rua das Flores"
+                onChange={(street) => set({ street })}
+              />
+              <TextField
+                label="Número"
+                value={contact.number}
+                maxLength={20}
+                onChange={(number) => set({ number })}
+              />
+            </div>
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,9rem)] gap-5">
+              <TextField
+                label="Bairro"
+                value={contact.district}
+                maxLength={80}
+                onChange={(district) => set({ district })}
+              />
+              <TextField
+                label="CEP (opcional)"
+                inputMode="numeric"
+                autoComplete="postal-code"
+                value={contact.zip}
+                maxLength={9}
+                placeholder="00000-000"
+                onChange={(zip) => set({ zip: formatZip(zip) })}
+              />
+            </div>
+          </>
+        ) : (
+          <ServiceAreaField
+            value={contact.serviceArea ?? []}
+            onChange={(serviceArea) => set({ serviceArea })}
           />
-          <TextField
-            label="Cidade"
-            autoComplete="address-level2"
-            value={address.city}
-            maxLength={60}
-            onChange={(city) => updateDraft((d) => setAddress(d, { city }))}
-          />
-        </div>
-        <div className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] gap-5">
-          <StateField
-            value={address.state}
-            onChange={(state) => updateDraft((d) => setAddress(d, { state }))}
-          />
-          <TextField
-            label="CEP"
-            inputMode="numeric"
-            autoComplete="postal-code"
-            value={address.zip}
-            placeholder="00000-000"
-            maxLength={9}
-            onChange={(zip) => updateDraft((d) => setAddress(d, { zip: formatZip(zip) }))}
-          />
-        </div>
+        )}
       </SectionCard>
 
-      <OpeningHoursCard
-        rows={(contact.openingHours ?? []) as OpeningHoursRow[]}
-        state={address.state}
-        onChange={(rows) => updateDraft((d) => setOpeningHours(d, rows))}
-      />
+      <SectionCard name="Horário de atendimento">
+        <HoursEditor
+          value={(contact.openingHours as OpeningHours | undefined) ?? defaultHours}
+          onChange={(openingHours) => set({ openingHours })}
+        />
+      </SectionCard>
 
-      <SectionCard name="Redes sociais" note="Opcional. Os links aparecem junto do contato.">
+      <SectionCard name="Redes sociais" note="Opcional. Só o nome de usuário.">
         <div className="grid gap-5 sm:grid-cols-2">
           <TextField
             label="Instagram"
-            value={social.instagram ?? ""}
-            placeholder="@seunegocio"
-            maxLength={100}
-            onChange={(instagram) => updateDraft((d) => setSocial(d, { instagram }))}
+            value={contact.instagram}
+            maxLength={60}
+            placeholder="padariadoze"
+            onChange={(value) => set({ instagram: handle(value, "instagram") })}
           />
           <TextField
             label="Facebook"
-            value={social.facebook ?? ""}
-            placeholder="facebook.com/seunegocio"
-            maxLength={100}
-            onChange={(facebook) => updateDraft((d) => setSocial(d, { facebook }))}
+            value={contact.facebook}
+            maxLength={60}
+            placeholder="padariadoze"
+            onChange={(value) => set({ facebook: handle(value, "facebook") })}
           />
         </div>
       </SectionCard>
 
-      <PhotosCard />
+      {needsRegistration && (
+        <SectionCard
+          name="Registro profissional"
+          note="Obrigatório na sua área. Aparece no rodapé do site."
+        >
+          <div className="grid grid-cols-[minmax(0,8rem)_minmax(0,1fr)] gap-5">
+            <TextField
+              label="Conselho"
+              value={contact.registration?.council}
+              maxLength={20}
+              placeholder="Ex.: CRP 04"
+              onChange={(council) =>
+                set({ registration: { number: contact.registration?.number ?? "", council } })
+              }
+            />
+            <TextField
+              label="Número"
+              value={contact.registration?.number}
+              maxLength={30}
+              onChange={(number) =>
+                set({ registration: { council: contact.registration?.council ?? "", number } })
+              }
+            />
+          </div>
+        </SectionCard>
+      )}
     </StepForm>
   );
 }
@@ -152,7 +207,6 @@ function WhatsappField({
   const [checked, setChecked] = useState(false);
   const digits = whatsappDigits(shown);
   const invalid = checked && digits !== "" && !whatsappSchema.safeParse(digits).success;
-
   return (
     <TextField
       label="WhatsApp"
@@ -169,6 +223,32 @@ function WhatsappField({
         const formatted = formatPhone(typed);
         setShown(formatted);
         onChange(whatsappDigits(formatted));
+      }}
+    />
+  );
+}
+
+function PhoneField({
+  value,
+  onChange,
+}: {
+  value: string | undefined;
+  onChange: (digits: string) => void;
+}) {
+  const [shown, setShown] = useState(() => formatPhone(value ?? ""));
+  return (
+    <TextField
+      label="Telefone (opcional)"
+      type="tel"
+      inputMode="tel"
+      autoComplete="tel"
+      value={shown}
+      placeholder="(35) 3471-0000"
+      maxLength={16}
+      onChange={(typed) => {
+        const formatted = formatPhone(typed);
+        setShown(formatted);
+        onChange(digitsOf(formatted));
       }}
     />
   );
@@ -195,163 +275,37 @@ function EmailField({
       maxLength={120}
       error={invalid ? "Escreva um e-mail válido, como voce@exemplo.com." : undefined}
       onBlur={() => setChecked(true)}
-      onChange={onChange}
+      onChange={(typed) => onChange(typed.trim())}
     />
   );
 }
 
-function StateField({
+/** Neighborhoods or cities served, typed as one line separated by commas. */
+function ServiceAreaField({
   value,
   onChange,
 }: {
-  value: string | undefined;
-  onChange: (state: string) => void;
+  value: string[];
+  onChange: (areas: string[]) => void;
 }) {
-  const id = useId();
+  const [shown, setShown] = useState(() => value.join(", "));
   return (
-    <div className="grid gap-2">
-      <label htmlFor={id} className="text-[0.9375rem] font-semibold">
-        Estado
-      </label>
-      <select
-        id={id}
-        value={value ?? ""}
-        autoComplete="address-level1"
-        onChange={(event) => onChange(event.target.value)}
-        className="h-13 w-full min-w-0 rounded-lg border border-input bg-card px-3 text-base text-ink outline-none transition-[border-color,box-shadow] duration-150 focus-visible:border-leaf focus-visible:ring-4 focus-visible:ring-leaf/15"
-      >
-        <option value="">UF</option>
-        {brazilianStates.map((uf) => (
-          <option key={uf} value={uf}>
-            {uf}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-const emptyRow = (): OpeningHoursRow => ({ days: "", hours: "" });
-
-/**
- * Opening hours, one row per group of days. Each row says right away whether it was
- * understood, and the card shows the open/closed sign the site will display.
- */
-function OpeningHoursCard({
-  rows,
-  state,
-  onChange,
-}: {
-  rows: OpeningHoursRow[];
-  state: string | undefined;
-  onChange: (rows: OpeningHoursRow[]) => void;
-}) {
-  const filled = rows.filter((row) => row.days.trim() && row.hours.trim());
-
-  return (
-    <SectionCard
-      name="Horários"
-      note="Escreva como estaria na porta. Com os horários, o site mostra se está aberto agora."
-    >
-      <ItemList<OpeningHoursRow>
-        items={rows.length ? rows : [emptyRow()]}
-        max={8}
-        itemName="Horário"
-        addLabel="Adicionar horário"
-        newItem={emptyRow}
-        onChange={onChange}
-        renderItem={(row, update, index) => {
-          const daysUnclear = row.days.trim() !== "" && !parseDays(row.days);
-          const hoursUnclear = row.hours.trim() !== "" && !parseHours(row.hours);
-          const holiday = /feriado/i.test(row.days);
-          return (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextField
-                label="Dias"
-                value={row.days}
-                placeholder={index === 0 ? "Ex.: Seg a Sex" : undefined}
-                maxLength={40}
-                error={
-                  daysUnclear && !holiday
-                    ? "Use dias como “Seg a Sex”, “Sábado” ou “Todos os dias”."
-                    : undefined
-                }
-                onChange={(days) => update({ days })}
-              />
-              <TextField
-                label="Horário"
-                value={row.hours}
-                placeholder={index === 0 ? "Ex.: 08:00 - 18:00" : undefined}
-                maxLength={40}
-                error={
-                  hoursUnclear
-                    ? "Use horários como “08:00 - 18:00”, “8h às 12h e 14h às 18h” ou “Fechado”."
-                    : undefined
-                }
-                onChange={(hours) => update({ hours })}
-              />
-            </div>
-          );
-        }}
-      />
-      <DoorSignPreview rows={filled} state={state} hasRows={filled.length > 0} />
-    </SectionCard>
-  );
-}
-
-/** The sign the site will show, computed with the business's clock. */
-function DoorSignPreview({
-  rows,
-  state,
-  hasRows,
-}: {
-  rows: OpeningHoursRow[];
-  state: string | undefined;
-  hasRows: boolean;
-}) {
-  // The clock is read after mounting, so server and browser render the same markup.
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    setNow(new Date());
-    const timer = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(timer);
-  }, []);
-
-  if (!hasRows || !now) return null;
-  const parsed = parseOpeningHours(rows);
-  const { weekday, minute } = localTime(now, timeZoneForState(state));
-  const status = parsed ? statusAt(buildWeek(parsed), weekday, minute) : null;
-
-  return (
-    <div role="status" className="rounded-lg border border-border bg-paper p-4 text-sm">
-      {!parsed ? (
-        <p className="text-ink-soft">
-          Os horários aparecem no site do jeito que você escreveu, mas sem a placa de aberto ou
-          fechado. Ajuste as linhas marcadas para ela aparecer.
-        </p>
-      ) : status ? (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="text-ink-soft">Agora o site mostraria:</span>
-          <span
-            className={cn(
-              "inline-flex items-center gap-2 rounded-full px-3 py-1 font-semibold",
-              status.open ? "bg-leaf-wash text-leaf-deep" : "bg-table text-ink",
-            )}
-          >
-            <span
-              aria-hidden="true"
-              className={cn("size-2 rounded-full", status.open ? "bg-leaf" : "bg-ink-soft")}
-            />
-            {status.label}
-          </span>
-          <span className="text-ink-soft">{status.detail}</span>
-        </div>
-      ) : (
-        <p className="text-ink-soft">
-          Hoje não está entre os dias informados, então a placa de aberto ou fechado não aparece
-          hoje. Se fecha hoje, acrescente uma linha com “Fechado”.
-        </p>
-      )}
-    </div>
+    <TextField
+      label="Bairros ou cidades que você atende"
+      value={shown}
+      maxLength={400}
+      placeholder="Ex.: Centro, Jardim América, Pouso Alegre"
+      hint="Separe por vírgula. Até 10."
+      onChange={(typed) => {
+        setShown(typed);
+        onChange(
+          typed
+            .split(",")
+            .map((area) => area.trim())
+            .filter((area) => area.length >= 2)
+            .slice(0, 10),
+        );
+      }}
+    />
   );
 }

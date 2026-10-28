@@ -1,178 +1,163 @@
 "use client";
 
+import { brazilianStates } from "@brotasites/schema";
 import {
-  applyCategory,
-  type BusinessStep as BusinessValues,
-  businessStepSchema,
-} from "@brotasites/schema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useEffect, useId, useState } from "react";
-import { useForm } from "react-hook-form";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { StepFooter } from "@/components/wizard/step-footer";
-import { StepHeader } from "@/components/wizard/step-header";
-import { readDemoHandoff } from "@/lib/demo-handoff";
-import { useDraft } from "@/lib/draft-store";
-import { CategoryPicker, listedCategories, OTHER, pickerValueFor } from "./category-picker";
+  blockedTopic,
+  businessAnswersSchema,
+  categoryNotOpen,
+  type FormDraft,
+  storyQuestions,
+} from "@brotasites/schema/v1.2";
+import { useId } from "react";
+import { useForm12 } from "@/lib/form-store";
+import { CategorySearch } from "./category-search";
+import { SectionCard, TextField } from "./fields";
+import { LockedNote, StepForm } from "./step-form";
+
+// Step 1: the business (docs/form-flow.md). The optional questions make the site specific: the
+// AI only writes from facts the client gives.
+
+type Business = NonNullable<FormDraft["business"]>;
 
 export function BusinessStep() {
-  const router = useRouter();
-  const { draft, updateDraft, completeStep } = useDraft();
-  const storedCategory = draft.business?.category;
-  const [choice, setChoice] = useState(() => pickerValueFor(storedCategory));
-  const categoryHelpId = useId();
-  const categoryErrorId = useId();
-
-  const form = useForm<BusinessValues>({
-    resolver: zodResolver(businessStepSchema),
-    mode: "onTouched",
-    defaultValues: {
-      name: draft.business?.name ?? "",
-      category: storedCategory ?? "",
-      city: draft.business?.contact?.address?.city ?? "",
-    },
-  });
-
-  // Every keystroke goes to the draft, so the preview follows along.
-  useEffect(() => {
-    const { unsubscribe } = form.watch((values, { name }) => {
-      if (name === "name") {
-        updateDraft((d) => ({ ...d, business: { ...d.business, name: values.name } }));
-      }
-      if (name === "city") {
-        updateDraft((d) => ({
-          ...d,
-          business: {
-            ...d.business,
-            contact: {
-              ...d.business?.contact,
-              address: { ...d.business?.contact?.address, city: values.city },
-            },
-          },
-        }));
-      }
-      if (name === "category" && values.category !== undefined) {
-        const category = values.category;
-        updateDraft((d) => applyCategory(d, category));
-      }
-    });
-    return unsubscribe;
-  }, [form, updateDraft]);
-
-  // Answers brought from the home page demo (/criar/negocio?nome=...&tipo=...): applied once,
-  // then removed from the address. Other answers in the draft stay as they are.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once, on arrival
-  useEffect(() => {
-    const { name, type } = readDemoHandoff(
-      window.location.search,
-      listedCategories.map((c) => c.id),
-    );
-    if (name) form.setValue("name", name, { shouldDirty: true });
-    if (type) chooseCategory(type);
-    if (window.location.search) window.history.replaceState(null, "", window.location.pathname);
-  }, []);
-
-  function chooseCategory(id: string) {
-    setChoice(id);
-    const label = listedCategories.find((c) => c.id === id)?.label ?? "";
-    form.setValue("category", label, {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: label !== "",
-    });
-  }
-
-  function onSubmit() {
-    completeStep("negocio");
-    router.push("/criar/modelo");
-  }
-
-  const categoryError = form.formState.errors.category?.message;
+  const { draft, updateDraft, identityLocked } = useForm12();
+  const business = draft.business ?? {};
+  const set = (patch: Partial<Business>) =>
+    updateDraft((d) => ({ ...d, business: { ...d.business, ...patch } }));
+  const blocked = blockedTopic(
+    business.name,
+    business.description,
+    ...Object.values(business.story ?? {}),
+  );
+  const notOpen = categoryNotOpen(business.category);
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="flex flex-1 flex-col">
-        <StepHeader step="negocio" />
-
-        <div className="grid gap-7">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[0.9375rem] font-semibold">Nome do negócio</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ex.: Padaria do Zé" autoComplete="organization" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+    <StepForm
+      step="negocio"
+      validate={() => {
+        if (blocked) return `Não atendemos negócios de ${blocked}.`;
+        if (notOpen) return notOpen;
+        const parsed = businessAnswersSchema.safeParse({
+          ...business,
+          description: business.description ?? "",
+        });
+        return parsed.success ? null : (parsed.error.issues[0]?.message ?? "Confira as respostas.");
+      }}
+    >
+      {identityLocked && (
+        <LockedNote>
+          A direção do site já foi aprovada. Mudanças no nome e na descrição entram quando você
+          pedir para montar o site de novo.
+        </LockedNote>
+      )}
+      <SectionCard name="O básico">
+        <TextField
+          label="Nome do negócio"
+          value={business.name}
+          maxLength={80}
+          autoComplete="organization"
+          placeholder="Ex.: Padaria do Zé"
+          onChange={(name) => set({ name })}
+        />
+        <CategorySearch value={business.category} onChange={(category) => set({ category })} />
+        {notOpen && (
+          <p role="status" className="text-sm font-semibold text-destructive">
+            {notOpen}
+          </p>
+        )}
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)] gap-5">
+          <TextField
+            label="Cidade"
+            value={business.city}
+            maxLength={80}
+            autoComplete="address-level2"
+            onChange={(city) => set({ city })}
           />
-
-          <fieldset className="grid gap-2.5">
-            <legend className="mb-2.5 text-[0.9375rem] font-semibold">Tipo de negócio</legend>
-            <CategoryPicker
-              value={choice}
-              onChange={chooseCategory}
-              invalid={Boolean(categoryError)}
-              describedBy={categoryError ? categoryErrorId : categoryHelpId}
-            />
-            {choice === OTHER && (
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <Input
-                    aria-label="Qual é o tipo do negócio?"
-                    placeholder="Qual é o tipo? Ex.: Floricultura"
-                    className="mt-1"
-                    autoFocus
-                    {...field}
-                  />
-                )}
-              />
-            )}
-            {categoryError ? (
-              <p id={categoryErrorId} className="text-sm text-destructive">
-                {categoryError}
-              </p>
-            ) : (
-              <p id={categoryHelpId} className="text-sm text-ink-soft">
-                Com isso sugerimos modelo, cores e seções. Você pode mudar tudo depois.
-              </p>
-            )}
-          </fieldset>
-
-          <FormField
-            control={form.control}
-            name="city"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[0.9375rem] font-semibold">Cidade</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Ex.: Santa Rita do Sapucaí"
-                    autoComplete="address-level2"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          <StateField
+            value={business.state}
+            onChange={(state) => set({ state: state as Business["state"] })}
           />
         </div>
+        <TextField
+          label="Conte em poucas palavras o que você faz"
+          multiline
+          value={business.description}
+          maxLength={500}
+          hint="Do seu jeito. Ex.: Padaria de bairro com pão de fermentação natural e bolos por encomenda."
+          onChange={(description) => set({ description })}
+        />
+        <TextField
+          label="Ano em que começou (opcional)"
+          inputMode="numeric"
+          value={business.foundedYear ? String(business.foundedYear) : ""}
+          maxLength={4}
+          placeholder="Ex.: 1998"
+          onChange={(year) => {
+            const digits = year.replace(/\D/g, "").slice(0, 4);
+            set({ foundedYear: digits.length === 4 ? Number(digits) : undefined });
+          }}
+        />
+      </SectionCard>
 
-        <StepFooter step="negocio" />
-      </form>
-    </Form>
+      <SectionCard
+        name="Deixe o site com a sua cara"
+        note="Opcional, mas faz diferença: o texto do site usa só o que você contar aqui, nada é inventado."
+      >
+        {storyQuestions.map(([key, question]) => (
+          <TextField
+            key={key}
+            label={question}
+            multiline
+            value={business.story?.[key]}
+            maxLength={200}
+            onChange={(answer) => set({ story: { ...business.story, [key]: answer } })}
+          />
+        ))}
+      </SectionCard>
+
+      {blocked && (
+        <div
+          role="alert"
+          className="rounded-lg border border-destructive/40 bg-paper p-4 text-[0.9375rem]"
+        >
+          <p className="font-semibold">Esse tipo de negócio a gente não atende.</p>
+          <p className="text-ink-soft">
+            Pelo que você escreveu, o site seria sobre {blocked}, e isso a BrotaSites não publica.
+            Nada foi cobrado. Se entendemos errado, ajuste o texto acima.
+          </p>
+        </div>
+      )}
+    </StepForm>
+  );
+}
+
+export function StateField({
+  value,
+  onChange,
+}: {
+  value: string | undefined;
+  onChange: (state: string) => void;
+}) {
+  const id = useId();
+  return (
+    <div className="grid gap-2">
+      <label htmlFor={id} className="text-[0.9375rem] font-semibold">
+        Estado
+      </label>
+      <select
+        id={id}
+        value={value ?? ""}
+        autoComplete="address-level1"
+        onChange={(event) => onChange(event.target.value)}
+        className="h-13 w-full min-w-0 rounded-lg border border-input bg-card px-3 text-base text-ink outline-none transition-[border-color,box-shadow] duration-150 focus-visible:border-leaf focus-visible:ring-4 focus-visible:ring-leaf/15"
+      >
+        <option value="">UF</option>
+        {brazilianStates.map((uf) => (
+          <option key={uf} value={uf}>
+            {uf}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }

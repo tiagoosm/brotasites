@@ -1,9 +1,12 @@
 "use client";
 
-import { type FormStepSlug, formSteps } from "@brotasites/schema";
+import {
+  type FormStepSlug12 as FormStepSlug,
+  formSteps12 as formSteps,
+} from "@brotasites/schema/v1.2";
 import { useEffect, useRef } from "react";
 
-/** Each step is one of the seven questions (copy lives in formSteps, see docs/platform-copy.md). */
+/** Each step is one of the seven questions (copy lives in formSteps12, docs/form-flow.md). */
 export function StepHeader({ step }: { step: FormStepSlug }) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const index = formSteps.findIndex((s) => s.slug === step);
@@ -23,7 +26,7 @@ export function StepHeader({ step }: { step: FormStepSlug }) {
     <header className="mb-9 grid gap-3">
       {/* Smaller screens already show the step in the header. */}
       <p className="tag hidden text-stem xl:block">
-        Pergunta {index + 1} de {formSteps.length} · {current.title}
+        Passo {index + 1} de {formSteps.length} · {current.title}
       </p>
       <h1
         ref={titleRef}
