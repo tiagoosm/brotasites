@@ -17,7 +17,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E9 Reviewer: deterministic checks + reviewer agent
 - [x] E10 Platform: sign-in, form, queue, status, directions, finished site
 - [x] E11 Admin review panel and catalog promotion cycle
-- [ ] E12 Hosting: Worker, R2, KV, publishing, suspension, export
+- [x] E12 Hosting: Worker, R2, KV, publishing, suspension, export
 - [ ] E13 Final verification, blind test kit, owner steps
 - [ ] E14 (optional) "Experimente aqui" demo on the home page
 

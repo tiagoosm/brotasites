@@ -2,11 +2,11 @@
 
 Form-to-landing-page platform for small businesses. The client fills out a short form, and BrotaSites builds and publishes a static landing page for them automatically. No code, no page builder.
 
-> **Status:** in development. The public site and the form are online at **https://brotasites.vercel.app** (Vercel, Hobby plan, testing only). Built and covered by tests: the 7-step form on schema 1.2 with sign-in first, the "Meus sites" dashboard (3 directions, the finished site, changes, approval and a stub payment), the identity engine, the AI layer, the reviewer, the generation jobs (`apps/jobs`, Trigger.dev) and the Worker that serves client sites. Not online yet: the jobs on Trigger.dev, the E10 database migrations, Cloudflare (R2, Worker, previews) and the client sites' domain (see `docs/owner-steps.md`).
+> **Status:** in development. The public site and the form are online at **https://brotasites.vercel.app** (Vercel, Hobby plan, testing only). Built and covered by tests: the 7-step form on schema 1.2 with sign-in first, the "Meus sites" dashboard (3 directions, the finished site, changes, approval and a stub payment), the identity engine, the AI layer, the reviewer, the generation jobs (`apps/jobs`, Trigger.dev), the admin panel with the catalog promotion cycle, and the Worker that serves client sites from R2 and Workers KV (versions, suspension, custom domains, .zip export). Not online yet: the jobs on Trigger.dev, the E10 and E11 database migrations, Cloudflare (R2, KV, Worker) and the client sites' domain (see `docs/owner-steps.md`).
 >
 > Repository: https://github.com/tiagoosm/brotasites (currently public; visibility to be decided by the owner, see `docs/owner-steps.md`).
 >
-> **Next:** hosting (E12): the Worker with KV, publishing by version, suspension and export. The steps are in [`PLAN.md`](PLAN.md).
+> **Next:** the final verification (E13). The steps are in [`PLAN.md`](PLAN.md).
 
 ## Platform hosting
 
@@ -117,7 +117,7 @@ pnpm --filter @brotasites/jobs dev:local     # local runner: takes queued jobs, 
 pnpm --filter @brotasites/jobs exec trigger deploy   # owner step: deploy the tasks to Trigger.dev
 ```
 
-The jobs need `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY` (never in the browser), and the R2 variables (`CLOUDFLARE_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`) for the previews and publishing. Each build goes to the R2 bucket `brotasites-sites` under `sites/<subdomain>/<deploy id>/` and then `sites/<subdomain>/current` switches, so visitors never see a half-updated site; previews go under `previews/<site id>/<token>/`. A single Worker, [`apps/sites-worker`](apps/sites-worker), serves both. Cloudflare setup is an owner step (`docs/owner-steps.md`, E12).
+The jobs need `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY` (never in the browser), and the R2 variables (`CLOUDFLARE_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`) for the previews and publishing. Each build goes to the R2 bucket `brotasites-sites` under `sites/<subdomain>/<deploy id>/`, with a .zip of it under `exports/`, and then the site's record in Workers KV switches to it (`CLOUDFLARE_KV_NAMESPACE_ID`, `CLOUDFLARE_KV_API_TOKEN`), keeping the previous version for a rollback, so visitors never see a half-updated site; previews go under `previews/<site id>/<token>/`. A single Worker, [`apps/sites-worker`](apps/sites-worker), serves sites, previews, suspended pages, clients' own domains and the signed .zip download (`docs/hosting.md`). Run it locally with `pnpm --filter @brotasites/sites-worker dev` (Miniflare, local R2 and KV). Cloudflare setup is an owner step (`docs/owner-steps.md`).
 
 Sites of schema 1.1 (made before E10) are still built by the old worker: `pnpm --filter @brotasites/generator worker`.
 
