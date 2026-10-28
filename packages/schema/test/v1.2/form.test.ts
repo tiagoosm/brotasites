@@ -105,7 +105,11 @@ describe("formToSiteConfig", () => {
     const config = siteConfigSchema.parse(
       formToSiteConfig(padaria, { availableAssets: new Set([photo(2).assetId]) }),
     );
-    expect(config.sections[0]?.id === "hero" && config.sections[0].content.image).toBeNull();
+    expect(config.sections[0]?.id === "hero" && config.sections[0].content.image?.assetId).toBe(
+      photo(2).assetId,
+    );
+    const none = siteConfigSchema.parse(formToSiteConfig(padaria, { availableAssets: new Set() }));
+    expect(none.sections[0]?.id === "hero" && none.sections[0].content.image).toBeNull();
   });
 });
 
