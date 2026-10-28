@@ -2,10 +2,13 @@ import { createHash, createHmac, randomBytes } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join, relative, sep } from "node:path";
 import type { SiteConfig } from "@brotasites/schema";
+import { type KvOptions, publishVersion, putPreviewRecord } from "./kv.js";
+import { zipDir } from "./zip.js";
 
 // Uploads a built site to the R2 bucket served by apps/sites-worker, through R2's S3 API.
 // Requests are signed with AWS Signature V4 (node:crypto, no SDK). Each deploy goes to a new
-// folder and the `current` pointer is written last, so the switch is atomic for visitors.
+// folder, with its .zip export, and the pointer is switched last, so the switch is atomic for
+// visitors: in Workers KV when it is configured (kv.ts), else the R2 object `current`.
 
 export interface R2Options {
   accountId: string;
@@ -20,6 +23,8 @@ export interface R2Options {
    * Worker serves them under the strict content security policy (apps/sites-worker/src/headers.ts).
    */
   strictCsp?: boolean;
+  /** The Worker's pointers and states (E12). Without it, the pointer is R2's `current`. */
+  kv?: KvOptions;
 }
 
 const CONCURRENCY = 6;
@@ -184,12 +189,20 @@ export async function deployToR2(
   const deployId =
     options.deployId ?? `${Date.now().toString(36)}-${randomBytes(4).toString("hex")}`;
   await uploadDirToR2(outDir, `sites/${subdomain}/${deployId}/`, options);
+  // The client's copy of this exact version (served by the Worker with a signed link).
+  await putObject(options, `exports/${subdomain}/${deployId}.zip`, await zipDir(outDir), {
+    "content-type": "application/zip",
+  });
 
   // Only now does the site switch to the new files.
-  await putObject(options, `sites/${subdomain}/current`, new TextEncoder().encode(deployId), {
-    "content-type": "text/plain; charset=utf-8",
-    "cache-control": "no-store",
-  });
+  if (options.kv) {
+    await publishVersion(options.kv, subdomain, deployId);
+  } else {
+    await putObject(options, `sites/${subdomain}/current`, new TextEncoder().encode(deployId), {
+      "content-type": "text/plain; charset=utf-8",
+      "cache-control": "no-store",
+    });
+  }
   return deployId;
 }
 
@@ -205,4 +218,6 @@ export async function uploadPreviewToR2(
   options: R2Options,
 ): Promise<void> {
   await uploadDirToR2(outDir, `previews/${siteId}/${token}/`, { ...options, strictCsp: true });
+  // The Worker opens the preview only with the token recorded here, until it expires.
+  if (options.kv) await putPreviewRecord(options.kv, siteId, token);
 }

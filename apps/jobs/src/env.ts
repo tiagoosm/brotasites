@@ -1,5 +1,5 @@
 import { aiProviderFromEnv } from "@brotasites/ai";
-import type { R2Options } from "@brotasites/generator";
+import type { KvOptions, R2Options } from "@brotasites/generator";
 import { reviewerAgentFromEnv } from "@brotasites/reviewer";
 import { createClient } from "@supabase/supabase-js";
 import type { PipelineDeps } from "./pipeline.js";
@@ -12,6 +12,18 @@ import { supabaseStore } from "./supabase-store.js";
 
 export type Env = Record<string, string | undefined>;
 
+export function kvFromEnv(env: Env): KvOptions | undefined {
+  const { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_KV_NAMESPACE_ID, CLOUDFLARE_KV_API_TOKEN } = env;
+  if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_KV_NAMESPACE_ID || !CLOUDFLARE_KV_API_TOKEN) {
+    return undefined;
+  }
+  return {
+    accountId: CLOUDFLARE_ACCOUNT_ID,
+    namespaceId: CLOUDFLARE_KV_NAMESPACE_ID,
+    apiToken: CLOUDFLARE_KV_API_TOKEN,
+  };
+}
+
 export function r2FromEnv(env: Env): R2Options | undefined {
   const { CLOUDFLARE_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = env;
   if (!CLOUDFLARE_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) return undefined;
@@ -20,6 +32,8 @@ export function r2FromEnv(env: Env): R2Options | undefined {
     accessKeyId: R2_ACCESS_KEY_ID,
     secretAccessKey: R2_SECRET_ACCESS_KEY,
     bucket: env.R2_BUCKET || "brotasites-sites",
+    // Pointers, states and preview tokens for the sites Worker (E12).
+    kv: kvFromEnv(env),
   };
 }
 
