@@ -9,6 +9,9 @@ const signedIn = [
   `/criar/${SITE}/marca`,
   `/criar/${SITE}/contato`,
   `/meus-sites/${SITE}`,
+  "/admin",
+  `/admin/sites/${SITE}`,
+  "/admin/catalogo",
 ];
 
 for (const path of ["/", "/ajuda", "/termos", "/privacidade", "/exemplo", ...signedIn]) {
@@ -20,6 +23,7 @@ for (const path of ["/", "/ajuda", "/termos", "/privacidade", "/exemplo", ...sig
         draft: padaria,
         completed: allBefore("endereco"),
         directions: threeDirections,
+        admin: path.startsWith("/admin"),
       });
     }
     await page.goto(path);

@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import type { BrowserContext } from "@playwright/test";
+import type { BrowserContext, Route } from "@playwright/test";
 
 // A fake Supabase for e2e: the platform points at https://e2e-test.supabase.co (see
 // playwright.config.ts), the session is a cookie made here and every auth, database and
@@ -102,6 +102,10 @@ export interface FakeState {
   removed: string[];
   /** Calls to the platform's route handlers. */
   api: string[];
+  /** The person is on the admins list (is_admin). */
+  admin?: boolean;
+  /** Bodies posted to the admin route handlers, by path. */
+  adminPosts: { path: string; body: Record<string, unknown> }[];
 }
 
 export function siteRow(status = "draft", extra: Partial<NonNullable<FakeState["site"]>> = {}) {
@@ -161,6 +165,7 @@ export async function fakeSupabase(
     uploads: [],
     removed: [],
     api: [],
+    adminPosts: [],
     ...initial,
   };
   const json = (body: unknown, status = 200) => ({
@@ -197,6 +202,8 @@ export async function fakeSupabase(
         setStatus("building", { approved_direction: String(body.p_direction_id) });
         event("direction_chosen", "Direção escolhida. Estamos montando o site.");
         return route.fulfill(json("job-build"));
+      case "is_admin":
+        return route.fulfill(json(state.admin === true));
       case "request_rebuild":
         setStatus("building");
         return route.fulfill(json("job-rebuild"));
@@ -297,6 +304,7 @@ export async function fakeSupabase(
   await context.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());
     state.api.push(url.pathname);
+    if (url.pathname.startsWith("/api/admin/")) return answerAdmin(route, url, state, json);
     if (url.pathname === "/api/jobs/start") return route.fulfill(json({ started: false }));
     if (url.pathname.endsWith("/renders")) {
       const urls: Record<string, string> = {};
@@ -349,3 +357,109 @@ export const threeDirections: FakeDirection[] = (
   source: index === 2 ? "engine" : "ai",
   screenshots: [`${SITE}/0/${direction}-1280.png`, `${SITE}/0/${direction}-390.png`],
 }));
+
+type Json = (
+  body: unknown,
+  status?: number,
+) => { status: number; contentType: string; body: string };
+
+/** The admin route handlers, answered from the fake's state (the real ones check is_admin). */
+function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
+  if (!state.admin) return route.fulfill(json({ error: "Esta área é só para a equipe." }, 403));
+  const request = route.request();
+  if (request.method() === "POST") {
+    const body = (request.postDataJSON() ?? {}) as Record<string, unknown>;
+    state.adminPosts.push({ path: url.pathname, body });
+    if (url.pathname.endsWith("/decide") && state.site) {
+      const next: Record<string, string> = {
+        approve: "awaiting_approval",
+        request_changes: "building",
+        suspend: "suspended",
+        unsuspend: "in_review",
+      };
+      if ((body.action === "request_changes" || body.action === "suspend") && !body.note) {
+        return route.fulfill(
+          json({ error: "Escreva o motivo: o cliente e o registro precisam dele." }, 400),
+        );
+      }
+      state.site = { ...state.site, status: next[String(body.action)] ?? state.site.status };
+      return route.fulfill(json({ status: state.site.status }));
+    }
+    return route.fulfill(json({ ok: true }));
+  }
+  if (url.pathname === "/api/admin/queue") {
+    const business = (state.draft.business ?? {}) as Record<string, string>;
+    return route.fulfill(
+      json(
+        state.site
+          ? [
+              {
+                id: state.site.id,
+                status: state.site.status,
+                statusMessage: state.site.status_message,
+                subdomain: state.site.subdomain,
+                updatedAt: state.site.updated_at,
+                name: business.name ?? null,
+                category: business.category ?? null,
+                city: business.city ?? null,
+                state: business.state ?? null,
+                review: "changesNeeded",
+              },
+            ]
+          : [],
+      ),
+    );
+  }
+  if (url.pathname.startsWith("/api/admin/sites/") && state.site) {
+    return route.fulfill(
+      json({
+        site: state.site,
+        draft: state.draft,
+        ownerEmail: USER.email,
+        direction: { direction: "evolucao", composition_key: "0123456789abcdef", source: "ai" },
+        screenshots: [],
+        reports: [
+          {
+            status: "changesNeeded",
+            created_at: "2026-10-29T10:00:00Z",
+            report: {
+              findings: [
+                {
+                  check: "agent:repetition",
+                  severity: "medium",
+                  where: "hero",
+                  message: "O título repete o nome do negócio.",
+                },
+              ],
+            },
+          },
+        ],
+        events: state.events,
+        decisions: [],
+        payments: [],
+      }),
+    );
+  }
+  if (url.pathname === "/api/admin/catalog") {
+    const metrics = {
+      suggested: 6,
+      chosen: 2,
+      approved: 1,
+      changeRequests: 1,
+      findings: { low: 1, medium: 1, high: 0 },
+      decisions: 2,
+      reviewHours: 1.5,
+    };
+    return route.fulfill(
+      json({
+        metrics: {
+          compositions: [{ key: "0123456789abcdef", ...metrics }],
+          variants: [{ id: "hero-feast", ...metrics }],
+        },
+        weights: [{ kind: "variant", ref: "hero-feast", state: "recommended" }],
+        requests: [],
+      }),
+    );
+  }
+  return route.fulfill(json({ error: "not found" }, 404));
+}
