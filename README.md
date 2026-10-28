@@ -6,7 +6,7 @@ Form-to-landing-page platform for small businesses. The client fills out a short
 >
 > Repository: https://github.com/tiagoosm/brotasites (currently public; visibility to be decided by the owner, see `docs/owner-steps.md`).
 >
-> **Next:** the admin review panel (E11), then hosting (E12). The steps are in [`PLAN.md`](PLAN.md).
+> **Next:** hosting (E12): the Worker with KV, publishing by version, suspension and export. The steps are in [`PLAN.md`](PLAN.md).
 
 ## Platform hosting
 
@@ -103,6 +103,10 @@ pnpm --filter @brotasites/ai eval
 ```bash
 pnpm --filter @brotasites/reviewer calibrate
 ```
+
+## Admin panel
+
+`/admin` is for the BrotaSites team only (people in the `admins` table, added by the owner; see `docs/owner-steps.md`). The review queue shows the sites waiting for a person (in review, needing attention, suspended). A site's page shows the finished site, the reviewer's findings, the client's answers and the history, and records the decision: approve for the client, ask for changes (the note goes to the copy step), suspend with a reason, or lift a suspension. Every decision is logged and the log cannot be rewritten. `/admin/catalogo` shows the metrics per composition and per variant, marks compositions and variants as recommended or retired, and records requests to the variant factory (`docs/catalog-promotion.md`).
 
 ## Publishing
 

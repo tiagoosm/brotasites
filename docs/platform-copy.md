@@ -83,3 +83,7 @@ Since E10 the form follows `docs/form-flow.md`. Titles, questions and descriptio
 - **Finished site:** *Um endereço particular, só para você conferir. Ele não aparece no Google.* / *Ver o site pronto* / *Aprovar e publicar*.
 - **Changes:** *Pedir ajustes* / *Mude o que quiser nas respostas e peça uma nova versão. A identidade aprovada continua a mesma.* / *Montar o site de novo com as mudanças*.
 - **Payment (stub):** *Publicar o site* / *Pagamento único. Sem mensalidade.* / *Ambiente de teste: o pagamento por Pix e cartão ainda não está ligado. Este botão simula um pagamento aprovado; nada é cobrado.* / *Simular pagamento aprovado*.
+
+## Admin panel (team only)
+
+Plain and short, in pt-BR like the rest of the platform. Titles: *Fila de revisão* (tabs *Em revisão*, *Precisa de atenção*, *Suspensos*), the site's name, *Catálogo*. Actions: *Aprovar para o cliente*, *Pedir ajustes*, *Suspender*, *Retirar a suspensão*; on the catalog, *Recomendar*, *Aposentar*, *Voltar ao normal* and *Registrar pedido*. A note is required to ask for changes and to suspend: *Escreva o motivo: o cliente e o registro precisam dele.* People who are not admins see *Acesso restrito*.
