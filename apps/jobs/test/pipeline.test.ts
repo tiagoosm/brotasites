@@ -98,6 +98,8 @@ function setup(draftChange?: (draft: FormDraft) => void) {
       { width: 1280, png: Buffer.from("desktop") },
     ],
     browserChecks: async () => ({ findings: [], screenshots: [] }),
+    // A job that fails shows why in the test output.
+    log: (message) => console.error(message),
   };
   return { store, siteId, deps, uploads, deployed };
 }
