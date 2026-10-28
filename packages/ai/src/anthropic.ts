@@ -1,4 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import type { z } from "zod";
 import { type ModelClient, ModelError, type ModelRequest, type ModelResponse } from "./model.js";
 
 // The live client: Claude through the Anthropic SDK. One Messages request per task, with:
@@ -21,6 +23,11 @@ export interface AnthropicClientOptions {
 }
 
 const FALLBACK_BETA = "server-side-fallback-2026-07-01";
+
+/** The JSON Schema for structured outputs from a Zod schema, as the SDK's helper builds it. */
+export function outputSchema(schema: z.ZodType): Record<string, unknown> {
+  return zodOutputFormat(schema).schema;
+}
 
 export class AnthropicModelClient implements ModelClient {
   readonly modelId: string;
@@ -46,7 +53,24 @@ export class AnthropicModelClient implements ModelClient {
         betas: [FALLBACK_BETA],
         fallbacks: "default",
         system: [{ type: "text", text: request.system, cache_control: { type: "ephemeral" } }],
-        messages: [{ role: "user", content: request.prompt }],
+        messages: [
+          {
+            role: "user",
+            content: request.images?.length
+              ? [
+                  ...request.images.map((image) => ({
+                    type: "image" as const,
+                    source: {
+                      type: "base64" as const,
+                      media_type: image.mediaType,
+                      data: image.data,
+                    },
+                  })),
+                  { type: "text" as const, text: request.prompt },
+                ]
+              : request.prompt,
+          },
+        ],
         output_config: {
           effort: this.effort,
           format: { type: "json_schema", schema: request.schema },

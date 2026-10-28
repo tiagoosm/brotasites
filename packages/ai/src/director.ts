@@ -1,4 +1,3 @@
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { variants as catalogVariants, type Variant } from "@brotasites/catalog";
 import {
   CompositionRejected,
@@ -13,6 +12,7 @@ import {
 } from "@brotasites/engine";
 import { type Family, type SiteConfig, siteConfigSchema } from "@brotasites/schema/v1.2";
 import type { z } from "zod";
+import { outputSchema } from "./anthropic.js";
 import { type AiCache, cacheKey, MemoryCache } from "./cache.js";
 import { catalogMenu, choicesOf, compositionSchema } from "./composition.js";
 import {
@@ -114,7 +114,7 @@ export class AiDirector implements EngineProvider {
     payload: unknown,
     maxTokens: number,
   ): Promise<{ value?: T; problems: string[]; costUsd: number }> {
-    const { schema: jsonSchema } = zodOutputFormat(schema);
+    const jsonSchema = outputSchema(schema);
     let response: Awaited<ReturnType<ModelClient["complete"]>>;
     try {
       response = await this.options.model.complete({

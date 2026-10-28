@@ -96,6 +96,14 @@ To work on the templates with live reload, run `pnpm --filter @brotasites/templa
 pnpm --filter @brotasites/ai eval
 ```
 
+## Reviewer
+
+`packages/reviewer` checks every site before a person sees it: the config, the built files (no outside requests, no scripts, safe links, weight), the page in Chromium at 360, 768 and 1280 px (overflow, axe, touch targets, reduced motion) and, with `AI_MODE=live`, a reviewer agent that looks at screenshots. Fixable findings go back to the generator for up to 2 rounds. To run the calibration set (20 known defects, 5 clean sites):
+
+```bash
+pnpm --filter @brotasites/reviewer calibrate
+```
+
 ## Publishing
 
 The last question reserves the site address and queues a generation job (`request_publication` in [`supabase/migrations`](supabase/migrations)). The worker takes queued jobs, turns the draft into the final config (the Zod schema has the last word), builds the site with the generator and records the result; the client follows it at `/meu-site`.

@@ -1,4 +1,9 @@
-export { type GenerateOptions, type GenerateResult, generateSite } from "./generate.js";
+export {
+  buildStaticSite,
+  type GenerateOptions,
+  type GenerateResult,
+  generateSite,
+} from "./generate.js";
 export * from "./image-pipeline.js";
 export { checkImages } from "./images.js";
 export { contentTypeFor, deployToR2, type R2Options, signS3 } from "./r2.js";

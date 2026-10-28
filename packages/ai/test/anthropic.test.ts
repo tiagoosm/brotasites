@@ -141,3 +141,32 @@ describe("modelFromEnv", () => {
     ).toThrow();
   });
 });
+
+describe("images", () => {
+  it("sends images as base64 blocks before the prompt", async () => {
+    const { fetch, calls } = fakeFetch(message());
+    const client = new AnthropicModelClient({
+      modelId: "claude-opus-5-5",
+      apiKey: "k",
+      fetch,
+      maxRetries: 0,
+    });
+    await client.complete({
+      ...request,
+      task: "reviewer",
+      images: [{ mediaType: "image/png", data: "iVBORw0KGgo=" }],
+    });
+    expect(calls[0]?.body.messages).toEqual([
+      {
+        role: "user",
+        content: [
+          {
+            type: "image",
+            source: { type: "base64", media_type: "image/png", data: "iVBORw0KGgo=" },
+          },
+          { type: "text", text: request.prompt },
+        ],
+      },
+    ]);
+  });
+});
