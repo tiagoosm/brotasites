@@ -53,7 +53,7 @@ Two more fixes came from Lighthouse (the home page's WebGL decorations, under Nu
 | Database (local Postgres 16, every migration) | 6 of 6 check files end with "ALL CHECKS PASSED" (RLS, storage, v1.2, publication, approval, admin) |
 | Browser suites | platform (Playwright, phone and desktop: the form, "Meus sites", admin, contrast, touch targets, the home page): 202 passed, 16 skipped (by design per screen size); templates (Playwright, fixtures 1.1 and 1.2, the variant matrix with axe, CSP, sideways scroll and touch targets, 8 KB JavaScript budget): 79 passed, 1 skipped, 1 failed in this container only (below); reviewer (calibration, real build review, broken words): 4 passed; jobs (direction screenshots): 1 passed |
 | Dependency audit | no high or critical advisory; 2 low and 3 moderate: `fast-uri` (through `ajv`, in the Trigger.dev CLI and in `@hookform/resolvers`, which the platform lists but never imports; fixed in 3.1.9, released on 2026-10-19, so Dependabot will offer it) and the `esbuild` development server (Trigger.dev CLI only) |
-| Secret scan (gitleaks, whole history) | no leaks in 140 commits |
+| Secret scan (gitleaks, whole history) | no leaks in the 143 commits of the branch |
 
 The one templates failure, "loads without console errors" on the old 1.1 fixture, is specific to this container: the test aborts the Google Maps iframe, which this container's Chromium (revision 1243, while Playwright 1.64.1 expects 1248) leaves pending, so the page never goes idle. It failed the same way here before any E13 change, the 1.1 template was not touched, and CI runs it with Playwright's own browser.
 
