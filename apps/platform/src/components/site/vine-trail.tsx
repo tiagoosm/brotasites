@@ -8,6 +8,7 @@
 // It only animates while the cursor moves and stops on its own once the vine settles.
 
 import { useEffect, useRef } from "react";
+import { acceleratedWebgl2 } from "./webgl";
 
 const POINTS = 50;
 const DETAIL = 4;
@@ -199,7 +200,8 @@ export default function VineTrail({
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!finePointer || reduced) return;
 
-    const gl = canvas.getContext("webgl2", {
+    // Only with a GPU (webgl.ts): drawn in software, the trail would make the page stutter.
+    const gl = acceleratedWebgl2(canvas, {
       alpha: true,
       premultipliedAlpha: true,
       antialias: false,
