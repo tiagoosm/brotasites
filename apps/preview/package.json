@@ -11,15 +11,15 @@
     "typecheck": "astro check"
   },
   "dependencies": {
-    "@astrojs/node": "11.1.8",
+    "@astrojs/node": "11.1.9",
     "@brotasites/schema": "workspace:*",
     "@brotasites/templates": "workspace:*",
     "@tailwindcss/vite": "4.3.3",
-    "astro": "7.4.0",
+    "astro": "7.4.2",
     "tailwindcss": "4.3.3"
   },
   "devDependencies": {
-    "@astrojs/check": "0.9.10",
+    "@astrojs/check": "0.9.12",
     "@types/node": "24.19.2",
     "typescript": "6.0.3"
   }
