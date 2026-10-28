@@ -1,7 +1,7 @@
 ---
 import Button from "../components/Button.astro";
 import Photo from "../components/Photo.astro";
-import { heroParts } from "../lib/hero";
+import { fitTitleClass, heroParts } from "../lib/hero";
 import type { VariantProps } from "./types";
 
 // hero-fullbleed: the photo fills the screen and the title sits on a solid panel cut into its
@@ -27,7 +27,9 @@ const parts = heroParts(config, theme, content);
         )
       }
       <p class="label">{parts.business.name} · {parts.business.address.city}</p>
-      <h1 id="abertura-title" class="fullbleed-title">{content.title}</h1>
+      <div class="fit-title-box">
+        <h1 id="abertura-title" class:list={["fullbleed-title", fitTitleClass(content.title)]}>{content.title}</h1>
+      </div>
       {content.subtitle && <p class="fullbleed-subtitle">{content.subtitle}</p>}
       <div class="fullbleed-actions">
         <Button link={parts.link} label={parts.label} />
@@ -90,7 +92,7 @@ const parts = heroParts(config, theme, content);
     }
   }
   .fullbleed-title {
-    font-size: var(--step-5);
+    font-size: min(var(--step-5), calc(100cqi / (var(--longest-word) * 0.62)));
     margin: 0.2em 0 0;
     overflow-wrap: break-word;
     hyphens: auto;

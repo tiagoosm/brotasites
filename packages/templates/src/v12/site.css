@@ -204,7 +204,11 @@ a {
   min-height: 4.25rem;
 }
 
+/* A 44 px touch target even when the mark is a 40 px monogram or a short name. */
 .header-home {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   text-decoration: none;
   min-width: 0;
 }
@@ -213,6 +217,66 @@ a {
   padding-inline: 1rem;
   min-height: 44px;
   font-size: var(--step--1);
+}
+
+/* Large titles and figures: the size the style asks for, but never so large that the longest
+   word (--longest-word characters, from the .fit-wN class the variant sets) overflows its column,
+   since browsers without Portuguese hyphenation would break it anywhere. Variants write
+   font-size: min(<size>, calc(100cqi / (var(--longest-word) * 0.62))) on the text itself, inside
+   a .fit-title-box (or another inline-size container). */
+.fit-title-box {
+  container-type: inline-size;
+}
+.fit-w4 {
+  --longest-word: 4;
+}
+.fit-w5 {
+  --longest-word: 5;
+}
+.fit-w6 {
+  --longest-word: 6;
+}
+.fit-w7 {
+  --longest-word: 7;
+}
+.fit-w8 {
+  --longest-word: 8;
+}
+.fit-w9 {
+  --longest-word: 9;
+}
+.fit-w10 {
+  --longest-word: 10;
+}
+.fit-w11 {
+  --longest-word: 11;
+}
+.fit-w12 {
+  --longest-word: 12;
+}
+.fit-w13 {
+  --longest-word: 13;
+}
+.fit-w14 {
+  --longest-word: 14;
+}
+.fit-w15 {
+  --longest-word: 15;
+}
+.fit-w16 {
+  --longest-word: 16;
+}
+.fit-w17 {
+  --longest-word: 17;
+}
+.fit-w18 {
+  --longest-word: 18;
+}
+.fit-w19 {
+  --longest-word: 19;
+}
+.fit-w20 {
+  --longest-word: 20;
 }
 
 /* Mark: logo, name or monogram */

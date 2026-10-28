@@ -3,7 +3,7 @@ import Icon from "../../components/Icon.astro";
 import Button from "../components/Button.astro";
 import Ornament from "../components/Ornament.astro";
 import Photo from "../components/Photo.astro";
-import { heroParts } from "../lib/hero";
+import { fitTitleClass, heroParts } from "../lib/hero";
 import type { VariantProps } from "./types";
 
 // hero-bento (food, events): a grid of rounded blocks. The title block leads; the others hold
@@ -20,7 +20,9 @@ const services = parts.services.slice(0, 3);
   <div class="container bento">
     <div class="bento-cell bento-title-cell">
       <p class="label" data-anim="reveal">{parts.business.name}</p>
-      <h1 id="abertura-title" class="bento-title">{content.title}</h1>
+      <div class="fit-title-box">
+        <h1 id="abertura-title" class:list={["bento-title", fitTitleClass(content.title)]}>{content.title}</h1>
+      </div>
       {content.subtitle && <p class="bento-subtitle">{content.subtitle}</p>}
       <div class="bento-actions">
         <Button link={parts.link} label={parts.label} />
@@ -61,7 +63,7 @@ const services = parts.services.slice(0, 3);
         ) : (
           <>
             <span>em</span>
-            <strong>{parts.business.address.city}</strong>
+            <strong class={fitTitleClass(parts.business.address.city)}>{parts.business.address.city}</strong>
           </>
         )
       }
@@ -102,7 +104,7 @@ const services = parts.services.slice(0, 3);
     min-height: clamp(18rem, 40vw, 30rem);
   }
   .bento-title {
-    font-size: var(--step-5);
+    font-size: min(var(--step-5), calc(100cqi / (var(--longest-word) * 0.62)));
     margin: 0.15em 0 0;
     overflow-wrap: break-word;
     hyphens: auto;
@@ -173,6 +175,7 @@ const services = parts.services.slice(0, 3);
     margin-top: 0.15em;
   }
   .bento-fact {
+    container-type: inline-size;
     background: var(--bg);
     color: var(--fg);
     display: grid;
@@ -181,7 +184,7 @@ const services = parts.services.slice(0, 3);
   }
   .bento-fact strong {
     font-family: var(--font-heading);
-    font-size: var(--step-3);
+    font-size: min(var(--step-3), calc(100cqi / (var(--longest-word, 4) * 0.62)));
     overflow-wrap: anywhere;
   }
 </style>

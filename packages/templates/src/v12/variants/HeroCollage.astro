@@ -3,7 +3,7 @@ import Button from "../components/Button.astro";
 import Ornament from "../components/Ornament.astro";
 import Photo from "../components/Photo.astro";
 import { findAsset } from "../lib/assets";
-import { heroParts } from "../lib/hero";
+import { fitTitleClass, heroParts } from "../lib/hero";
 import type { VariantProps } from "./types";
 
 // hero-collage (events and creatives): tilted prints of the client's photos (the hero one and
@@ -31,7 +31,9 @@ const prints = [...(parts.image ? [{ file: parts.image, alt: parts.alt }] : []),
   <div class="container collage-grid">
     <div class="collage-text">
       <p class="label" data-anim="reveal">{parts.business.name}</p>
-      <h1 id="abertura-title" class="collage-title">{content.title}</h1>
+      <div class="fit-title-box">
+        <h1 id="abertura-title" class:list={["collage-title", fitTitleClass(content.title)]}>{content.title}</h1>
+      </div>
       {content.subtitle && <p class="collage-subtitle" data-anim="reveal" data-anim-delay="100">{content.subtitle}</p>}
       <div class="collage-actions" data-anim="reveal" data-anim-delay="200">
         <Button link={parts.link} label={parts.label} />
@@ -73,7 +75,7 @@ const prints = [...(parts.image ? [{ file: parts.image, alt: parts.alt }] : []),
     }
   }
   .collage-title {
-    font-size: var(--step-5);
+    font-size: min(var(--step-5), calc(100cqi / (var(--longest-word) * 0.62)));
     margin: 0.15em 0 0;
     overflow-wrap: break-word;
     hyphens: auto;
