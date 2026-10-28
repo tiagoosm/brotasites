@@ -48,3 +48,4 @@ next-env.d.ts
 
 # Example site, generated at build time (apps/platform/scripts/build-example.mjs)
 apps/platform/public/exemplo-site/
+.previews/

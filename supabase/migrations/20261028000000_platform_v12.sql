@@ -367,3 +367,67 @@ grant execute on function public.request_rebuild(uuid) to authenticated;
 grant execute on function private.hit_rate_limit(text, integer, interval) to service_role;
 grant execute on function private.add_event(uuid, text, text) to service_role;
 grant usage on schema private to service_role;
+
+-- 11. Functions the jobs (server, secret key) call ----------------------------------------
+
+-- Takes the oldest queued job of the given kinds (the 1.2 runner never takes 1.1 "generate"
+-- jobs), or the given job when Trigger.dev starts it by id.
+create function public.claim_job(p_kinds text[], p_job_id uuid default null)
+returns setof public.jobs
+language sql
+set search_path = ''
+as $$
+  update public.jobs set status = 'running', started_at = now(), attempts = attempts + 1
+  where id = (
+    select id from public.jobs
+    where status = 'queued' and kind = any (p_kinds) and (p_job_id is null or id = p_job_id)
+    order by created_at
+    for update skip locked
+    limit 1
+  )
+  returning *;
+$$;
+
+-- AI rounds per key and day, and the day's spend (packages/ai/src/limits.ts), atomically.
+create function public.ai_count_round(p_key text)
+returns integer
+language sql
+set search_path = ''
+as $$
+  insert into public.ai_usage (key, count) values (p_key, 1)
+  on conflict (key) do update set count = public.ai_usage.count + 1, updated_at = now()
+  returning count;
+$$;
+
+create function public.ai_add_spend(p_day date, p_usd numeric)
+returns numeric
+language sql
+set search_path = ''
+as $$
+  insert into public.ai_spend (day, usd) values (p_day, p_usd)
+  on conflict (day) do update set usd = public.ai_spend.usd + excluded.usd
+  returning usd;
+$$;
+
+-- True only for the first caller of the day: one budget alert per day.
+create function public.ai_claim_alert(p_day date)
+returns boolean
+language sql
+set search_path = ''
+as $$
+  with claimed as (
+    insert into public.ai_spend (day, usd, alerted) values (p_day, 0, true)
+    on conflict (day) do update set alerted = true where public.ai_spend.alerted = false
+    returning 1
+  )
+  select exists (select 1 from claimed);
+$$;
+
+revoke execute on function public.claim_job(text[], uuid) from public, anon, authenticated;
+revoke execute on function public.ai_count_round(text) from public, anon, authenticated;
+revoke execute on function public.ai_add_spend(date, numeric) from public, anon, authenticated;
+revoke execute on function public.ai_claim_alert(date) from public, anon, authenticated;
+grant execute on function public.claim_job(text[], uuid) to service_role;
+grant execute on function public.ai_count_round(text) to service_role;
+grant execute on function public.ai_add_spend(date, numeric) to service_role;
+grant execute on function public.ai_claim_alert(date) to service_role;

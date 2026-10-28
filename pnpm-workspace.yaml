@@ -9,8 +9,12 @@ saveExact: true
 allowBuilds:
   esbuild: true
   workerd: true
+  # trigger.dev CLI: downloads a remote-build helper we do not use (deploys build on Trigger.dev).
+  "@depot/cli": false
 
 # Security fixes for transitive dependencies, until their parents ship them.
 overrides:
   # GHSA-xjj6-f33q-929c (high): wrangler 4.151 pulls miniflare with undici 7.29.
   "miniflare>undici": "7.30.1"
+  # ws memory-exhaustion DoS (high, fixed in 8.21.0): @trigger.dev/sdk > socket.io-client.
+  "engine.io-client>ws": "8.21.3"

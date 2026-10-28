@@ -189,6 +189,34 @@ begin
     if sqlerrm <> 'rate_limited' then raise; end if;
   end;
 
+  -- Server functions: jobs by kind, AI counters, one alert per day.
+  perform set_config('role', 'service_role', true);
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  select count(*) into n from public.claim_job(array['publish']);
+  if n <> 0 then raise exception 'FAIL: claimed a job of another kind'; end if;
+  select count(*) into n from public.claim_job(array['directions', 'build']) where kind in ('directions', 'build') and attempts = 1;
+  if n <> 1 then raise exception 'FAIL: did not claim the oldest 1.2 job'; end if;
+  if public.ai_count_round('k') <> 1 or public.ai_count_round('k') <> 2 then raise exception 'FAIL: AI round counter'; end if;
+  if public.ai_add_spend('2026-10-28', 0.5) <> 0.5 or public.ai_add_spend('2026-10-28', 0.25) <> 0.75 then
+    raise exception 'FAIL: AI spend';
+  end if;
+  if not public.ai_claim_alert('2026-10-28') or public.ai_claim_alert('2026-10-28') then
+    raise exception 'FAIL: one alert per day';
+  end if;
+
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+  begin
+    perform public.claim_job(array['build']);
+    raise exception 'FAIL: client claimed a job';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.ai_add_spend('2026-10-28', -100);
+    raise exception 'FAIL: client changed the AI spend';
+  exception when insufficient_privilege then null;
+  end;
+
   -- Clients cannot call the rate limiter or log events themselves.
   perform set_config('role', 'authenticated', true);
   begin
