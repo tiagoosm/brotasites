@@ -39,6 +39,11 @@ jobs:
       - name: Unit and integration tests
         run: pnpm test
 
+      # Every migration on a throwaway Postgres, then the RLS checks in supabase/tests
+      # (the runner image ships PostgreSQL 16).
+      - name: Database migrations and RLS checks
+        run: bash supabase/tests/local/run.sh
+
       - name: Install Playwright browser
         run: pnpm --filter @brotasites/templates exec playwright install --with-deps chromium
 

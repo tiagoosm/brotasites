@@ -64,7 +64,7 @@ export function HeroDemo() {
                 <input
                   type="radio"
                   name="tipo"
-                  value={option.id}
+                  value={option.category}
                   checked={checked}
                   onChange={() => {
                     setTypeId(option.id);
@@ -82,7 +82,7 @@ export function HeroDemo() {
 
       <Miniature name={shownName} type={type} />
       <p className="sr-only" role="status">
-        Prévia: {shownName}, {type.label.toLocaleLowerCase("pt-BR")}.
+        Amostra: {shownName}, {type.label.toLocaleLowerCase("pt-BR")}.
       </p>
 
       <p className="text-[0.8125rem] text-ink-soft">Nada é salvo aqui. É só uma amostra.</p>

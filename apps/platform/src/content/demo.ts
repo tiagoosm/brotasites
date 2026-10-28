@@ -5,28 +5,31 @@ import { findCategory, findPalette } from "@brotasites/schema";
 // labeled as example text.
 
 export interface DemoType {
-  /** Category id in @brotasites/schema, also sent to the form. */
+  /** Category id of the 1.1 catalog, for the sample colors and font. */
   id: string;
+  /** Category id of schema 1.2, sent to the form. */
+  category: string;
   label: string;
   title: string;
   font: string;
   colors: { primary: string; background: string; text: string };
 }
 
-const demo: { id: string; title: string }[] = [
-  { id: "padaria", title: "Pão quentinho todo dia" },
-  { id: "salao", title: "Seu cabelo em boas mãos" },
-  { id: "barbearia", title: "Corte e barba sem pressa" },
-  { id: "oficina", title: "Seu carro bem cuidado" },
-  { id: "cafeteria", title: "Um café feito com calma" },
-  { id: "pet", title: "Cuidado de verdade para o seu pet" },
+const demo: { id: string; category: string; title: string }[] = [
+  { id: "padaria", category: "padaria", title: "Pão quentinho todo dia" },
+  { id: "salao", category: "salao-beleza", title: "Seu cabelo em boas mãos" },
+  { id: "barbearia", category: "barbearia", title: "Corte e barba sem pressa" },
+  { id: "oficina", category: "oficina-mecanica", title: "Seu carro bem cuidado" },
+  { id: "cafeteria", category: "cafeteria", title: "Um café feito com calma" },
+  { id: "pet", category: "pet-shop", title: "Cuidado de verdade para o seu pet" },
 ];
 
-export const demoTypes: DemoType[] = demo.map(({ id, title }) => {
+export const demoTypes: DemoType[] = demo.map(({ id, category: categoryId, title }) => {
   const category = findCategory(id);
   const palette = findPalette(category.palettes[0]);
   return {
     id,
+    category: categoryId,
     label: category.label,
     title,
     font: category.fonts.heading,

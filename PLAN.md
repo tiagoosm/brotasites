@@ -15,7 +15,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E7 Image pipeline and content security
 - [x] E8 AI layer: art director, copy, playbooks, evaluations
 - [x] E9 Reviewer: deterministic checks + reviewer agent
-- [ ] E10 Platform: sign-in, form, queue, status, directions, finished site
+- [x] E10 Platform: sign-in, form, queue, status, directions, finished site
 - [ ] E11 Admin review panel and catalog promotion cycle
 - [ ] E12 Hosting: Worker, R2, KV, publishing, suspension, export
 - [ ] E13 Final verification, blind test kit, owner steps

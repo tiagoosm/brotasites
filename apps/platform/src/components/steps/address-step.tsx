@@ -1,96 +1,116 @@
 "use client";
 
+import { formatPhone, suggestSubdomain } from "@brotasites/schema";
 import {
-  buildPreviewConfig,
-  draftSections,
-  type FormStepSlug,
-  formatPhone,
-  formSteps,
-  publishProblems,
-  sectionInfo,
-  suggestSubdomain,
-  templateOptions,
-} from "@brotasites/schema";
-import { ArrowRight, Check, LoaderCircle, TriangleAlert } from "lucide-react";
+  categoryInfo,
+  type FormStepSlug12,
+  formSteps12,
+  sectionsOf,
+} from "@brotasites/schema/v1.2";
+import { ArrowRight, Check, ExternalLink, LoaderCircle, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { StepFooter } from "@/components/wizard/step-footer";
 import { StepHeader } from "@/components/wizard/step-header";
-import { useDraft } from "@/lib/draft-store";
+import { useForm12 } from "@/lib/form-store";
 import {
+  AddressError,
   type Availability,
   alternativeSubdomain,
   checkSubdomain,
   localSubdomainProblem,
-  PublishError,
-  requestPublication,
+  reserveSubdomain,
   tidySubdomain,
 } from "@/lib/publication";
+import { infoFor } from "@/lib/site-status";
+import { SITES_DOMAIN } from "@/lib/site-url";
+import { approveSite, previewUrl, SiteActionError } from "@/lib/sites";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { SectionCard } from "./fields";
 
-// Question 7: the site address, a last look at every answer, and the publish button.
+// Step 7: the address, a last look at the answers, the finished site and the approval.
+// Approving leads to the one-time payment; the site goes live once it is paid.
 
 const CHECK_DELAY_MS = 400;
+const LOCKED_ADDRESS = ["publishing", "live", "grace", "suspended"];
 
 export function AddressStep() {
   const router = useRouter();
-  const { draft, account, updateDraft, completeStep, ensureSite } = useDraft();
-  const subdomain = draft.site?.subdomain ?? "";
-  const availability = useAvailability(subdomain, draft.business?.contact?.address?.city);
-  const problems = useMemo(() => publishProblems(draft), [draft]);
-  const [publishing, setPublishing] = useState(false);
+  const { draft, site, siteId, updateDraft, reloadSite, completeStep } = useForm12();
+  const typed = draft.site?.subdomain ?? site?.subdomain ?? "";
+  const saved = site?.subdomain ?? null;
+  const status = site?.status ?? "draft";
+  const addressLocked = LOCKED_ADDRESS.includes(status);
+  const availability = useAvailability(typed, draft.business?.city);
+  const [saving, setSaving] = useState(false);
+  const [approving, setApproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const preview = site ? previewUrl(site) : null;
 
   // Start from the business name, the way most clients would write it.
   useEffect(() => {
-    if (draft.site?.subdomain !== undefined) return;
+    if (draft.site?.subdomain !== undefined || saved) return;
     const suggestion = suggestSubdomain(draft.business?.name);
     if (suggestion) updateDraft((d) => ({ ...d, site: { ...d.site, subdomain: suggestion } }));
-  }, [draft.site?.subdomain, draft.business?.name, updateDraft]);
+  }, [draft.site?.subdomain, draft.business?.name, saved, updateDraft]);
 
-  const ready = problems.length === 0 && availability.state === "available";
-
-  async function publish() {
-    setError(null);
+  async function keepAddress() {
     const supabase = getBrowserSupabase();
-    if (!supabase || !ready) return;
-    setPublishing(true);
+    if (!supabase || availability.state !== "available") return;
+    setSaving(true);
+    setError(null);
     try {
-      const owner = await ensureSite();
-      if (!owner) throw new PublishError("Entre de novo para publicar.");
-      await requestPublication(supabase, owner.siteId, subdomain);
-      completeStep("endereco");
-      router.push("/meu-site");
+      await reserveSubdomain(supabase, siteId, typed);
+      await reloadSite();
     } catch (caught) {
       setError(
-        caught instanceof PublishError
+        caught instanceof AddressError
           ? caught.message
-          : "Não foi possível publicar agora. Tente de novo em instantes.",
+          : "Não foi possível guardar o endereço agora.",
       );
-      setPublishing(false);
+    }
+    setSaving(false);
+  }
+
+  async function approve() {
+    if (!saved || status !== "awaiting_approval") return;
+    setApproving(true);
+    setError(null);
+    try {
+      const result = await approveSite(siteId);
+      completeStep("endereco");
+      router.push(
+        result.paymentId
+          ? `/meus-sites/${siteId}/pagamento?p=${result.paymentId}`
+          : `/meus-sites/${siteId}`,
+      );
+    } catch (caught) {
+      setError(
+        caught instanceof SiteActionError ? caught.message : "Não foi possível aprovar agora.",
+      );
+      setApproving(false);
     }
   }
 
   const action =
-    account.status === "signed-in" ? (
+    status === "awaiting_approval" ? (
       <Button
         type="submit"
         size="lg"
-        disabled={!ready || publishing}
+        disabled={!saved || approving}
         className="group ml-auto flex-1 sm:flex-none"
       >
-        {publishing ? (
+        {approving ? (
           <>
             <LoaderCircle aria-hidden="true" className="animate-spin" />
-            Publicando…
+            Aprovando…
           </>
         ) : (
           <>
-            Publicar meu site
+            Aprovar e publicar
             <ArrowRight
               aria-hidden="true"
               className="transition-transform duration-200 group-hover:translate-x-0.5"
@@ -100,9 +120,7 @@ export function AddressStep() {
       </Button>
     ) : (
       <Button asChild size="lg" className="ml-auto flex-1 sm:flex-none">
-        <Link href={`/entrar?voltar=${encodeURIComponent("/criar/endereco")}`}>
-          Entrar para publicar
-        </Link>
+        <Link href={`/meus-sites/${siteId}`}>Ir para Meus sites</Link>
       </Button>
     );
 
@@ -112,36 +130,76 @@ export function AddressStep() {
       className="flex flex-1 flex-col"
       onSubmit={(event) => {
         event.preventDefault();
-        void publish();
+        void approve();
       }}
     >
       <StepHeader step="endereco" />
       <div className="grid gap-10">
-        <SectionCard name="Endereço do site">
+        <SectionCard name="Endereço do site" note="Depois de publicado, o endereço não muda.">
           <SubdomainField
-            value={subdomain}
-            availability={availability}
+            value={typed}
+            disabled={addressLocked}
+            availability={saved === typed ? { state: "available" } : availability}
             onChange={(value) =>
               updateDraft((d) => ({ ...d, site: { ...d.site, subdomain: value } }))
             }
           />
+          {!addressLocked &&
+            (saved === typed ? (
+              <p className="flex items-center gap-2 text-sm font-semibold text-leaf-deep">
+                <Check aria-hidden="true" className="size-4" />
+                Endereço guardado para o seu site.
+              </p>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="justify-self-start"
+                disabled={availability.state !== "available" || saving}
+                onClick={() => void keepAddress()}
+              >
+                {saving ? "Guardando…" : "Guardar este endereço"}
+              </Button>
+            ))}
         </SectionCard>
 
-        <SectionCard
-          name="Revisão"
-          note="Confira cada resposta. Tudo pode ser mudado depois de publicar."
-        >
-          {problems.length > 0 && <Problems problems={problems} />}
+        <SectionCard name="Site pronto">
+          <p className="text-[0.9375rem]">
+            <strong>{infoFor(status).label}.</strong> {infoFor(status).text}
+          </p>
+          {preview && ["awaiting_approval", "publishing", "live"].includes(status) && (
+            <a
+              href={preview}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 justify-self-start font-semibold text-leaf-deep underline underline-offset-4"
+            >
+              Ver o site pronto
+              <ExternalLink aria-hidden="true" className="size-4" />
+              <span className="sr-only">(abre em outra aba)</span>
+            </a>
+          )}
+          {status === "awaiting_approval" && (
+            <p className="text-sm text-ink-soft">
+              Quer mudar algo? Ajuste as respostas e peça uma nova versão em{" "}
+              <Link
+                href={`/meus-sites/${siteId}`}
+                className="font-semibold text-leaf-deep underline underline-offset-4"
+              >
+                Meus sites
+              </Link>
+              . {saved ? "" : "Guarde o endereço antes de aprovar."}
+            </p>
+          )}
+        </SectionCard>
+
+        <SectionCard name="Revisão" note="Confira as respostas. Toque em uma parte para mudar.">
           <Summary />
         </SectionCard>
 
-        {account.status !== "signed-in" && (
-          <p className="text-[0.9375rem] text-ink-soft">
-            Para publicar, entre com o seu e-mail. O seu rascunho vai junto.
-          </p>
-        )}
         {error && (
-          <p role="alert" className="text-[0.9375rem] text-destructive">
+          <p role="alert" className="text-[0.9375rem] font-semibold text-destructive">
             {error}
           </p>
         )}
@@ -195,17 +253,18 @@ function useAvailability(subdomain: string, city: string | undefined): Availabil
 
 function SubdomainField({
   value,
+  disabled,
   availability,
   onChange,
 }: {
   value: string;
+  disabled: boolean;
   availability: Availability;
   onChange: (value: string) => void;
 }) {
   const id = useId();
   const noteId = `${id}-note`;
   const bad = availability.state === "invalid" || availability.state === "taken";
-
   return (
     <div className="grid gap-2.5">
       <label htmlFor={id} className="text-[0.9375rem] font-semibold">
@@ -222,6 +281,7 @@ function SubdomainField({
         <input
           id={id}
           value={value}
+          disabled={disabled}
           onChange={(event) => onChange(tidySubdomain(event.target.value))}
           maxLength={40}
           autoComplete="off"
@@ -231,11 +291,11 @@ function SubdomainField({
           aria-invalid={bad || undefined}
           className="h-full min-w-0 flex-1 rounded-l-lg bg-transparent pl-4 font-mono text-[0.9375rem] text-ink outline-none"
         />
-        <span className="shrink-0 pr-4 font-mono text-[0.9375rem] text-ink-soft">
-          .brotasites.com
+        <span className="shrink-0 truncate pr-4 font-mono text-[0.9375rem] text-ink-soft">
+          .{SITES_DOMAIN}
         </span>
       </div>
-      <AvailabilityNote id={noteId} availability={availability} onUse={onChange} />
+      {!disabled && <AvailabilityNote id={noteId} availability={availability} onUse={onChange} />}
     </div>
   );
 }
@@ -262,7 +322,7 @@ function AvailabilityNote({
       return (
         <p id={id} role="status" className={cn(base, "font-semibold text-leaf-deep")}>
           <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-          Disponível. Esse será o endereço do seu site.
+          Disponível.
         </p>
       );
     case "taken":
@@ -297,119 +357,76 @@ function AvailabilityNote({
   }
 }
 
-const stepTitle = (slug: FormStepSlug) => formSteps.find((s) => s.slug === slug)?.title ?? slug;
+const sectionNames: Record<string, string> = {
+  sobre: "Sobre",
+  servicos: "Serviços",
+  "como-funciona": "Como funciona",
+  diferenciais: "Diferenciais",
+  galeria: "Galeria",
+  depoimentos: "Depoimentos",
+  faq: "Perguntas frequentes",
+  "cta-final": "Chamada final",
+  contato: "Contato",
+};
 
-function Problems({ problems }: { problems: { step: FormStepSlug; message: string }[] }) {
-  return (
-    <div className="grid gap-3 rounded-lg border border-pollen/60 bg-pollen/10 p-4">
-      <p className="font-semibold">
-        {problems.length === 1
-          ? "Falta 1 coisa para publicar"
-          : `Faltam ${problems.length} coisas para publicar`}
-      </p>
-      <ul className="grid gap-2.5 text-[0.9375rem]">
-        {problems.map((problem) => (
-          <li
-            key={`${problem.step}-${problem.message}`}
-            className="flex flex-wrap items-baseline gap-x-3 gap-y-1"
-          >
-            <span>{problem.message}</span>
-            <Link
-              href={`/criar/${problem.step}`}
-              className="text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
-            >
-              Corrigir em {stepTitle(problem.step).toLocaleLowerCase("pt-BR")}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-const sectionNames = new Map(sectionInfo.map((info) => [info.id, info.name]));
-
-/** One line per question, with a way back to it. */
 function Summary() {
-  const { draft } = useDraft();
-  const config = useMemo(() => buildPreviewConfig(draft), [draft]);
-  const { business, design } = config;
-  const contact = draft.business?.contact;
-  const photos = draftSections(draft).reduce((count, section) => {
-    const content = section.content ?? {};
-    const gallery = Array.isArray(content.images) ? content.images.length : 0;
-    return count + gallery + (typeof content.image === "string" && content.image ? 1 : 0);
-  }, 0);
-
-  const rows: { step: FormStepSlug; value: React.ReactNode }[] = [
-    {
-      step: "negocio",
-      value: [draft.business?.name, draft.business?.category, contact?.address?.city]
+  const { draft, siteId } = useForm12();
+  const business = draft.business ?? {};
+  const contact = draft.contact ?? {};
+  const content = draft.content ?? {};
+  const channels = [
+    contact.whatsapp && `WhatsApp ${formatPhone(contact.whatsapp)}`,
+    contact.phone && `Telefone ${formatPhone(contact.phone)}`,
+    contact.email,
+  ].filter(Boolean);
+  const services = (content.services ?? []).filter((s) => s.name?.trim()).length;
+  const photos = (content.photos ?? []).length;
+  const rows: [FormStepSlug12, string][] = [
+    [
+      "negocio",
+      [
+        business.name,
+        business.category && categoryInfo(business.category)?.label,
+        [business.city, business.state].filter(Boolean).join(" - "),
+      ]
+        .filter(Boolean)
+        .join(" · ") || "Ainda sem respostas",
+    ],
+    [
+      "marca",
+      [
+        draft.brand?.logoAsset ? "Com logo" : "Sem logo (monograma)",
+        draft.brand?.feelings?.length ? draft.brand.feelings.join(" e ") : null,
+      ]
         .filter(Boolean)
         .join(" · "),
-    },
-    { step: "modelo", value: templateOptions.find((t) => t.id === design.template)?.name },
-    {
-      step: "cores",
-      value: (
-        <span className="inline-flex items-center gap-2.5">
-          <span className="inline-flex" aria-hidden="true">
-            {[design.colors.primary, design.colors.secondary, design.colors.background].map(
-              (color, i) => (
-                <span
-                  // biome-ignore lint/suspicious/noArrayIndexKey: fixed list of three swatches
-                  key={i}
-                  className="-ml-1 size-4 rounded-full border border-card first:ml-0"
-                  style={{ background: color }}
-                />
-              ),
-            )}
-          </span>
-          {design.fonts.heading} e {design.fonts.body}
-        </span>
-      ),
-    },
-    {
-      step: "secoes",
-      value: config.sections
-        .filter((s) => s.enabled)
-        .map((s) => sectionNames.get(s.id))
+    ],
+    [
+      "secoes",
+      sectionsOf(draft)
+        .map((id) => sectionNames[id] ?? id)
         .join(", "),
-    },
-    {
-      step: "conteudo",
-      value: `Título: ${(config.sections.find((s) => s.id === "hero")?.content as { title?: string })?.title ?? business.name}`,
-    },
-    {
-      step: "contato",
-      value:
-        [
-          contact?.whatsapp && `WhatsApp ${formatPhone(contact.whatsapp)}`,
-          photos > 0 && (photos === 1 ? "1 foto" : `${photos} fotos`),
-        ]
-          .filter(Boolean)
-          .join(" · ") || "Nada informado ainda",
-    },
+    ],
+    [
+      "conteudo",
+      `${services} ${services === 1 ? "serviço" : "serviços"} · ${photos} ${photos === 1 ? "foto" : "fotos"}`,
+    ],
+    ["contato", channels.join(" · ") || "Nenhum canal ainda"],
   ];
-
   return (
-    <dl className="grid divide-y divide-border">
-      {rows.map((row) => (
-        <div
-          key={row.step}
-          className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1 py-3.5 first:pt-0 last:pb-0"
-        >
-          <dt className="tag text-stem">{stepTitle(row.step)}</dt>
-          <dd className="row-start-2 min-w-0 text-[0.9375rem] break-words">{row.value || "—"}</dd>
-          <dd className="row-span-2 self-center">
+    <dl className="grid gap-3">
+      {rows.map(([slug, text]) => (
+        <div key={slug} className="grid gap-1 border-b border-border pb-3 last:border-0">
+          <dt className="flex items-baseline justify-between gap-3">
+            <span className="tag text-stem">{formSteps12.find((s) => s.slug === slug)?.title}</span>
             <Link
-              href={`/criar/${row.step}`}
-              aria-label={`Editar ${stepTitle(row.step).toLocaleLowerCase("pt-BR")}`}
+              href={`/criar/${siteId}/${slug}`}
               className="text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
             >
-              Editar
+              Mudar
             </Link>
-          </dd>
+          </dt>
+          <dd className="text-[0.9375rem]">{text}</dd>
         </div>
       ))}
     </dl>

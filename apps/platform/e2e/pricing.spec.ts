@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 test("the home page shows the one-time price and what it includes", async ({ page }) => {
   await page.goto("/");
   const section = page.getByRole("region", { name: "Quanto custa" });
-  await expect(section).toContainText("Criar, editar e ver a prévia é grátis.");
+  await expect(section).toContainText("Criar, editar, ver as direções e o site pronto é grátis.");
   await expect(section).toContainText(/R\$\s297/);
   await expect(section).toContainText("pagamento único");
   await expect(section).toContainText("12 meses de hospedagem");

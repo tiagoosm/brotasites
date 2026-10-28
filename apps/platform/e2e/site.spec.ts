@@ -1,4 +1,4 @@
-import { formSteps } from "@brotasites/schema";
+import { formSteps12 as formSteps } from "@brotasites/schema/v1.2";
 import { expect, type Page, test } from "@playwright/test";
 
 // The public site: home with the stem, help, terms and privacy.
@@ -17,8 +17,9 @@ test("the home page presents the seven questions in the form's order", async ({ 
   await expect(questions).toHaveText(formSteps.map((step) => step.question));
 
   await page.getByRole("main").getByRole("link", { name: "Criar meu site" }).first().click();
-  await expect(page).toHaveURL(/\/criar\/negocio$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Qual é o seu negócio?");
+  // Signing in comes before the first question.
+  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fcriar$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entre para criar o seu site");
 });
 
 test("with reduced motion the stem is shown fully grown", async ({ browser }) => {

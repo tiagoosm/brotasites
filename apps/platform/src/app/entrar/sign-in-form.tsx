@@ -62,7 +62,7 @@ export function SignInForm() {
     <div className="step-enter w-full max-w-[26rem]">
       <div>
         <Link
-          href={next}
+          href="/"
           className="mb-14 inline-flex items-center gap-2.5 font-display text-[1.375rem] leading-none"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6 text-leaf">
@@ -95,10 +95,11 @@ export function SignInForm() {
         <form onSubmit={send} noValidate className="grid gap-6">
           <header className="grid gap-3">
             <h1 className="font-display text-[2.5rem] leading-[1.05]">
-              Entre para guardar o seu site
+              Entre para criar o seu site
             </h1>
             <p className="text-[1.0625rem] text-ink-soft">
-              Mandamos um link de acesso para o seu e-mail. Sem senha para lembrar.
+              Mandamos um link de acesso para o seu e-mail. Sem senha para lembrar. Suas respostas e
+              os seus sites ficam guardados na sua conta.
             </p>
           </header>
 
@@ -135,16 +136,15 @@ export function SignInForm() {
             </>
           ) : (
             <p className="rounded-lg border border-dashed border-border p-4 text-ink-soft">
-              O acesso por e-mail ainda não está disponível. Suas respostas continuam salvas neste
-              aparelho.
+              O acesso por e-mail ainda não está disponível. Tente de novo mais tarde.
             </p>
           )}
 
           <Link
-            href={next}
+            href="/"
             className="justify-self-start text-[0.9375rem] text-ink-soft underline-offset-4 hover:text-ink hover:underline"
           >
-            Continuar sem entrar
+            Voltar para o início
           </Link>
         </form>
       )}

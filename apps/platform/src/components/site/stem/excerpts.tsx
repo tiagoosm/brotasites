@@ -1,4 +1,4 @@
-import { type FormStepSlug, palettes, sectionInfo, templateOptions } from "@brotasites/schema";
+import type { FormStepSlug12 } from "@brotasites/schema/v1.2";
 import { Check, Lock } from "lucide-react";
 import { chipClass } from "@/components/shared/chip";
 import { cn } from "@/lib/utils";
@@ -37,77 +37,50 @@ function BusinessExcerpt() {
   );
 }
 
-function TemplateExcerpt() {
+function BrandExcerpt() {
+  const feelings = ["Acolhedor", "Elegante", "Moderno", "Robusto", "Ousado"];
   return (
-    <Card className="grid gap-2.5">
-      {templateOptions.slice(0, 2).map((option) => (
-        <div
-          key={option.id}
-          className={cn(
-            "rounded-xl border p-4",
-            option.available
-              ? "border-leaf bg-leaf-wash/60"
-              : "border-dashed border-line-strong bg-paper",
-          )}
-        >
-          <p className="flex items-center justify-between font-semibold">
-            {option.name}
-            <span className="tag text-[0.75rem] text-ink-soft">
-              {option.available ? "Escolhido" : "Em breve"}
-            </span>
-          </p>
-          <p className="mt-1 text-sm text-ink-soft">{option.description}</p>
-        </div>
-      ))}
-    </Card>
-  );
-}
-
-function ColorsExcerpt() {
-  return (
-    <Card className="grid gap-2.5">
-      {palettes.slice(0, 3).map((palette, index) => (
-        <div
-          key={palette.id}
-          className={cn(
-            "flex items-center gap-3 rounded-xl border px-3.5 py-3",
-            index === 0 ? "border-leaf ring-2 ring-leaf/25" : "border-input",
-          )}
-        >
-          <span className="flex">
-            {[palette.background, palette.primary, palette.secondary, palette.text].map(
-              (color, i) => (
-                <span
-                  // biome-ignore lint/suspicious/noArrayIndexKey: fixed four swatches
-                  key={i}
-                  className="-ml-1.5 size-6 rounded-full border-2 border-card first:ml-0"
-                  style={{ background: color }}
-                />
-              ),
-            )}
+    <Card className="grid gap-4">
+      <div className="flex items-center gap-2">
+        {["#B45309", "#F5E6CC", "#3F2A1D"].map((color) => (
+          <span
+            key={color}
+            className="size-9 rounded-lg border border-line"
+            style={{ background: color }}
+          />
+        ))}
+        <span className="ml-2 text-sm text-ink-soft">Cores da marca</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {feelings.map((feeling, index) => (
+          <span key={feeling} className={chipClass({ checked: index === 0 })}>
+            {index === 0 && <Check className="size-3.5" strokeWidth={2.5} />}
+            {feeling}
           </span>
-          <span className="font-semibold">{palette.name}</span>
-          <span className="tag ml-auto text-ink-soft">{palette.primary}</span>
-        </div>
-      ))}
+        ))}
+      </div>
     </Card>
   );
 }
 
 function SectionsExcerpt() {
-  const shown = ["hero", "sobre", "servicos", "depoimentos"] as const;
+  const shown = [
+    { name: "Topo", locked: true, on: true },
+    { name: "Serviços", on: true },
+    { name: "Galeria de fotos", on: true },
+    { name: "Depoimentos", on: false },
+  ];
   return (
     <Card className="grid gap-2">
-      {shown.map((id) => {
-        const info = sectionInfo.find((s) => s.id === id);
-        const on = id !== "depoimentos";
+      {shown.map((info) => {
+        const on = info.on;
         return (
           <div
-            key={id}
+            key={info.name}
             className="flex items-center justify-between rounded-xl border border-input px-4 py-3"
           >
-            <span className="font-semibold">{info?.name}</span>
-            {info?.locked ? (
+            <span className="font-semibold">{info.name}</span>
+            {info.locked ? (
               <span className="tag inline-flex items-center gap-1.5 text-ink-soft">
                 <Lock className="size-3.5" />
                 Sempre aparece
@@ -137,7 +110,7 @@ function SectionsExcerpt() {
 function ContentExcerpt() {
   return (
     <Card>
-      <p className="mb-2 text-sm font-semibold">Frase de apresentação</p>
+      <p className="mb-2 text-sm font-semibold">Descrição do serviço</p>
       <div className="rounded-lg border border-leaf px-4 py-3 ring-4 ring-leaf/15">
         <span className="typing">Pão de fermentação natural, todo dia às 6h</span>
         <span className="caret" />
@@ -150,9 +123,15 @@ function ContentExcerpt() {
 function ContactExcerpt() {
   return (
     <Card className="grid gap-3">
+      <div className="flex flex-wrap gap-1.5">
+        {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((day, index) => (
+          <span key={day} className={cn(chipClass({ checked: index < 5 }), "px-3")}>
+            {day}
+          </span>
+        ))}
+      </div>
       <div className="flex items-center gap-3 rounded-xl border border-input px-4 py-3">
-        <span className="font-semibold">Seg a Sex</span>
-        <span className="text-ink-soft">06:00 - 19:00</span>
+        <span className="font-semibold">06:00 às 19:00</span>
       </div>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-paper p-3 text-sm">
         <span className="text-ink-soft">Agora o site mostraria:</span>
@@ -166,6 +145,42 @@ function ContactExcerpt() {
   );
 }
 
+function DirectionExcerpt() {
+  const directions = [
+    { name: "Fiel à marca", colors: ["#B45309", "#FFF7EC"] },
+    { name: "Evolução", colors: ["#1F5130", "#F4F1E8"] },
+    { name: "Contraste", colors: ["#2B2350", "#F3F0FA"] },
+  ];
+  return (
+    <Card className="grid grid-cols-3 gap-2.5">
+      {directions.map((direction, index) => (
+        <div
+          key={direction.name}
+          className={cn(
+            "grid gap-2 rounded-xl border p-2.5",
+            index === 1 ? "border-leaf ring-2 ring-leaf/25" : "border-input",
+          )}
+        >
+          <div
+            className="grid h-16 content-end gap-1 rounded-md p-2"
+            style={{ background: direction.colors[1] }}
+          >
+            <span
+              className="h-1.5 w-3/4 rounded-full"
+              style={{ background: direction.colors[0] }}
+            />
+            <span
+              className="h-1.5 w-1/2 rounded-full opacity-50"
+              style={{ background: direction.colors[0] }}
+            />
+          </div>
+          <span className="text-[0.8125rem] leading-tight font-semibold">{direction.name}</span>
+        </div>
+      ))}
+    </Card>
+  );
+}
+
 function AddressExcerpt() {
   return (
     <Card>
@@ -175,18 +190,18 @@ function AddressExcerpt() {
       </div>
       <p className="mt-2.5 flex items-center gap-2 text-sm font-semibold text-leaf-deep">
         <Check className="size-4" />
-        Disponível. Esse será o endereço do seu site.
+        Disponível.
       </p>
     </Card>
   );
 }
 
-export const excerpts: Record<FormStepSlug, () => React.ReactNode> = {
+export const excerpts: Record<FormStepSlug12, () => React.ReactNode> = {
   negocio: BusinessExcerpt,
-  modelo: TemplateExcerpt,
-  cores: ColorsExcerpt,
+  marca: BrandExcerpt,
   secoes: SectionsExcerpt,
   conteudo: ContentExcerpt,
   contato: ContactExcerpt,
+  direcao: DirectionExcerpt,
   endereco: AddressExcerpt,
 };

@@ -3,23 +3,11 @@ import { expect, type Page, test } from "@playwright/test";
 // Sign-in by magic link. Supabase points at a fake project in e2e (playwright.config.ts) and
 // the email request is intercepted, so no real email is ever sent.
 
-const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 1280;
-
 function answerOtp(page: Page, status: number, body: object) {
   return page.route("**/auth/v1/otp**", (route) =>
     route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) }),
   );
 }
-
-test("the form invites to sign in without requiring it", async ({ page }) => {
-  await page.goto("/criar/negocio");
-  const invite = isMobile(page)
-    ? page.getByRole("link", { name: "Entrar", exact: true })
-    : page.getByRole("link", { name: /Entrar para salvar na sua conta/ });
-  await expect(invite).toBeVisible();
-  await expect(invite).toHaveAttribute("href", "/entrar?voltar=%2Fcriar%2Fnegocio");
-  await expect(page.getByRole("status").first()).toContainText(/Salvo/i);
-});
 
 test("sending the magic link", async ({ page }) => {
   let sent: { email?: string; redirect?: string } = {};
@@ -32,7 +20,7 @@ test("sending the magic link", async ({ page }) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
   });
   await page.goto("/entrar?voltar=%2Fcriar%2Fcores");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entre para guardar o seu site");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entre para criar o seu site");
 
   await page.getByLabel("Seu e-mail").fill("ze@padaria");
   await page.getByRole("button", { name: "Enviar link de acesso" }).click();
@@ -67,15 +55,11 @@ test("an expired or broken link sends the person back with an explanation", asyn
   );
 });
 
-test("continuing without signing in never leaves the platform", async ({ page }) => {
-  await page.goto("/entrar?voltar=https%3A%2F%2Fexemplo.com");
-  await expect(page.getByRole("link", { name: "Continuar sem entrar" })).toHaveAttribute(
+test("after the link, the person never leaves the platform", async ({ page }) => {
+  await page.goto("/auth/confirm?next=https%3A%2F%2Fexemplo.com");
+  await expect(page).toHaveURL(/\/entrar\?erro=link&voltar=%2Fcriar$/);
+  await expect(page.getByRole("link", { name: "Voltar para o início" })).toHaveAttribute(
     "href",
-    "/criar/negocio",
-  );
-  await page.goto("/entrar?voltar=%2Fcriar%2Fcores");
-  await expect(page.getByRole("link", { name: "Continuar sem entrar" })).toHaveAttribute(
-    "href",
-    "/criar/cores",
+    "/",
   );
 });

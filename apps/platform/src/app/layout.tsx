@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: { type: "website", locale: "pt_BR", siteName: "BrotaSites" },
   title: { default: "BrotaSites · Sete perguntas e seu site pronto", template: "%s · BrotaSites" },
   description:
-    "Responda sete perguntas e veja o site do seu negócio ficar pronto enquanto escreve. Com WhatsApp, mapa e horário de funcionamento. Sem código.",
+    "Responda sete perguntas, escolha uma de 3 direções para o visual e receba o site do seu negócio pronto. Com WhatsApp, horários e botão Como chegar. Sem código.",
 };
 
 export const viewport: Viewport = {

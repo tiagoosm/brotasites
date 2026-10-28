@@ -8,3 +8,9 @@ export const PLATFORM_URL = (
 
 /** Public pages, listed in the sitemap. */
 export const publicPages = ["/", "/ajuda", "/termos", "/privacidade"] as const;
+
+/** The base domain of client sites (BASE_DOMAIN), separate from the platform's. */
+export const SITES_DOMAIN = (process.env.NEXT_PUBLIC_BASE_DOMAIN ?? "sites.localhost").replace(
+  /^\.+|\.+$/g,
+  "",
+);

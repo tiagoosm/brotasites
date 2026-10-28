@@ -1,0 +1,43 @@
+{
+  "name": "@brotasites/jobs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Generation jobs: directions, build with copy and review, private preview, publishing (Trigger.dev tasks and a local runner).",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "dev:local": "pnpm run build && node dist/local.js"
+  },
+  "dependencies": {
+    "@brotasites/ai": "workspace:*",
+    "@brotasites/catalog": "workspace:*",
+    "@brotasites/engine": "workspace:*",
+    "@brotasites/generator": "workspace:*",
+    "@brotasites/reviewer": "workspace:*",
+    "@brotasites/schema": "workspace:*",
+    "@brotasites/templates": "workspace:*",
+    "@playwright/test": "1.64.1",
+    "@supabase/supabase-js": "2.118.0",
+    "@trigger.dev/sdk": "4.8.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@trigger.dev/build": "4.8.1",
+    "@types/node": "24.19.2",
+    "trigger.dev": "4.8.1",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

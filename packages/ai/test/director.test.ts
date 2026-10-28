@@ -162,6 +162,17 @@ describe("copy", () => {
     expect(pick(after)).toEqual(pick(before));
   });
 
+  it("passes the reviewer's notes to the model and does not reuse the answer cached without them", async () => {
+    const site = config();
+    const answer = JSON.stringify(draftCopy(copyInputFrom(site)));
+    const model = new ScriptedModelClient([answer, answer]);
+    const ai = director(model);
+    await ai.writeCopy(site, caller);
+    await ai.writeCopy(site, caller, { notes: ["O título repete o da seção sobre."] });
+    expect(model.requests).toHaveLength(2);
+    expect(model.requests[1]?.prompt).toMatch(/Address these points:\n- O título repete/);
+  });
+
   it("falls back to the client's own text when the AI fails twice", async () => {
     const model = new ScriptedModelClient([new ModelError("overloaded", true), "{}"]);
     const result = await director(model).writeCopy(config(), caller);

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { SiteConfig } from "@brotasites/schema";
 import { afterAll, describe, expect, it } from "vitest";
-import { contentTypeFor, deployToR2, signS3 } from "../src/r2.js";
+import { contentTypeFor, deployToR2, signS3, uploadPreviewToR2 } from "../src/r2.js";
 
 describe("signS3", () => {
   // "Example: GET Object" from the AWS Signature Version 4 documentation for S3.
@@ -133,5 +133,37 @@ describe("deployToR2", () => {
     expect(contentTypeFor("_astro/a.woff2")).toBe("font/woff2");
     expect(contentTypeFor("foto.WEBP")).toBe("image/webp");
     expect(contentTypeFor("arquivo.xyz")).toBe("application/octet-stream");
+  });
+});
+
+describe("uploadPreviewToR2", () => {
+  it("puts the preview under previews/<site>/<token>/ with the strict CSP mark", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "brotasites-preview-"));
+    await writeFile(join(dir, "index.html"), "<h1>Prévia</h1>");
+    const requests: { url: string; meta: string }[] = [];
+    const fakeFetch: typeof fetch = async (input, init) => {
+      const headers = init?.headers as Record<string, string>;
+      requests.push({ url: String(input), meta: headers["x-amz-meta-csp"] ?? "" });
+      return new Response(null, { status: 200 });
+    };
+    await uploadPreviewToR2(
+      dir,
+      "0b6f2a4e-5c1d-4e8a-9f3b-2d7c6a1e4b90",
+      "tok_abcdefghijklmnopqrstuvwxyz012345",
+      {
+        accountId: "acc",
+        accessKeyId: "k",
+        secretAccessKey: "s",
+        bucket: "b",
+        fetch: fakeFetch,
+      },
+    );
+    expect(requests).toEqual([
+      {
+        url: "https://acc.r2.cloudflarestorage.com/b/previews/0b6f2a4e-5c1d-4e8a-9f3b-2d7c6a1e4b90/tok_abcdefghijklmnopqrstuvwxyz012345/index.html",
+        meta: "strict",
+      },
+    ]);
+    await rm(dir, { recursive: true, force: true });
   });
 });

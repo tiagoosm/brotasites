@@ -1,131 +1,105 @@
 import { expect, type Page, test } from "@playwright/test";
+import { fakeSupabase, padaria, SITE, signIn, withSite } from "./support/supabase";
 
-const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024;
+// The 7-step form (docs/form-flow.md): signing in comes first, each step checks its own
+// answers in Portuguese and saves them to the account.
 
-/** Clicks a business type tag, as a person would (the radio input inside is visually hidden). */
-async function chooseType(page: Page, name: string) {
-  await page
-    .getByRole("group", { name: "Tipo de negócio" })
-    .getByText(name, { exact: true })
-    .click();
-  await expect(page.getByRole("radio", { name })).toBeChecked();
+const step = (slug: string) => new RegExp(`/criar/${SITE}/${slug}$`);
+
+async function chooseCategory(page: Page, search: string, label: string) {
+  await page.getByLabel("Tipo de negócio").fill(search);
+  await page.getByText(label, { exact: true }).click();
+  await expect(page.getByRole("radio", { name: label })).toHaveCount(0);
 }
 
-async function fillBusiness(page: Page) {
+test("creating a site asks to sign in first", async ({ page }) => {
+  await page.goto("/criar");
+  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fcriar$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entre para criar o seu site");
+});
+
+test("signed in, a new site starts at the first question", async ({ page, context }) => {
+  const user = await signIn(context);
+  const state = await fakeSupabase(context, user);
+  await page.goto("/criar");
+  await expect(page).toHaveURL(step("negocio"));
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Qual é o seu negócio?");
+  expect(state.site?.id).toBe(SITE);
+});
+
+test("an unfinished draft opens where the person stopped", async ({ page, context }) => {
+  await withSite(context, { draft: padaria, completed: ["negocio", "marca"] });
+  await page.goto("/criar");
+  await expect(page).toHaveURL(step("secoes"));
+});
+
+test("explains what is missing, in Portuguese, then saves and moves on", async ({
+  page,
+  context,
+}) => {
+  const state = await withSite(context);
+  await page.goto(`/criar/${SITE}/negocio`);
+  const next = page.getByRole("button", { name: "Próximo: marca e sensação" });
+  await next.click();
+  await expect(page.locator("#step-problem")).toHaveText("Informe o nome do negócio.");
+  await expect(page).toHaveURL(step("negocio"));
+
   await page.getByLabel("Nome do negócio").fill("Padaria do Zé");
-  await chooseType(page, "Padaria");
-  await page.getByLabel("Cidade").fill("Santa Rita do Sapucaí");
-}
-
-test("explains what is missing, in Portuguese", async ({ page }) => {
-  await page.goto("/criar/negocio");
-  await page.getByRole("button", { name: "Próximo: modelo" }).click();
-  await expect(page.getByText("Escreva o nome do negócio, com pelo menos 2 letras.")).toBeVisible();
-  await expect(page.getByText("Escolha um tipo da lista ou escreva qual é.")).toBeVisible();
-  await expect(page.getByText("Escreva a cidade onde o negócio fica.")).toBeVisible();
-  await expect(page).toHaveURL(/\/criar\/negocio$/);
+  await chooseCategory(page, "padar", "Padaria");
+  await page.getByLabel("Cidade", { exact: true }).fill("Santa Rita do Sapucaí");
+  await page.getByLabel("Estado").selectOption("MG");
+  await page
+    .getByLabel("Conte em poucas palavras o que você faz")
+    .fill("Pão de fermentação natural");
+  await next.click();
+  await expect(page).toHaveURL(step("marca"));
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Como você quer que o seu negócio pareça?",
+  );
+  await expect
+    .poll(() => state.saved.at(-1))
+    .toMatchObject({
+      draft: { business: { name: "Padaria do Zé", category: "padaria", state: "MG" } },
+      completed: ["negocio"],
+    });
 });
 
-test("answering the first question moves on and grows the stem", async ({ page }) => {
-  await page.goto("/criar/negocio");
-  await fillBusiness(page);
-  await page.getByRole("button", { name: "Próximo: modelo" }).click();
-  await expect(page).toHaveURL(/\/criar\/modelo$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Qual estilo combina com você?");
-  if (!isMobile(page)) {
-    const rail = page.getByRole("navigation", { name: "Perguntas do formulário" });
-    await expect(rail.locator('[aria-current="step"]')).toContainText("Modelo");
-    await expect(rail.getByRole("link", { name: /Seu negócio/ })).toBeVisible();
-  }
-});
-
-test("the draft survives a reload", async ({ page }) => {
-  await page.goto("/criar/negocio");
-  await fillBusiness(page);
-  await expect(page.getByRole("status").first()).toContainText(/salvo/i, { timeout: 5_000 });
-  await page.reload();
-  await expect(page.getByLabel("Nome do negócio")).toHaveValue("Padaria do Zé");
-  await expect(page.getByRole("radio", { name: "Padaria" })).toBeChecked();
-  await expect(page.getByLabel("Cidade")).toHaveValue("Santa Rita do Sapucaí");
-});
-
-test("questions ahead of the client's progress send them back", async ({ page }) => {
-  await page.goto("/criar/secoes");
-  await expect(page).toHaveURL(/\/criar\/negocio$/);
-});
-
-test("a business type outside the list can be typed", async ({ page }) => {
-  await page.goto("/criar/negocio");
-  await page.getByLabel("Nome do negócio").fill("Flor de Lis");
-  await chooseType(page, "Outro tipo");
-  await page.getByLabel("Qual é o tipo do negócio?").fill("Floricultura");
-  await page.getByLabel("Cidade").fill("Pouso Alegre");
-  await page.getByRole("button", { name: "Próximo: modelo" }).click();
-  await expect(page).toHaveURL(/\/criar\/modelo$/);
-});
-
-/** The visible preview iframe (two are kept; the hidden one loads the next update). */
-const site = (page: Page) => page.frameLocator('iframe[data-active="true"]');
-
-async function openPreview(page: Page) {
-  if (isMobile(page)) await page.getByRole("button", { name: "Ver prévia" }).click();
-  return isMobile(page)
-    ? page.getByRole("dialog", { name: "Prévia do site" })
-    : page.getByRole("region", { name: "Prévia do site" });
-}
-
-test("the preview renders the real template and follows typing", async ({ page }) => {
-  await page.goto("/criar/negocio");
+test("the answers survive a reload", async ({ page, context }) => {
+  const state = await withSite(context);
+  await page.goto(`/criar/${SITE}/negocio`);
   await page.getByLabel("Nome do negócio").fill("Barbearia do Léo");
-  await chooseType(page, "Barbearia");
-  const preview = await openPreview(page);
-  await expect(preview).toContainText("barbearia-do-leo.brotasites.com");
-  // The template's own markup: hero title and the sections suggested for a barbershop.
-  await expect(site(page).locator("#hero-title")).toHaveText(/Barbearia\s+do\s+Léo/);
-  await expect(site(page).locator("#servicos")).toBeVisible();
-
-  if (isMobile(page)) {
-    await page.keyboard.press("Escape");
-    await expect(preview).toBeHidden();
-    await page.getByLabel("Nome do negócio").fill("Barbearia do Léo Centro");
-    await openPreview(page);
-  } else {
-    await page.getByLabel("Nome do negócio").fill("Barbearia do Léo Centro");
-  }
-  await expect(site(page).locator("#hero-title")).toHaveText(/Barbearia\s+do\s+Léo\s+Centro/);
-});
-
-test("the preview switches between phone and computer", async ({ page }) => {
-  test.skip(isMobile(page), "On phones the preview opens at phone size");
-  await page.goto("/criar/negocio");
-  const preview = await openPreview(page);
-  await expect(site(page).locator("#hero-title")).toBeVisible();
-  await preview.getByRole("button", { name: "celular" }).click();
-  await expect(preview.getByRole("button", { name: "celular" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await expect(page.locator('iframe[data-active="true"]')).toHaveCSS("width", "390px");
-  // At phone width the template shows its mobile menu button.
-  await expect(site(page).getByLabel("Abrir menu")).toBeVisible();
-});
-
-test("does not scroll sideways and logs no errors", async ({ page }) => {
-  const errors: string[] = [];
-  page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
-  await page.goto("/criar/negocio");
-  await fillBusiness(page);
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBe(0);
-  expect(errors).toEqual([]);
-});
-
-test("an answer typed right before leaving the page is kept", async ({ page }) => {
-  await page.goto("/criar/negocio");
-  await page.getByLabel("Nome do negócio").fill("Empório Serra");
-  // Reload immediately, before the debounced save would run.
+  await expect.poll(() => state.saved.length).toBeGreaterThan(0);
   await page.reload();
-  await expect(page.getByLabel("Nome do negócio")).toHaveValue("Empório Serra");
+  await expect(page.getByLabel("Nome do negócio")).toHaveValue("Barbearia do Léo");
+});
+
+test("blocked topics stop the first step, kindly", async ({ page, context }) => {
+  await withSite(context);
+  await page.goto(`/criar/${SITE}/negocio`);
+  await page.getByLabel("Nome do negócio").fill("Loja do Beto");
+  await page
+    .getByLabel("Conte em poucas palavras o que você faz")
+    .fill("Vendemos vapes e pods descartáveis");
+  await expect(page.getByText("Esse tipo de negócio a gente não atende.")).toBeVisible();
+  await page.getByRole("button", { name: "Próximo: marca e sensação" }).click();
+  await expect(page.locator("#step-problem")).toHaveText(
+    "Não atendemos negócios de cigarro eletrônico e tabaco.",
+  );
+});
+
+test("steps ahead of the person's progress send them back", async ({ page, context }) => {
+  await withSite(context, { completed: ["negocio"] });
+  await page.goto(`/criar/${SITE}/contato`);
+  await expect(page).toHaveURL(step("marca"));
+});
+
+test("a site of another account is not found", async ({ page, context }) => {
+  await withSite(context);
+  await page.goto("/criar/00000000-0000-4000-8000-000000000000/negocio");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Site não encontrado");
+});
+
+test("old addresses of the form lead to the new one", async ({ page }) => {
+  await page.goto("/criar/negocio");
+  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fcriar$/);
 });

@@ -2,7 +2,7 @@
 
 // Links to the form and to sign-in use prefetch={false}: those pages carry the account and
 // schema code, which the public pages should not download in advance.
-export const CREATE_HREF = "/criar/negocio";
+export const CREATE_HREF = "/criar";
 
 export const headerLinks = [
   { href: "/#como-funciona", label: "Como funciona" },

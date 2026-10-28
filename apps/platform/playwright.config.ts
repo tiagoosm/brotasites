@@ -1,15 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3100;
-const PREVIEW_PORT = 4410;
-export const PREVIEW_URL = `http://localhost:${PREVIEW_PORT}`;
 
 // Runs against a production build of the platform.
 export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
-  // The preview server renders every keystroke; too many browsers at once slow it to a crawl.
-  workers: process.env.CI ? 2 : 3,
+  workers: process.env.CI ? 2 : 4,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
@@ -18,6 +15,8 @@ export default defineConfig({
     locale: "pt-BR",
     timezoneId: "America/Sao_Paulo",
     trace: "retain-on-failure",
+    // A Chromium installed elsewhere (a container with its own browsers), when given.
+    launchOptions: process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {},
   },
   projects: [
     {
@@ -35,31 +34,19 @@ export default defineConfig({
       },
     },
   ],
-  webServer: [
-    {
-      // The live preview server (apps/preview), allowed to be framed by the test platform.
-      command: "pnpm --dir ../preview exec astro build && node ../preview/dist/server/entry.mjs",
-      url: `${PREVIEW_URL}/render`,
-      env: {
-        PORT: String(PREVIEW_PORT),
-        PREVIEW_FRAME_ANCESTORS: `http://localhost:${PORT}`,
-        ASTRO_TELEMETRY_DISABLED: "1",
-      },
-      reuseExistingServer: !process.env.CI,
-      timeout: 240_000,
+  webServer: {
+    command: `pnpm run build && pnpm exec next start --port ${PORT}`,
+    url: `http://localhost:${PORT}/`,
+    env: {
+      NEXT_TELEMETRY_DISABLED: "1",
+      // A fake project: tests intercept its calls, and the platform's own route handlers, so
+      // nothing reaches real Supabase or Trigger.dev.
+      NEXT_PUBLIC_SUPABASE_URL: "https://e2e-test.supabase.co",
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_e2e_test",
+      NEXT_PUBLIC_PREVIEW_ORIGIN: "https://previa.sites.localhost",
+      NEXT_PUBLIC_BASE_DOMAIN: "sites.localhost",
     },
-    {
-      command: `pnpm run build && pnpm exec next start --port ${PORT}`,
-      url: `http://localhost:${PORT}/criar/negocio`,
-      env: {
-        NEXT_TELEMETRY_DISABLED: "1",
-        NEXT_PUBLIC_PREVIEW_URL: PREVIEW_URL,
-        // A fake project: tests intercept its auth calls, so nothing reaches real Supabase.
-        NEXT_PUBLIC_SUPABASE_URL: "https://e2e-test.supabase.co",
-        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_e2e_test",
-      },
-      reuseExistingServer: !process.env.CI,
-      timeout: 240_000,
-    },
-  ],
+    reuseExistingServer: !process.env.CI,
+    timeout: 240_000,
+  },
 });

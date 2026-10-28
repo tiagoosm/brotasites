@@ -1,11 +1,14 @@
 import { expect, test } from "@playwright/test";
+import { fakeSupabase, SITE, signIn } from "./support/supabase";
 
 // The home page demo: type a name, pick a type, see a miniature of the site, and carry both
 // answers into the first question. Nothing is saved before the form.
 
 test("the miniature follows the name and type, and the answers reach the form", async ({
   page,
+  context,
 }) => {
+  const state = await fakeSupabase(context, await signIn(context));
   await page.goto("/");
   const demo = page.getByRole("form", { name: "Experimente aqui" });
   const miniature = demo.locator(".demo-site");
@@ -18,12 +21,13 @@ test("the miniature follows the name and type, and the answers reach the form", 
   await expect(miniature).toContainText("Corte e barba sem pressa");
   await expect(miniature).toHaveCSS("background-color", "rgb(244, 245, 247)");
   await expect(demo.getByText("barbearia-do-leo.brotasites.com")).toBeVisible();
-  await expect(demo.getByRole("status")).toHaveText("Prévia: Barbearia do Léo, barbearia.");
+  await expect(demo.getByRole("status")).toHaveText("Amostra: Barbearia do Léo, barbearia.");
 
   await demo.getByRole("button", { name: "Continuar com este site" }).click();
-  await expect(page).toHaveURL(/\/criar\/negocio$/);
+  await expect(page).toHaveURL(new RegExp(`/criar/${SITE}/negocio$`));
   await expect(page.getByLabel("Nome do negócio")).toHaveValue("Barbearia do Léo");
-  await expect(page.getByRole("radio", { name: "Barbearia" })).toBeChecked();
+  await expect(page.getByText("Beleza e bem-estar")).toBeVisible();
+  expect(state.draft).toEqual({ business: { name: "Barbearia do Léo", category: "barbearia" } });
 });
 
 test("the demo stores nothing until the form", async ({ page }) => {
@@ -44,6 +48,6 @@ test("without JavaScript the demo still shows the example and sends the answers"
   await demo.getByLabel("Nome do seu negócio").fill("Oficina do Beto");
   await demo.getByText("Oficina mecânica", { exact: true }).click();
   await demo.getByRole("button", { name: "Continuar com este site" }).click();
-  await expect(page).toHaveURL(/\/criar\/negocio\?nome=Oficina\+do\+Beto&tipo=oficina$/);
+  await expect(page).toHaveURL(/\/criar\?nome=Oficina\+do\+Beto&tipo=oficina-mecanica$/);
   await context.close();
 });
