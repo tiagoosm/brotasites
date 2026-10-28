@@ -8,8 +8,13 @@
 // Layout in the bucket (written by the generation worker, packages/generator/src/r2.ts):
 //   sites/<subdomain>/current            the id of the live deploy (plain text)
 //   sites/<subdomain>/<deploy id>/...    the files of that deploy
+//   previews/<site id>/<token>/...      a private preview of a site before it goes live
 // A new deploy is uploaded in full before `current` changes, so visitors never see a
 // half-updated site.
+//
+// Previews (the finished-site screen, docs/product.md) live at previa.<SITES_DOMAIN>/<site
+// id>/<token>/, or /previa/<site id>/<token>/ on the testing address: a secret token in the
+// address, never indexed, never cached, and no referrer, so the token does not leak.
 
 import { policyFor, securityHeaders } from "./headers";
 
@@ -21,6 +26,9 @@ export interface Env {
 const SUBDOMAIN = /^[a-z0-9](?:[a-z0-9-]{1,38})[a-z0-9]$/;
 const TEST_HOST_SUFFIX = ".workers.dev";
 const SITE_COOKIE = "brotasites_site";
+const PREVIEW_HOST = "previa";
+const SITE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const PREVIEW_TOKEN = /^[A-Za-z0-9_-]{32,64}$/;
 
 /** The subdomain of a request host, or null when the host is not a client site. */
 export function siteFromHost(host: string, domain: string): string | null {
@@ -106,6 +114,29 @@ async function serveFile(
   return null;
 }
 
+/** A file of a private preview: "/<site id>/<token>/<path>", or null. */
+export async function servePreview(
+  request: Request,
+  env: Env,
+  pathname: string,
+): Promise<Response | null> {
+  const [, siteId = "", token = "", ...rest] = pathname.split("/");
+  if (!SITE_ID.test(siteId) || !PREVIEW_TOKEN.test(token)) return null;
+  const keys = candidateKeys(`/${rest.join("/")}`);
+  if (!keys) return null;
+  for (const key of keys) {
+    const object = await env.SITES.get(`previews/${siteId}/${token}/${key}`);
+    if (!object) continue;
+    const headers = new Headers(securityHeaders(policyFor(object.customMetadata)));
+    object.writeHttpMetadata(headers);
+    headers.set("cache-control", "private, no-store");
+    headers.set("x-robots-tag", "noindex, nofollow");
+    headers.set("referrer-policy", "no-referrer");
+    return new Response(request.method === "HEAD" ? null : object.body, { headers });
+  }
+  return null;
+}
+
 /** Testing address: /<subdomain>/... picks the site; other paths use the site cookie. */
 async function servePathMode(request: Request, env: Env, url: URL): Promise<Response> {
   const [, first = "", ...rest] = url.pathname.split("/");
@@ -147,6 +178,8 @@ async function servePathMode(request: Request, env: Env, url: URL): Promise<Resp
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const preview = (pathname: string) =>
+      servePreview(request, env, pathname).then((response) => response ?? notFound());
     if (request.method !== "GET" && request.method !== "HEAD") {
       return new Response("Método não permitido.", {
         status: 405,
@@ -154,7 +187,13 @@ export default {
       });
     }
     const url = new URL(request.url);
-    if (isTestHost(url.hostname)) return servePathMode(request, env, url);
+    if (isTestHost(url.hostname)) {
+      if (url.pathname.startsWith(`/${PREVIEW_HOST}/`)) {
+        return preview(url.pathname.slice(PREVIEW_HOST.length + 1));
+      }
+      return servePathMode(request, env, url);
+    }
+    if (url.hostname === `${PREVIEW_HOST}.${env.SITES_DOMAIN}`) return preview(url.pathname);
 
     const subdomain = siteFromHost(url.hostname, env.SITES_DOMAIN);
     if (!subdomain) return notFound();

@@ -30,6 +30,12 @@ const env: Env = {
     "sites/padaria-do-ze/d2/index.html": { body: "<h1>Padaria do Zé</h1>", type: "text/html" },
     "sites/padaria-do-ze/d2/_astro/site.abc.css": { body: "body{}", type: "text/css" },
     "sites/padaria-do-ze/d2/cardapio/index.html": { body: "cardápio", type: "text/html" },
+    "previews/0b6f2a4e-5c1d-4e8a-9f3b-2d7c6a1e4b90/tok_abcdefghijklmnopqrstuvwxyz012345/index.html":
+      {
+        body: "<h1>Prévia</h1>",
+        type: "text/html",
+        customMetadata: { csp: "strict" },
+      },
     "sites/oficina-nova/current": { body: "v1" },
     "sites/oficina-nova/v1/index.html": {
       body: "<h1>Oficina</h1>",
@@ -157,5 +163,38 @@ describe("security headers on responses", () => {
     expect(response.status).toBe(404);
     expect(response.headers.get("content-security-policy")).toContain("script-src 'none'");
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+  });
+});
+
+describe("private previews", () => {
+  const path = "/0b6f2a4e-5c1d-4e8a-9f3b-2d7c6a1e4b90/tok_abcdefghijklmnopqrstuvwxyz012345/";
+
+  it("serves a preview with its token, never indexed, cached or leaking the address", async () => {
+    const response = await get(`https://previa.brotasites.com${path}`);
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("<h1>Prévia</h1>");
+    expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(response.headers.get("content-security-policy")).toContain("script-src 'self'");
+  });
+
+  it("refuses a wrong token, a malformed id and the preview prefix on site hosts", async () => {
+    expect(
+      (
+        await get(
+          "https://previa.brotasites.com/0b6f2a4e-5c1d-4e8a-9f3b-2d7c6a1e4b90/tok_wrongwrongwrongwrongwrongwrong0000/",
+        )
+      ).status,
+    ).toBe(404);
+    expect((await get("https://previa.brotasites.com/../sites/padaria-do-ze/current")).status).toBe(
+      404,
+    );
+    expect((await get(`https://padaria-do-ze.brotasites.com/previews${path}`)).status).toBe(404);
+  });
+
+  it("serves previews on the testing address under /previa/", async () => {
+    const response = await get(`https://brotasites-sites.conta.workers.dev/previa${path}`);
+    expect(response.status).toBe(200);
   });
 });

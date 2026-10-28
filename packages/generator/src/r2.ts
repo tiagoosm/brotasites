@@ -147,32 +147,43 @@ async function listFiles(dir: string): Promise<string[]> {
     .map((entry) => join(entry.parentPath, entry.name));
 }
 
+/** Uploads every file of a folder under a key prefix ("sites/x/deploy/"). */
+export async function uploadDirToR2(
+  outDir: string,
+  prefix: string,
+  options: R2Options,
+  headers: Record<string, string> = {},
+): Promise<number> {
+  const files = await listFiles(outDir);
+  if (!files.some((file) => relative(outDir, file) === "index.html")) {
+    throw new Error("O site gerado não tem index.html.");
+  }
+  const queue = [...files];
+  const upload = async () => {
+    for (let file = queue.shift(); file; file = queue.shift()) {
+      const path = relative(outDir, file).split(sep).join("/");
+      await putObject(options, `${prefix}${path}`, await readFile(file), {
+        "content-type": contentTypeFor(path),
+        // R2 keeps x-amz-meta-* headers as the object's custom metadata.
+        ...(options.strictCsp ? { "x-amz-meta-csp": "strict" } : {}),
+        ...headers,
+      });
+    }
+  };
+  await Promise.all(Array.from({ length: CONCURRENCY }, upload));
+  return files.length;
+}
+
 /** Uploads the built site and makes it the live version. Returns the deploy id. */
 export async function deployToR2(
   outDir: string,
-  config: SiteConfig,
+  config: Pick<SiteConfig, "site"> | { site: { subdomain: string } },
   options: R2Options,
 ): Promise<string> {
   const subdomain = config.site.subdomain;
   const deployId =
     options.deployId ?? `${Date.now().toString(36)}-${randomBytes(4).toString("hex")}`;
-  const files = await listFiles(outDir);
-  if (!files.some((file) => relative(outDir, file) === "index.html")) {
-    throw new Error("O site gerado não tem index.html.");
-  }
-
-  const queue = [...files];
-  const upload = async () => {
-    for (let file = queue.shift(); file; file = queue.shift()) {
-      const path = relative(outDir, file).split(sep).join("/");
-      await putObject(options, `sites/${subdomain}/${deployId}/${path}`, await readFile(file), {
-        "content-type": contentTypeFor(path),
-        // R2 keeps x-amz-meta-* headers as the object's custom metadata.
-        ...(options.strictCsp ? { "x-amz-meta-csp": "strict" } : {}),
-      });
-    }
-  };
-  await Promise.all(Array.from({ length: CONCURRENCY }, upload));
+  await uploadDirToR2(outDir, `sites/${subdomain}/${deployId}/`, options);
 
   // Only now does the site switch to the new files.
   await putObject(options, `sites/${subdomain}/current`, new TextEncoder().encode(deployId), {
@@ -180,4 +191,18 @@ export async function deployToR2(
     "cache-control": "no-store",
   });
   return deployId;
+}
+
+/**
+ * Uploads a private preview (docs/hosting.md): `previews/<site id>/<token>/`, served by the
+ * sites Worker at previa.<domain>/<site id>/<token>/ with noindex. The site must be built with
+ * that path as its base.
+ */
+export async function uploadPreviewToR2(
+  outDir: string,
+  siteId: string,
+  token: string,
+  options: R2Options,
+): Promise<void> {
+  await uploadDirToR2(outDir, `previews/${siteId}/${token}/`, { ...options, strictCsp: true });
 }
