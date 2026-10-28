@@ -162,3 +162,14 @@ test("the address: suggestion, availability and keeping it before approving", as
   await page.getByRole("button", { name: "Aprovar e publicar" }).click();
   await expect(page).toHaveURL(new RegExp(`${dashboard}/pagamento`));
 });
+
+test("a published site can be downloaded as a .zip", async ({ page, context }) => {
+  await withSite(context, {
+    ...finished,
+    site: { ...finished.site, status: "live" },
+  });
+  await page.goto(dashboard);
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Baixar o site (.zip)" }).click();
+  expect((await download).suggestedFilename()).toBe("site.zip");
+});

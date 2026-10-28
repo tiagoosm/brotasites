@@ -260,6 +260,35 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         </section>
       )}
 
+      {["live", "grace"].includes(site.status) && (
+        <div className="grid gap-2">
+          <Button
+            variant="outline"
+            size="lg"
+            className="justify-self-start"
+            disabled={acting !== null}
+            onClick={() =>
+              act("export", async () => {
+                const response = await fetch(`/api/sites/${site.id}/export`);
+                const body = (await response.json().catch(() => ({}))) as {
+                  url?: string;
+                  error?: string;
+                };
+                if (!response.ok || !body.url) {
+                  throw new SiteActionError(body.error ?? "O download não está disponível agora.");
+                }
+                window.location.assign(body.url);
+              })
+            }
+          >
+            Baixar o site (.zip)
+          </Button>
+          <p className="text-sm text-ink-soft">
+            O site é seu: uma cópia com todos os arquivos, para guardar ou hospedar onde quiser.
+          </p>
+        </div>
+      )}
+
       {site.status === "live" && liveUrl && (
         <a
           href={liveUrl}

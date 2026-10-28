@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminErrors, isUuid, requireAdmin } from "@/lib/server/admin";
+import { setHostingState } from "@/lib/server/hosting";
 import { triggerJob } from "@/lib/server/jobs";
 import { errors, fail } from "@/lib/server/session";
 
@@ -41,5 +42,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   const result = data as { status: string; jobId?: string };
   if (result.jobId) await triggerJob(result.jobId);
-  return NextResponse.json({ status: result.status });
+  // A published site follows the decision on the sites Worker (KV), within about a minute.
+  let hosting: "synced" | "not-published" | "off" | "failed" | undefined;
+  if (action === "suspend" || action === "unsuspend") {
+    const { data: site } = await admin.db
+      .from("sites")
+      .select("subdomain")
+      .eq("id", id)
+      .maybeSingle();
+    if (site?.subdomain) {
+      const state =
+        action === "suspend" ? "suspended" : result.status === "grace" ? "grace" : "active";
+      hosting = await setHostingState(site.subdomain as string, state).catch(
+        () => "failed" as const,
+      );
+    }
+  }
+  return NextResponse.json({ status: result.status, hosting });
 }
