@@ -3,6 +3,7 @@ import Button from "../components/Button.astro";
 import Ornament from "../components/Ornament.astro";
 import Photo from "../components/Photo.astro";
 import { findAsset } from "../lib/assets";
+import { fitTitleClass } from "../lib/hero";
 import { hoursSummary } from "../lib/hours";
 import { ctaLink, primaryContact } from "../lib/links";
 import type { VariantProps } from "./types";
@@ -25,7 +26,9 @@ const seed = config.design.seed;
   <div class="container hero-grid">
     <div class="hero-text">
       <p class="label" data-anim="reveal">{business.name} · {business.address.city}</p>
-      <h1 id="abertura-title" class="hero-title">{content.title}</h1>
+      <div class="fit-title-box">
+        <h1 id="abertura-title" class:list={["hero-title", fitTitleClass(content.title)]}>{content.title}</h1>
+      </div>
       {content.subtitle && <p class="hero-subtitle" data-anim="reveal" data-anim-delay="100">{content.subtitle}</p>}
       <div class="hero-actions">
         <Button link={link} label={label} />
@@ -74,7 +77,7 @@ const seed = config.design.seed;
     }
   }
   .hero-title {
-    font-size: var(--step-5);
+    font-size: min(var(--step-5), calc(100cqi / (var(--longest-word) * 0.62)));
     margin: 0.2em 0 0;
   }
   .hero-subtitle {

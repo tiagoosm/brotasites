@@ -3,11 +3,12 @@ import { type Browser, chromium, type Page } from "@playwright/test";
 import type { Finding } from "./findings.js";
 import { serveDir } from "./serve.js";
 
-// Checks in a real browser (docs/ai-and-reviewer.md, Reviewer 1): content past the screen edge at 360,
-// 768 and 1280 px, accessibility (axe, WCAG 2.1 AA), 44 px touch targets, text cut off by its
-// box, failed and outside requests, and content hidden when the visitor asks for reduced
-// motion. Every request that does not go to the site itself is blocked and reported. Also
-// returns the screenshots the reviewer agent looks at.
+// Checks in a real browser (docs/ai-and-reviewer.md, Reviewer 1): content past the screen edge at
+// 360, 768 and 1280 px, accessibility (axe, WCAG 2.1 AA), 44 px touch targets, words broken in
+// the middle of a heading or other large text, text cut off by its box, failed and outside
+// requests, and content hidden when the visitor asks for reduced motion. Every request that does
+// not go to the site itself is blocked and reported. Also returns the screenshots the reviewer
+// agent looks at.
 
 export const REVIEW_WIDTHS = [360, 768, 1280] as const;
 const MIN_TARGET = 44;
@@ -126,6 +127,34 @@ async function layoutFindings(page: Page): Promise<PageFinding[]> {
           where: sectionOf(el),
           message: `Texto cortado: "${describe(el)}".`,
         });
+      }
+    }
+
+    // A word broken in the middle of a heading or of other large text (a title too large for its
+    // column, in a browser without Portuguese hyphenation). Breaks at a hyphen the word already
+    // has are fine.
+    const words = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let node = words.nextNode(); node; node = words.nextNode()) {
+      const parent = node.parentElement;
+      if (!parent || !visible(parent) || parent.closest("[aria-hidden=true],script,style"))
+        continue;
+      const large =
+        parent.closest("h1,h2,h3") || Number.parseFloat(getComputedStyle(parent).fontSize) >= 28;
+      if (!large) continue;
+      const text = node.textContent ?? "";
+      for (const match of text.matchAll(/[^\s\-\u2010-\u2014]{4,}/g)) {
+        const range = document.createRange();
+        range.setStart(node, match.index);
+        range.setEnd(node, match.index + match[0].length);
+        const tops = new Set([...range.getClientRects()].map((rect) => Math.round(rect.top)));
+        if (tops.size > 1) {
+          push({
+            check: "broken-word",
+            severity: "medium",
+            where: sectionOf(parent),
+            message: `Palavra quebrada no meio: "${match[0]}".`,
+          });
+        }
       }
     }
 

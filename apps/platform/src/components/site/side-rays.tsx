@@ -2,9 +2,11 @@
 
 // SideRays, from React Bits (https://reactbits.dev, MIT + Commons Clause), adapted to
 // TypeScript. Soft WebGL light rays shining in from a corner. Renders nothing without
-// WebGL 2, slows to a still glow with reduced motion, and pauses when off screen.
+// WebGL 2 drawn by a GPU (webgl.ts), slows to a still glow with reduced motion, and pauses when off
+// screen.
 
 import { useEffect, useRef, useState } from "react";
+import { acceleratedWebgl2 } from "./webgl";
 
 const PIXEL_BUDGET = 2.4e6;
 const TAU = Math.PI * 2;
@@ -304,7 +306,7 @@ export default function SideRays({
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
 
-    const gl = canvas.getContext("webgl2", {
+    const gl = acceleratedWebgl2(canvas, {
       alpha: true,
       premultipliedAlpha: true,
       antialias: false,

@@ -15,7 +15,8 @@ const { business, navigation, brand } = config;
 
 <header class:list={["site-header", "tone-base", navigation.sticky && "is-sticky"]}>
   <div class="container header-row">
-    <a href="#inicio" class="header-home" aria-label={`${business.name}, início`}>
+    {/* Named by its visible text (the monogram is hidden from screen readers) or the logo's alt. */}
+    <a href="#inicio" class="header-home">
       <Mark name={business.name} style={markStyle} logoAsset={brand.logoAsset} />
     </a>
     <Button link={primaryContact(business)} label={navigation.ctaLabel} class="header-cta" />
