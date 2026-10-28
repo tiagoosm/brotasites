@@ -1,11 +1,12 @@
-// The single Worker that serves every client site. Nothing here is deployed by the
-// platform: run `pnpm --filter @brotasites/sites-worker deploy` once the R2 bucket exists
-// in Cloudflare (see README, "Publishing").
+// The single Worker that serves every client site (docs/hosting.md). Nothing here is deployed
+// by the platform or by Claude Code: the owner deploys it (docs/owner-steps.md, Cloudflare).
 //
-// For now sites are opened on the free workers.dev address, by path:
+// Locally, `pnpm --filter @brotasites/sites-worker dev` runs it with Miniflare (wrangler dev),
+// with local R2 and KV. Before deploying, the owner replaces the KV namespace id below and
+// BASE_DOMAIN, uncomments the route and sets the secret: `wrangler secret put EXPORT_SECRET`.
+//
+// Until the domain exists, sites open on the free workers.dev address, by path:
 //   https://brotasites-sites.<account>.workers.dev/<subdomain>/
-// Once brotasites.com is in Cloudflare, add the route below to serve
-// <subdomain>.brotasites.com as well.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "brotasites-sites",
@@ -13,7 +14,11 @@
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
   "r2_buckets": [{ "binding": "SITES", "bucket_name": "brotasites-sites" }],
-  "vars": { "SITES_DOMAIN": "brotasites.com" },
-  // "routes": [{ "pattern": "*.brotasites.com/*", "zone_name": "brotasites.com" }],
+  // Site pointers and states, custom domains and preview tokens.
+  "kv_namespaces": [{ "binding": "HOSTING", "id": "00000000000000000000000000000000" }],
+  // The client sites' own domain, separate from the platform's (still to be chosen).
+  "vars": { "BASE_DOMAIN": "sites.localhost" },
+  // One route for every subdomain, so the zone's route limits never grow with clients:
+  // "routes": [{ "pattern": "*.<BASE_DOMAIN>/*", "zone_name": "<BASE_DOMAIN>" }],
   "observability": { "enabled": true }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import worker, { candidateKeys, type Env, siteFromHost } from "../src/index";
+import worker, { candidateKeys, type Env, exportSignature, siteFromHost } from "../src/index";
 
 /** An in-memory stand-in for the R2 bucket binding. */
 function bucket(
@@ -22,21 +22,44 @@ function bucket(
   } as unknown as R2Bucket;
 }
 
+/** An in-memory stand-in for the KV binding. */
+function kv(values: Record<string, string>): KVNamespace {
+  return { get: async (key: string) => values[key] ?? null } as unknown as KVNamespace;
+}
+
+const PREVIEW_SITE = "0b6f2a4e-5c1d-4e8a-9f3b-2d7c6a1e4b90";
+const PREVIEW_TOKEN = "tok_abcdefghijklmnopqrstuvwxyz012345";
+const later = new Date(Date.now() + 86_400_000).toISOString();
+
+const values: Record<string, string> = {
+  [`preview:${PREVIEW_SITE}`]: JSON.stringify({ token: PREVIEW_TOKEN, expiresAt: later }),
+  "site:oficina-nova": JSON.stringify({ version: "v1", previous: "v0", state: "active" }),
+  "site:loja-suspensa": JSON.stringify({ version: "v1", state: "suspended" }),
+  "site:loja-antiga": JSON.stringify({ version: "v1", state: "offline" }),
+  "site:loja-carencia": JSON.stringify({ version: "v1", state: "grace" }),
+  "domain:www.oficinanova.com.br": "oficina-nova",
+};
+
 const env: Env = {
-  SITES_DOMAIN: "brotasites.com",
+  BASE_DOMAIN: "brotasites.com",
+  EXPORT_SECRET: "segredo-de-teste",
+  HOSTING: kv(values),
   SITES: bucket({
     "sites/padaria-do-ze/current": { body: "d2\n" },
     "sites/padaria-do-ze/d1/index.html": { body: "versão antiga", type: "text/html" },
     "sites/padaria-do-ze/d2/index.html": { body: "<h1>Padaria do Zé</h1>", type: "text/html" },
     "sites/padaria-do-ze/d2/_astro/site.abc.css": { body: "body{}", type: "text/css" },
     "sites/padaria-do-ze/d2/cardapio/index.html": { body: "cardápio", type: "text/html" },
-    "previews/0b6f2a4e-5c1d-4e8a-9f3b-2d7c6a1e4b90/tok_abcdefghijklmnopqrstuvwxyz012345/index.html":
-      {
-        body: "<h1>Prévia</h1>",
-        type: "text/html",
-        customMetadata: { csp: "strict" },
-      },
-    "sites/oficina-nova/current": { body: "v1" },
+    [`previews/${PREVIEW_SITE}/${PREVIEW_TOKEN}/index.html`]: {
+      body: "<h1>Prévia</h1>",
+      type: "text/html",
+      customMetadata: { csp: "strict" },
+    },
+    "sites/oficina-nova/v0/index.html": { body: "versão anterior", type: "text/html" },
+    "exports/oficina-nova/v1.zip": { body: "PK-zip", type: "application/zip" },
+    "sites/loja-suspensa/v1/index.html": { body: "<h1>Loja</h1>", type: "text/html" },
+    "sites/loja-antiga/v1/index.html": { body: "<h1>Loja</h1>", type: "text/html" },
+    "sites/loja-carencia/v1/index.html": { body: "<h1>Ainda no ar</h1>", type: "text/html" },
     "sites/oficina-nova/v1/index.html": {
       body: "<h1>Oficina</h1>",
       type: "text/html",
@@ -196,5 +219,101 @@ describe("private previews", () => {
   it("serves previews on the testing address under /previa/", async () => {
     const response = await get(`https://brotasites-sites.conta.workers.dev/previa${path}`);
     expect(response.status).toBe(200);
+  });
+});
+
+describe("hosting records in KV (E12)", () => {
+  it("serves the version KV points to, and sites published before KV from R2", async () => {
+    expect(await (await get("https://oficina-nova.brotasites.com/")).text()).toBe(
+      "<h1>Oficina</h1>",
+    );
+    expect(await (await get("https://padaria-do-ze.brotasites.com/")).text()).toBe(
+      "<h1>Padaria do Zé</h1>",
+    );
+  });
+
+  it("shows a neutral page for suspended sites and says when a site left", async () => {
+    const paused = await get("https://loja-suspensa.brotasites.com/");
+    expect(paused.status).toBe(503);
+    expect(await paused.text()).toContain("temporariamente fora do ar");
+    expect(paused.headers.get("cache-control")).toBe("no-store");
+    const gone = await get("https://loja-antiga.brotasites.com/");
+    expect(gone.status).toBe(410);
+    // On the testing address too, without setting the site cookie.
+    const test = await get("https://brotasites-sites.conta.workers.dev/loja-suspensa/");
+    expect(test.status).toBe(503);
+    expect(test.headers.get("set-cookie")).toBeNull();
+  });
+
+  it("keeps a site in its grace period online", async () => {
+    const response = await get("https://loja-carencia.brotasites.com/");
+    expect(response.status).toBe(200);
+  });
+
+  it("serves a client's own domain from the KV map, and nothing for unknown domains", async () => {
+    expect(await (await get("https://www.oficinanova.com.br/")).text()).toBe("<h1>Oficina</h1>");
+    expect((await get("https://www.outrodominio.com.br/")).status).toBe(404);
+    // A subdomain of the base domain is never looked up as a custom domain.
+    expect((await get("https://x.y.brotasites.com/")).status).toBe(404);
+  });
+
+  it("opens a preview only with the recorded token, before it expires", async () => {
+    const path = `/${PREVIEW_SITE}/${PREVIEW_TOKEN}/`;
+    expect((await get(`https://previa.brotasites.com${path}`)).status).toBe(200);
+    const expired: Env = {
+      ...env,
+      HOSTING: kv({
+        ...values,
+        [`preview:${PREVIEW_SITE}`]: JSON.stringify({
+          token: PREVIEW_TOKEN,
+          expiresAt: "2020-01-01T00:00:00Z",
+        }),
+      }),
+    };
+    expect(
+      (await worker.fetch(new Request(`https://previa.brotasites.com${path}`), expired)).status,
+    ).toBe(404);
+    const unknown: Env = { ...env, HOSTING: kv({}) };
+    expect(
+      (await worker.fetch(new Request(`https://previa.brotasites.com${path}`), unknown)).status,
+    ).toBe(404);
+  });
+
+  it("hands the .zip of the live version over a signed, short-lived link", async () => {
+    const exp = Math.floor(Date.now() / 1000) + 600;
+    const sig = await exportSignature("segredo-de-teste", "oficina-nova", exp);
+    const response = await get(
+      `https://previa.brotasites.com/_export/oficina-nova?exp=${exp}&sig=${sig}`,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("PK-zip");
+    expect(response.headers.get("content-disposition")).toBe(
+      'attachment; filename="oficina-nova.zip"',
+    );
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+
+    const bad = [
+      `exp=${exp}&sig=${sig.replace(/^./, sig[0] === "a" ? "b" : "a")}`,
+      `exp=${exp + 1}&sig=${sig}`,
+      `exp=${exp + 7200}&sig=${await exportSignature("segredo-de-teste", "oficina-nova", exp + 7200)}`,
+      `exp=${exp - 3600}&sig=${await exportSignature("segredo-de-teste", "oficina-nova", exp - 3600)}`,
+    ];
+    for (const query of bad) {
+      expect(
+        (await get(`https://previa.brotasites.com/_export/oficina-nova?${query}`)).status,
+        query,
+      ).toBe(403);
+    }
+    const other = await exportSignature("segredo-de-teste", "padaria-do-ze", exp);
+    expect(
+      (await get(`https://previa.brotasites.com/_export/oficina-nova?exp=${exp}&sig=${other}`))
+        .status,
+    ).toBe(403);
+    const noSecret: Env = { ...env, EXPORT_SECRET: undefined };
+    const off = await worker.fetch(
+      new Request(`https://previa.brotasites.com/_export/oficina-nova?exp=${exp}&sig=${sig}`),
+      noSecret,
+    );
+    expect(off.status).toBe(403);
   });
 });
