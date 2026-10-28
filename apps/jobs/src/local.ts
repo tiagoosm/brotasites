@@ -7,12 +7,13 @@ import { depsFromEnv } from "./env.js";
 import { JOB_KINDS, runJob } from "./pipeline.js";
 
 // The local runner, for development without Trigger.dev: takes queued jobs one at a time and
-// serves the previews at http://localhost:<port>/<site id>/<token>/ (set PREVIEW_ORIGIN on the
-// platform to that address). Needs the Supabase variables; the R2 ones only to publish.
+// serves the previews at http://127.0.0.1:4500/<site id>/<token>/ (LOCAL_PREVIEWS_PORT; the
+// platform's NEXT_PUBLIC_PREVIEW_ORIGIN defaults to that address). Needs the Supabase
+// variables; the R2 ones only to publish.
 
 const root = resolve(process.env.LOCAL_PREVIEWS_DIR ?? ".previews");
 await mkdir(root, { recursive: true });
-const server = await serveDir(root);
+const server = await serveDir(root, "/", Number(process.env.LOCAL_PREVIEWS_PORT ?? 4500));
 console.log(`Prévias locais em ${server.url}`);
 
 const deps = depsFromEnv(process.env, { localPreviews: root });

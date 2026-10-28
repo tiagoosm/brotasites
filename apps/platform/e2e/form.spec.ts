@@ -98,3 +98,8 @@ test("a site of another account is not found", async ({ page, context }) => {
   await page.goto("/criar/00000000-0000-4000-8000-000000000000/negocio");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Site não encontrado");
 });
+
+test("old addresses of the form lead to the new one", async ({ page }) => {
+  await page.goto("/criar/negocio");
+  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fcriar$/);
+});

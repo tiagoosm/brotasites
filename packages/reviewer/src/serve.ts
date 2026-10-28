@@ -25,7 +25,7 @@ export interface StaticServer {
   close(): Promise<void>;
 }
 
-export async function serveDir(distDir: string, base = "/"): Promise<StaticServer> {
+export async function serveDir(distDir: string, base = "/", listenPort = 0): Promise<StaticServer> {
   const root = resolve(distDir);
   const server: Server = createServer((request, response) => {
     let path = decodeURIComponent(new URL(request.url ?? "/", "http://localhost").pathname);
@@ -47,7 +47,7 @@ export async function serveDir(distDir: string, base = "/"): Promise<StaticServe
     response.writeHead(200, { "Content-Type": types[extname(file)] ?? "application/octet-stream" });
     createReadStream(file).pipe(response);
   });
-  await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
+  await new Promise<void>((done) => server.listen(listenPort, "127.0.0.1", done));
   const { port } = server.address() as AddressInfo;
   return {
     url: `http://127.0.0.1:${port}${base}`,

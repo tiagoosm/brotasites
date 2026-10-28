@@ -177,7 +177,9 @@ describe("pipeline", { timeout: 240_000 }, () => {
     expect(identity?.palette).toEqual(chosen?.identity.palette);
     expect(config.design.overrides.colors).toBeDefined();
     if (identity) {
-      expect(contrastIssues({ ...identity.palette, ...config.design.overrides.colors })).toEqual([]);
+      expect(contrastIssues({ ...identity.palette, ...config.design.overrides.colors })).toEqual(
+        [],
+      );
     }
   });
 

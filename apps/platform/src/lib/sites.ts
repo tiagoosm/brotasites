@@ -208,7 +208,7 @@ export async function renderUrls(siteId: string): Promise<Record<string, string>
 /** The private address of the finished site (previa.<domain>/<site>/<token>/). */
 export function previewUrl(site: Pick<SiteRow, "id" | "preview_token">): string | null {
   if (!site.preview_token) return null;
-  const origin = (process.env.NEXT_PUBLIC_PREVIEW_ORIGIN ?? "http://localhost:4500").replace(
+  const origin = (process.env.NEXT_PUBLIC_PREVIEW_ORIGIN ?? "http://127.0.0.1:4500").replace(
     /\/$/,
     "",
   );
