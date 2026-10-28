@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { AiDirector, SimulatedModelClient } from "@brotasites/ai";
 import { SimulatedReviewerAgent } from "@brotasites/reviewer";
-import { type FormDraft, siteConfigSchema } from "@brotasites/schema/v1.2";
+import { contrastIssues, type FormDraft, siteConfigSchema } from "@brotasites/schema/v1.2";
 import { templatesRoot } from "@brotasites/templates";
 import { describe, expect, it } from "vitest";
 import {
@@ -157,6 +157,28 @@ describe("pipeline", { timeout: 240_000 }, () => {
       "site_built",
       "published",
     ]);
+  });
+
+  it("keeps colors changed after approval, with AA contrast", async () => {
+    const { store, siteId, deps } = setup((draft) => {
+      // A light primary that would make white button text unreadable.
+      draft.colorOverrides = { primary: "#F2E8D5" };
+    });
+    store.enqueue(siteId, "directions");
+    await runNext(deps, store);
+    const [chosen] = store.directions.filter((d) => d.siteId === siteId);
+    await store.updateSite(siteId, { status: "building" });
+    const record = store.sites.get(siteId);
+    if (record) record.approvedDirection = chosen?.id ?? null;
+    store.enqueue(siteId, "build");
+    expect(await runNext(deps, store)).toBe("done");
+    const config = siteConfigSchema.parse((await store.loadSite(siteId)).config);
+    const identity = config.design.identity;
+    expect(identity?.palette).toEqual(chosen?.identity.palette);
+    expect(config.design.overrides.colors).toBeDefined();
+    if (identity) {
+      expect(contrastIssues({ ...identity.palette, ...config.design.overrides.colors })).toEqual([]);
+    }
   });
 
   it("retries a failed job once, then sends the site to needs attention", async () => {

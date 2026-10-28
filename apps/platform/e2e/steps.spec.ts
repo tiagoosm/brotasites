@@ -1,5 +1,13 @@
 import { expect, test } from "@playwright/test";
-import { allBefore, padaria, SITE, USER, withSite } from "./support/supabase";
+import {
+  allBefore,
+  padaria,
+  SITE,
+  siteRow,
+  threeDirections,
+  USER,
+  withSite,
+} from "./support/supabase";
 
 // Steps 2 to 5: brand, sections, content with photos and consent, contact with hours.
 
@@ -144,4 +152,25 @@ test("contact: by appointment and 24 hours need no schedule", async ({ page, con
   await expect
     .poll(() => state.draft.contact)
     .toMatchObject({ openingHours: { mode: "always", rules: [] } });
+});
+
+test("brand after approval: the style stays, the colors can change with AA", async ({
+  page,
+  context,
+}) => {
+  const state = await withSite(context, {
+    site: siteRow("awaiting_approval", { approved_direction: threeDirections[0]?.id ?? null }),
+    draft: padaria,
+    completed: allBefore("endereco"),
+    directions: threeDirections,
+  });
+  await page.goto(at("marca"));
+  await expect(page.getByRole("checkbox", { name: /^Acolhedor:/ })).toBeDisabled();
+  const primary = page.getByLabel("Cor principal (botões)");
+  await expect(primary).toHaveValue("#b45309");
+  await primary.fill("#f2e8d5");
+  await expect(page.getByText(/o texto ficaria difícil de ler/)).toBeVisible();
+  await expect.poll(() => state.draft.colorOverrides).toEqual({ primary: "#F2E8D5" });
+  await page.getByRole("button", { name: "Voltar às cores aprovadas" }).click();
+  await expect(primary).toHaveValue("#b45309");
 });

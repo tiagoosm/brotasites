@@ -1,9 +1,18 @@
 "use client";
 
-import { brandAnswersSchema, type Feeling, feelings } from "@brotasites/schema/v1.2";
+import {
+  brandAnswersSchema,
+  contrastIssues,
+  type Feeling,
+  feelings,
+  type Palette,
+} from "@brotasites/schema/v1.2";
 import { Check } from "lucide-react";
+import { useEffect, useState } from "react";
 import { chipClass } from "@/components/shared/chip";
 import { useForm12 } from "@/lib/form-store";
+import { loadDirection } from "@/lib/sites";
+import { getBrowserSupabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { PickFiles, Thumb, UploadStatus, useAssetUrls, useUploader } from "./asset-upload";
 import { SectionCard } from "./fields";
@@ -44,10 +53,11 @@ export function BrandStep() {
     >
       {identityLocked && (
         <LockedNote>
-          A identidade visual já foi aprovada: cores e sensações ficam como estão. Você ainda pode
-          trocar o logo.
+          A identidade visual já foi aprovada: o estilo e as sensações ficam como estão. Você ainda
+          pode trocar o logo e ajustar as cores do site.
         </LockedNote>
       )}
+      {identityLocked && <ApprovedColors />}
       <SectionCard
         name="Logo"
         note="Opcional. Sem logo, a gente cria um monograma com o nome do negócio."
@@ -166,5 +176,73 @@ export function BrandStep() {
         </div>
       </ChoiceGroup>
     </StepForm>
+  );
+}
+
+const adjustable: { role: "primary" | "accent"; label: string }[] = [
+  { role: "primary", label: "Cor principal (botões)" },
+  { role: "accent", label: "Cor de destaque" },
+];
+
+/** After approval: the approved palette's two brand colors, which the client may change. */
+function ApprovedColors() {
+  const { site, draft, updateDraft } = useForm12();
+  const [palette, setPalette] = useState<Palette | null>(null);
+  const directionId = site?.approved_direction;
+  useEffect(() => {
+    const supabase = getBrowserSupabase();
+    if (!supabase || !directionId) return;
+    loadDirection(supabase, directionId)
+      .then((direction) => setPalette((direction?.identity.palette as Palette) ?? null))
+      .catch(() => {});
+  }, [directionId]);
+  if (!palette) return null;
+  const overrides = draft.colorOverrides ?? {};
+  const merged = { ...palette, ...overrides };
+  const hardToRead = contrastIssues(merged).length > 0;
+  const changed = Object.keys(overrides).length > 0;
+
+  return (
+    <SectionCard
+      name="Cores do site"
+      note="As mudanças entram quando você pedir para montar o site de novo, em Meus sites."
+    >
+      <div className="flex flex-wrap gap-6">
+        {adjustable.map(({ role, label }) => (
+          <label
+            key={role}
+            className="grid justify-items-start gap-2 text-[0.9375rem] font-semibold"
+          >
+            {label}
+            <input
+              type="color"
+              value={merged[role]}
+              className="size-12 cursor-pointer rounded-lg border border-input bg-card p-1"
+              onChange={(event) =>
+                updateDraft((d) => ({
+                  ...d,
+                  colorOverrides: { ...d.colorOverrides, [role]: event.target.value.toUpperCase() },
+                }))
+              }
+            />
+          </label>
+        ))}
+      </div>
+      {hardToRead && (
+        <p role="status" className="text-sm text-ink-soft">
+          Com essa cor, o texto ficaria difícil de ler. A gente ajusta um pouco o tom ao montar o
+          site.
+        </p>
+      )}
+      {changed && (
+        <button
+          type="button"
+          className="touch-target justify-self-start text-sm font-semibold text-leaf-deep underline underline-offset-4"
+          onClick={() => updateDraft(({ colorOverrides: _, ...rest }) => rest)}
+        >
+          Voltar às cores aprovadas
+        </button>
+      )}
+    </SectionCard>
   );
 }

@@ -235,3 +235,17 @@ export async function approveSite(
   }
   return body;
 }
+
+/** One direction of the site (the approved one, for its palette). */
+export async function loadDirection(
+  supabase: SupabaseClient,
+  directionId: string,
+): Promise<DirectionRow | null> {
+  const { data, error } = await supabase
+    .from("site_directions")
+    .select("id, round, direction, identity, source, screenshots")
+    .eq("id", directionId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as DirectionRow | null) ?? null;
+}

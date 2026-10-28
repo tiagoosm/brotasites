@@ -252,7 +252,9 @@ export async function fakeSupabase(
       }
     }
     if (table === "site_events" && method === "GET") return answer(state.events);
-    if (table === "site_directions" && method === "GET") return answer(state.directions);
+    if (table === "site_directions" && method === "GET") {
+      return answer(state.directions.filter((d) => !idFilter || idFilter === `eq.${d.id}`));
+    }
     if (table === "assets") {
       if (method === "POST") {
         const id = `5a1b2c3d-4e5f-4a6b-8c7d-${String(state.uploads.length).padStart(12, "0")}`;
@@ -332,7 +334,15 @@ export const threeDirections: FakeDirection[] = (
   direction,
   identity: {
     personality: "artesanal",
-    palette: { primary: ["#B45309", "#1F5130", "#3B2C5E"][index] as string, background: "#FFFAF2" },
+    palette: {
+      background: "#FFFAF2",
+      surface: "#FFFFFF",
+      text: "#1F1A14",
+      textMuted: "#5C5148",
+      primary: ["#B45309", "#1F5130", "#3B2C5E"][index] as string,
+      onPrimary: "#FFFFFF",
+      accent: "#7C2D12",
+    },
     fontPair: "fraunces-inter",
     heroVariant: "split",
   },

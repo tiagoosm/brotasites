@@ -282,6 +282,11 @@ export interface FormDraft {
   content?: Partial<z.input<typeof contentAnswersSchema>>;
   contact?: Partial<z.input<typeof contactAnswersSchema>>;
   site?: { subdomain?: string };
+  /**
+   * Colors the client changes after approving a direction (the identity stays locked). The
+   * build keeps them only with AA contrast, pulling them to the nearest passing tone if needed.
+   */
+  colorOverrides?: Partial<Record<"primary" | "accent", string>>;
 }
 
 /** Loose check of a stored draft: shape only, so an old or partial draft still opens. */
@@ -293,6 +298,9 @@ export const formDraftSchema = z
     content: z.record(z.string(), z.unknown()).optional(),
     contact: z.record(z.string(), z.unknown()).optional(),
     site: z.object({ subdomain: subdomainSchema.optional() }).optional(),
+    colorOverrides: z
+      .object({ primary: hexColorSchema.optional(), accent: hexColorSchema.optional() })
+      .optional(),
   })
   .loose();
 

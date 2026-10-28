@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { join } from "node:path";
 import type { AiDirector } from "@brotasites/ai";
-import type { EngineInput } from "@brotasites/engine";
+import { applyOverrides, type EngineInput } from "@brotasites/engine";
 import { buildStaticSite } from "@brotasites/generator";
 import { type BrowserResult, type ReviewerAgent, reviewSite } from "@brotasites/reviewer";
 import {
@@ -151,7 +151,7 @@ export async function runBuild(deps: PipelineDeps, job: Job): Promise<void> {
     for (const warning of workspace.warnings)
       await store.addEvent(site.id, "photo_warning", warning);
     const caller = { siteId: site.id, accountId: site.ownerId };
-    const form = siteConfigSchema.parse(
+    const answers = siteConfigSchema.parse(
       formToSiteConfig(
         { ...site.draft, site: { subdomain: site.subdomain ?? site.draft.site?.subdomain } },
         {
@@ -163,6 +163,12 @@ export async function runBuild(deps: PipelineDeps, job: Job): Promise<void> {
         },
       ),
     );
+    // Colors changed after approval: kept with AA contrast, the identity itself stays locked.
+    const colors = site.draft.colorOverrides;
+    const form =
+      colors && Object.keys(colors).length > 0
+        ? { ...answers, design: applyOverrides(answers.design, { colors }, { repair: true }) }
+        : answers;
     const input = engineInputOf(site, workspace);
     await deps.ai.recordApproved(site.id, input.family, input.city, {
       id: direction.direction,
