@@ -37,7 +37,7 @@ function astroBin(): string {
  * package: two builds at the same time never share it, and the prerendered chunks still
  * resolve the templates' dependencies.
  */
-async function runAstroBuild(
+export async function buildStaticSite(
   configPath: string,
   outDir: string,
   base?: string,
@@ -88,7 +88,7 @@ export async function generateSite(options: GenerateOptions): Promise<GenerateRe
   const usesCopy = remote.downloaded > 0 || remote.warnings.length > 0;
   if (usesCopy) await writeFile(resolvedPath, JSON.stringify(remote.config, null, 2));
   try {
-    const build = await runAstroBuild(usesCopy ? resolvedPath : configPath, outDir, options.base);
+    const build = await buildStaticSite(usesCopy ? resolvedPath : configPath, outDir, options.base);
     if (!build.ok) {
       return {
         success: false,

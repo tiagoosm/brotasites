@@ -69,7 +69,7 @@ beforeAll(() => {
   cpSync(join(fixture, "assets"), join(dir, "assets"), { recursive: true });
   // Its own scratch directory inside the package: with an outDir outside its working directory
   // Astro writes its prerender build to `<cwd>/.astro`, which other builds running at the same
-  // time would share (see runAstroBuild in packages/generator).
+  // time would share (see buildStaticSite in packages/generator).
   mkdirSync(join(root, ".builds"), { recursive: true });
   scratch = mkdtempSync(join(root, ".builds", "xss-"));
   const astro = join(root, "node_modules/astro/bin/astro.mjs");
