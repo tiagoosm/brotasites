@@ -1,3 +1,4 @@
+import { AnchorScroll } from "@/components/site/anchor-scroll";
 import { MotionReveal } from "@/components/site/motion-reveal";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
@@ -33,6 +34,7 @@ export default async function SiteLayout({
       <SiteFooter signedIn={signedIn} />
       <SiteVine />
       <MotionReveal />
+      <AnchorScroll />
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { connection } from "next/server";
+import { AnchorScroll } from "@/components/site/anchor-scroll";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { SkipLink } from "@/components/site/skip-link";
@@ -27,6 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {children}
       </div>
       <SiteFooter signedIn={session.signedIn} compact={focus} />
+      <AnchorScroll />
     </>
   );
 }
