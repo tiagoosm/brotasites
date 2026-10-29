@@ -92,7 +92,7 @@ export async function loadSite(
   return { ...site, draft: config?.draft ?? {}, completed: config?.completed ?? [] };
 }
 
-/** A new 1.2 site with an empty draft (or the answers brought from the home page demo). */
+/** A new 1.2 site with an empty draft. */
 export async function createSite(supabase: SupabaseClient, draft: FormDraft = {}): Promise<string> {
   const { data, error } = await supabase.from("sites").insert({}).select("id").single();
   if (error || !data) throw error ?? new Error("site not created");

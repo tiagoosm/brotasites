@@ -47,6 +47,11 @@ Dashboard (E16, as built):
 - Notices (`public.notifications`): made only by database triggers; clients read their own and can change only `read_at` (column grant, RLS, and a trigger that keeps the first read time); no insert or delete by clients; the sentence comes from a closed list of kinds, no stored text. Marking as read goes through `/api/notifications/read`: Origin, Zod (UUIDs or "all"), the person's session, a rate limit per IP and per account.
 - The public pages are prerendered twice (visitor and signed in) and served by the proxy under the same address, with `private, no-cache`; the internal addresses answer 404. They hold no personal data (only which menu to show).
 
+Header (E17, as built):
+
+- One header everywhere. Who is signed in comes from the server: the signed-in pages read the session, name and team flag in their layout; the prerendered public pages ask `/api/account/me` (the person's own name, email and team flag, `no-store`) only when the profile menu opens. Names and emails are rendered as text (escaped), never as HTML, and never put in a URL. "Área da equipe" is only a link: `/admin` is still checked on the server and needs the second step (aal2).
+- With the `/exemplo` page gone (it framed the example site), the platform's CSP no longer allows framing: `frame-ancestors 'none'` (was `'self'`) and `frame-src` only for Turnstile (was also `'self'` and the previews).
+
 ## 6. Payments
 
 Publish only after a confirmed webhook, with idempotency; never trust the browser. No card data in our system. Webhook authentication as in the provider's documentation (to verify).

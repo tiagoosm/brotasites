@@ -69,6 +69,14 @@ In this order. Nothing here was done by Claude Code; values marked "to verify" w
 
 Since 2026-10-27 the owner does not approve each task. Choices the plan reserved for the owner are taken with the recommended option and listed here; any of them can be reversed.
 
+- **E17, one header and the profile menu:**
+  - **Name and team on the public pages** (owner's choice, 2026-10-29): the prerendered public pages only know that someone is signed in, so their profile button shows the person icon and the menu reads the name, the email and "Área da equipe" from `/api/account/me` when it first opens (the four account items show at once). The signed-in pages render the initials and the full menu from the server.
+  - The menu is built in the project (no new library): the ARIA menu-button pattern, items of 44px, Escape and Tab close it, a click outside too.
+  - Signed out, the home page's header shows "Entrar" but not "Criar meu site" (its hero has the button, as before); every other page shows both. Signed in, "Criar site" shows on every page, next to the profile button.
+  - The dashboard's notices bell moved from the old header to the greeting; the team area's links became tabs under the header; the form shows its progress under the header, without a second brand or account menu.
+  - Footer: the full one everywhere, a single line on the sign-in, sign-up and password screens.
+  - **Fixed on the way**: since E16 the home page logged a React hydration error (#418): the header compared the prerendered internal address ("/visitante") with the visible one ("/") and rendered differently. The header now reads the visible address.
+  - Lighthouse of the home page, this container, phone / desktop (performance / accessibility / best practices / SEO): before (main, E16) 62 / 100 / 92 / 100 and 100 / 100 / 92 / 100 (phone LCP 4.2 s, TBT 1,190 ms; the 92 was the hydration error); after 93 / 100 / 100 / 100 and 100 / 100 / 100 / 100 (phone LCP 3.0 s, TBT 150 ms).
 - **E16, account dashboard:**
   - **Public pages, two prerendered versions** (owner's choice, 2026-10-29): `/`, `/ajuda`, `/termos` and `/privacidade` are built twice (`/visitante/...` and `/logado/...`, `src/lib/public-variant.ts`); the proxy, which already reads the session, serves the right one under the page's own address and answers 404 to the internal addresses. The pages stay static and the menu never flickers.
   - **`Vary: Cookie`**: Next.js writes its own `Vary` on every rendered page and replaces ours; it is kept on redirects and API answers. The pages that differ per session are still never stored by a shared cache: the dashboard and the account pages send `Cache-Control: private, no-store`, the public pages `private, no-cache`. To verify after the first deploy: that Vercel keeps `private` on the public pages (if it changes it to `public, max-age=0, must-revalidate`, caches still revalidate every time, so no one gets another person's menu).
@@ -95,7 +103,6 @@ Since 2026-10-27 the owner does not approve each task. Choices the plan reserved
 - **E10, form and dashboard choices:**
   - Signing in is required before the first question, so the sign-in page no longer offers "Continuar sem entrar"; it links back to the home page instead.
   - After approval the client can change two colors of the approved palette, the main color (buttons) and the accent, in step 2. The build applies them with the engine's overrides and pulls them to the nearest tone that keeps AA; the rest of the identity stays locked. Other palette roles are not offered, to keep the screen simple.
-  - The home page keeps the "Experimente aqui" miniature (plan step E14) as a sample, labeled "Amostra" and "Nada é salvo aqui"; it is not a preview of the form.
   - The "Como funciona" section shows the 7 steps of the new form with small still pictures; the old pictures of templates and palettes were removed.
   - Sites wait in "in review" for a person (CLAUDE.md: at first every site is reviewed by hand). The admin queue comes in E11; until then `REVIEW_SKIP_HUMAN=true` sends finished sites straight to the client, in development only.
   - E11, admin panel: decisions go through `server_admin_decide` and are logged in `admin_decisions`, which not even the server can rewrite. Asking for changes or suspending needs a note (the change note goes to the copy step; the suspension reason is shown to the client). Suspending today only changes the status on the platform; taking the site offline in the Worker comes with E12.

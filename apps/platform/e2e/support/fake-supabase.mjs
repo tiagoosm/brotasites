@@ -15,6 +15,8 @@ const calls = [];
 // The dashboard of each user (E16): their sites (rows as the dashboard's query reads them) and
 // notices, set by the tests at /__test/dashboard.
 const dashboards = new Map(); // userId -> { sites, notices }
+// Who is on the team (E17: the profile menu shows "Área da equipe"), set at /__test/team.
+const team = new Set();
 
 const b64 = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
 const unb64 = (value) => JSON.parse(Buffer.from(value, "base64url").toString());
@@ -151,6 +153,11 @@ const server = createServer(async (req, res) => {
     return send(res, 200, user ? { ...userJson(user), password: undefined } : null);
   }
   if (path === "/__test/calls") return send(res, 200, calls);
+  if (path === "/__test/team" && method === "POST") {
+    const body = await readJson(req);
+    team.add(body.userId);
+    return send(res, 200, {});
+  }
   if (path === "/__test/dashboard" && method === "POST") {
     const body = await readJson(req);
     dashboards.set(body.userId, {
@@ -308,6 +315,10 @@ const server = createServer(async (req, res) => {
   }
 
   // Database (only what the platform's server reads) ----------------------------------------
+  if (path === "/rest/v1/rpc/is_admin_member") {
+    const user = bearerUser(req);
+    return send(res, 200, Boolean(user && team.has(user.id)));
+  }
   if (path === "/rest/v1/rpc/server_rate_limit") {
     const body = await readJson(req);
     const used = (limits.get(body.p_key) ?? 0) + 1;

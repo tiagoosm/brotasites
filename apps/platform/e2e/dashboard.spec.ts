@@ -68,16 +68,21 @@ test("with no sites: an invitation, and nothing pending", async ({ page, context
   await signIn(context, { user: who });
   await page.goto("/painel");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Olá, Zé");
-  await expect(page.getByText(who.email)).toBeVisible();
+  await expect(page.getByRole("main").getByText(who.email)).toBeVisible();
   await expect(page.getByText("Tudo em dia.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Crie seu primeiro site" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Criar meu site" })).toHaveAttribute(
     "href",
     "/criar",
   );
-  const menu = page.getByRole("navigation", { name: "Conta" });
-  await expect(menu.getByRole("link")).toHaveText(["Painel", "Criar site", "Perfil e segurança"]);
-  await expect(menu.getByRole("button", { name: "Sair" })).toBeVisible();
+  // The account lives in the profile menu of the one header (E17), read on the server.
+  await page.getByRole("button", { name: "Menu da conta de Zé da Padaria" }).click();
+  await expect(page.getByRole("menuitem")).toHaveText([
+    "Painel",
+    "Criar site",
+    "Perfil e segurança",
+    "Sair",
+  ]);
 });
 
 test("each status shows its label, what is pending and the right button", async ({

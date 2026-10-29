@@ -3,23 +3,35 @@
 import { ArrowRight, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { CREATE_HREF, guestLinks, headerLinks, memberLinks, phoneMenuLinks } from "./nav";
+import {
+  accountItems,
+  currentLink,
+  guestLinks,
+  type HeaderSession,
+  headerLinks,
+  mainButton,
+  visiblePath,
+} from "./nav";
+import { ProfileMenu } from "./profile-menu";
 import { SignOutButton } from "./sign-out";
 
 /**
- * Quiet sticky header: brand, two links, sign in and the one primary action. Signed in, the
- * account's menu instead (Painel, Criar site, Perfil e segurança, Sair). `signedIn` comes from
- * the server (the page variant the proxy picked), so the menu never flickers.
+ * The one header of every page (E17): the brand, the same four links (Como funciona, Preço,
+ * Dúvidas, Ajuda), and the account on the right: "Entrar" and "Criar meu site" signed out, or
+ * "Criar site" and the profile menu signed in. Who is signed in comes from the server (the
+ * public page variant the proxy picked, or the session the signed-in pages read), never from
+ * the browser, so nothing flickers. Up to 768px: the brand, the profile button and the menu.
  */
-export function SiteHeader({ signedIn }: { signedIn: boolean }) {
+export function SiteHeader({ session }: { session: HeaderSession }) {
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
+  const pathname = visiblePath(usePathname());
   const isHome = pathname === "/";
+  const current = currentLink(pathname);
+  const main = mainButton(session, isHome);
 
   // Navigating closes the phone menu.
   useEffect(() => {
@@ -28,63 +40,60 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-line/80 bg-paper/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-5 sm:gap-6 sm:px-8">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-5 sm:px-8 md:gap-5 lg:gap-6">
         <Brand />
-        <nav aria-label="Principal" className="ml-auto hidden items-center gap-7 md:flex">
-          {(signedIn ? memberLinks : headerLinks).map((link) => (
+        <nav
+          aria-label="Principal"
+          className="mx-auto hidden items-center gap-4 text-[0.875rem] md:flex lg:gap-7 lg:text-[0.9375rem]"
+        >
+          {headerLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              prefetch={link.account ? false : undefined}
-              aria-current={pathname === link.href ? "page" : undefined}
-              className="touch-target text-[0.9375rem] text-ink-soft transition-colors duration-150 hover:text-ink aria-[current=page]:text-ink"
+              aria-current={current === link.href ? "page" : undefined}
+              className="touch-target text-ink-soft transition-colors duration-150 hover:text-ink aria-[current=page]:font-semibold aria-[current=page]:text-ink"
             >
               {link.label}
             </Link>
           ))}
-          {signedIn ? (
-            <SignOutButton className="text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline" />
-          ) : (
-            // "Criar conta" sits next to "Entrar" where no "Criar meu site" button is shown.
-            (isHome ? guestLinks : guestLinks.slice(0, 1)).map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                prefetch={false}
-                className="touch-target text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
-              >
-                {link.label}
-              </Link>
-            ))
-          )}
         </nav>
-        {/* The home page has its own buttons (at most three); the other pages get one here.
-            Signed in, "Criar site" is already in the menu. */}
-        {!isHome && !signedIn && (
-          <Button
-            asChild
-            size="lg"
-            className="touch-target ml-auto h-9 px-4 text-sm sm:h-10 sm:px-5 sm:text-[0.9375rem] md:ml-0"
-          >
-            <Link href={CREATE_HREF} prefetch={false}>
-              Criar meu site
+        <div className="ml-auto flex items-center gap-3 md:ml-0 lg:gap-4">
+          {!session.signedIn && (
+            <Link
+              href="/entrar"
+              prefetch={false}
+              className="touch-target hidden text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline md:inline-flex"
+            >
+              Entrar
             </Link>
+          )}
+          {main && (
+            <Button
+              asChild
+              size="lg"
+              className="touch-target hidden h-10 px-4 text-sm md:inline-flex lg:px-5 lg:text-[0.9375rem]"
+            >
+              <Link href={main.href} prefetch={false}>
+                {main.label}
+              </Link>
+            </Button>
+          )}
+          {session.signedIn && <ProfileMenu session={session} />}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-lg"
+            className="touch-target -mr-2 md:hidden"
+            aria-label="Abrir menu"
+            aria-expanded={open}
+            aria-controls="menu-celular"
+            onClick={() => setOpen(true)}
+          >
+            <Menu aria-hidden="true" className="size-5" />
           </Button>
-        )}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-lg"
-          className={cn("touch-target -mr-2 md:hidden", (isHome || signedIn) && "ml-auto")}
-          aria-label="Abrir menu"
-          aria-expanded={open}
-          aria-controls="menu-celular"
-          onClick={() => setOpen(true)}
-        >
-          <Menu aria-hidden="true" className="size-5" />
-        </Button>
+        </div>
       </div>
-      {open && <PhoneMenu signedIn={signedIn} onClose={() => setOpen(false)} />}
+      {open && <PhoneMenu session={session} onClose={() => setOpen(false)} />}
     </header>
   );
 }
@@ -94,8 +103,13 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
  * the page is inert and does not scroll, and Escape or any link closes it and brings focus
  * back to the button. The items come in one after the other (".phone-menu" in globals.css).
  */
-function PhoneMenu({ signedIn, onClose }: { signedIn: boolean; onClose: () => void }) {
-  const links = [...phoneMenuLinks, ...(signedIn ? memberLinks : guestLinks.slice(0, 1))];
+function PhoneMenu({ session, onClose }: { session: HeaderSession; onClose: () => void }) {
+  // The middle links, then the account: its menu signed in, or "Entrar" (and the main button
+  // "Criar conta" at the bottom) signed out.
+  const account = session.signedIn
+    ? accountItems(session.known ? session.team : false)
+    : guestLinks.slice(0, 1);
+  const links = [...headerLinks, ...account];
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -170,24 +184,33 @@ function PhoneMenu({ signedIn, onClose }: { signedIn: boolean; onClose: () => vo
       </div>
       <nav aria-label="Menu" className="mt-8 grid">
         {links.map((link, index) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            // The form and account pages carry the account code; load it only when opened.
-            prefetch={link.account ? false : undefined}
-            onClick={onClose}
-            style={{ "--item": index } as React.CSSProperties}
-            className="phone-menu-item group flex min-h-14 items-center justify-between border-b border-line py-3 font-display text-[1.75rem] leading-tight text-ink transition-colors duration-150 active:text-leaf-deep"
-          >
-            {link.label}
-            <ArrowRight
-              aria-hidden="true"
-              className="size-5 text-leaf opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
-            />
-          </Link>
+          <Fragment key={link.href}>
+            {index === headerLinks.length && (
+              <p
+                className="phone-menu-item tag mt-8 mb-1 text-stem"
+                style={{ "--item": index } as React.CSSProperties}
+              >
+                {session.signedIn ? "Sua conta" : "Conta"}
+              </p>
+            )}
+            <Link
+              href={link.href}
+              // The form and account pages carry the account code; load it only when opened.
+              prefetch={link.account ? false : undefined}
+              onClick={onClose}
+              style={{ "--item": index } as React.CSSProperties}
+              className="phone-menu-item group flex min-h-14 items-center justify-between border-b border-line py-3 font-display text-[1.75rem] leading-tight text-ink transition-colors duration-150 active:text-leaf-deep"
+            >
+              {link.label}
+              <ArrowRight
+                aria-hidden="true"
+                className="size-5 text-leaf opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+              />
+            </Link>
+          </Fragment>
         ))}
       </nav>
-      {signedIn ? (
+      {session.signedIn ? (
         <SignOutButton
           className="phone-menu-item mt-auto min-h-14 shrink-0 justify-self-start font-display text-[1.75rem] text-ink"
           style={{ "--item": links.length } as React.CSSProperties}

@@ -31,7 +31,7 @@ export function StepHeader({ step }: { step: FormStepSlug }) {
       <h1
         ref={titleRef}
         tabIndex={-1}
-        className="scroll-mt-[8.5rem] font-display text-[2.375rem] leading-[1.06] outline-none sm:text-[2.75rem] xl:scroll-mt-8"
+        className="scroll-mt-[10rem] font-display text-[2.375rem] leading-[1.06] outline-none sm:text-[2.75rem] xl:scroll-mt-24"
       >
         {current.question}
       </h1>

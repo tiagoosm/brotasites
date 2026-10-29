@@ -2,8 +2,6 @@ import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FaqAccordion } from "@/components/site/faq-accordion";
-import { ExampleShowcase } from "@/components/site/home/example-showcase";
-import { HeroDemo } from "@/components/site/home/hero-demo";
 import { HeroRays } from "@/components/site/home/hero-rays";
 import { PriceSection } from "@/components/site/home/price-section";
 import { SpecularLink } from "@/components/site/home/specular-link";
@@ -54,6 +52,13 @@ const features = [
   },
 ];
 
+// Under the hero's buttons: the three things the page goes on to explain.
+const heroFacts = [
+  { title: "Sete perguntas", text: "Uma de cada vez, salvas na sua conta." },
+  { title: "3 direções de visual", text: "Você escolhe a que tem a sua cara." },
+  { title: "Você aprova", text: "Criar é grátis; paga só para publicar." },
+];
+
 function CreateButton() {
   return (
     <Button asChild size="lg" className="group">
@@ -78,38 +83,41 @@ export default function HomePage() {
       />
       <div className="relative isolate overflow-hidden">
         <HeroRays />
-        <section className="mx-auto grid max-w-6xl items-center gap-x-14 gap-y-24 px-5 pt-14 pb-28 sm:px-8 sm:pt-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,30rem)] lg:pb-36">
-          <div className="hero-enter grid gap-7">
-            <h1 className="font-display text-[3.25rem] leading-[0.98] tracking-[-0.025em] sm:text-[4.5rem] lg:text-[4rem] xl:text-[4.5rem]">
+        <section className="mx-auto grid min-h-[calc(100svh-4rem)] max-w-6xl content-center px-5 pt-12 pb-20 sm:px-8 sm:pt-20 sm:pb-28 lg:min-h-[44rem]">
+          <div className="hero-enter grid max-w-[52rem] gap-7 sm:gap-8">
+            <h1 className="font-display text-[3.25rem] leading-[0.98] tracking-[-0.025em] sm:text-[5rem] lg:text-[6rem]">
               Sete perguntas <span className="block text-stem">e seu site pronto.</span>
             </h1>
-            <p className="max-w-[34ch] text-[1.1875rem] text-ink-soft">
+            <p className="max-w-[38ch] text-[1.1875rem] text-ink-soft sm:text-[1.3125rem]">
               Conte o que você faz e escolha uma de 3 direções para o visual. A gente monta o site e
               você só aprova. Sem código.
             </p>
-            <div className="grid justify-items-start gap-5">
-              <div className="flex flex-wrap items-center gap-3">
-                <SpecularLink href={CREATE_HREF} prefetch={false}>
-                  Criar meu site
-                  <ArrowRight
-                    aria-hidden="true"
-                    className="transition-transform duration-200 group-hover:translate-x-0.5"
-                  />
-                </SpecularLink>
-              </div>
+            <div className="flex flex-wrap items-center gap-x-7 gap-y-4">
+              <SpecularLink href={CREATE_HREF} prefetch={false}>
+                Criar meu site
+                <ArrowRight
+                  aria-hidden="true"
+                  className="transition-transform duration-200 group-hover:translate-x-0.5"
+                />
+              </SpecularLink>
               <Link
                 href="#como-funciona"
-                className="touch-target text-[0.875rem] text-ink-soft underline underline-offset-4 hover:text-ink"
+                className="touch-target text-[0.9375rem] text-ink-soft underline underline-offset-4 hover:text-ink"
               >
                 Ver como funciona
               </Link>
             </div>
+            <ul className="mt-4 grid max-w-[46rem] gap-x-10 gap-y-3 border-t border-line pt-6 text-[0.9375rem] text-ink-soft sm:grid-cols-3">
+              {heroFacts.map((fact) => (
+                <li key={fact.title} className="grid gap-0.5">
+                  <span className="font-semibold text-ink">{fact.title}</span>
+                  {fact.text}
+                </li>
+              ))}
+            </ul>
           </div>
-          <HeroDemo />
         </section>
       </div>
-
-      <ExampleShowcase />
 
       <section
         id="como-funciona"

@@ -60,11 +60,11 @@ export function contentSecurityPolicy(
     `img-src ${list("'self'", "data:", "blob:", supabase, previews)}`,
     "font-src 'self' data:",
     `connect-src ${list("'self'", supabase, supabase?.replace(/^http/, "ws"), TURNSTILE)}`,
-    `frame-src ${list("'self'", TURNSTILE, previews)}`,
+    `frame-src ${TURNSTILE}`,
     "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'self'",
+    "frame-ancestors 'none'",
   ].join("; ");
 }

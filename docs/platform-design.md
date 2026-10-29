@@ -62,12 +62,11 @@ Nothing runs over 900ms, except what follows the scroll.
 - Section entrances (home page): each element marked `data-reveal` rises 16px with a short fade and blur, once, as it reaches the screen (`motion-reveal.tsx`). The HTML always holds the final content: without JavaScript or with reduced motion nothing is hidden, and only elements below the screen ever wait.
 - Section titles (h2 on the home page): revealed word by word as they reach the screen, once, in at most 600ms in all (`split-words.tsx`). The server writes the whole title, the heading carries it in `aria-label` and the word pieces are `aria-hidden`.
 - Hero: the title stays still (animating it delayed the largest paint by about 0.4s on a simulated phone); the text and the buttons under it rise in once on load.
-- Example frame ("Veja um site de verdade", right under the hero): the real example site in a browser frame. On screens wider than 768px it starts scaled down to about the text column and grows to full size with the scroll (CSS scroll-driven, never holding the scroll); phones, reduced motion and browsers without support get the full-size frame. The page inside loads only when the frame is about to show.
 - Home page stem: the ink grows with the scroll (CSS scroll-driven animation). When its tip reaches a question, the leaf unfurls and the question's text and picture enter, one after the other, once.
 - Form stem: drawing (stroke-dashoffset, 900ms ease-in-out) and leaf unfurling (700ms ease-out).
 - Question content rises in with a short stagger when the step changes.
 - The live marker pings slowly; the bud breathes.
-- Phone menu: the sheet fades in and its items rise in one after the other, the main button last (about 0.65s in all). It is rendered in the body, outside the header, whose backdrop blur would otherwise squeeze the fixed sheet into the header's height.
+- One header on every page (E17), sticky, 64px: the brand, the four links centered, and the account on the right (a 44px round profile button with the initials). The profile menu drops 4px in 140ms (nothing for reduced motion). Phone menu: the sheet fades in and its items rise in one after the other, the main button last (about 0.65s in all). It is rendered in the body, outside the header, whose backdrop blur would otherwise squeeze the fixed sheet into the header's height. On the form, the progress sits right under the header (the stem rail from 1280px).
 - Buttons press to 0.97. The hero's "Criar meu site" alone has a specular finish: a cream light on its rim that follows the mouse (still, on the top-left, on touch screens and with reduced motion). Inside, the sheen stays at 4% so the white text keeps at least 4.5:1.
 - Everything is disabled under `prefers-reduced-motion`.
 

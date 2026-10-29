@@ -2,10 +2,11 @@ import { MotionReveal } from "@/components/site/motion-reveal";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteVine } from "@/components/site/site-vine";
+import { SkipLink } from "@/components/site/skip-link";
 import { PUBLIC_VARIANTS, type PublicVariant } from "@/lib/public-variant";
 
 // The public site around the form: home, help and the legal pages. Each page is prerendered
-// twice, for visitors and for signed-in people (only the header's menu differs); the proxy
+// twice, for visitors and for signed-in people (only the header's account part differs); the proxy
 // serves the right one under the page's own address (lib/public-variant.ts), so the pages
 // stay static and the menu never flickers.
 export const dynamicParams = false;
@@ -24,13 +25,8 @@ export default async function SiteLayout({
   const signedIn = ((await params).session as PublicVariant) === "logado";
   return (
     <>
-      <a
-        href="#conteudo"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-white"
-      >
-        Pular para o conteúdo
-      </a>
-      <SiteHeader signedIn={signedIn} />
+      <SkipLink />
+      <SiteHeader session={signedIn ? { signedIn: true, known: false } : { signedIn: false }} />
       <main id="conteudo" className="bg-paper">
         {children}
       </main>

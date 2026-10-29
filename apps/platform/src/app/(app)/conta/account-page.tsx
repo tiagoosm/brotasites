@@ -3,14 +3,12 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
-import { AccountMenu } from "@/components/account/account-menu";
 import { postJson } from "@/components/account/api";
 import { Captcha } from "@/components/account/captcha";
 import { EmailConfirmBanner } from "@/components/account/email-banner";
 import { Field, FormError } from "@/components/account/field";
 import { MfaEnroll } from "@/components/account/mfa";
 import { PasswordField } from "@/components/account/password-field";
-import { Brand } from "@/components/brand";
 import { Loading, Notice, unavailable } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
 import { type AccountState, useRequiredAccount } from "@/lib/account";
@@ -60,12 +58,8 @@ export function AccountPage() {
   }, [account.status, load]);
 
   return (
-    <div className="min-h-dvh bg-paper">
-      <header className="mx-auto flex w-full max-w-[44rem] items-center justify-between gap-4 px-5 py-6 sm:px-8">
-        <Brand />
-        <AccountMenu current="/conta" />
-      </header>
-      <main className="mx-auto grid w-full max-w-[44rem] gap-10 px-5 pb-24 sm:px-8">
+    <div className="min-h-[calc(100dvh-4rem)] bg-paper">
+      <main className="mx-auto grid w-full max-w-[44rem] gap-10 px-5 pt-10 pb-24 sm:px-8">
         {account.status === "unavailable" ? (
           <Notice {...unavailable} />
         ) : account.status !== "signed-in" || !profile ? (
