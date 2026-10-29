@@ -1,0 +1,13 @@
+<!-- Supabase Auth email template: change-email (docs/owner-steps.md, Accounts). Subject: "Confirme o seu novo e-mail no BrotaSites" -->
+<!-- Plain HTML, no images, no tracking. The link is single-use and expires (Auth settings). -->
+<div style="font-family: Arial, Helvetica, sans-serif; color: #1f2a24; max-width: 520px; margin: 0 auto; padding: 24px; line-height: 1.5;">
+  <p style="font-size: 20px; font-weight: bold; margin: 0 0 16px;">BrotaSites</p>
+  <h1 style="font-size: 22px; margin: 0 0 12px;">Confirme o novo e-mail</h1>
+  <p style="margin: 0 0 20px;">Recebemos um pedido para trocar o e-mail da sua conta de {{ .Email }} para {{ .NewEmail }}. Toque no botão para confirmar a troca.</p>
+  <p style="margin: 0 0 24px;">
+    <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email_change&amp;redirect_to={{ .RedirectTo }}" style="display: inline-block; background: #2f6b46; color: #ffffff; text-decoration: none; font-weight: bold; padding: 12px 22px; border-radius: 999px;">Confirmar novo e-mail</a>
+  </p>
+  <p style="margin: 0 0 8px; font-size: 14px;">O link vale por pouco tempo e só uma vez. Se o botão não funcionar, copie este endereço no navegador:</p>
+  <p style="margin: 0 0 20px; font-size: 13px; word-break: break-all;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email_change&amp;redirect_to={{ .RedirectTo }}</p>
+  <p style="margin: 0; font-size: 14px; color: #4b5a51;">Se não foi você quem pediu, ignore este e-mail e troque a sua senha: a troca só vale depois da confirmação.</p>
+</div>

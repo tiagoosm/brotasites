@@ -74,7 +74,10 @@ Since E10 the form follows `docs/form-flow.md`. Titles, questions and descriptio
 - **Errors** (say what to do, never apologize; every form error is pt-BR, a test checks it): *Informe o nome do negócio.* / *Escolha o tipo de negócio.* / *Informe pelo menos um contato: WhatsApp, telefone ou e-mail.* / *Confirme que as pessoas da foto autorizaram o uso.* / *Use até 80 caracteres.* (limits vary by field)
 - **Blocked topic:** *Esse tipo de negócio a gente não atende.* / *Pelo que você escreveu, o site seria sobre {tema}, e isso a BrotaSites não publica. Nada foi cobrado. Se entendemos errado, ajuste o texto acima.*
 - **Autosave:** Salvando… / Respostas salvas na sua conta / Salvo neste aparelho, mas não na sua conta
-- **Sign-in:** *Entre para criar o seu site* / *Mandamos um link de acesso para o seu e-mail. Sem senha para lembrar. Suas respostas e os seus sites ficam guardados na sua conta.* / *Voltar para o início*
+- **Sign-in (/entrar):** *Entre na sua conta* / *Suas respostas e os seus sites ficam guardados na sua conta.* / E-mail, Senha, **Entrar** / *Entrar com um link no e-mail* · *Esqueci a senha* · *Ainda não tem conta? Criar conta*. Errors never say which part is wrong: *E-mail ou senha incorretos.*
+- **Sign-up (/cadastro):** *Crie a sua conta* / *É grátis. Suas respostas e os seus sites ficam guardados na sua conta.* / Seu nome, E-mail, Senha (*Pelo menos 10 caracteres. Evite senhas comuns e o seu e-mail.* and a meter: Fraca demais, Aceitável, Boa, Forte, Muito forte), *Li e aceito os Termos de uso e a Política de Privacidade.*, **Criar conta**. Then *Confira o seu e-mail* with *Reenviar e-mail de confirmação* (once a minute, with the seconds left) and *Usar outro e-mail*.
+- **Same answer for any email:** *Se houver uma conta com {email}, enviamos um link…* (sign-in link, password reset, resend).
+- **Account (/conta):** *Sua conta*, then *Seus dados* (name, *WhatsApp (opcional)*), *E-mail*, *Senha* or *Criar senha*, *Verificação em duas etapas* (team only), *Aparelhos conectados* (*Sair de todos os aparelhos*), *Seus dados* (*Baixar meus dados (.json)*), *Excluir minha conta*. Sensitive changes: *Por segurança, confirme que é você: entre de novo e repita o pedido em até 10 minutos.*
 
 ## Meus sites (dashboard)
 

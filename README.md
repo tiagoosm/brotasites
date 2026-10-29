@@ -2,7 +2,7 @@
 
 Form-to-landing-page platform for small businesses. The client fills out a short form, and BrotaSites builds and publishes a static landing page for them automatically. No code, no page builder.
 
-> **Status:** built and verified (plan steps E1 to E13), not selling yet. The public site and the form are online at **https://brotasites.vercel.app** (Vercel, Hobby plan, testing only). Built and covered by tests: the 7-step form on schema 1.2 with sign-in first, the "Meus sites" dashboard (3 directions, the finished site, changes, approval and a stub payment), the identity engine, the AI layer, the reviewer, the generation jobs (`apps/jobs`, Trigger.dev), the admin panel with the catalog promotion cycle, the Worker that serves client sites from R2 and Workers KV (versions, suspension, custom domains, .zip export) and the blind test kit. Not online yet: the jobs on Trigger.dev, the E10 and E11 database migrations, Cloudflare (R2, KV, Worker), the client sites' domain, the real AI model and payments (see `docs/owner-steps.md`). The final report, with what is in, what was cut and the numbers, is [`docs/final-report.md`](docs/final-report.md).
+> **Status:** built and verified (plan steps E1 to E13), not selling yet. The public site and the form are online at **https://brotasites.vercel.app** (Vercel, Hobby plan, testing only). Built and covered by tests: accounts (sign-up with password and email confirmation, sign-in by password or link, the /conta page, two-step verification for the team), the 7-step form on schema 1.2 with sign-in first, the "Meus sites" dashboard (3 directions, the finished site, changes, approval and a stub payment), the identity engine, the AI layer, the reviewer, the generation jobs (`apps/jobs`, Trigger.dev), the admin panel with the catalog promotion cycle, the Worker that serves client sites from R2 and Workers KV (versions, suspension, custom domains, .zip export) and the blind test kit. Not online yet: the jobs on Trigger.dev, the E10 and E11 database migrations, Cloudflare (R2, KV, Worker), the client sites' domain, the real AI model and payments (see `docs/owner-steps.md`). The final report, with what is in, what was cut and the numbers, is [`docs/final-report.md`](docs/final-report.md).
 >
 > Repository: https://github.com/tiagoosm/brotasites (currently public; visibility to be decided by the owner, see `docs/owner-steps.md`).
 >
@@ -14,7 +14,7 @@ The platform (`apps/platform`) runs on Vercel, project `brotasites`, linked to t
 
 ## How it works
 
-1. The client signs in (magic link) and answers 7 mobile-first steps: business, brand and feeling, sections, content and photos, contact and hours, then sends them (`docs/form-flow.md`). The draft is saved in the account at every step.
+1. The client creates an account (name, email, password, accepted terms; the email is confirmed by link) or signs in, and answers 7 mobile-first steps: business, brand and feeling, sections, content and photos, contact and hours, then sends them (`docs/form-flow.md`). The draft is saved in the account at every step.
 2. A job draws 3 art directions with the deterministic identity engine and the AI art director; the client picks one on "Meus sites" (or asks for 3 more). Choosing locks the identity.
 3. Another job builds the site: the answers become one configuration JSON (Zod schema 1.2), the AI (Claude) rewrites the text without inventing facts, the reviewer checks it, and a private preview goes up.
 4. After a person's review, the client sees the finished site at a private address, asks for changes or approves, and pays once to publish.
@@ -104,6 +104,10 @@ pnpm --filter @brotasites/ai eval
 pnpm --filter @brotasites/reviewer calibrate
 ```
 
+## Accounts
+
+`/cadastro` creates the account (name, email, password, the terms); the confirmation link signs the person in. `/entrar` takes the password or sends a sign-in link; `/esqueci-senha` sends a link to `/redefinir-senha`. `/conta` edits the name and WhatsApp, the email (confirmed by link) and the password, signs out the other devices, downloads the data as JSON and deletes the account. Every request goes through the platform's routes (`/api/auth/*`, `/api/account/*`) with an Origin check, Zod, rate limits per IP and email, and Cloudflare Turnstile checked by Supabase; the signed-in pages are refused on the server (`src/proxy.ts`). Setup (SMTP, Supabase settings, email templates in `docs/email-templates/`, Turnstile, two-step verification for the team) is in `docs/owner-steps.md`, Accounts.
+
 ## Admin panel
 
 `/admin` is for the BrotaSites team only (people in the `admins` table, added by the owner; see `docs/owner-steps.md`). The review queue shows the sites waiting for a person (in review, needing attention, suspended). A site's page shows the finished site, the reviewer's findings, the client's answers and the history, and records the decision: approve for the client, ask for changes (the note goes to the copy step), suspend with a reason, or lift a suspension. Every decision is logged and the log cannot be rewritten. `/admin/catalogo` shows the metrics per composition and per variant, marks compositions and variants as recommended or retired, and records requests to the variant factory (`docs/catalog-promotion.md`).
@@ -143,12 +147,12 @@ Copy `.env.example` to `apps/platform/.env.local` and fill in `NEXT_PUBLIC_SUPAB
 Dashboard settings (Authentication):
 
 - **URL Configuration:** add `http://localhost:3000/**` (and later the production domain) to Redirect URLs.
-- **Email templates, Magic Link:** link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/criar` so the link also works when opened on another device.
+- **Email templates:** the four pt-BR templates of `docs/email-templates/` (confirmation, sign-in link, password reset, email change), which link to `/auth/confirm` with a `token_hash`, so the link also works when opened on another device. The rest of the Authentication settings are in `docs/owner-steps.md`, Accounts.
 - **SMTP:** the built-in sender is rate limited and meant for testing; production needs a custom SMTP provider.
 
 ## Tests
 
-- **Platform (Playwright):** the 7-step form, "Meus sites", the directions, approval and the stub payment, against a fake Supabase answered in the browser (`apps/platform/e2e/support/supabase.ts`), plus WCAG AA contrast and 44px touch targets on the public and signed-in pages. Run with `pnpm --filter @brotasites/platform test:e2e`.
+- **Platform (Playwright):** accounts end to end against a fake Supabase server (`e2e/support/fake-supabase.mjs`: sign-up, confirmation, sign-in, links, reset, email change, data export, deletion, the security checks), the 7-step form, "Meus sites", the directions, approval and the stub payment, against a fake Supabase answered in the browser (`apps/platform/e2e/support/supabase.ts`), plus WCAG AA contrast and 44px touch targets on the public and signed-in pages. Run with `pnpm --filter @brotasites/platform test:e2e`.
 - **Database:** `bash supabase/tests/local/run.sh` (local Postgres 16 with a Supabase stand-in): every migration and the checks that one person never reaches another's data.
 - **Unit (Vitest):** the Zod schema, the generator's validation and build, and the template helpers (opening hours, contrast, links, theme, fonts).
 - **Reviewer (Vitest + Chromium):** `pnpm --filter @brotasites/reviewer test:e2e` runs the calibration set (20 known defects caught, no false alarm on 5 clean sites), reviews a real build of the fixture end to end and checks the broken-word detection.
