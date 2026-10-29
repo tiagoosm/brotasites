@@ -1,4 +1,4 @@
-import { safeNextPath } from "@/lib/supabase/env";
+import { DEFAULT_NEXT, safeNextPath } from "@/lib/supabase/env";
 import { getAuthSupabase } from "@/lib/supabase/server";
 import { captchaError, captchaTokenFor } from "./captcha";
 import { clientIp, guardErrors, limitKey, refuse } from "./guard";
@@ -35,7 +35,7 @@ export function platformOrigin(request: Request): string {
 export function confirmUrl(
   request: Request,
   next: string | undefined,
-  fallback = "/criar",
+  fallback = DEFAULT_NEXT,
 ): string {
   return `${platformOrigin(request)}/auth/confirm?next=${encodeURIComponent(safeNextPath(next, fallback))}`;
 }

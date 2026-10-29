@@ -28,7 +28,7 @@ import {
 import { getBrowserSupabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
-// One site on "Meus sites": where it is, what the client can do now, and what happened. It
+// One site of the dashboard: where it is, what the client can do now, and what happened. It
 // refreshes on its own while the system works; nothing here waits on a loading screen.
 
 const POLL_MS = 4000;
@@ -112,7 +112,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
       <Notice
         title="Site não encontrado"
         text="Este site não está na sua conta. Confira se entrou com o mesmo e-mail."
-        action={{ href: "/meus-sites", label: "Ver meus sites" }}
+        action={{ href: "/painel", label: "Ir para o painel" }}
       />
     );
   }
@@ -131,10 +131,10 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
     <div className="grid gap-12">
       <header className="grid gap-3">
         <Link
-          href="/meus-sites"
+          href="/painel"
           className="touch-target justify-self-start text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
         >
-          ← Meus sites
+          ← Painel
         </Link>
         <h1 className="font-display text-[2.5rem] leading-[1.05] sm:text-[2.875rem]">{name}</h1>
         <div role="status" className="grid gap-1">
@@ -261,7 +261,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
       )}
 
       {["live", "grace"].includes(site.status) && (
-        <div className="grid gap-2">
+        <div id="baixar" className="grid scroll-mt-6 gap-2">
           <Button
             variant="outline"
             size="lg"

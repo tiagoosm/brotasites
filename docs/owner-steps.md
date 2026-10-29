@@ -41,6 +41,11 @@ A temporary setup to try accounts on `https://brotasites.vercel.app`. Undo it be
 - Owner steps: in Supabase, Authentication > URL Configuration, Site URL `https://brotasites.vercel.app` and Redirect URL `https://brotasites.vercel.app/auth/confirm**`; copy the secret key (Project Settings > API Keys) into Vercel as `SUPABASE_SECRET_KEY` (type "Sensitive", production).
 - Before launch: delete `NEXT_PUBLIC_CAPTCHA_MODE` in Vercel, then follow "Accounts (E15)".
 
+## Dashboard (E16)
+
+1. **Migration.** Apply `supabase/migrations/20261031000000_notifications.sql` after the accounts migration (SQL Editor, the whole file, Run), then run `supabase/tests/notifications.sql`: it must end with "ALL CHECKS PASSED".
+2. Nothing else to configure: the dashboard and the notices use the existing session, tables and limits. Notices read more than 90 days ago are removed by the database itself, whenever the same person gets a new notice (no scheduled job needed).
+
 ## Accounts (E15)
 
 In this order. Nothing here was done by Claude Code; values marked "to verify" were not checked in the official pages from this session (supabase.com and resend.com were out of the session's network; Supabase facts come from its documentation search).
@@ -64,6 +69,13 @@ In this order. Nothing here was done by Claude Code; values marked "to verify" w
 
 Since 2026-10-27 the owner does not approve each task. Choices the plan reserved for the owner are taken with the recommended option and listed here; any of them can be reversed.
 
+- **E16, account dashboard:**
+  - **Public pages, two prerendered versions** (owner's choice, 2026-10-29): `/`, `/ajuda`, `/termos` and `/privacidade` are built twice (`/visitante/...` and `/logado/...`, `src/lib/public-variant.ts`); the proxy, which already reads the session, serves the right one under the page's own address and answers 404 to the internal addresses. The pages stay static and the menu never flickers.
+  - **`Vary: Cookie`**: Next.js writes its own `Vary` on every rendered page and replaces ours; it is kept on redirects and API answers. The pages that differ per session are still never stored by a shared cache: the dashboard and the account pages send `Cache-Control: private, no-store`, the public pages `private, no-cache`. To verify after the first deploy: that Vercel keeps `private` on the public pages (if it changes it to `public, max-age=0, must-revalidate`, caches still revalidate every time, so no one gets another person's menu).
+  - **Data**: the dashboard reads the profile, the sites (with their name, answered steps and the two milestone events embedded), the latest 15 notices and the unread count in four requests sent at once, with the person's session; nothing is read per site. Milestone dates come from what already exists (`created_at`, the first `directions_ready` and `site_built` events, `approved_at`, `published_at`); no new column.
+  - **Notices**: made by triggers on `sites.status` (directions ready, ready for approval, published, suspended, suspension lifted), on `admin_decisions` ("request_changes") and on the email confirmation. "Directions ready" is unique per round; the others are made once per real status change. The admin's note never goes into a notice. Retention: read notices older than 90 days are deleted when the person gets a new notice.
+  - **Menus**: signed out, the header shows "Entrar" and, where there is no "Criar meu site" button (home page and phone menu), "Criar conta". Signed in: Painel, Criar site, Perfil e segurança, Sair. "Criar site" in the header goes to `/criar` (which opens the latest draft); "Criar outro site" on the dashboard goes to `/criar?novo=1`.
+  - **Suspended sites**: the status text is now "Seu site foi suspenso. Veja os motivos na página do site." everywhere (no contact screen).
 - **E3, fonts of client sites:** 13 open-license (SIL OFL 1.1) families, licenses checked in the Google Fonts repository: Fraunces, Instrument Serif, DM Serif Display, Cormorant Garamond, Young Serif, Bricolage Grotesque, Space Grotesk, Manrope, DM Sans, Fredoka, Baloo 2, Caveat and Kalam, in 9 pairs (`packages/catalog/src/fonts.ts`). Playfair Display was left out: its name is a Reserved Font Name, and the OFL treats the subset we ship as a modified version. To see them, run `pnpm --filter @brotasites/catalog specimen` and open `packages/catalog/dist/specimen/index.html`.
 - **E6, taste calibration (food):** the first variants, `hero-feast`, `sobre-manifesto` and `servicos-menu`, were rendered in the four states (good photo, weak photo, no photo, long text) at 360 and 1280 px and sent to the owner on 2026-10-27; production went on with that taste. To see them again: `node packages/templates/scripts/variant-states.mjs --out /tmp/states --hero hero-feast --sobre sobre-manifesto --servicos servicos-menu`, then open `/tmp/states/index.html`.
 - **E8, AI model:** `claude-opus-5-5` (Claude Opus 5.5), set by `AI_MODEL_ID`, with effort `medium`. Prices checked on 2026-10-27 at platform.claude.com/docs/en/about-claude/pricing (USD per million tokens, before taxes):

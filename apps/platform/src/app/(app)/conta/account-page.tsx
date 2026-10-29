@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
+import { AccountMenu } from "@/components/account/account-menu";
 import { postJson } from "@/components/account/api";
 import { Captcha } from "@/components/account/captcha";
 import { EmailConfirmBanner } from "@/components/account/email-banner";
@@ -62,23 +63,7 @@ export function AccountPage() {
     <div className="min-h-dvh bg-paper">
       <header className="mx-auto flex w-full max-w-[44rem] items-center justify-between gap-4 px-5 py-6 sm:px-8">
         <Brand />
-        <nav aria-label="Conta" className="flex items-center gap-5 text-[0.8125rem]">
-          <Link
-            href="/meus-sites"
-            className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
-          >
-            Meus sites
-          </Link>
-          <form action="/auth/sair" method="post">
-            <input type="hidden" name="voltar" value="/" />
-            <button
-              type="submit"
-              className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
-            >
-              Sair
-            </button>
-          </form>
-        </nav>
+        <AccountMenu current="/conta" />
       </header>
       <main className="mx-auto grid w-full max-w-[44rem] gap-10 px-5 pb-24 sm:px-8">
         {account.status === "unavailable" ? (
@@ -87,7 +72,7 @@ export function AccountPage() {
           <Loading />
         ) : (
           <>
-            <h1 className="font-display text-[2.5rem] leading-[1.05]">Sua conta</h1>
+            <h1 className="font-display text-[2.5rem] leading-[1.05]">Perfil e segurança</h1>
             {params.get("email") === "alterado" && (
               <p
                 role="status"

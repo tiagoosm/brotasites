@@ -41,6 +41,12 @@ Accounts (E15, as built):
 - The team's admin panel needs a second factor (TOTP, aal2), checked by the database's `is_admin()`.
 - Account deletion removes the sites (database, Storage, KV at once, R2 by the jobs) and keeps paid charges for the tax period.
 
+Dashboard (E16, as built):
+
+- `/painel` is refused on the server without a session (proxy, then the page checks getUser again), read with the person's own session (RLS), `private, no-store` and `noindex`, out of the sitemap. Nothing admin-only reaches it (review notes, decision log, reviewer reports, catalog weights).
+- Notices (`public.notifications`): made only by database triggers; clients read their own and can change only `read_at` (column grant, RLS, and a trigger that keeps the first read time); no insert or delete by clients; the sentence comes from a closed list of kinds, no stored text. Marking as read goes through `/api/notifications/read`: Origin, Zod (UUIDs or "all"), the person's session, a rate limit per IP and per account.
+- The public pages are prerendered twice (visitor and signed in) and served by the proxy under the same address, with `private, no-cache`; the internal addresses answer 404. They hold no personal data (only which menu to show).
+
 ## 6. Payments
 
 Publish only after a confirmed webhook, with idempotency; never trust the browser. No card data in our system. Webhook authentication as in the provider's documentation (to verify).

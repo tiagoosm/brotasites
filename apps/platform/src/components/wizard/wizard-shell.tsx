@@ -10,7 +10,7 @@ import { SproutProgress, SproutProgressBar } from "./sprout-progress";
 
 // Herbarium layout. Desktop: steps rail | form on the "table". Phones: the form fills the
 // screen. There is no live preview (decision of 2026-10-27): the client sees the 3 directions
-// and the finished site on "Meus sites".
+// and the finished site on the dashboard.
 
 export function WizardShell({ children }: { children: React.ReactNode }) {
   const params = useParams<{ etapa?: string }>();
@@ -83,16 +83,16 @@ function AccountArea({ compact = false }: { compact?: boolean }) {
       {!compact && <span className="truncate">{account.email}</span>}
       <div className="flex items-center gap-4">
         <Link
-          href="/meus-sites"
+          href="/painel"
           className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
         >
-          Meus sites
+          Painel
         </Link>
         <Link
           href="/conta"
           className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
         >
-          Conta
+          Perfil e segurança
         </Link>
         {!compact && (
           <form action="/auth/sair" method="post">

@@ -70,7 +70,7 @@ export const faqGroups: FaqGroup[] = [
         slug: "o-que-sao-as-direcoes",
         question: "O que são as 3 direções?",
         answer:
-          "São 3 caminhos para o visual do site, criados com as suas respostas: Fiel à marca, Evolução e Contraste. Você escolhe um, ou pede outros 3, quantas vezes quiser. Não precisa esperar com a página aberta: elas aparecem em Meus sites quando ficam prontas.",
+          "São 3 caminhos para o visual do site, criados com as suas respostas: Fiel à marca, Evolução e Contraste. Você escolhe um, ou pede outros 3, quantas vezes quiser. Não precisa esperar com a página aberta: elas aparecem no seu painel quando ficam prontas.",
       },
     ],
   },

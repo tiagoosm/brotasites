@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getBrowserSupabase } from "./supabase/client";
 
-// Pages that need an account (the form and "Meus sites") check the session in the browser and
+// Pages that need an account (the form and the site pages) check the session in the browser and
 // send people to sign in, coming back to the same page afterwards. This is for the interface
 // only: the proxy (src/proxy.ts) already turned away requests without a session, and the routes
 // and database functions check again.

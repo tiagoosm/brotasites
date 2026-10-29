@@ -8,6 +8,7 @@ const TURNSTILE = "https://challenges.cloudflare.com";
 
 /** Paths rendered per request with a nonce (the (app) route group). */
 const APP_PREFIXES = [
+  "/painel",
   "/criar",
   "/meus-sites",
   "/meu-site",
@@ -20,7 +21,7 @@ const APP_PREFIXES = [
 ];
 
 /** Pages that need a session; the proxy sends people without one to /entrar. */
-export const PROTECTED_PREFIXES = ["/criar", "/meus-sites", "/conta", "/admin"];
+export const PROTECTED_PREFIXES = ["/painel", "/criar", "/meus-sites", "/conta", "/admin"];
 
 /** Pages and routes that are never cached nor indexed. */
 const PRIVATE_PREFIXES = [...APP_PREFIXES, "/auth", "/api"];

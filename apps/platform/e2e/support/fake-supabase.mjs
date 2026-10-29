@@ -12,6 +12,9 @@ const outbox = []; // { to, type, tokenHash, redirectTo }
 const tokens = new Map(); // tokenHash -> { userId, type, email }
 const limits = new Map();
 const calls = [];
+// The dashboard of each user (E16): their sites (rows as the dashboard's query reads them) and
+// notices, set by the tests at /__test/dashboard.
+const dashboards = new Map(); // userId -> { sites, notices }
 
 const b64 = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
 const unb64 = (value) => JSON.parse(Buffer.from(value, "base64url").toString());
@@ -148,6 +151,18 @@ const server = createServer(async (req, res) => {
     return send(res, 200, user ? { ...userJson(user), password: undefined } : null);
   }
   if (path === "/__test/calls") return send(res, 200, calls);
+  if (path === "/__test/dashboard" && method === "POST") {
+    const body = await readJson(req);
+    dashboards.set(body.userId, {
+      sites: body.sites ?? [],
+      notices: body.notices ?? [],
+      fullName: body.fullName,
+    });
+    return send(res, 200, {});
+  }
+  if (path === "/__test/dashboard") {
+    return send(res, 200, dashboards.get(url.searchParams.get("userId")) ?? null);
+  }
   if (path === "/__test/profile") {
     const user = byEmail(url.searchParams.get("email"));
     return send(res, 200, user?.profile ?? null);
@@ -320,7 +335,7 @@ const server = createServer(async (req, res) => {
     }
     const profile = user
       ? {
-          full_name: user.meta?.full_name ?? "",
+          full_name: dashboards.get(user.id)?.fullName ?? user.meta?.full_name ?? "",
           phone: user.phone ?? null,
           terms_version: user.meta?.terms_version ?? null,
           has_password: Boolean(user.password),
@@ -332,6 +347,41 @@ const server = createServer(async (req, res) => {
         ? send(res, 200, profile)
         : send(res, 406, { code: "PGRST116", message: "no rows" });
     return send(res, 200, profile ? [profile] : []);
+  }
+  if (path === "/rest/v1/notifications") {
+    const user = bearerUser(req);
+    const board = (user && dashboards.get(user.id)) || { sites: [], notices: [] };
+    const unreadOnly = url.searchParams.get("read_at") === "is.null";
+    if (method === "PATCH") {
+      const ids = url.searchParams
+        .get("id")
+        ?.match(/^in\.\((.*)\)$/)?.[1]
+        ?.split(",");
+      const owner = url.searchParams.get("user_id")?.replace(/^eq\./, "");
+      let marked = 0;
+      if (user && owner === user.id) {
+        for (const notice of board.notices) {
+          if (notice.read_at || (ids && !ids.includes(notice.id))) continue;
+          notice.read_at = new Date().toISOString();
+          marked++;
+        }
+      }
+      res.writeHead(204, { "content-range": `*/${marked}`, ...cors });
+      return res.end();
+    }
+    const rows = board.notices
+      .filter((notice) => !unreadOnly || !notice.read_at)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+    if (method === "HEAD") {
+      res.writeHead(200, { "content-range": `*/${rows.length}`, ...cors });
+      return res.end();
+    }
+    return send(res, 200, rows.slice(0, Number(url.searchParams.get("limit") ?? 15)));
+  }
+  if (path === "/rest/v1/sites" && !url.searchParams.get("id")) {
+    const user = bearerUser(req);
+    const board = user && dashboards.get(user.id);
+    return send(res, 200, board ? board.sites : []);
   }
   if (path === "/rest/v1/sites" && url.searchParams.get("id")) {
     // ownSite(): any site id is the person's, ready for approval.

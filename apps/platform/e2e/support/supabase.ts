@@ -24,15 +24,19 @@ const base64url = (value: string) => Buffer.from(value).toString("base64url");
  * A session cookie in the format @supabase/ssr reads. The token is checked via /auth/v1/user (by
  * the test in the browser, by fake-supabase.mjs on the server). Confirmed email unless told.
  */
-export async function signIn(context: BrowserContext, options: { confirmed?: boolean } = {}) {
+export async function signIn(
+  context: BrowserContext,
+  options: { confirmed?: boolean; user?: { id: string; email: string } } = {},
+) {
   const confirmed = options.confirmed ?? true;
+  const who = options.user ?? USER;
   const exp = Math.floor(Date.now() / 1000) + 3600;
   const token = [
     base64url(JSON.stringify({ alg: "HS256", typ: "JWT" })),
     base64url(
       JSON.stringify({
-        sub: USER.id,
-        email: USER.email,
+        sub: who.id,
+        email: who.email,
         role: "authenticated",
         aud: "authenticated",
         aal: "aal1",
@@ -43,7 +47,7 @@ export async function signIn(context: BrowserContext, options: { confirmed?: boo
     "assinatura",
   ].join(".");
   const user = {
-    ...USER,
+    ...who,
     aud: "authenticated",
     role: "authenticated",
     app_metadata: {},

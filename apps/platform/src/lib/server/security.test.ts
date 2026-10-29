@@ -108,13 +108,23 @@ describe("recent sign-in", () => {
 
 describe("pages and CSP", () => {
   it("protects the signed-in area and keeps account pages out of caches", () => {
-    for (const path of ["/criar", "/criar/1/negocio", "/meus-sites", "/conta", "/admin/catalogo"]) {
+    for (const path of [
+      "/painel",
+      "/criar",
+      "/criar/1/negocio",
+      "/meus-sites",
+      "/meus-sites/1",
+      "/conta",
+      "/admin/catalogo",
+    ]) {
       expect(isProtectedPath(path), path).toBe(true);
     }
-    for (const path of ["/", "/entrar", "/cadastro", "/criarx", "/termos"]) {
+    for (const path of ["/", "/entrar", "/cadastro", "/criarx", "/painelx", "/termos"]) {
       expect(isProtectedPath(path), path).toBe(false);
     }
     expect(isPrivatePath("/entrar")).toBe(true);
+    expect(isPrivatePath("/painel")).toBe(true);
+    expect(isPrivatePath("/api/notifications/read")).toBe(true);
     expect(isPrivatePath("/api/account/export")).toBe(true);
     expect(isPrivatePath("/ajuda")).toBe(false);
   });

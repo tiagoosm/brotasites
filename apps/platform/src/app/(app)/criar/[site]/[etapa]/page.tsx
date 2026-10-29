@@ -45,7 +45,7 @@ export default function StepPage() {
       <Notice
         title="Site não encontrado"
         text="Este site não está na sua conta. Confira se entrou com o mesmo e-mail."
-        action={{ href: "/meus-sites", label: "Ir para Meus sites" }}
+        action={{ href: "/painel", label: "Ir para o painel" }}
       />
     );
   }

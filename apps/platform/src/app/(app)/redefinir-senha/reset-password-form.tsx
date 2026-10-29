@@ -40,7 +40,7 @@ export function ResetPasswordForm() {
     const result = await postJson("/api/account/password", { password });
     setSending(false);
     if (result.ok) {
-      router.replace("/meus-sites?senha=alterada");
+      router.replace("/painel?senha=alterada");
       return;
     }
     setFields(result.data.fields ?? {});

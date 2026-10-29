@@ -9,7 +9,7 @@ UI copy shown to the client is in pt-BR; labels quoted below are the actual pt-B
 - One main question per screen. Plain, informal language.
 - Draft saved at every step: the client can close the page and come back later.
 - Per-step validation with the schema, with clear error messages in Portuguese.
-- No live preview. Generation is asynchronous: after sending, the client follows the status on "Meus sites".
+- No live preview. Generation is asynchronous: after sending, the client follows the status on the dashboard (`/painel`).
 
 ## Sign-in
 

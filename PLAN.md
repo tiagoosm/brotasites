@@ -21,6 +21,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E13 Final verification, blind test kit, owner steps
 - [ ] E14 (optional) "Experimente aqui" demo on the home page
 - [x] E15 Accounts: sign-up with password and email confirmation, sign-in, account page, security
+- [x] E16 Account dashboard: home after signing in, pending actions, site status, in-site notices
 
 ## Steps in detail
 
@@ -86,6 +87,10 @@ Run every test, Lighthouse, axe and the security suite. Build the blind test kit
 ### E15 Accounts
 
 Sign-up with name, email, password and the accepted terms, with email confirmation; sign-in by password or by link; "esqueci a senha"; the /conta page (profile, email, password, two-step verification for the team, other devices, data export, account deletion). Security: server-side page protection, the confirmed-email rule on the server and in the database, no account enumeration, Turnstile, rate limits, password rules, host-only cookies, no open redirects, Origin checks, Zod, admin with aal2, no-store and noindex. Email templates in `docs/email-templates/`; Supabase and email setup in `docs/owner-steps.md` (Accounts). Login with Google is left for later.
+
+### E16 Account dashboard
+
+Signing in, signing up and confirming the email lead to `/painel` (unless a safe page was asked for with `voltar`), and signed-in people who open `/entrar` or `/cadastro` go there too. The dashboard, rendered on the server with the person's session, replaces the list at `/meus-sites` (now a 308 to `/painel`; each site's pages keep their addresses): a greeting, what needs the person (email to confirm, a direction to choose, a site to approve, a site that needs attention, a draft to continue, an incomplete profile), one card per site (status, milestones, the right button, and once published the address, hosting included until and days of changes left, from `pricing.ts`) and the in-site notices (`public.notifications`, made by database triggers on the status changes; the sentence comes from the kind, no stored text). The account menu is Painel, Criar site, Perfil e segurança, Sair. The public pages are prerendered twice, for visitors and for signed-in people, and the proxy serves the right one under the same address, so the menu never flickers. No help or contact screen, no notification emails; renewal, custom domain, charges and receipts come later.
 
 ### E14 Home demo (optional)
 

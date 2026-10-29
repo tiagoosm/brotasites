@@ -141,7 +141,7 @@ export async function runDirections(deps: PipelineDeps, job: Job): Promise<void>
     await store.addEvent(
       site.id,
       "directions_ready",
-      "As 3 direções estão prontas. Escolha a sua em Meus sites.",
+      "As 3 direções estão prontas. Escolha a sua no seu painel.",
     );
   } finally {
     await workspace.dispose();

@@ -4,7 +4,8 @@ import { expect, type Page, test } from "@playwright/test";
 // page behind it that does not scroll, and links that close it.
 
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;
-const items = ["Como funciona", "Preço", "Dúvidas", "Ajuda", "Entrar", "Criar meu site"];
+// Signed out (E16): sign in, then create the account as the main button.
+const items = ["Como funciona", "Preço", "Dúvidas", "Ajuda", "Entrar", "Criar conta"];
 
 async function openMenu(page: Page) {
   const button = page.getByRole("button", { name: "Abrir menu" });
@@ -39,7 +40,7 @@ test("the open menu covers the whole screen, down to its last button", async ({ 
   const viewport = page.viewportSize();
   expect(box?.y).toBe(0);
   expect(box?.height).toBe(viewport?.height);
-  await expect(menu.getByRole("link", { name: "Criar meu site" })).toBeInViewport({ ratio: 1 });
+  await expect(menu.getByRole("link", { name: "Criar conta" })).toBeInViewport({ ratio: 1 });
 });
 
 test("it lists every part, then the main button, each easy to tap", async ({ page }) => {
@@ -66,7 +67,7 @@ test("focus stays inside, Escape closes it and focus goes back to the button", a
   // Shift+Tab from the first control goes round to the last.
   await menu.getByRole("button", { name: "Fechar menu" }).focus();
   await page.keyboard.press("Shift+Tab");
-  await expect(menu.getByRole("link", { name: "Criar meu site" })).toBeFocused();
+  await expect(menu.getByRole("link", { name: "Criar conta" })).toBeFocused();
 
   await page.keyboard.press("Escape");
   await expect(menu).toBeHidden();

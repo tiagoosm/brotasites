@@ -12,7 +12,7 @@ import {
 } from "./support/accounts";
 import { fakeSupabase, SITE, SUPABASE, signIn } from "./support/supabase";
 
-// "Conta" (E15): profile, email change, a copy of the data, deleting the account, and the
+// "Perfil e segurança" (/conta, E15): profile, email change, a copy of the data, deleting the account, and the
 // confirmed-email rule, with real round trips to the fake Supabase.
 
 test.beforeEach(async ({ context }) => {
@@ -123,8 +123,8 @@ test("deleting the account removes the sites and signs out", async ({ page, requ
   expect(calls.indexOf("POST /rest/v1/rpc/server_delete_account")).toBeLessThan(
     calls.indexOf(`DELETE /auth/v1/admin/users/${user.id}`),
   );
-  await page.goto("/meus-sites");
-  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fmeus-sites$/);
+  await page.goto("/painel");
+  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fpainel$/);
   await signInWithPassword(page, email);
   await expect(page.getByRole("main").getByRole("alert")).toHaveText("E-mail ou senha incorretos.");
 });
@@ -135,7 +135,7 @@ test("without a confirmed email: the warning, and no payment on the server", asy
   request,
 }) => {
   await fakeSupabase(context, await signIn(context, { confirmed: false }));
-  await page.goto("/meus-sites");
+  await page.goto("/painel");
   await expect(page.getByRole("complementary", { name: "Confirmação do e-mail" })).toContainText(
     "Confirme o seu e-mail.",
   );
@@ -167,7 +167,7 @@ test("the account pages pass axe", async ({ page, request }) => {
     ).toEqual([]);
   }
   await signInWithPassword(page, email, PASSWORD, "/conta");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sua conta");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Perfil e segurança");
   const result = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();

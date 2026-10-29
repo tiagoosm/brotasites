@@ -48,7 +48,7 @@ Project owner: Tiago da Silva Machado (github.com/tiagoosm). Product language (U
 
 ## Product rules
 
-- No loading screen: generation is asynchronous. The client sends the form and can close the page; status shows on the "Meus sites" tab of the dashboard. No notification emails in this round; the only emails sent are the account's own (email confirmation, sign-in link, password reset, email change).
+- No loading screen: generation is asynchronous. The client sends the form and can close the page; status shows on the account dashboard (`/painel`), with in-site notices. No notification emails in this round; the only emails sent are the account's own (email confirmation, sign-in link, password reset, email change).
 - There is no live preview while answering the form (decision of 2026-10-27). The client sees only the 3 art directions and the finished site (private address, not indexed, with a token).
 - Directions: "Fiel à marca", "Evolução", "Contraste". Unlimited redos until one is approved. After approval the identity is locked; only content, images, contact details, sections and colors (with AA contrast) can change.
 - Every site goes through the automatic reviewer and, at first, through human review in the admin queue.
