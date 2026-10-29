@@ -12,10 +12,12 @@ async function chooseCategory(page: Page, search: string, label: string) {
   await expect(page.getByRole("radio", { name: label })).toHaveCount(0);
 }
 
-test("creating a site asks to sign in first", async ({ page }) => {
+test("creating a site asks for an account first, on the server", async ({ page }) => {
   await page.goto("/criar");
+  await expect(page).toHaveURL(/\/cadastro\?voltar=%2Fcriar$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Crie a sua conta");
+  await page.getByRole("link", { name: "Entrar" }).click();
   await expect(page).toHaveURL(/\/entrar\?voltar=%2Fcriar$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entre para criar o seu site");
 });
 
 test("signed in, a new site starts at the first question", async ({ page, context }) => {
@@ -101,5 +103,5 @@ test("a site of another account is not found", async ({ page, context }) => {
 
 test("old addresses of the form lead to the new one", async ({ page }) => {
   await page.goto("/criar/negocio");
-  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fcriar$/);
+  await expect(page).toHaveURL(/\/cadastro\?voltar=%2Fcriar$/);
 });

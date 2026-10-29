@@ -8,6 +8,7 @@ import type {
   JobKind,
   PipelineStore,
   SitePatch,
+  SitePurge,
   SiteRecord,
 } from "./store.js";
 
@@ -27,6 +28,7 @@ export class MemoryStore implements PipelineStore {
   readonly renders = new Map<string, Uint8Array>();
   readonly reports: { siteId: string; status: string; report: unknown }[] = [];
   readonly paid = new Set<string>();
+  readonly purges: (SitePurge & { done: boolean; error?: string })[] = [];
   readonly registry = Object.assign(new MemoryRegistry(), {
     approved: new Set<string>(),
     async markApproved(this: { approved: Set<string> }, siteId: string) {
@@ -35,6 +37,22 @@ export class MemoryStore implements PipelineStore {
   });
   readonly usage = new MemoryUsageStore();
   readonly cache = new MemoryCache();
+
+  async claimPurge() {
+    const purge = this.purges.find((item) => !item.done && item.attempts < 5);
+    if (!purge) return null;
+    purge.attempts += 1;
+    return {
+      id: purge.id,
+      siteId: purge.siteId,
+      subdomain: purge.subdomain,
+      attempts: purge.attempts,
+    };
+  }
+  async finishPurge(id: number, error?: string) {
+    const purge = this.purges.find((item) => item.id === id);
+    if (purge) Object.assign(purge, error ? { error } : { done: true, error: undefined });
+  }
 
   enqueue(siteId: string, kind: JobKind, payload: Record<string, unknown> = {}): Job {
     const job = { id: randomUUID(), siteId, kind, attempts: 0, payload, status: "queued" as const };

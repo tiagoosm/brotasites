@@ -1,12 +1,15 @@
 import { readFileSync } from "node:fs";
 import type { BrowserContext, Route } from "@playwright/test";
 
-// A fake Supabase for e2e: the platform points at https://e2e-test.supabase.co (see
+// A fake Supabase for e2e: the platform points at http://localhost:54390 (see
 // playwright.config.ts), the session is a cookie made here and every auth, database and
-// storage call from the browser is answered by the test. The platform's own route handlers
-// (/api/...) are answered here too, so nothing reaches a real project or Trigger.dev.
+// storage call from the browser is answered by the test. The platform's server reaches the same
+// address, answered by fake-supabase.mjs (sessions, the account routes). The platform's own
+// data route handlers (/api/...) are answered here, so nothing reaches a real project.
 
-export const SUPABASE = "https://e2e-test.supabase.co";
+export const SUPABASE = "http://localhost:54390";
+/** The session cookie's name for that address (@supabase/ssr: sb-<first label>-auth-token). */
+export const SESSION_COOKIE = "sb-localhost-auth-token";
 export const USER = { id: "1c0a7b5e-9d2f-4f61-8b3a-5e7d9c2a4f10", email: "ze@padariadoze.com.br" };
 export const SITE = "7d1c1a52-2f0e-4c39-9a35-6b1f4a8e2c10";
 export const PAYMENT = "9e2b4c6d-8f0a-4b1c-a3d5-e7f9a1b3c5d7";
@@ -17,8 +20,12 @@ export const photoBytes = readFileSync(
 
 const base64url = (value: string) => Buffer.from(value).toString("base64url");
 
-/** A session cookie in the format @supabase/ssr reads. The token is checked via /auth/v1/user. */
-export async function signIn(context: BrowserContext) {
+/**
+ * A session cookie in the format @supabase/ssr reads. The token is checked via /auth/v1/user (by
+ * the test in the browser, by fake-supabase.mjs on the server). Confirmed email unless told.
+ */
+export async function signIn(context: BrowserContext, options: { confirmed?: boolean } = {}) {
+  const confirmed = options.confirmed ?? true;
   const exp = Math.floor(Date.now() / 1000) + 3600;
   const token = [
     base64url(JSON.stringify({ alg: "HS256", typ: "JWT" })),
@@ -28,7 +35,9 @@ export async function signIn(context: BrowserContext) {
         email: USER.email,
         role: "authenticated",
         aud: "authenticated",
+        aal: "aal1",
         exp,
+        email_confirmed_at: confirmed ? "2026-10-21T00:00:00Z" : null,
       }),
     ),
     "assinatura",
@@ -39,6 +48,7 @@ export async function signIn(context: BrowserContext) {
     role: "authenticated",
     app_metadata: {},
     user_metadata: {},
+    email_confirmed_at: confirmed ? "2026-10-21T00:00:00Z" : null,
     created_at: "2026-10-21T00:00:00Z",
   };
   const session = {
@@ -51,7 +61,7 @@ export async function signIn(context: BrowserContext) {
   };
   await context.addCookies([
     {
-      name: "sb-e2e-test-auth-token",
+      name: SESSION_COOKIE,
       value: `base64-${base64url(JSON.stringify(session))}`,
       domain: "localhost",
       path: "/",

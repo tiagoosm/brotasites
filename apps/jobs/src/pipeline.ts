@@ -17,6 +17,7 @@ import {
   siteConfigSchema,
 } from "@brotasites/schema/v1.2";
 import type { PreviewHost, Publisher } from "./previews.js";
+import type { Purger } from "./purge.js";
 import type { Screenshotter } from "./screenshots.js";
 import type { Job, JobKind, PipelineStore, SiteRecord } from "./store.js";
 import { prepareWorkspace, type Workspace } from "./workspace.js";
@@ -41,6 +42,8 @@ export interface PipelineDeps {
   /** The reviewer's browser checks; its own Chromium by default. */
   browserChecks?: (site: { distDir: string; base?: string }) => Promise<BrowserResult>;
   build?: typeof buildStaticSite;
+  /** Removes a deleted site's files from R2 and KV (E15); without R2 the cleanups wait. */
+  purger?: Purger;
   /** Development only: skip the human review and go straight to the client. */
   skipHumanReview?: boolean;
   log?: (message: string) => void;

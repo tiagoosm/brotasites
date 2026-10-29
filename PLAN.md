@@ -20,6 +20,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E12 Hosting: Worker, R2, KV, publishing, suspension, export
 - [x] E13 Final verification, blind test kit, owner steps
 - [ ] E14 (optional) "Experimente aqui" demo on the home page
+- [x] E15 Accounts: sign-up with password and email confirmation, sign-in, account page, security
 
 ## Steps in detail
 
@@ -81,6 +82,10 @@ As in `docs/hosting.md`, extending the existing `apps/sites-worker`: run locally
 ### E13 Final verification
 
 Run every test, Lighthouse, axe and the security suite. Build the blind test kit (`docs/blind-test.md`) with 20 sites. Update the README and `docs/owner-steps.md`. Deliver a report: what is in, what was cut, numbers, and what depends on the owner's decisions and accounts.
+
+### E15 Accounts
+
+Sign-up with name, email, password and the accepted terms, with email confirmation; sign-in by password or by link; "esqueci a senha"; the /conta page (profile, email, password, two-step verification for the team, other devices, data export, account deletion). Security: server-side page protection, the confirmed-email rule on the server and in the database, no account enumeration, Turnstile, rate limits, password rules, host-only cookies, no open redirects, Origin checks, Zod, admin with aal2, no-store and noindex. Email templates in `docs/email-templates/`; Supabase and email setup in `docs/owner-steps.md` (Accounts). Login with Google is left for later.
 
 ### E14 Home demo (optional)
 

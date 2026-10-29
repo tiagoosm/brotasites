@@ -48,6 +48,9 @@ test("without JavaScript the demo still shows the example and sends the answers"
   await demo.getByLabel("Nome do seu negócio").fill("Oficina do Beto");
   await demo.getByText("Oficina mecânica", { exact: true }).click();
   await demo.getByRole("button", { name: "Continuar com este site" }).click();
-  await expect(page).toHaveURL(/\/criar\?nome=Oficina\+do\+Beto&tipo=oficina-mecanica$/);
+  // Without an account, the answers wait in the address while the person signs up.
+  await expect(page).toHaveURL(
+    /\/cadastro\?voltar=%2Fcriar%3Fnome%3DOficina%2Bdo%2BBeto%26tipo%3Doficina-mecanica$/,
+  );
   await context.close();
 });

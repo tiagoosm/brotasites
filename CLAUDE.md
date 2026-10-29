@@ -27,7 +27,7 @@ Project owner: Tiago da Silva Machado (github.com/tiagoosm). Product language (U
 
 - TypeScript everywhere. Monorepo with pnpm + Turborepo.
 - Platform (form, client dashboard, admin, API): Next.js (App Router), Tailwind and shadcn/ui, hosted on Vercel. The Hobby plan is limited to non-commercial, personal use: move to Pro before charging clients.
-- Database, auth (magic link) and file storage: Supabase, for platform data only. RLS on every table.
+- Database, auth (email and password with email confirmation, plus a sign-in link) and file storage: Supabase, for platform data only. RLS on every table.
 - Validation: Zod in `packages/schema`, the single source of truth for the form, API, AI, engine and generator. Spec: `docs/schema-1.2.md`.
 - Generated sites: Astro + Tailwind, static HTML, no database, no external requests.
 - Site hosting: one Cloudflare Worker + R2 + KV, on a base domain separate from the platform's (`BASE_DOMAIN`). Client custom domains through Cloudflare for SaaS. See "Site hosting: options and limits" and `docs/hosting.md`.
@@ -48,7 +48,7 @@ Project owner: Tiago da Silva Machado (github.com/tiagoosm). Product language (U
 
 ## Product rules
 
-- No loading screen: generation is asynchronous. The client sends the form and can close the page; status shows on the "Meus sites" tab of the dashboard. No notification emails in this round; the only email sent is the magic sign-in link.
+- No loading screen: generation is asynchronous. The client sends the form and can close the page; status shows on the "Meus sites" tab of the dashboard. No notification emails in this round; the only emails sent are the account's own (email confirmation, sign-in link, password reset, email change).
 - There is no live preview while answering the form (decision of 2026-10-27). The client sees only the 3 art directions and the finished site (private address, not indexed, with a token).
 - Directions: "Fiel à marca", "Evolução", "Contraste". Unlimited redos until one is approved. After approval the identity is locked; only content, images, contact details, sections and colors (with AA contrast) can change.
 - Every site goes through the automatic reviewer and, at first, through human review in the admin queue.

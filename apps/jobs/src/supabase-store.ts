@@ -128,6 +128,34 @@ export function supabaseStore(db: SupabaseClient): PipelineStore {
     usage,
     cache,
 
+    async claimPurge() {
+      const rows = check(await db.rpc("claim_site_purge"), "claim purge") as Record<
+        string,
+        unknown
+      >[];
+      const row = rows[0];
+      return row
+        ? {
+            id: Number(row.id),
+            siteId: String(row.site_id),
+            subdomain: (row.subdomain as string | null) ?? null,
+            attempts: Number(row.attempts),
+          }
+        : null;
+    },
+    async finishPurge(id, error) {
+      check(
+        await db
+          .from("site_purges")
+          .update(
+            error
+              ? { last_error: error.slice(0, 2000) }
+              : { done_at: new Date().toISOString(), last_error: null },
+          )
+          .eq("id", id),
+        "finish purge",
+      );
+    },
     async claimJob(kinds, jobId) {
       const rows = check(
         await db.rpc("claim_job", { p_kinds: kinds, p_job_id: jobId ?? null }),

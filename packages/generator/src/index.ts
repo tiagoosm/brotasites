@@ -9,7 +9,10 @@ export { checkImages } from "./images.js";
 export * from "./kv.js";
 export {
   contentTypeFor,
+  deleteR2Object,
   deployToR2,
+  listR2Keys,
+  purgeSite,
   type R2Options,
   signS3,
   uploadDirToR2,

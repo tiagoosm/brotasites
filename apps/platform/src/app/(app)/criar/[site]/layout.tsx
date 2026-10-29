@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { EmailConfirmBanner } from "@/components/account/email-banner";
 import { Loading, Notice, unavailable } from "@/components/shared/page-state";
 import { WizardShell } from "@/components/wizard/wizard-shell";
 import { useRequiredAccount } from "@/lib/account";
@@ -14,7 +15,10 @@ export default function SiteFormLayout({ children }: { children: React.ReactNode
   if (account.status !== "signed-in") return <Loading />;
   return (
     <FormProvider siteId={site} account={{ userId: account.userId, email: account.email }}>
-      <WizardShell>{children}</WizardShell>
+      <WizardShell>
+        <EmailConfirmBanner account={account} />
+        {children}
+      </WizardShell>
     </FormProvider>
   );
 }

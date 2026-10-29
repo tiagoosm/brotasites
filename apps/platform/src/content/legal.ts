@@ -18,9 +18,12 @@ export interface LegalSection {
   blocks: LegalBlock[];
 }
 
-export const LEGAL_UPDATED = "24 de outubro de 2026";
+export const LEGAL_UPDATED = "29 de outubro de 2026";
+// PENDING LEGAL REVIEW ("pendente de revisão jurídica"): a provisional text, version
+// TERMS_VERSION ("2026-10-draft", src/lib/auth/schemas.ts and the accounts migration). Accounts
+// record the version they accepted; a new version asks everyone to accept again.
 export const LEGAL_NOTICE =
-  "Versão inicial, em revisão jurídica. O texto pode mudar antes do lançamento do serviço.";
+  "Versão inicial (2026-10-draft), pendente de revisão jurídica. O texto pode mudar antes do lançamento do serviço.";
 
 export const privacySections: LegalSection[] = [
   {
@@ -37,10 +40,11 @@ export const privacySections: LegalSection[] = [
     blocks: [
       {
         list: [
-          "Seu e-mail, quando você entra na sua conta.",
+          "Seu nome, seu e-mail e sua senha, quando você cria a conta (a senha é guardada só de forma cifrada, ninguém consegue lê-la). O WhatsApp da conta é opcional.",
+          "A data e a versão dos Termos e da Política de Privacidade que você aceitou.",
           "As respostas que você dá no formulário: nome, tipo e cidade do negócio, textos, endereço, telefone, WhatsApp, e-mail de contato do negócio, horários e redes sociais.",
           "As fotos que você envia.",
-          "Os dados técnicos necessários para manter você conectado (a sessão de login).",
+          "Os dados técnicos necessários para manter você conectado (a sessão de login) e para proteger as contas contra abuso: o endereço IP e o e-mail, guardados apenas de forma cifrada e por pouco tempo para limitar tentativas seguidas.",
         ],
       },
       "Não coletamos dados de pagamento. Não usamos cookies de publicidade nem de análise de audiência.",
@@ -54,7 +58,8 @@ export const privacySections: LegalSection[] = [
         list: [
           "Criar as 3 direções para o visual e montar o seu site com as suas respostas.",
           "Guardar o seu rascunho na sua conta, para você continuar de qualquer aparelho.",
-          "Enviar o link de acesso para o seu e-mail.",
+          "Enviar os e-mails da sua conta: confirmação do e-mail, link de acesso, redefinição de senha e troca de e-mail. Não enviamos outros e-mails.",
+          "Proteger as contas contra robôs e tentativas de invasão.",
           "Gerar e publicar o seu site, quando você pedir.",
         ],
       },
@@ -77,7 +82,7 @@ export const privacySections: LegalSection[] = [
           "Supabase: guarda as contas, os rascunhos e as fotos, em servidores em São Paulo.",
           "Anthropic (modelo de IA Claude): recebe as respostas que você escreve, sem a sua senha nem o seu e-mail, para organizar e revisar os textos do site e conferir o resultado.",
           "Trigger.dev: executa as tarefas que criam as direções e montam o site.",
-          "Cloudflare: hospeda o site pronto para você conferir e, quando a publicação estiver disponível, os sites publicados.",
+          "Cloudflare: hospeda o site pronto para você conferir e, quando a publicação estiver disponível, os sites publicados. O Cloudflare Turnstile confere, nas telas de cadastro e de entrada, que quem usa é uma pessoa e não um robô.",
         ],
       },
       "Esses serviços tratam os dados apenas para fazer o BrotaSites funcionar. Alguns podem processar dados fora do Brasil, com as garantias exigidas pela lei.",
@@ -89,7 +94,8 @@ export const privacySections: LegalSection[] = [
     blocks: [
       {
         list: [
-          "Um cookie de sessão, para manter você conectado depois de entrar.",
+          "Um cookie de sessão, para manter você conectado depois de entrar. Ele vale só para o endereço da plataforma, nunca para os sites dos clientes.",
+          "Nas telas de cadastro e de entrada, o Cloudflare Turnstile pode usar dados do navegador para diferenciar pessoas de robôs.",
           "Uma cópia do rascunho no próprio navegador, para que nada se perca se a internet cair enquanto você responde.",
         ],
       },
@@ -100,7 +106,7 @@ export const privacySections: LegalSection[] = [
     id: "prazo",
     title: "Por quanto tempo guardamos",
     blocks: [
-      "Guardamos os dados da sua conta, os rascunhos e as fotos enquanto a conta existir. Quando você pede a exclusão da conta, apagamos esses dados, exceto o que a lei nos obrigar a manter.",
+      "Guardamos os dados da sua conta, os rascunhos e as fotos enquanto a conta existir. Você pode excluir a conta a qualquer momento, na página Conta: apagamos a conta, os sites, os rascunhos e as fotos, e tiramos do ar os sites publicados. Os registros de pagamentos feitos ficam guardados pelo prazo que a lei fiscal exige.",
     ],
   },
   {
@@ -117,7 +123,7 @@ export const privacySections: LegalSection[] = [
           "a informação sobre com quem compartilhamos os dados.",
         ],
       },
-      `Os pedidos são feitos pelo contato de privacidade (${PENDING}). Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).`,
+      `Na página Conta você corrige seu nome e WhatsApp, troca o e-mail, baixa uma cópia dos seus dados e exclui a conta. Os outros pedidos são feitos pelo contato de privacidade (${PENDING}). Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).`,
     ],
   },
   {
@@ -174,7 +180,8 @@ export const termsSections: LegalSection[] = [
     id: "conta",
     title: "Sua conta",
     blocks: [
-      "Você entra com o seu e-mail, recebendo um link de acesso. Use um e-mail que seja seu e cuide do acesso a ele, porque quem acessa o e-mail consegue entrar na conta.",
+      "Você cria a conta com seu nome, seu e-mail e uma senha, e confirma o e-mail pelo link que enviamos. Depois, entra com a senha ou com um link de acesso enviado ao e-mail. Use um e-mail que seja seu e cuide do acesso a ele e da sua senha, porque quem acessa o e-mail consegue entrar na conta.",
+      "Você pode baixar seus dados e excluir a conta a qualquer momento, na página Conta.",
     ],
   },
   {

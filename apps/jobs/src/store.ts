@@ -75,6 +75,14 @@ export interface SitePatch {
   publishedAt?: Date;
 }
 
+/** What a deleted site left in hosting (site_purges, E15). */
+export interface SitePurge {
+  id: number;
+  siteId: string;
+  subdomain: string | null;
+  attempts: number;
+}
+
 export interface PipelineStore {
   /** Takes the oldest queued job of these kinds (or the given one) and marks it running. */
   claimJob(kinds: JobKind[], jobId?: string): Promise<Job | null>;
@@ -104,6 +112,10 @@ export interface PipelineStore {
   hasPaidPublish(siteId: string): Promise<boolean>;
   /** The admin's recommended and retired compositions and variants (E11). */
   catalogWeights(): Promise<CatalogWeights>;
+
+  /** Takes the oldest pending hosting cleanup of a deleted site (at most 5 attempts). */
+  claimPurge(): Promise<SitePurge | null>;
+  finishPurge(id: number, error?: string): Promise<void>;
 
   registry: UniquenessRegistry & { markApproved(siteId: string): Promise<void> };
   usage: UsageStore;

@@ -13,7 +13,7 @@ UI copy shown to the client is in pt-BR; labels quoted below are the actual pt-B
 
 ## Sign-in
 
-Signing in is required to create a site (decision of 2026-10-27, replacing the decision of 2026-10-21 that left it optional until publishing). Sign-in is by magic link (email, no password) and comes before step 1. The draft is saved in the account at every step, and the directions and the finished site appear on the client's dashboard.
+Signing in is required to create a site (decision of 2026-10-27, replacing the decision of 2026-10-21 that left it optional until publishing). An account comes before step 1: sign-up with name, email, password and the accepted terms, the email confirmed by link (E15); after that, sign-in by password or by a link sent to the email. The draft is saved in the account at every step, and the directions and the finished site appear on the client's dashboard.
 
 ## Steps
 

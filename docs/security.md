@@ -30,6 +30,17 @@ See `ai-and-reviewer.md`: delimited data, no tools and no secrets, closed JSON, 
 - Security headers and CSP on the platform too.
 - Single-use, short-lived magic links; never reveal whether an email exists.
 
+Accounts (E15, as built):
+
+- Sign-up with name, email, password (10+ characters, not a common one) and the accepted terms (the version is recorded, append-only); the email is confirmed by link before the first sign-in. Sign-in by password or by link; "esqueci a senha" by link. The confirmed email is checked again by the server (approval) and the database (`request_directions`, `server_approve`).
+- Every account request goes through the platform's routes (`/api/auth/*`, `/api/account/*`): Origin check (also for every `/api` write, in `src/proxy.ts`), Zod, rate limits per IP and per email in the database (`server_rate_limit`, hashed keys), and Cloudflare Turnstile checked by Supabase Auth itself, so bots that skip the pages are refused too.
+- The same answer and about the same time for an existing and a new email (sign-up, sign-in, link, reset, resend); one message for a wrong email or password.
+- The signed-in pages are refused on the server (`src/proxy.ts`, getClaims) before any page code; the routes check the user again with getUser.
+- Session cookie host-only (no Domain), Secure over HTTPS, SameSite=Lax, readable by the browser client as Supabase's SSR design requires (decision of 2026-10-29: HttpOnly would need every data access moved to the server). A nonce CSP with 'strict-dynamic' on the signed-in and account pages keeps injected scripts from running there; account pages are `no-store` and `noindex`.
+- Changing the email, creating a password and deleting the account need a sign-in from the last 10 minutes (the JWT's amr); changing the password needs the current one. Password and email changes sign out the other devices.
+- The team's admin panel needs a second factor (TOTP, aal2), checked by the database's `is_admin()`.
+- Account deletion removes the sites (database, Storage, KV at once, R2 by the jobs) and keeps paid charges for the tax period.
+
 ## 6. Payments
 
 Publish only after a confirmed webhook, with idempotency; never trust the browser. No card data in our system. Webhook authentication as in the provider's documentation (to verify).
@@ -44,7 +55,7 @@ Ownership verification of custom domains (Cloudflare for SaaS). Subdomains only 
 
 ## 9. Data and LGPD
 
-Collect the minimum. Privacy policy and deletion on request (legal text with a lawyer). Defined log retention. Backups with tested restores.
+Collect the minimum: name, email, password (Supabase stores only a hash), optional WhatsApp, the accepted terms version; CPF/CNPJ and billing address only at payment (columns reserved, no screen yet). Privacy policy (legal text with a lawyer). The person downloads their data and deletes the account at /conta. Defined log retention: the account routes never log a password, a token or a full email. Backups with tested restores.
 
 ## 10. Security tests in CI
 

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { SiteConfig } from "@brotasites/schema";
 import { afterAll, describe, expect, it } from "vitest";
-import { contentTypeFor, deployToR2, signS3, uploadPreviewToR2 } from "../src/r2.js";
+import { contentTypeFor, deployToR2, purgeSite, signS3, uploadPreviewToR2 } from "../src/r2.js";
 
 describe("signS3", () => {
   // "Example: GET Object" from the AWS Signature Version 4 documentation for S3.
@@ -165,5 +165,62 @@ describe("uploadPreviewToR2", () => {
       },
     ]);
     await rm(dir, { recursive: true, force: true });
+  });
+});
+
+describe("purgeSite", () => {
+  it("lists every page of keys and deletes the site's versions, exports, previews and KV records", async () => {
+    const calls: string[] = [];
+    const listing: Record<string, string[][]> = {
+      "previews/s1/": [["previews/s1/tok/index.html"]],
+      "sites/padaria/": [
+        ["sites/padaria/v1/index.html", "sites/padaria/v1/a&amp;b.css"],
+        ["sites/padaria/v2/index.html"],
+      ],
+      "exports/padaria/": [["exports/padaria/v1.zip"]],
+    };
+    const fakeFetch = (async (input: string | URL, init?: RequestInit) => {
+      const url = new URL(String(input));
+      const method = init?.method ?? "GET";
+      calls.push(
+        `${method} ${url.hostname.startsWith("api.") ? "kv" : "r2"} ${decodeURIComponent(url.pathname)}`,
+      );
+      expect(new Headers(init?.headers).get("authorization")).toBeTruthy();
+      if (method === "GET" && url.searchParams.get("list-type") === "2") {
+        const pages = listing[url.searchParams.get("prefix") ?? ""] ?? [[]];
+        const page = url.searchParams.get("continuation-token") ? 1 : 0;
+        const keys = pages[page] ?? [];
+        const more = page + 1 < pages.length;
+        return new Response(
+          `<ListBucketResult>${keys.map((key) => `<Contents><Key>${key}</Key></Contents>`).join("")}<IsTruncated>${more}</IsTruncated>${more ? "<NextContinuationToken>next</NextContinuationToken>" : ""}</ListBucketResult>`,
+        );
+      }
+      return new Response(null, { status: method === "DELETE" ? 204 : 200 });
+    }) as typeof fetch;
+
+    const removed = await purgeSite(
+      {
+        accountId: "acc",
+        accessKeyId: "k",
+        secretAccessKey: "s",
+        bucket: "brotasites-sites",
+        fetch: fakeFetch,
+        kv: { accountId: "acc", namespaceId: "ns", apiToken: "t", fetch: fakeFetch },
+      },
+      { siteId: "s1", subdomain: "padaria" },
+    );
+    expect(removed).toBe(5);
+    const deletes = calls.filter((call) => call.startsWith("DELETE")).sort();
+    expect(deletes).toEqual(
+      [
+        "DELETE kv /client/v4/accounts/acc/storage/kv/namespaces/ns/values/preview:s1",
+        "DELETE kv /client/v4/accounts/acc/storage/kv/namespaces/ns/values/site:padaria",
+        "DELETE r2 /brotasites-sites/exports/padaria/v1.zip",
+        "DELETE r2 /brotasites-sites/previews/s1/tok/index.html",
+        "DELETE r2 /brotasites-sites/sites/padaria/v1/a&b.css",
+        "DELETE r2 /brotasites-sites/sites/padaria/v1/index.html",
+        "DELETE r2 /brotasites-sites/sites/padaria/v2/index.html",
+      ].sort(),
+    );
   });
 });

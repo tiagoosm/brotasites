@@ -50,3 +50,19 @@ export async function setHostingState(
   if (!saved.ok) throw new Error(`KV write failed (${saved.status})`);
   return "synced";
 }
+
+/** Removes a key from KV (a deleted site's preview record); "off" without the variables. */
+export async function deleteHostingKey(
+  key: string,
+  fetcher: typeof fetch = fetch,
+): Promise<"deleted" | "off"> {
+  const url = kvUrl(key);
+  if (!url) return "off";
+  const response = await fetcher(url, {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${process.env.CLOUDFLARE_KV_API_TOKEN}` },
+  });
+  if (!response.ok && response.status !== 404)
+    throw new Error(`KV delete failed (${response.status})`);
+  return "deleted";
+}

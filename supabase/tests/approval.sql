@@ -12,7 +12,8 @@ declare
   job uuid;
   n int;
 begin
-  insert into auth.users (id, email, aud, role) values (a, 'a-approval@brotasites.test', 'authenticated', 'authenticated');
+  insert into auth.users (id, email, aud, role, email_confirmed_at)
+    values (a, 'a-approval@brotasites.test', 'authenticated', 'authenticated', now());
 
   perform set_config('role', 'authenticated', true);
   perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);

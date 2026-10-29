@@ -2,7 +2,7 @@ import { createHash, createHmac, randomBytes } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join, relative, sep } from "node:path";
 import type { SiteConfig } from "@brotasites/schema";
-import { type KvOptions, publishVersion, putPreviewRecord } from "./kv.js";
+import { type KvOptions, kvDelete, publishVersion, putPreviewRecord } from "./kv.js";
 import { zipDir } from "./zip.js";
 
 // Uploads a built site to the R2 bucket served by apps/sites-worker, through R2's S3 API.
@@ -110,21 +110,100 @@ export function signS3(input: SignInput): string {
   return `AWS4-HMAC-SHA256 Credential=${input.accessKeyId}/${scope}, SignedHeaders=${names.join(";")}, Signature=${signature}`;
 }
 
+const amzDate = () =>
+  new Date()
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}/, "");
+
+const objectUrl = (options: R2Options, key: string) =>
+  new URL(
+    `https://${options.accountId}.r2.cloudflarestorage.com/${options.bucket}/${key.split("/").map(encodeSegment).join("/")}`,
+  );
+
+/** A signed request without a body (GET a listing, DELETE an object). */
+async function bodyless(options: R2Options, method: "GET" | "DELETE", url: URL): Promise<Response> {
+  const signed = { "x-amz-date": amzDate(), "x-amz-content-sha256": sha256("") };
+  const authorization = signS3({
+    method,
+    url,
+    headers: signed,
+    region: "auto",
+    accessKeyId: options.accessKeyId,
+    secretAccessKey: options.secretAccessKey,
+  });
+  return (options.fetch ?? fetch)(url, { method, headers: { ...signed, authorization } });
+}
+
+/** Every key under a prefix (ListObjectsV2, 1,000 at a time). */
+export async function listR2Keys(options: R2Options, prefix: string): Promise<string[]> {
+  const keys: string[] = [];
+  let token: string | undefined;
+  do {
+    const url = new URL(`https://${options.accountId}.r2.cloudflarestorage.com/${options.bucket}`);
+    url.searchParams.set("list-type", "2");
+    url.searchParams.set("prefix", prefix);
+    if (token) url.searchParams.set("continuation-token", token);
+    const response = await bodyless(options, "GET", url);
+    if (!response.ok)
+      throw new Error(`Falha ao listar ${prefix} no R2 (resposta ${response.status}).`);
+    const xml = await response.text();
+    for (const match of xml.matchAll(/<Key>([^<]*)<\/Key>/g)) {
+      keys.push(
+        (match[1] as string).replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">"),
+      );
+    }
+    token = /<IsTruncated>true<\/IsTruncated>/.test(xml)
+      ? xml.match(/<NextContinuationToken>([^<]*)<\/NextContinuationToken>/)?.[1]
+      : undefined;
+  } while (token);
+  return keys;
+}
+
+export async function deleteR2Object(options: R2Options, key: string): Promise<void> {
+  const response = await bodyless(options, "DELETE", objectUrl(options, key));
+  if (!response.ok && response.status !== 404) {
+    throw new Error(`Falha ao apagar ${key} no R2 (resposta ${response.status}).`);
+  }
+}
+
+/**
+ * Removes everything a deleted site left in hosting (account deletion, E15): its versions,
+ * its .zip exports, its previews and its records in KV. Returns how many files went.
+ */
+export async function purgeSite(
+  options: R2Options,
+  site: { siteId: string; subdomain: string | null },
+): Promise<number> {
+  const prefixes = [`previews/${site.siteId}/`];
+  if (site.subdomain) prefixes.push(`sites/${site.subdomain}/`, `exports/${site.subdomain}/`);
+  let removed = 0;
+  for (const prefix of prefixes) {
+    const keys = await listR2Keys(options, prefix);
+    const queue = [...keys];
+    const remove = async () => {
+      for (let key = queue.shift(); key; key = queue.shift()) await deleteR2Object(options, key);
+    };
+    await Promise.all(Array.from({ length: CONCURRENCY }, remove));
+    removed += keys.length;
+  }
+  if (options.kv) {
+    if (site.subdomain) await kvDelete(options.kv, `site:${site.subdomain}`);
+    await kvDelete(options.kv, `preview:${site.siteId}`);
+  }
+  return removed;
+}
+
 async function putObject(
   options: R2Options,
   key: string,
   body: Uint8Array,
   headers: Record<string, string>,
 ): Promise<void> {
-  const url = new URL(
-    `https://${options.accountId}.r2.cloudflarestorage.com/${options.bucket}/${key.split("/").map(encodeSegment).join("/")}`,
-  );
+  const url = objectUrl(options, key);
   const signed: Record<string, string> = {
     ...headers,
-    "x-amz-date": new Date()
-      .toISOString()
-      .replace(/[-:]/g, "")
-      .replace(/\.\d{3}/, ""),
+    "x-amz-date": amzDate(),
     "x-amz-content-sha256": sha256(body),
   };
   const authorization = signS3({

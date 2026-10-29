@@ -88,6 +88,12 @@ function AccountArea({ compact = false }: { compact?: boolean }) {
         >
           Meus sites
         </Link>
+        <Link
+          href="/conta"
+          className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
+        >
+          Conta
+        </Link>
         {!compact && (
           <form action="/auth/sair" method="post">
             <input type="hidden" name="voltar" value="/" />

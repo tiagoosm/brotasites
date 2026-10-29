@@ -2,3 +2,5 @@
 # a made-up 16-hex composition key in the e2e fake Supabase, since changed to a low-entropy value.
 cae1ba2e7c3b5a15d0ee5c725ff2fd1f51782dca:apps/platform/e2e/support/supabase.ts:generic-api-key:419
 cae1ba2e7c3b5a15d0ee5c725ff2fd1f51782dca:apps/platform/e2e/support/supabase.ts:generic-api-key:456
+# The e2e test password (a made-up phrase for accounts on the fake Supabase).
+6e361e50be7bd3d2c5e47a4a8a120a8f28de27a5:apps/platform/e2e/support/accounts.ts:generic-api-key:9

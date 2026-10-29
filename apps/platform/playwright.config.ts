@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3100;
+const FAKE_SUPABASE_PORT = 54390;
+const FAKE_SUPABASE = `http://localhost:${FAKE_SUPABASE_PORT}`;
 
 // Runs against a production build of the platform.
 export default defineConfig({
@@ -34,19 +36,31 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: `pnpm run build && pnpm exec next start --port ${PORT}`,
-    url: `http://localhost:${PORT}/`,
-    env: {
-      NEXT_TELEMETRY_DISABLED: "1",
-      // A fake project: tests intercept its calls, and the platform's own route handlers, so
-      // nothing reaches real Supabase or Trigger.dev.
-      NEXT_PUBLIC_SUPABASE_URL: "https://e2e-test.supabase.co",
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_e2e_test",
-      NEXT_PUBLIC_PREVIEW_ORIGIN: "https://previa.sites.localhost",
-      NEXT_PUBLIC_BASE_DOMAIN: "sites.localhost",
+  webServer: [
+    {
+      // The platform's server calls Supabase too (the proxy's session check, the account
+      // routes): a fake project in memory answers it (e2e/support/fake-supabase.mjs).
+      command: `node e2e/support/fake-supabase.mjs`,
+      url: `${FAKE_SUPABASE}/__test/outbox`,
+      reuseExistingServer: !process.env.CI,
+      env: { FAKE_SUPABASE_PORT: String(FAKE_SUPABASE_PORT) },
     },
-    reuseExistingServer: !process.env.CI,
-    timeout: 240_000,
-  },
+    {
+      command: `pnpm run build && pnpm exec next start --port ${PORT}`,
+      url: `http://localhost:${PORT}/`,
+      env: {
+        NEXT_TELEMETRY_DISABLED: "1",
+        // The fake project: the browser's calls are answered inside each test, the server's by
+        // the fake above, so nothing reaches real Supabase or Trigger.dev.
+        NEXT_PUBLIC_SUPABASE_URL: FAKE_SUPABASE,
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_e2e_test",
+        SUPABASE_SECRET_KEY: "sb_secret_e2e_test",
+        NEXT_PUBLIC_CAPTCHA_MODE: "simulated",
+        NEXT_PUBLIC_PREVIEW_ORIGIN: "https://previa.sites.localhost",
+        NEXT_PUBLIC_BASE_DOMAIN: "sites.localhost",
+      },
+      reuseExistingServer: !process.env.CI,
+      timeout: 240_000,
+    },
+  ],
 });
