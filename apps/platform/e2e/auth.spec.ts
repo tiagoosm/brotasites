@@ -51,7 +51,7 @@ test("signing up, confirming the email and landing on the form", async ({ page, 
   // The link confirms and signs in, back to where the person was going.
   await page.goto(linkOf(mail));
   await expect(page).toHaveURL(/\/conta$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sua conta");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Perfil e segurança");
   await expect(page.getByLabel("Seu nome")).toHaveValue("Zé da Padaria");
   // The link works once.
   await page.context().clearCookies();
@@ -111,6 +111,62 @@ test("signing in with the password and with a link", async ({ page, request }) =
   await expect(page).toHaveURL(/\/conta$/);
 });
 
+test("without a page to go back to, signing in and confirming lead to the dashboard", async ({
+  page,
+  request,
+}) => {
+  // The password.
+  const email = uniqueEmail("painel");
+  await createUser(request, { email });
+  await signInWithPassword(page, email);
+  await expect(page).toHaveURL(/\/painel$/);
+  await expect(page.getByRole("heading", { level: 2, name: "Seus sites" })).toBeVisible();
+  // Signed in, the sign-in and sign-up pages lead to the dashboard, on the server.
+  await page.goto("/entrar");
+  await expect(page).toHaveURL(/\/painel$/);
+  await page.goto("/cadastro");
+  await expect(page).toHaveURL(/\/painel$/);
+  // The public pages show the account's menu, already in the server's HTML (no flicker).
+  const home = await page.context().request.get("/");
+  const html = await home.text();
+  expect(html).toContain(">Painel<");
+  expect(html).toContain(">Perfil e segurança<");
+  expect(html).not.toContain(">Entrar<");
+  // Two pages under one address: never stored once for everyone by a shared cache.
+  expect(home.headers()["cache-control"]).toBe("private, no-cache");
+
+  // Confirming a new account's email.
+  await page.context().clearCookies();
+  const fresh = uniqueEmail("painel-novo");
+  await page.goto("/cadastro");
+  await page.getByLabel("Seu nome").fill("Zé");
+  await page.getByLabel("E-mail").fill(fresh);
+  await page.getByLabel("Senha", { exact: true }).fill(PASSWORD);
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Criar conta" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Confira o seu e-mail");
+  await page.goto(linkOf(await lastMail(request, fresh, "signup")));
+  await expect(page).toHaveURL(/\/painel$/);
+
+  // Signed out, the public pages offer to sign in, and the internal addresses do not exist.
+  await page.context().clearCookies();
+  const visitor = await (await page.context().request.get("/")).text();
+  expect(visitor).toContain(">Entrar<");
+  expect(visitor).not.toContain(">Painel<");
+  expect((await page.context().request.get("/logado")).status()).toBe(404);
+  expect((await page.context().request.get("/visitante/ajuda")).status()).toBe(404);
+});
+
+test("a page asked for still comes first: voltar=/criar opens the form", async ({
+  page,
+  request,
+}) => {
+  const email = uniqueEmail("voltar");
+  await createUser(request, { email });
+  await signInWithPassword(page, email, PASSWORD, "/criar");
+  await expect(page).toHaveURL(/\/criar(\/|$)/);
+});
+
 test("resending the confirmation waits a minute between emails", async ({ page, request }) => {
   await page.clock.install();
   const email = uniqueEmail("reenvio");
@@ -164,7 +220,7 @@ test("forgot and reset the password", async ({ page, request }) => {
   await expect(page.getByText("As duas senhas não são iguais.")).toBeVisible();
   await page.getByLabel("Repita a nova senha").fill("Cafe-com-leite-99");
   await page.getByRole("button", { name: "Salvar nova senha" }).click();
-  await expect(page).toHaveURL(/\/meus-sites\?senha=alterada$/);
+  await expect(page).toHaveURL(/\/painel\?senha=alterada$/);
 
   await page.context().clearCookies();
   await signInWithPassword(page, email, "Cafe-com-leite-99", "/conta");

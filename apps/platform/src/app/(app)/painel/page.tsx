@@ -248,7 +248,7 @@ function SiteCard({ site }: { site: DashboardSite }) {
                   href={`https://${address}`}
                   target="_blank"
                   rel="noopener"
-                  className="inline-flex items-center gap-1 font-semibold break-all text-leaf-deep underline underline-offset-4"
+                  className="inline-flex min-h-11 items-center gap-1 font-semibold break-all text-leaf-deep underline underline-offset-4"
                 >
                   {address}
                   <ExternalLink aria-hidden="true" className="size-4 shrink-0" />

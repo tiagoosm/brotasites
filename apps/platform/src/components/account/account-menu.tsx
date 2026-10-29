@@ -2,8 +2,9 @@ import Link from "next/link";
 import { memberLinks } from "@/components/site/nav";
 import { SignOutButton } from "@/components/site/sign-out";
 
+// Each item is a full 44px target, apart from its neighbours, also when the menu wraps on phones.
 const linkClass =
-  "touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline aria-[current=page]:text-ink aria-[current=page]:underline";
+  "inline-flex min-h-11 min-w-11 items-center justify-center px-1 font-semibold text-leaf-deep underline-offset-4 hover:underline aria-[current=page]:text-ink aria-[current=page]:underline";
 
 /**
  * The signed-in pages' menu: Painel, Criar site, Perfil e segurança, Sair (the same links as
@@ -13,7 +14,7 @@ export function AccountMenu({ current, extra }: { current?: string; extra?: Reac
   return (
     <nav
       aria-label="Conta"
-      className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 text-[0.8125rem]"
+      className="flex flex-wrap items-center justify-end gap-x-3 text-[0.8125rem]"
     >
       {extra}
       {memberLinks.map((link) => (
@@ -26,7 +27,7 @@ export function AccountMenu({ current, extra }: { current?: string; extra?: Reac
           {link.label}
         </Link>
       ))}
-      <SignOutButton className="font-semibold text-leaf-deep underline-offset-4 hover:underline" />
+      <SignOutButton className={linkClass} />
     </nav>
   );
 }

@@ -79,7 +79,15 @@ Since E10 the form follows `docs/form-flow.md`. Titles, questions and descriptio
 - **Same answer for any email:** *Se houver uma conta com {email}, enviamos um link…* (sign-in link, password reset, resend).
 - **Account (/conta):** *Sua conta*, then *Seus dados* (name, *WhatsApp (opcional)*), *E-mail*, *Senha* or *Criar senha*, *Verificação em duas etapas* (team only), *Aparelhos conectados* (*Sair de todos os aparelhos*), *Seus dados* (*Baixar meus dados (.json)*), *Excluir minha conta*. Sensitive changes: *Por segurança, confirme que é você: entre de novo e repita o pedido em até 10 minutos.*
 
-## Meus sites (dashboard)
+## Painel (account dashboard, E16)
+
+- **Greeting:** *Olá, {primeiro nome}* (or *Olá*), the email and *Perfil e segurança*.
+- **Precisa de você:** one card per pending action, most urgent first: the email banner (*Confirme o seu e-mail.* with *Reenviar e-mail de confirmação*), *{site}: {status label}* with the status sentence (or the visible reason for *Precisa de atenção*), *Continue de onde parou: {etapa}.*, *Complete o seu perfil* / *Diga como podemos chamar você. O WhatsApp é opcional.* Nothing pending: *Tudo em dia.*
+- **Seus sites:** status label and sentence, *Última mudança em {data}*, the milestones (*Criado*, *Direções prontas*, *Em revisão*, *Aprovado*, *Publicado*), the button (*Continuar*, *Escolher direção*, *Revisar*, *Baixar o site*, *Ver detalhes*), and once published *Endereço*, *Hospedagem incluída até {data}*, *Alterações incluídas: {n} dias restantes* (or *Período encerrado*). No sites: *Crie seu primeiro site* / *Responda sete perguntas sobre o seu negócio e receba 3 direções de visual para escolher.* / *Criar meu site*.
+- **Avisos:** *As 3 direções de {site} estão prontas.*, *{site} está pronto para você conferir.*, *Nossa equipe pediu ajustes em {site}. Estamos montando de novo.*, *{site} está no ar.*, *{site} foi suspenso. Veja os motivos na página do site.*, *A suspensão de {site} foi retirada.*, *Seu e-mail foi confirmado.* / *Marcar todos como lidos* / *Nenhum aviso por enquanto.*
+- **Menu:** *Painel*, *Criar site*, *Perfil e segurança*, *Sair* (signed out: *Entrar*, *Criar conta*).
+
+## Each site's page (`/meus-sites/<site>`)
 
 - **Statuses:** the labels and sentences of `apps/platform/src/lib/site-status.ts`, one per status of `docs/product.md` (*Criando as 3 direções*, *Escolha uma das 3*, *Montando seu site*, *Dando uma última olhada*, *Site pronto para conferir*, *Colocando no ar*, *No ar*, *Precisa de atenção*). A small *Sua vez* tag marks the sites waiting on the client.
 - **Directions:** *Escolha uma das 3* / *Escolher uma direção fixa a identidade do site (cores, letras e formas). Depois, ainda dá para mudar textos, fotos, contato e seções.* Cards: *Fiel à marca* (*Segue de perto as suas cores e o seu jeito.*), *Evolução* (*Parte da sua marca e dá um passo além.*), *Contraste* (*Um caminho diferente, para comparar.*). *Escolher esta* asks once more: *Escolher “{direção}”? A identidade fica fixa depois disso.* Redo: *Nenhuma serviu: criar outras 3*.

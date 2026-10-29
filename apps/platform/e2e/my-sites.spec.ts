@@ -9,15 +9,17 @@ import {
   withSite,
 } from "./support/supabase";
 
-// After the form: sending the answers, the 3 directions on "Meus sites", the finished site,
+// After the form: sending the answers, the 3 directions on the site page, the finished site,
 // the address, approval and the test payment. Generation is asynchronous: no loading screen.
 
 const dashboard = `/meus-sites/${SITE}`;
 const allSteps = allBefore("endereco");
 
-test("Meus sites needs an account, and the old page leads there", async ({ page }) => {
+test("the site pages need an account, and the old page leads to the dashboard", async ({
+  page,
+}) => {
   await page.goto("/meu-site");
-  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fmeus-sites$/);
+  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fpainel$/);
 });
 
 test("sending the answers starts the directions and opens the dashboard", async ({
@@ -46,16 +48,6 @@ test("what is missing to generate is listed, with links back", async ({ page, co
   await expect(page.getByText("o tipo de negócio")).toBeVisible();
   await expect(page.getByText("um contato (WhatsApp, telefone ou e-mail)")).toBeVisible();
   await expect(page.getByRole("button", { name: "Ver as 3 direções" })).toBeDisabled();
-});
-
-test("the list shows each site and whose turn it is", async ({ page, context }) => {
-  await withSite(context, { site: siteRow("awaiting_direction_choice"), draft: padaria });
-  await page.goto("/meus-sites");
-  const card = page.getByRole("link", { name: /Padaria do Zé/ });
-  await expect(card).toContainText("Escolha uma das 3");
-  await expect(card).toContainText("Sua vez");
-  await card.click();
-  await expect(page).toHaveURL(new RegExp(`${dashboard}$`));
 });
 
 test("choosing one of the 3 directions, after a confirmation", async ({ page, context }) => {
