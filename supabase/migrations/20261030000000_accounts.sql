@@ -24,6 +24,9 @@ create table public.profiles (
   phone text check (phone ~ '^\+[1-9][0-9]{7,14}$'),
   terms_version text check (char_length(terms_version) between 1 and 40),
   terms_accepted_at timestamptz,
+  -- Kept by triggers on auth.users: accounts made with the sign-in link have no password until
+  -- they create one at /conta.
+  has_password boolean not null default false,
   -- Billing data, asked for at payment (a later step); no screen writes them yet.
   document_type text check (document_type in ('cpf', 'cnpj')),
   document_number text check (document_number ~ '^([0-9]{11}|[0-9]{14})$'),
@@ -125,7 +128,9 @@ begin
     btrim(regexp_replace(regexp_replace(coalesce(meta ->> 'full_name', ''), '[[:cntrl:]]', ' ', 'g'), '\s+', ' ', 'g')),
     80
   );
-  insert into public.profiles (id, full_name) values (new.id, name) on conflict (id) do nothing;
+  insert into public.profiles (id, full_name, has_password)
+    values (new.id, name, coalesce(new.encrypted_password, '') <> '')
+    on conflict (id) do nothing;
   if meta ->> 'terms_version' = private.current_terms_version() then
     perform private.record_terms(new.id, meta ->> 'terms_version');
   end if;
@@ -137,9 +142,29 @@ revoke execute on function private.handle_new_user() from public, anon, authenti
 create trigger on_auth_user_created after insert on auth.users
   for each row execute function private.handle_new_user();
 
+create function private.handle_password_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  update public.profiles
+    set has_password = coalesce(new.encrypted_password, '') <> ''
+    where id = new.id;
+  return new;
+end;
+$$;
+revoke execute on function private.handle_password_change() from public, anon, authenticated;
+
+create trigger on_auth_user_password after update of encrypted_password on auth.users
+  for each row execute function private.handle_password_change();
+
 -- Accounts made with the sign-in link before profiles existed: an empty name, asked for at
 -- /conta the first time.
-insert into public.profiles (id) select id from auth.users on conflict (id) do nothing;
+insert into public.profiles (id, has_password)
+  select id, coalesce(encrypted_password, '') <> '' from auth.users
+  on conflict (id) do nothing;
 
 -- 5. Only a confirmed email sends the form (the draft can be saved before). -----------------
 

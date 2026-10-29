@@ -20,6 +20,7 @@ create table auth.users (
   role text,
   instance_id uuid,
   raw_user_meta_data jsonb,
+  encrypted_password varchar(255),
   email_confirmed_at timestamptz,
   created_at timestamptz not null default now()
 );

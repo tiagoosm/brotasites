@@ -17,12 +17,12 @@ declare
   ok boolean;
 begin
   -- 1. The sign-up makes the profile from validated metadata. -----------------------------
-  insert into auth.users (id, email, aud, role, raw_user_meta_data) values
+  insert into auth.users (id, email, aud, role, raw_user_meta_data, encrypted_password) values
     (a, 'a-accounts@brotasites.test', 'authenticated', 'authenticated',
-      jsonb_build_object('full_name', E'  Zé   da\tPadaria\u0007 ', 'terms_version', '2026-10-draft')),
+      jsonb_build_object('full_name', E'  Zé   da\tPadaria\u0007 ', 'terms_version', '2026-10-draft'), '$2a$10$hash'),
     (b, 'b-accounts@brotasites.test', 'authenticated', 'authenticated',
-      jsonb_build_object('full_name', repeat('x', 200), 'terms_version', '1999-01-old')),
-    (admin, 'admin-accounts@brotasites.test', 'authenticated', 'authenticated', null);
+      jsonb_build_object('full_name', repeat('x', 200), 'terms_version', '1999-01-old'), ''),
+    (admin, 'admin-accounts@brotasites.test', 'authenticated', 'authenticated', null, null);
 
   select full_name into name from public.profiles where id = a;
   if name is distinct from 'Zé da Padaria' then raise exception 'FAIL: name not cleaned: %', name; end if;
@@ -38,6 +38,15 @@ begin
   end if;
   select count(*) into n from public.terms_acceptances where user_id = b;
   if n <> 0 then raise exception 'FAIL: an unknown terms version was recorded'; end if;
+  -- Who has a password: from the sign-up, then when one is created.
+  if not exists (select 1 from public.profiles where id = a and has_password)
+    or exists (select 1 from public.profiles where id = b and has_password) then
+    raise exception 'FAIL: has_password is wrong after the sign-up';
+  end if;
+  update auth.users set encrypted_password = '$2a$10$new' where id = b;
+  if not exists (select 1 from public.profiles where id = b and has_password) then
+    raise exception 'FAIL: creating a password was not noticed';
+  end if;
 
   -- 2. Each person reaches only their own profile. ----------------------------------------
   perform set_config('role', 'authenticated', true);
