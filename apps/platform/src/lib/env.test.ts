@@ -4,7 +4,8 @@ import { safeNextPath } from "./supabase/env";
 describe("safeNextPath", () => {
   it("keeps paths inside the platform", () => {
     expect(safeNextPath("/criar/123/marca")).toBe("/criar/123/marca");
-    expect(safeNextPath("/meus-sites?senha=alterada")).toBe("/meus-sites?senha=alterada");
+    expect(safeNextPath("/painel?senha=alterada")).toBe("/painel?senha=alterada");
+    expect(safeNextPath("/criar")).toBe("/criar");
     expect(safeNextPath("/conta#excluir")).toBe("/conta#excluir");
   });
 
@@ -29,7 +30,8 @@ describe("safeNextPath", () => {
       undefined,
       "",
     ]) {
-      expect(safeNextPath(value), String(value)).toBe("/criar");
+      // The dashboard is where signing in leads when no safe page was asked for (E16).
+      expect(safeNextPath(value), String(value)).toBe("/painel");
     }
   });
 
