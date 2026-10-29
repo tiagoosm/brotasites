@@ -258,29 +258,131 @@ html:has([data-wizard]) {
   }
 }
 
-/* ---------- Home page stem: grows with scrolling, a leaf opens at each question ---------- */
+/* ---------- Home page stem (stem.tsx, E18) ----------
+   One curved stroke through the questions' leaves, its shape set by stem-geometry.tsx. The
+   body is a tapering shape, dark at the base and lighter at the young tip, revealed by a mask
+   whose line is drawn as the page scrolls. Leaves grow from the stem at their own angles. */
 
-.stem-track,
-.stem-ink {
+.stem {
+  --stem-x: 22px;
+  --stem-gap: 5rem;
+  --leaf-scale: 1;
+}
+
+@media (min-width: 640px) {
+  .stem {
+    --stem-x: 30px;
+    --stem-gap: 6rem;
+    --leaf-scale: 1.4;
+  }
+}
+
+.stem-svg {
   position: absolute;
-  top: 0.5rem;
-  bottom: 1.25rem;
-  left: calc(1rem - 1px);
-  width: 2px;
-  border-radius: 2px;
+  top: 0;
+  left: 0;
+  width: 3.5rem;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
 }
 
-.stem-track {
-  background: repeating-linear-gradient(var(--line-strong) 0 3px, transparent 3px 9px);
+@media (min-width: 640px) {
+  .stem-svg {
+    width: 5rem;
+  }
 }
 
-.stem-ink {
-  background: var(--stem);
-  transform-origin: top;
+.stem-guide {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 6;
+  vector-effect: non-scaling-stroke;
+}
+
+.stem-body {
+  fill: url(#stem-shade);
+}
+
+.stem-ink-line {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 16;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 0;
+}
+
+/* The column on the left of each question, where its leaves grow. */
+.stem-anchor {
+  position: absolute;
+  top: 0;
+  left: -3.5rem;
+  width: 3.5rem;
+  height: 0;
+}
+
+@media (min-width: 640px) {
+  .stem-anchor {
+    left: -5rem;
+    width: 5rem;
+  }
 }
 
 .stem-leaf {
+  --leaf-w: 40px;
+  --leaf-h: 24px;
+  --leaf-rot: var(--leaf-angle);
+  --leaf-fold: -35deg;
+  position: absolute;
+  top: calc(18px + var(--leaf-y));
+  left: calc(var(--stem-x) + var(--leaf-x));
+  width: calc(var(--leaf-w) * var(--leaf-size) * var(--leaf-scale));
+  height: calc(var(--leaf-h) * var(--leaf-size) * var(--leaf-scale));
+  margin-top: calc(var(--leaf-h) * var(--leaf-size) * var(--leaf-scale) / -2);
+  overflow: visible;
   transform-origin: 0 50%;
+  rotate: var(--leaf-rot);
+}
+
+.stem-leaf[data-side="left"] {
+  --leaf-rot: calc(-1 * var(--leaf-angle));
+  --leaf-fold: 35deg;
+  left: auto;
+  right: calc(100% - var(--stem-x) - var(--leaf-x));
+  transform-origin: 100% 50%;
+}
+
+.stem-tendril {
+  --leaf-w: 24px;
+}
+
+.stem-leaf-sway {
+  transform-box: view-box;
+  transform-origin: 0 50%;
+}
+
+[data-side="left"] .stem-leaf-sway {
+  transform-origin: 100% 50%;
+}
+
+.stem-bloom {
+  position: absolute;
+  top: 2px;
+  left: calc(var(--stem-x) - 1rem);
+  width: 2rem;
+  height: 2rem;
+  overflow: visible;
+}
+
+.stem-petal,
+.stem-bloom-glow {
+  transform-box: view-box;
+  transform-origin: 0 0;
+}
+
+.stem-petal {
+  rotate: var(--petal-turn);
 }
 
 /* The text being typed in the "conteúdo" excerpt. */
@@ -327,8 +429,8 @@ html:has([data-wizard]) {
     }
 
     /* The tip of the ink follows a point about two thirds down the screen. */
-    .stem-ink {
-      animation: stem-grow linear both;
+    .stem-ink-line {
+      animation: stem-draw linear both;
       animation-timeline: --stem-line;
       animation-range: cover 35vh cover calc(100% - 65vh);
     }
@@ -343,17 +445,22 @@ html:has([data-wizard]) {
   }
 }
 
-@keyframes stem-grow {
+@keyframes stem-draw {
   from {
-    transform: scaleY(0);
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
   }
 }
 
-/* ---------- Section entrances: once per element, as it reaches the screen ----------
+/* ---------- Section entrances: each time an element comes back on screen ----------
    The HTML always carries the content in its final state. Only motion-reveal.tsx moves an
-   element to "waiting" (below the screen, JavaScript running, motion allowed) and then to
-   "done" when it arrives. Without JavaScript, or with reduced motion, nothing is ever hidden.
-   Transforms, opacity and blur only, so nothing around it moves (no layout shift). */
+   element to "waiting" (fully off screen, JavaScript running, motion allowed), then to "done"
+   (entering) when it arrives, or "shown" (final state at once, when too many arrive together
+   or during a jump to a section). Without JavaScript, or with reduced motion, nothing is ever
+   hidden. Transforms, opacity and blur only, so nothing around it moves (no layout shift). */
 
 @media (prefers-reduced-motion: no-preference) {
   [data-reveal=""][data-entry="waiting"],
@@ -382,19 +489,41 @@ html:has([data-wizard]) {
     --entry-index: 2;
   }
 
-  .stem-leaf,
-  .stem-bud {
-    transform-box: fill-box;
-    transition:
-      transform var(--motion-unfurl) var(--ease-out),
-      opacity calc(var(--motion-unfurl) / 2) var(--ease-out);
+  /* A question's leaves bud from the stem as the tip of the ink reaches it: tiny and folded
+     against the stem, they grow, open out with a slight turn and settle with a small sway.
+     The last question blooms. Waiting off screen, they are buds again. */
+  [data-entry="waiting"] .stem-leaf {
+    opacity: 0;
+    scale: 0.05;
+    rotate: calc(var(--leaf-rot) + var(--leaf-fold));
   }
 
-  [data-entry="waiting"] .stem-leaf,
-  [data-entry="waiting"] .stem-bud {
-    opacity: 0;
-    transform: scale(0.2) rotate(-28deg);
-    transition: none;
+  [data-entry="done"] .stem-leaf {
+    animation: leaf-grow 1100ms var(--ease-out) both;
+    animation-delay: 80ms;
+  }
+
+  [data-entry="done"] .stem-leaflet {
+    animation-delay: 0ms;
+  }
+
+  /* The young leaves keep a slow, slight sway while they are on screen. */
+  [data-entry="done"] :is(.stem-leaflet, .stem-tendril) .stem-leaf-sway,
+  [data-entry="shown"] :is(.stem-leaflet, .stem-tendril) .stem-leaf-sway {
+    animation: leaf-sway 5.5s ease-in-out 1.2s infinite alternate;
+  }
+
+  [data-entry="waiting"] .stem-petal {
+    scale: 0;
+  }
+
+  [data-entry="done"] .stem-petal {
+    animation: petal-open 900ms var(--ease-out) both;
+    animation-delay: calc(200ms + var(--petal-index) * 70ms);
+  }
+
+  [data-entry="done"] .stem-bloom-glow {
+    animation: bloom-glow 1600ms var(--ease-out) 500ms both;
   }
 
   /* Titles revealed word by word (split-words.tsx): each word rises a third of a line. The
@@ -424,64 +553,84 @@ html:has([data-wizard]) {
   }
 }
 
-/* ---------- Specular finish on the hero's main button (specular-link.tsx) ----------
-   A cream highlight on the rim, centered on the cursor, over the solid green button. Inside,
+/* ---------- Specular finish on every "Criar meu site" button (create-site-button.tsx) ----------
+   A cream highlight on the rim, centred on the cursor, over the solid green button. Inside,
    only a sheen kept at 4%: white text on leaf is 5.25:1, and anything brighter under the
-   text would take it below 4.5:1. At rest (touch, reduced motion, no JavaScript) the light
-   sits still on the top-left of the rim. */
-
-@property --spec-x {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 16%;
-}
-
-@property --spec-y {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 0%;
-}
+   text would take it below 4.5:1. The light is its own layer, moved with transform only, inside
+   two still frames: the rim (a 2px ring, masked once) and the sheen. Nothing on the button
+   repaints while the light moves. At rest (touch, reduced motion, no JavaScript) it sits on
+   the top-left of the rim. */
 
 .specular {
   position: relative;
   isolation: isolate;
+  overflow: hidden;
 }
 
-.specular::before,
-.specular::after {
-  content: "";
+.specular-rim,
+.specular-sheen {
   position: absolute;
   inset: 0;
   z-index: -1;
   border-radius: inherit;
   pointer-events: none;
+  overflow: hidden;
 }
 
-.specular::before {
+.specular-rim {
   padding: 2px;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: var(--rim-rest, 0.75);
+  transition: opacity var(--motion-micro) var(--ease-out);
+}
+
+.specular:hover .specular-rim {
+  opacity: var(--rim-hover, 1);
+}
+
+/* A circle centred on the rest point (16% from the left, on the top edge); the script
+   translates it to the cursor. */
+.specular-light {
+  position: absolute;
+  top: 0;
+  left: 16%;
+  width: 9rem;
+  height: 9rem;
+  margin: -4.5rem 0 0 -4.5rem;
+  border-radius: 50%;
   background: radial-gradient(
-    4.5rem circle at var(--spec-x) var(--spec-y),
+    closest-side,
     rgb(250 244 222 / 0.95),
     rgb(205 232 192 / 0.5) 45%,
     transparent 75%
   );
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
-  opacity: 0.75;
-  transition: opacity var(--motion-micro) var(--ease-out);
+  pointer-events: none;
 }
 
-.specular::after {
-  background: radial-gradient(
-    8rem circle at var(--spec-x) var(--spec-y),
-    rgb(250 244 222 / 0.04),
-    transparent 70%
-  );
+/* Its own layer only while the mouse is over the button (layers cost compositing work). */
+.specular:hover .specular-light {
+  will-change: transform;
 }
 
-.specular:hover::before {
-  opacity: 1;
+.specular-light-wide {
+  width: 16rem;
+  height: 16rem;
+  margin: -8rem 0 0 -8rem;
+  background: radial-gradient(closest-side, rgb(250 244 222 / 0.04), transparent 70%);
+}
+
+/* The header's button: the same light, quieter. */
+.specular-nav {
+  --rim-rest: 0.55;
+  --rim-hover: 0.85;
+}
+
+.specular-nav .specular-light {
+  width: 6rem;
+  height: 6rem;
+  margin: -3rem 0 0 -3rem;
 }
 
 .specular:focus-visible {
@@ -489,34 +638,14 @@ html:has([data-wizard]) {
   outline-offset: 3px;
 }
 
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .specular {
-    transition:
-      transform 150ms ease-out,
-      background-color 150ms ease-out,
-      box-shadow 150ms ease-out,
-      --spec-x var(--motion-micro) var(--ease-out),
-      --spec-y var(--motion-micro) var(--ease-out);
-  }
-}
-
 /* ---------- Border glow on the price card (glow-card.tsx) ----------
-   A ring of the brand greens with a short arc of the example's amber (Padaria do Zé), lit
-   around the angle of the cursor. At rest (touch, reduced motion, no JavaScript) it is a soft,
-   still light on the top-left. It only touches the rim and a halo outside the card, so the
-   text inside keeps its contrast. On phones the halo is left out. */
-
-@property --glow-angle {
-  syntax: "<angle>";
-  inherits: true;
-  initial-value: -45deg;
-}
-
-@property --glow-strength {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 0.5;
-}
+   A ring of the brand greens with a short arc of the example's amber (Padaria do Zé). At rest
+   it turns slowly round the border (one turn in 12 s); with the mouse over the card the script
+   turns it toward the cursor. Only the `rotate` of an inner square (its own layer) and the
+   opacity change: the ring's mask and the halo's blur stay still. It only touches the rim and a
+   halo outside the card, so the text inside keeps its contrast. On phones the halo is left out;
+   with reduced motion (or no JavaScript for the following part) the light rests on the
+   top-left. */
 
 .glow-card {
   --glow-amber: #b45309;
@@ -524,29 +653,21 @@ html:has([data-wizard]) {
   position: relative;
 }
 
-.glow-card::before,
-.glow-card::after {
-  content: "";
+.glow-ring,
+.glow-halo {
+  --glow-strength: 0.5;
   position: absolute;
   inset: -1px;
   border-radius: inherit;
   pointer-events: none;
-  background: conic-gradient(
-    from calc(var(--glow-angle) - 70deg),
-    transparent 0deg,
-    var(--leaf) 25deg,
-    var(--glow-light) 55deg,
-    var(--glow-amber) 72deg,
-    var(--glow-light) 88deg,
-    var(--leaf) 115deg,
-    transparent 140deg
-  );
+  overflow: hidden;
+  container-type: size;
   opacity: var(--glow-strength);
   transition: opacity 250ms var(--ease-out);
 }
 
 /* The lit rim, drawn over the card's own border. */
-.glow-card::before {
+.glow-ring {
   padding: 1.5px;
   mask:
     linear-gradient(#000 0 0) content-box exclude,
@@ -555,19 +676,77 @@ html:has([data-wizard]) {
 
 /* A soft halo behind the card: its background hides the part under it, so only the outside
    shows. The card's parent isolates it, so the halo stays above the section's background. */
-.glow-card::after {
+.glow-halo {
   z-index: -1;
   inset: -2px;
+  overflow: visible;
+  container-type: normal;
   filter: blur(14px);
   opacity: calc(var(--glow-strength) * 0.35);
 }
 
-@media (max-width: 767px) {
-  .glow-card::after {
-    content: none;
+/* The turning square stays inside the card's shape; the blur spreads from there. */
+.glow-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  container-type: size;
+}
+
+/* A square larger than the card's diagonal, centred on it: turning it moves the lit arc
+   round the border. */
+.glow-spin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150cqmax;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  rotate: -45deg;
+  background: conic-gradient(
+    from -70deg,
+    transparent 0deg,
+    var(--leaf) 25deg,
+    var(--glow-light) 55deg,
+    var(--glow-amber) 72deg,
+    var(--glow-light) 88deg,
+    var(--leaf) 115deg,
+    transparent 140deg
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .glow-spin {
+    animation: glow-turn 12s linear infinite;
   }
 
-  .glow-card {
+  .glow-card[data-glow-paused] .glow-spin {
+    animation-play-state: paused;
+  }
+
+  /* Following the cursor: the script sets the angle. */
+  .glow-card[data-glow-following] .glow-spin {
+    animation: none;
+  }
+}
+
+@keyframes glow-turn {
+  from {
+    rotate: 0deg;
+  }
+
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (max-width: 767px) {
+  .glow-halo {
+    display: none;
+  }
+
+  .glow-ring {
     --glow-strength: 0.4;
   }
 }
@@ -597,5 +776,68 @@ html:has([data-wizard]) {
   from {
     opacity: 0;
     transform: translateY(-4px);
+  }
+}
+
+@keyframes leaf-grow {
+  0% {
+    opacity: 0;
+    scale: 0.05;
+    rotate: calc(var(--leaf-rot) + var(--leaf-fold));
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  65% {
+    scale: 1.06;
+    rotate: calc(var(--leaf-rot) - var(--leaf-fold) * 0.12);
+  }
+
+  82% {
+    scale: 0.98;
+    rotate: calc(var(--leaf-rot) + var(--leaf-fold) * 0.05);
+  }
+
+  100% {
+    opacity: 1;
+    scale: 1;
+    rotate: var(--leaf-rot);
+  }
+}
+
+@keyframes leaf-sway {
+  from {
+    rotate: -2.5deg;
+  }
+
+  to {
+    rotate: 2.5deg;
+  }
+}
+
+@keyframes petal-open {
+  from {
+    scale: 0;
+    rotate: calc(var(--petal-turn) - 50deg);
+  }
+
+  to {
+    scale: 1;
+    rotate: var(--petal-turn);
+  }
+}
+
+@keyframes bloom-glow {
+  0%,
+  100% {
+    opacity: 0.18;
+    scale: 1;
+  }
+
+  45% {
+    opacity: 0.5;
+    scale: 1.35;
   }
 }

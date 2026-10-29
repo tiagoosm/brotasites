@@ -95,6 +95,16 @@ export function SignInForm() {
             ? "Suas respostas e os seus sites ficam guardados na sua conta."
             : "Mandamos um link de acesso para o seu e-mail. Toque nele para entrar."}
         </p>
+        {/* The header's "Entrar ou cadastre-se" leads here: signing up is one tap away. */}
+        <p className="rounded-lg border border-leaf/30 bg-leaf/5 px-4 py-3 text-[0.9375rem]">
+          Ainda não tem conta?{" "}
+          <Link
+            href={`/cadastro${back}`}
+            className="touch-target font-semibold text-leaf-deep underline underline-offset-4"
+          >
+            Cadastre-se
+          </Link>
+        </p>
       </header>
 
       <FormError message={error} />
@@ -148,15 +158,6 @@ export function SignInForm() {
         >
           Esqueci a senha
         </Link>
-        <p className="text-ink-soft">
-          Ainda não tem conta?{" "}
-          <Link
-            href={`/cadastro${back}`}
-            className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
-          >
-            Criar conta
-          </Link>
-        </p>
       </div>
     </form>
   );

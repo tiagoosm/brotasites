@@ -1,9 +1,19 @@
 import { expect, type Page, test } from "@playwright/test";
 
-// The price card's border glow (glow-card.tsx): it follows the mouse on the rim and outside
-// the card only, stays still on touch screens and with reduced motion.
+// The price card's border glow (glow-card.tsx, E18): at rest it turns slowly round the border
+// on its own; the mouse takes over (the short way round, stronger near the edge) and, when it
+// leaves, the turn goes on from where it stopped. Touch screens keep turning; reduced motion
+// keeps a still, soft glow. The rim and the halo only: the inside stays white.
 
 const card = (page: Page) => page.locator(".glow-card");
+const spin = (page: Page) => page.locator(".glow-ring .glow-spin");
+const angle = (page: Page) =>
+  spin(page).evaluate((el) => Number.parseFloat(getComputedStyle(el).rotate) || 0);
+const norm = (value: number) => ((value % 360) + 360) % 360;
+const apart = (a: number, b: number) => {
+  const d = Math.abs(norm(a) - norm(b));
+  return Math.min(d, 360 - d);
+};
 
 async function cardBox(page: Page) {
   await card(page).scrollIntoViewIfNeeded();
@@ -13,23 +23,49 @@ async function cardBox(page: Page) {
   return box;
 }
 
-test("the glow follows the mouse and rests when it leaves", async ({ page }) => {
+test("at rest the glow turns round the border by itself", async ({ page }) => {
+  await page.goto("/");
+  await cardBox(page);
+  const before = await angle(page);
+  await page.waitForTimeout(1500);
+  const after = await angle(page);
+  // One turn in 12 s: about 45 degrees in 1.5 s, always the same way.
+  expect(apart(before, after)).toBeGreaterThan(20);
+  expect(apart(before, after)).toBeLessThan(80);
+});
+
+test("the mouse takes over and the turn resumes from there when it leaves", async ({ page }) => {
   test.skip((page.viewportSize()?.width ?? 0) < 768, "the glow follows a mouse");
   await page.goto("/");
   const box = await cardBox(page);
+  // The right edge of the card: 90 degrees, and strong.
+  await page.mouse.move(box.x + box.width + 40, box.y + box.height / 2);
   await page.mouse.move(box.x + box.width - 6, box.y + box.height / 2, { steps: 5 });
-  await expect
-    .poll(() =>
-      card(page).evaluate((el) => Number.parseFloat(el.style.getPropertyValue("--glow-angle"))),
-    )
-    .toBeCloseTo(90, 0);
-  expect(
-    await card(page).evaluate((el) => Number(el.style.getPropertyValue("--glow-strength"))),
-  ).toBeGreaterThan(0.9);
-  await page.mouse.move(0, 0);
-  await expect
-    .poll(() => card(page).evaluate((el) => el.style.getPropertyValue("--glow-angle")))
-    .toBe("");
+  await expect.poll(async () => apart(await angle(page), 90)).toBeLessThan(4);
+  await expect(card(page)).toHaveAttribute("data-glow-following", "");
+  const strength = await page
+    .locator(".glow-ring")
+    .evaluate((el) => Number(el.style.getPropertyValue("--glow-strength")));
+  expect(strength).toBeGreaterThan(0.9);
+  // The bottom edge: 180 degrees, reached by easing, not a jump.
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height - 6, { steps: 3 });
+  await expect.poll(async () => apart(await angle(page), 180)).toBeLessThan(6);
+
+  // Leaving: it goes on from where it stopped. Between the two readings it may only have turned
+  // as far as the elapsed time allows at one turn per 12 s (30 degrees a second), not jumped.
+  const read = () =>
+    page.evaluate(() => {
+      const element = document.querySelector(".glow-ring .glow-spin") as HTMLElement;
+      return { a: Number.parseFloat(getComputedStyle(element).rotate) || 0, t: performance.now() };
+    });
+  const stopped = await read();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height + 120);
+  await expect(card(page)).not.toHaveAttribute("data-glow-following", "");
+  const resumed = await read();
+  const allowed = ((resumed.t - stopped.t) / 1000) * 30 + 6;
+  expect(apart(resumed.a, stopped.a)).toBeLessThanOrEqual(allowed);
+  await page.waitForTimeout(1500);
+  expect(apart((await read()).a, resumed.a)).toBeGreaterThan(20);
 });
 
 test("inside the card the background stays white while it glows", async ({ page }) => {
@@ -65,32 +101,40 @@ test("inside the card the background stays white while it glows", async ({ page 
   expect(darkest).toBeGreaterThanOrEqual(250);
 });
 
-test("on touch screens and with reduced motion the glow stays still and soft", async ({
+test("touch screens keep the slow turn; reduced motion keeps a still, soft glow", async ({
   browser,
 }) => {
-  for (const options of [
-    { viewport: { width: 375, height: 812 }, hasTouch: true, isMobile: true },
-    { viewport: { width: 1280, height: 800 }, reducedMotion: "reduce" as const },
-  ]) {
-    const context = await browser.newContext(options);
-    const page = await context.newPage();
-    await page.goto("/");
-    const box = await cardBox(page);
-    if (options.viewport.width >= 768) {
-      await page.mouse.move(box.x + box.width - 6, box.y + box.height / 2, { steps: 5 });
-    } else {
-      await page.touchscreen.tap(box.x + box.width - 10, box.y + 10);
-    }
-    expect(await card(page).evaluate((el) => el.style.getPropertyValue("--glow-angle"))).toBe("");
-    const rim = await card(page).evaluate((el) => Number(getComputedStyle(el, "::before").opacity));
-    expect(rim).toBeGreaterThan(0);
-    expect(rim).toBeLessThanOrEqual(0.5);
-    if (options.viewport.width < 768) {
-      // No halo on phones.
-      expect(await card(page).evaluate((el) => getComputedStyle(el, "::after").content)).toBe(
-        "none",
-      );
-    }
-    await context.close();
-  }
+  const touch = await browser.newContext({
+    viewport: { width: 375, height: 812 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  let page = await touch.newPage();
+  await page.goto("/");
+  let box = await cardBox(page);
+  await page.touchscreen.tap(box.x + box.width - 10, box.y + 10);
+  const first = await angle(page);
+  await page.waitForTimeout(1200);
+  expect(apart(first, await angle(page))).toBeGreaterThan(15);
+  // No halo on phones.
+  await expect(page.locator(".glow-halo")).toHaveCSS("display", "none");
+  await touch.close();
+
+  const reduced = await browser.newContext({
+    viewport: { width: 1280, height: 800 },
+    reducedMotion: "reduce",
+  });
+  page = await reduced.newPage();
+  await page.goto("/");
+  box = await cardBox(page);
+  await page.mouse.move(box.x + box.width - 6, box.y + box.height / 2, { steps: 5 });
+  await page.waitForTimeout(600);
+  expect(await angle(page)).toBe(-45);
+  await expect(card(page)).not.toHaveAttribute("data-glow-following", "");
+  const rim = await page
+    .locator(".glow-ring")
+    .evaluate((el) => Number(getComputedStyle(el).opacity));
+  expect(rim).toBeGreaterThan(0);
+  expect(rim).toBeLessThanOrEqual(0.5);
+  await reduced.close();
 });

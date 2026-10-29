@@ -7,13 +7,15 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
+import { CreateSiteButton } from "./create-site-button";
 import {
   accountItems,
+  CREATE_HREF,
   currentLink,
-  guestLinks,
   type HeaderSession,
   headerLinks,
   mainButton,
+  signInLink,
   visiblePath,
 } from "./nav";
 import { ProfileMenu } from "./profile-menu";
@@ -60,23 +62,22 @@ export function SiteHeader({ session }: { session: HeaderSession }) {
         <div className="ml-auto flex items-center gap-3 md:ml-0 lg:gap-4">
           {!session.signedIn && (
             <Link
-              href="/entrar"
+              href={signInLink.href}
               prefetch={false}
-              className="touch-target hidden text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline md:inline-flex"
+              className="touch-target hidden text-[0.875rem] font-semibold whitespace-nowrap text-leaf-deep underline-offset-4 hover:underline md:inline-flex lg:text-[0.9375rem]"
             >
-              Entrar
+              {signInLink.label}
             </Link>
           )}
           {main && (
-            <Button
-              asChild
-              size="lg"
-              className="touch-target hidden h-10 px-4 text-sm md:inline-flex lg:px-5 lg:text-[0.9375rem]"
+            <CreateSiteButton
+              href={main.href}
+              size="nav"
+              arrow={false}
+              className="hidden whitespace-nowrap md:inline-flex"
             >
-              <Link href={main.href} prefetch={false}>
-                {main.label}
-              </Link>
-            </Button>
+              {main.label}
+            </CreateSiteButton>
           )}
           {session.signedIn && <ProfileMenu session={session} />}
           <Button
@@ -104,11 +105,11 @@ export function SiteHeader({ session }: { session: HeaderSession }) {
  * back to the button. The items come in one after the other (".phone-menu" in globals.css).
  */
 function PhoneMenu({ session, onClose }: { session: HeaderSession; onClose: () => void }) {
-  // The middle links, then the account: its menu signed in, or "Entrar" (and the main button
-  // "Criar conta" at the bottom) signed out.
+  // The middle links, then the account: its menu signed in ("Criar site" is the main button at
+  // the bottom), or "Entrar ou cadastre-se" signed out; the main button creates the site.
   const account = session.signedIn
-    ? accountItems(session.known ? session.team : false)
-    : guestLinks.slice(0, 1);
+    ? accountItems(session.known ? session.team : false).filter((link) => link.href !== CREATE_HREF)
+    : [signInLink];
   const links = [...headerLinks, ...account];
   const ref = useRef<HTMLDivElement>(null);
 
@@ -210,24 +211,20 @@ function PhoneMenu({ session, onClose }: { session: HeaderSession; onClose: () =
           </Fragment>
         ))}
       </nav>
-      {session.signedIn ? (
+      {session.signedIn && (
         <SignOutButton
-          className="phone-menu-item mt-auto min-h-14 shrink-0 justify-self-start font-display text-[1.75rem] text-ink"
+          className="phone-menu-item min-h-14 shrink-0 justify-self-start border-b border-line py-3 text-left font-display text-[1.75rem] text-ink"
           style={{ "--item": links.length } as React.CSSProperties}
         />
-      ) : (
-        <Button
-          asChild
-          size="lg"
-          className="phone-menu-item mt-auto shrink-0"
-          style={{ "--item": links.length } as React.CSSProperties}
-        >
-          <Link href="/cadastro" prefetch={false} onClick={onClose}>
-            Criar conta
-            <ArrowRight aria-hidden="true" />
-          </Link>
-        </Button>
       )}
+      <div
+        className="phone-menu-item mt-auto grid shrink-0 pt-8"
+        style={{ "--item": links.length + 1 } as React.CSSProperties}
+      >
+        <CreateSiteButton onClick={onClose}>
+          {session.signedIn ? "Criar site" : "Criar meu site"}
+        </CreateSiteButton>
+      </div>
     </div>,
     document.body,
   );

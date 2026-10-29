@@ -1,10 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-// The hero's main button (specular-link.tsx): a solid link with a light on its rim that
-// follows the mouse, still on touch screens.
+// Every "Criar meu site" button (create-site-button.tsx, E18): a solid link with a light on its
+// rim that follows the mouse, eased frame by frame on its own layer, still on touch screens.
 
 const heroButton = (page: import("@playwright/test").Page) =>
-  page.locator("section").first().getByRole("link", { name: "Criar meu site" });
+  page.getByRole("main").locator("a[data-create-site]").first();
+const lightOf = (page: import("@playwright/test").Page) =>
+  heroButton(page)
+    .locator(".specular-rim [data-specular-light]")
+    .evaluate((el) => (el as HTMLElement).style.transform);
+const AT_REST = "translate3d(0px, 0px, 0px)";
 
 test("it is a real link to the form, at least 44px tall, with a visible focus outline", async ({
   page,
@@ -96,10 +101,12 @@ test("the light follows the mouse and rests when it leaves", async ({ page }) =>
     if (!box) throw new Error("no button");
     await page.mouse.move(box.x + box.width * 0.1, box.y + box.height * 0.5);
     await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.9, { steps: 4 });
-    expect(await button.evaluate((el) => el.style.getPropertyValue("--spec-x"))).not.toBe("");
+    expect(await lightOf(page)).not.toBe(AT_REST);
   }).toPass();
+  // Only a transform moves: the button's own style is untouched.
+  expect(await button.evaluate((el) => el.getAttribute("style"))).toBeNull();
   await page.mouse.move(0, 0);
-  await expect.poll(() => button.evaluate((el) => el.style.getPropertyValue("--spec-x"))).toBe("");
+  await expect.poll(() => lightOf(page)).toBe(AT_REST);
 });
 
 test("on touch screens the light stays still", async ({ browser }) => {
@@ -112,8 +119,46 @@ test("on touch screens the light stays still", async ({ browser }) => {
   await page.goto("/");
   const button = heroButton(page);
   await button.tap({ trial: true });
-  expect(await button.evaluate((el) => el.style.getPropertyValue("--spec-x"))).toBe("");
-  const light = await button.evaluate((el) => getComputedStyle(el, "::before").backgroundImage);
+  await page.waitForTimeout(300);
+  expect(await lightOf(page)).toBe(AT_REST);
+  const light = await button
+    .locator(".specular-rim [data-specular-light]")
+    .evaluate((el) => getComputedStyle(el).backgroundImage);
   expect(light).toContain("radial-gradient");
   await context.close();
+});
+
+test("every create-site button has the same finish, 44px tall", async ({ page }) => {
+  await page.goto("/");
+  const inMain = page.getByRole("main").locator("a[data-create-site]");
+  // The hero, after the questions and the closing call.
+  await expect(inMain).toHaveCount(3);
+  for (const link of await inMain.all()) {
+    await expect(link).toHaveText(/Criar meu site/);
+    await expect(link).toHaveClass(/specular/);
+    await expect(link.locator(".specular-rim")).toHaveCount(1);
+    expect((await link.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+  }
+  // No create-site link without it, anywhere on the page.
+  const plain = await page.evaluate(
+    () =>
+      [...document.querySelectorAll<HTMLAnchorElement>('a[href="/criar"]')].filter(
+        (link) =>
+          /Criar (meu )?site/.test(link.textContent ?? "") && !link.classList.contains("specular"),
+      ).length,
+  );
+  expect(plain).toBe(0);
+  // The header's (other pages) and the phone menu's.
+  await page.goto("/ajuda");
+  if ((page.viewportSize()?.width ?? 0) >= 768) {
+    const nav = page.getByRole("banner").locator("a[data-create-site]");
+    await expect(nav).toHaveText("Criar meu site");
+    await expect(nav).toHaveClass(/specular-nav/);
+    expect((await nav.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+  } else {
+    await page.getByRole("button", { name: "Abrir menu" }).click();
+    const sheet = page.getByRole("dialog", { name: "Menu" }).locator("a[data-create-site]");
+    await expect(sheet).toHaveText(/Criar meu site/);
+    await expect(sheet).toHaveClass(/specular/);
+  }
 });

@@ -6,6 +6,7 @@ import { EmailConfirmBanner } from "@/components/account/email-banner";
 import { AutoRefresh } from "@/components/dashboard/auto-refresh";
 import { NoticesBell } from "@/components/dashboard/notices";
 import { Notice } from "@/components/shared/page-state";
+import { CreateSiteButton } from "@/components/site/create-site-button";
 import { Button } from "@/components/ui/button";
 import {
   type DashboardSite,
@@ -167,12 +168,7 @@ function SitesSection({ sites }: { sites: DashboardSite[] }) {
           <p className="text-[0.9375rem] text-ink-soft">
             Responda sete perguntas sobre o seu negócio e receba 3 direções de visual para escolher.
           </p>
-          <Button asChild size="lg" className="justify-self-start">
-            <Link href="/criar">
-              Criar meu site
-              <ArrowRight aria-hidden="true" />
-            </Link>
-          </Button>
+          <CreateSiteButton className="justify-self-start" />
         </div>
       ) : (
         <ul className="grid gap-4">

@@ -26,9 +26,13 @@ test("with reduced motion the stem is shown fully grown", async ({ browser }) =>
   const context = await browser.newContext({ reducedMotion: "reduce" });
   const page = await context.newPage();
   await page.goto("/");
-  const ink = page.locator(".stem-ink");
-  await expect(ink).toHaveCSS("transform", "none");
-  await expect(page.locator(".stem-leaf").last()).toHaveCSS("opacity", "1");
+  // The ink's mask line is whole (no scroll-driven drawing), every leaf is open.
+  await expect(page.locator(".stem-ink-line")).toHaveCSS("stroke-dashoffset", "0px");
+  await expect(page.locator(".stem-ink-line")).toHaveCSS("animation-name", "none");
+  for (const leaf of await page.locator(".stem-leaf").all()) {
+    await expect(leaf).toHaveCSS("opacity", "1");
+    await expect(leaf).toHaveCSS("animation-name", "none");
+  }
   await context.close();
 });
 
@@ -148,21 +152,19 @@ test("questions are headings with buttons that open by keyboard", async ({ page 
   await expect(panel).toBeHidden();
 });
 
-test("the vine decoration stays out of the content", async ({ page }) => {
+test("the vine decoration is there only with a mouse, never in the way", async ({ page }) => {
   await page.goto("/");
   const vine = page.getByTestId("site-vine");
-  const width = page.viewportSize()?.width ?? 0;
-  if (width < 1280) {
-    // Narrow screens have no side margins, so there is no vine at all.
+  if (page.viewportSize() && isPhone(page)) {
+    // The phone project emulates a touch screen: no vine at all.
     await expect(vine).toHaveCount(0);
     return;
   }
-  // Wide screens: only the margins outside the 72rem content column show it.
+  // Any width with a mouse now (E18): the whole page, kept off the content by the shader.
+  await expect(vine).toHaveCount(1);
   await expect(vine).toHaveCSS("pointer-events", "none");
   await expect(vine).toHaveAttribute("aria-hidden", "true");
-  // The column edge is 50% - 36rem (576px); the browser reports the mask in pixels.
-  await expect(vine).toHaveCSS(
-    "mask-image",
-    /linear-gradient.*rgba\(0, 0, 0, 0\) calc\(50% - 576px\).*calc\(50% \+ 576px\)/,
-  );
+  await expect(vine).toHaveCSS("position", "fixed");
+  // Below the header, which stays on top of it.
+  await expect(vine).toHaveCSS("z-index", "20");
 });

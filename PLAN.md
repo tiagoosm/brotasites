@@ -23,6 +23,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E15 Accounts: sign-up with password and email confirmation, sign-in, account page, security
 - [x] E16 Account dashboard: home after signing in, pending actions, site status, in-site notices
 - [x] E17 One header everywhere, the profile menu, and a home page without the demo
+- [x] E18 Home page motion and navigation: one create-site button, repeating entrances, smooth section links, the turning price glow, an organic stem, the vine everywhere
 
 ## Steps in detail
 
@@ -96,6 +97,10 @@ Signing in, signing up and confirming the email lead to `/painel` (unless a safe
 ### E17 One header, the profile menu, a cleaner home page
 
 The same header and footer on every page (public pages, sign-in and password screens, the dashboard, the account, each site's page, the form, payment and the team area), with the same four links in the middle (Como funciona, Preço, Dúvidas, Ajuda). Signed out: "Entrar" and "Criar meu site". Signed in: "Criar site" and a round profile button (initials, or a person icon) whose menu holds the name and email, Painel, Criar site, Perfil e segurança, Área da equipe (team only, decided on the server) and Sair (a POST form). The menu follows the ARIA menu-button pattern (keyboard, Escape, Tab, click outside). On phones: the brand, the profile button and the full-screen sheet with the links and the account block. Signed-in pages read the session on the server for the header; the prerendered public pages keep their two variants and ask `/api/account/me` for the name and team only when the menu opens. The form keeps its progress under the header (no second brand or account menu); the team area's "Fila de revisão" and "Catálogo" are tabs inside the page. The home page loses the "Experimente aqui" demo, the "Veja um site de verdade" frame and the `/exemplo` page (owner decision of 2026-10-29); the hero fills the space with the title, the text, the buttons and three short facts.
+
+### E18 Home page motion and navigation
+
+Every create-site button shares the specular finish, now a composited light eased once per frame (smooth where it stuttered). The header's sign-in link reads "Entrar ou cadastre-se". Section entrances repeat each time an element returns, with a cap on simultaneous entrances and an instant final state on jumps. The links to Como funciona, Preço and Dúvidas scroll smoothly there (also from other pages). The price card's glow turns slowly by itself and hands over to the mouse without jumps. The stem in "Como funciona" is one curved, tapering stroke with leaves that bud, grow and sway, ending in a bloom. The mouse vine roams the free space of the whole public page, kept off the content. All with reduced motion, no JavaScript and touch screens covered.
 
 ### E14 Home demo (optional)
 
