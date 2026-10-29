@@ -47,6 +47,8 @@ export const limits = {
   signIn: { ip: { max: 30, windowSeconds: 900 }, email: { max: 10, windowSeconds: 900 } },
   emailLink: { ip: { max: 10, windowSeconds: 3600 }, email: { max: 5, windowSeconds: 3600 } },
   account: { ip: { max: 30, windowSeconds: 3600 }, email: { max: 10, windowSeconds: 3600 } },
+  // Dashboard notices (E16): the second key is the account, not an email.
+  notices: { ip: { max: 300, windowSeconds: 3600 }, email: { max: 120, windowSeconds: 3600 } },
 } as const;
 
 export function rulesFor(

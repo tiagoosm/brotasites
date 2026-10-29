@@ -78,7 +78,7 @@ export const statusInfo: Record<SiteStatus, StatusInfo> = {
   },
   suspended: {
     label: "Suspenso",
-    text: "O site foi suspenso. Veja o motivo abaixo e fale com a gente.",
+    text: "Seu site foi suspenso. Veja os motivos na página do site.",
     busy: false,
     yourTurn: false,
   },

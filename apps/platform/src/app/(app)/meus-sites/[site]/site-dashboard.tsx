@@ -261,7 +261,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
       )}
 
       {["live", "grace"].includes(site.status) && (
-        <div className="grid gap-2">
+        <div id="baixar" className="grid scroll-mt-6 gap-2">
           <Button
             variant="outline"
             size="lg"
