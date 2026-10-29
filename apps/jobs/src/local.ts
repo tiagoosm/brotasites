@@ -5,6 +5,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { serveDir } from "@brotasites/reviewer";
 import { depsFromEnv } from "./env.js";
 import { JOB_KINDS, runJob } from "./pipeline.js";
+import { runPurges } from "./purge.js";
 
 // The local runner, for development without Trigger.dev: takes queued jobs one at a time and
 // serves the previews at http://127.0.0.1:4500/<site id>/<token>/ (LOCAL_PREVIEWS_PORT; the
@@ -29,6 +30,10 @@ for (;;) {
     return null;
   });
   if (!job) {
+    // Between jobs: the hosting cleanup of deleted accounts.
+    await runPurges(deps.store, deps.purger, (message) => console.log(message)).catch(
+      (error: unknown) => console.error("Falha na limpeza de sites excluídos:", error),
+    );
     await sleep(3000);
     continue;
   }

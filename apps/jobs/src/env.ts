@@ -1,5 +1,5 @@
 import { aiProviderFromEnv } from "@brotasites/ai";
-import type { KvOptions, R2Options } from "@brotasites/generator";
+import { type KvOptions, purgeSite, type R2Options } from "@brotasites/generator";
 import { reviewerAgentFromEnv } from "@brotasites/reviewer";
 import { createClient } from "@supabase/supabase-js";
 import type { PipelineDeps } from "./pipeline.js";
@@ -67,6 +67,7 @@ export function depsFromEnv(
     agent: reviewerAgentFromEnv(env),
     previews,
     publisher: r2 ? new R2Publisher(r2) : undefined,
+    purger: r2 ? (site) => purgeSite(r2, site) : undefined,
     screenshot,
     skipHumanReview: env.REVIEW_SKIP_HUMAN === "true",
     log: (message) => console.log(message),

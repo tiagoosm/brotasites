@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { triggerJob } from "@/lib/server/jobs";
 import { paymentProvider, publishAmountCents } from "@/lib/server/payments";
-import { errors, fail, ownSite } from "@/lib/server/session";
+import { accountErrors, errors, fail, ownSite } from "@/lib/server/session";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 
 const approveErrors: Record<string, [number, string]> = {
   wrong_status: [409, "O site não está pronto para aprovar. Atualize a página."],
   no_subdomain: [409, "Escolha e guarde o endereço do site antes de aprovar."],
   site_not_found: [404, errors.notFound],
+  email_not_confirmed: [403, accountErrors.emailNotConfirmed],
 };
 
 // The client approves the finished site: a payment to make, or (already paid) publishing.
@@ -15,6 +16,8 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   const { id } = await params;
   const owned = await ownSite(id);
   if ("error" in owned) return owned.error;
+  // Paying needs a confirmed email (checked again by server_approve).
+  if (!owned.user.email_confirmed_at) return fail(403, accountErrors.emailNotConfirmed);
   const provider = paymentProvider();
   const admin = getAdminSupabase();
   if (!provider || !admin)

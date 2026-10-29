@@ -12,3 +12,15 @@ export async function triggerJob(jobId: string): Promise<boolean> {
     return false;
   }
 }
+
+/** Starts the hosting cleanup of deleted sites (R2 files); otherwise the local runner takes it. */
+export async function triggerPurge(): Promise<boolean> {
+  if (!process.env.TRIGGER_SECRET_KEY) return false;
+  try {
+    const { tasks } = await import("@trigger.dev/sdk");
+    await tasks.trigger("site-purge", {});
+    return true;
+  } catch {
+    return false;
+  }
+}

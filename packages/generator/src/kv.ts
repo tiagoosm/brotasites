@@ -54,6 +54,16 @@ export async function kvPut(
   if (!response.ok) throw new Error(`Falha ao gravar ${key} no KV (resposta ${response.status}).`);
 }
 
+export async function kvDelete(options: KvOptions, key: string): Promise<void> {
+  const response = await (options.fetch ?? fetch)(valueUrl(options, key), {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${options.apiToken}` },
+  });
+  if (!response.ok && response.status !== 404) {
+    throw new Error(`Falha ao apagar ${key} no KV (resposta ${response.status}).`);
+  }
+}
+
 export function parseSiteRecord(raw: string | null): SiteRecord | null {
   if (!raw) return null;
   try {
