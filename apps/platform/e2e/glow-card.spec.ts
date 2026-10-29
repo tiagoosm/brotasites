@@ -51,13 +51,21 @@ test("the mouse takes over and the turn resumes from there when it leaves", asyn
   await page.mouse.move(box.x + box.width / 2, box.y + box.height - 6, { steps: 3 });
   await expect.poll(async () => apart(await angle(page), 180)).toBeLessThan(6);
 
-  const stopped = await angle(page);
+  // Leaving: it goes on from where it stopped. Between the two readings it may only have turned
+  // as far as the elapsed time allows at one turn per 12 s (30 degrees a second), not jumped.
+  const read = () =>
+    page.evaluate(() => {
+      const element = document.querySelector(".glow-ring .glow-spin") as HTMLElement;
+      return { a: Number.parseFloat(getComputedStyle(element).rotate) || 0, t: performance.now() };
+    });
+  const stopped = await read();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height + 120);
   await expect(card(page)).not.toHaveAttribute("data-glow-following", "");
-  // Right after leaving it is still where it stopped, then it turns on from there.
-  expect(apart(await angle(page), stopped)).toBeLessThan(12);
+  const resumed = await read();
+  const allowed = ((resumed.t - stopped.t) / 1000) * 30 + 6;
+  expect(apart(resumed.a, stopped.a)).toBeLessThanOrEqual(allowed);
   await page.waitForTimeout(1500);
-  expect(apart(await angle(page), stopped)).toBeGreaterThan(20);
+  expect(apart((await read()).a, resumed.a)).toBeGreaterThan(20);
 });
 
 test("inside the card the background stays white while it glows", async ({ page }) => {
