@@ -9,7 +9,7 @@ import {
 } from "@playwright/test";
 import { SITE, SUPABASE, signIn } from "./support/supabase";
 
-// The one header of every page (E17): the same four links, "Entrar" and "Criar meu site"
+// The one header of every page (E17): the same four links, "Entrar ou cadastre-se" and "Criar meu site"
 // signed out, the profile menu signed in, decided on the server (no flicker).
 
 const middle = ["Como funciona", "Preço", "Dúvidas", "Ajuda"];
@@ -45,7 +45,11 @@ test.describe("the same header everywhere", () => {
       const nav = banner(page).getByRole("navigation", { name: "Principal" });
       await expect(nav.getByRole("link")).toHaveText(middle);
       await expect(nav.getByRole("link", { name: "Preço" })).toHaveAttribute("href", "/#preco");
-      await expect(banner(page).getByRole("link", { name: "Entrar" })).toBeVisible();
+      // One way in (E18), to /entrar, where signing up is one tap away.
+      await expect(
+        banner(page).getByRole("link", { name: "Entrar ou cadastre-se" }),
+      ).toHaveAttribute("href", "/entrar");
+      await expect(banner(page).getByRole("link", { name: "Criar conta" })).toHaveCount(0);
       // The home page's hero has the main button; every other page has it in the header.
       await expect(banner(page).getByRole("link", { name: "Criar meu site" })).toHaveCount(
         path === "/" ? 0 : 1,
@@ -82,7 +86,13 @@ test.describe("the same header everywhere", () => {
         banner(page).getByRole("link", { name: "Criar site", exact: true }),
       ).toBeVisible();
       // No account links loose in the bar: they are in the profile menu.
-      for (const name of ["Painel", "Perfil e segurança", "Conta", "Entrar", "Sair"]) {
+      for (const name of [
+        "Painel",
+        "Perfil e segurança",
+        "Conta",
+        "Entrar ou cadastre-se",
+        "Sair",
+      ]) {
         await expect(
           banner(page).getByRole("link", { name, exact: true }).filter({ visible: true }),
         ).toHaveCount(0);
@@ -192,7 +202,7 @@ test("signing out from the menu goes back to the visitor's header", async ({
   await expect(page).toHaveURL(/\/$/);
   await expect(profileButton(page)).toHaveCount(0);
   if (!isPhone(page))
-    await expect(banner(page).getByRole("link", { name: "Entrar" })).toBeVisible();
+    await expect(banner(page).getByRole("link", { name: "Entrar ou cadastre-se" })).toBeVisible();
 });
 
 test("on phones the sheet lists the links and the account", async ({ page, context, request }) => {
@@ -202,13 +212,15 @@ test("on phones the sheet lists the links and the account", async ({ page, conte
   await expect(profileButton(page)).toBeVisible();
   await banner(page).getByRole("button", { name: "Abrir menu" }).click();
   const sheet = page.getByRole("dialog", { name: "Menu" });
+  // The account block, then "Criar site" as the sheet's main button (E18).
   await expect(sheet.getByRole("link")).toHaveText([
     ...middle,
     "Painel",
-    "Criar site",
     "Perfil e segurança",
     "Área da equipe",
+    "Criar site",
   ]);
+  await expect(sheet.locator("a[data-create-site]")).toHaveClass(/specular/);
   await expect(sheet.getByText("Sua conta")).toBeVisible();
   await expect(sheet.getByRole("button", { name: "Sair" })).toBeVisible();
   for (let i = 0; i < 12; i++) {
