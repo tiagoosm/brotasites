@@ -17,9 +17,9 @@ test("the home page presents the seven questions in the form's order", async ({ 
   await expect(questions).toHaveText(formSteps.map((step) => step.question));
 
   await page.getByRole("main").getByRole("link", { name: "Criar meu site" }).first().click();
-  // Signing in comes before the first question.
-  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fcriar$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entre para criar o seu site");
+  // The account comes before the first question.
+  await expect(page).toHaveURL(/\/cadastro\?voltar=%2Fcriar$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Crie a sua conta");
 });
 
 test("with reduced motion the stem is shown fully grown", async ({ browser }) => {
@@ -105,7 +105,9 @@ test("help answers open from a direct link and the contents lead to each part", 
 test("terms and privacy say they are under review", async ({ page }) => {
   for (const path of ["/termos", "/privacidade"]) {
     await page.goto(path);
-    await expect(page.getByRole("note")).toHaveText(/Versão inicial, em revisão jurídica/);
+    await expect(page.getByRole("note")).toHaveText(
+      /Versão inicial \(2026-10-draft\), pendente de revisão jurídica/,
+    );
   }
 });
 
