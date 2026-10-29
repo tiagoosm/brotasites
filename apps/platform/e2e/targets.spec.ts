@@ -14,7 +14,7 @@ const signedIn = [
   "/admin/catalogo",
 ];
 
-for (const path of ["/", "/ajuda", "/termos", "/privacidade", "/exemplo", ...signedIn]) {
+for (const path of ["/", "/ajuda", "/termos", "/privacidade", ...signedIn]) {
   test(`touch targets on ${path} are at least 44px`, async ({ page, context }) => {
     test.setTimeout(60_000);
     if (signedIn.includes(path)) {

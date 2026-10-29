@@ -19,7 +19,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E11 Admin review panel and catalog promotion cycle
 - [x] E12 Hosting: Worker, R2, KV, publishing, suspension, export
 - [x] E13 Final verification, blind test kit, owner steps
-- [ ] E14 (optional) "Experimente aqui" demo on the home page
+- [x] E14 "Experimente aqui" demo on the home page: removed (owner decision 2026-10-29)
 - [x] E15 Accounts: sign-up with password and email confirmation, sign-in, account page, security
 - [x] E16 Account dashboard: home after signing in, pending actions, site status, in-site notices
 
@@ -94,4 +94,4 @@ Signing in, signing up and confirming the email lead to `/painel` (unless a safe
 
 ### E14 Home demo (optional)
 
-The home page already has an "Experimente aqui" demo (name + business type, a miniature, "Continuar com este site" to the form). Rebuild it on the engine, in the browser, with no AI and nothing saved. It respects reduced motion, does not worsen LCP and works without JS (falls back to a still picture).
+Removed (owner decision 2026-10-29). The "Experimente aqui" demo, the "Veja um site de verdade" example frame and the `/exemplo` page were taken off the home page in E17; the form always starts empty.

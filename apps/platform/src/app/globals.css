@@ -298,13 +298,6 @@ html:has([data-wizard]) {
     animation: caret-blink 1100ms steps(1) infinite;
   }
 
-  /* The home demo eases into each type's colors. */
-  .demo-site {
-    transition:
-      background-color 300ms var(--ease-out),
-      color 300ms var(--ease-out);
-  }
-
   /* The hero settles in once, on load: the text and the buttons rise in under the title.
      The title itself stays still, so the largest paint is never delayed. */
   .hero-enter > :not(h1) {
@@ -317,6 +310,10 @@ html:has([data-wizard]) {
 
   .hero-enter > :nth-child(3) {
     animation-delay: 210ms;
+  }
+
+  .hero-enter > :nth-child(4) {
+    animation-delay: 280ms;
   }
 
   @supports (animation-timeline: view()) {
@@ -419,78 +416,6 @@ html:has([data-wizard]) {
 @keyframes caret-blink {
   50% {
     opacity: 0;
-  }
-}
-
-/* ---------- Example site frame (example-showcase.tsx) ----------
-   The window always spans almost the whole screen, so its layout never changes and the page
-   inside never reflows. On wide screens it starts scaled down to about the width of the text
-   column and grows to full size as it comes into view, driven by the scroll position: the
-   scroll is never held, the frame only follows it. Phones, browsers without scroll-driven
-   animations and reduced motion get the full-size frame. */
-
-.example-frame {
-  padding-inline: 1.25rem;
-}
-
-.example-window {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  height: 34rem;
-  max-height: 80vh;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 1rem;
-  background: var(--surface);
-  box-shadow: 0 32px 64px -44px rgb(20 36 27 / 0.5);
-}
-
-@media (min-width: 769px) {
-  .example-frame {
-    padding-inline: 1rem;
-  }
-
-  .example-window {
-    /* The text column (72rem with a 2rem gutter) over the window, at common widths. */
-    --frame-start: 0.95;
-    height: clamp(30rem, 74vh, 46rem);
-    max-height: none;
-  }
-}
-
-@media (min-width: 1024px) {
-  .example-window {
-    --frame-start: 0.92;
-  }
-}
-
-@media (min-width: 1280px) {
-  .example-window {
-    --frame-start: 0.87;
-  }
-}
-
-@media (min-width: 1440px) {
-  .example-window {
-    --frame-start: 0.8;
-  }
-}
-
-@media (min-width: 769px) and (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .example-window {
-      transform-origin: 50% 0;
-      animation: frame-open linear both;
-      animation-timeline: view();
-      animation-range: entry 10% cover 50%;
-    }
-  }
-}
-
-@keyframes frame-open {
-  from {
-    transform: scale(var(--frame-start));
-    border-radius: 1.5rem;
   }
 }
 

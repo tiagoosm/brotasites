@@ -95,7 +95,6 @@ Since 2026-10-27 the owner does not approve each task. Choices the plan reserved
 - **E10, form and dashboard choices:**
   - Signing in is required before the first question, so the sign-in page no longer offers "Continuar sem entrar"; it links back to the home page instead.
   - After approval the client can change two colors of the approved palette, the main color (buttons) and the accent, in step 2. The build applies them with the engine's overrides and pulls them to the nearest tone that keeps AA; the rest of the identity stays locked. Other palette roles are not offered, to keep the screen simple.
-  - The home page keeps the "Experimente aqui" miniature (plan step E14) as a sample, labeled "Amostra" and "Nada é salvo aqui"; it is not a preview of the form.
   - The "Como funciona" section shows the 7 steps of the new form with small still pictures; the old pictures of templates and palettes were removed.
   - Sites wait in "in review" for a person (CLAUDE.md: at first every site is reviewed by hand). The admin queue comes in E11; until then `REVIEW_SKIP_HUMAN=true` sends finished sites straight to the client, in development only.
   - E11, admin panel: decisions go through `server_admin_decide` and are logged in `admin_decisions`, which not even the server can rewrite. Asking for changes or suspending needs a note (the change note goes to the copy step; the suspension reason is shown to the client). Suspending today only changes the status on the platform; taking the site offline in the Worker comes with E12.

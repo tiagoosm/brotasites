@@ -14,9 +14,6 @@ import { DEFAULT_NEXT, safeNextPath, supabaseEnv } from "./env";
  */
 export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  // The example site (public/exemplo-site, made by the generator) is a client site: it keeps its
-  // own markup and is shown framed on /exemplo.
-  if (path.startsWith("/exemplo-site/")) return NextResponse.next();
   // The public pages' variants are reached only through their own addresses.
   if (isVariantPath(path)) {
     return new NextResponse("Not found", { status: 404, headers: { "cache-control": "no-store" } });

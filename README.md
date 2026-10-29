@@ -6,7 +6,7 @@ Form-to-landing-page platform for small businesses. The client fills out a short
 >
 > Repository: https://github.com/tiagoosm/brotasites (currently public; visibility to be decided by the owner, see `docs/owner-steps.md`).
 >
-> **Next:** the owner steps in `docs/owner-steps.md` (accounts, migrations, the real model), then the blind test with real people; the optional home demo (E14) can come at any time. The steps are in [`PLAN.md`](PLAN.md).
+> **Next:** the owner steps in `docs/owner-steps.md` (accounts, migrations, the real model), then the blind test with real people. The steps are in [`PLAN.md`](PLAN.md).
 
 ## Platform hosting
 

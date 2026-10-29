@@ -1,16 +1,15 @@
 "use client";
 
-import { categoryIds, type FormDraft, formSteps12 } from "@brotasites/schema/v1.2";
+import { formSteps12 } from "@brotasites/schema/v1.2";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Loading, Notice, unavailable } from "@/components/shared/page-state";
 import { useRequiredAccount } from "@/lib/account";
-import { readDemoHandoff } from "@/lib/demo-handoff";
 import { createSite, listSites, loadSite } from "@/lib/sites";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 
 // "/criar": signing in comes first (docs/form-flow.md). Then the latest draft opens where the
-// person stopped, or a new site starts (with the name and type from the home page demo).
+// person stopped, or a new, empty site starts ("?novo=1" always starts a new one).
 
 export function StartForm() {
   const router = useRouter();
@@ -25,8 +24,7 @@ export function StartForm() {
     const supabase = getBrowserSupabase();
     if (!supabase) return;
     (async () => {
-      const handoff = readDemoHandoff(params.toString(), categoryIds);
-      const fresh = params.get("novo") === "1" || Boolean(handoff.name || handoff.type);
+      const fresh = params.get("novo") === "1";
       const draftSite = fresh
         ? undefined
         : (await listSites(supabase)).find((site) => site.status === "draft");
@@ -37,11 +35,7 @@ export function StartForm() {
         router.replace(`/criar/${draftSite.id}/${next.slug}`);
         return;
       }
-      const draft: FormDraft =
-        handoff.name || handoff.type
-          ? { business: { name: handoff.name, category: handoff.type } }
-          : {};
-      const siteId = await createSite(supabase, draft);
+      const siteId = await createSite(supabase);
       router.replace(`/criar/${siteId}/negocio`);
     })().catch(() => setFailed(true));
   }, [account.status, params, router]);

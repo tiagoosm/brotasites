@@ -137,7 +137,7 @@ describe("pages and CSP", () => {
     );
     expect(app).not.toContain("unsafe-eval");
     expect(app).toContain("connect-src 'self' https://abc.supabase.co wss://abc.supabase.co");
-    expect(app).toContain("frame-ancestors 'self'");
+    expect(app).toContain("frame-ancestors 'none'");
     expect(app).toContain("object-src 'none'");
     expect(contentSecurityPolicy(null, env)).toContain("script-src 'self' 'unsafe-inline'");
   });
