@@ -227,3 +227,43 @@ test("the home page passes axe", async ({ page }) => {
     result.violations.map((v) => `${v.id} ${v.nodes.map((n) => n.target).join(" | ")}`),
   ).toEqual([]);
 });
+
+test("the decorations never cover the page, with or without a GPU", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(800);
+  // The hero's title is drawn in ink: its pixels are dark, whatever the vine and the light do.
+  const png = (await page.getByRole("heading", { level: 1 }).screenshot()).toString("base64");
+  const darkest = await page.evaluate(async (data) => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${data}`;
+    await image.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("no canvas");
+    context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let min = 255;
+    for (let i = 0; i < pixels.length; i += 4) min = Math.min(min, pixels[i] ?? 255);
+    return min;
+  }, png);
+  expect(darkest).toBeLessThan(80);
+  // Without a GPU the vine draws nothing and leaves no canvas over the page.
+  const vine = page.getByTestId("site-vine");
+  if ((await vine.count()) > 0) {
+    const canvases = await vine.locator("canvas").count();
+    const gpu = await page.evaluate(() => {
+      const gl = document
+        .createElement("canvas")
+        .getContext("webgl2", { failIfMajorPerformanceCaveat: true });
+      const info = gl?.getExtension("WEBGL_debug_renderer_info");
+      const renderer = gl
+        ? String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER))
+        : "";
+      return Boolean(gl) && !/swiftshader|llvmpipe|softpipe|software/i.test(renderer);
+    });
+    if (!gpu) expect(canvases).toBe(0);
+  }
+});

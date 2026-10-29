@@ -606,9 +606,12 @@ html:has([data-wizard]) {
     rgb(205 232 192 / 0.5) 45%,
     transparent 75%
   );
-  transform: translate3d(0, 0, 0);
-  will-change: transform;
   pointer-events: none;
+}
+
+/* Its own layer only while the mouse is over the button (layers cost compositing work). */
+.specular:hover .specular-light {
+  will-change: transform;
 }
 
 .specular-light-wide {
@@ -711,7 +714,6 @@ html:has([data-wizard]) {
     var(--leaf) 115deg,
     transparent 140deg
   );
-  will-change: rotate;
 }
 
 @media (prefers-reduced-motion: no-preference) {

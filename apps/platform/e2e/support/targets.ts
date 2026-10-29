@@ -71,6 +71,23 @@ export async function findSmallTargetsWhileScrolling(page: Page): Promise<SmallT
   for (let y = 0; y <= height; y += step) {
     await page.evaluate((top) => window.scrollTo(0, top), y);
     await page.waitForTimeout(120);
+    // Sizes are checked in the settled layout: entrances (which come back on every scroll,
+    // E18) move elements for a moment. Endless loops (the glow's turn, the leaves' sway) are
+    // not waited for.
+    await page.evaluate(() =>
+      Promise.all(
+        document
+          .getAnimations()
+          .filter(
+            (animation) =>
+              // Time-based and running: not the stem's ink (driven by the scroll), not a loop.
+              animation.timeline === document.timeline &&
+              animation.playState === "running" &&
+              animation.effect?.getComputedTiming().iterations !== Number.POSITIVE_INFINITY,
+          )
+          .map((animation) => animation.finished.catch(() => undefined)),
+      ),
+    );
     for (const target of await findSmallTargets(page)) found.set(target.name, target);
   }
   return [...found.values()];

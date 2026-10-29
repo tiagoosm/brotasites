@@ -229,7 +229,13 @@ export default function VineTrail({
       antialias: false,
     });
     const ctx = leafCanvas.getContext("2d");
-    if (!gl || !ctx) return;
+    if (!gl || !ctx) {
+      // No GPU (or no canvas): no vine at all. A canvas whose context was dropped can show as
+      // a white sheet, so both leave the page instead of sitting over it.
+      canvas.remove();
+      leafCanvas.remove();
+      return;
+    }
     const vertex = compile(gl, gl.VERTEX_SHADER, VERTEX);
     const fragment = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT);
     const program = gl.createProgram();
