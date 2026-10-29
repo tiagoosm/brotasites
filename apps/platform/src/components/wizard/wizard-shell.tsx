@@ -2,14 +2,12 @@
 
 import { type FormStepSlug12, formSteps12 } from "@brotasites/schema/v1.2";
 import { Check, CloudOff, LoaderCircle } from "lucide-react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Brand } from "@/components/brand";
 import { useForm12 } from "@/lib/form-store";
 import { SproutProgress, SproutProgressBar } from "./sprout-progress";
 
-// Herbarium layout. Desktop: steps rail | form on the "table". Phones: the form fills the
-// screen. There is no live preview (decision of 2026-10-27): the client sees the 3 directions
+// Herbarium layout, under the site's one header. Desktop: steps rail | form on the "table".
+// Phones: the form fills the screen. There is no live preview (decision of 2026-10-27): the client sees the 3 directions
 // and the finished site on the dashboard.
 
 export function WizardShell({ children }: { children: React.ReactNode }) {
@@ -18,27 +16,25 @@ export function WizardShell({ children }: { children: React.ReactNode }) {
     "negocio") as FormStepSlug12;
 
   return (
-    <div data-wizard className="grid min-h-dvh bg-table xl:grid-cols-[15rem_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-dvh flex-col gap-12 border-r border-border bg-paper px-7 py-8 xl:flex">
-        <Brand />
+    <div
+      data-wizard
+      className="grid min-h-[calc(100dvh-4rem)] bg-table xl:grid-cols-[15rem_minmax(0,1fr)]"
+    >
+      <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] flex-col gap-12 border-r border-border bg-paper px-7 py-8 xl:flex">
         <SproutProgress current={step} />
         <div className="mt-auto grid gap-4">
-          <AccountArea />
           <SaveStatus />
         </div>
       </aside>
 
       <main className="mx-auto flex w-full max-w-[44rem] min-w-0 flex-col bg-card xl:my-6 xl:rounded-2xl xl:border xl:border-border">
-        <header className="sticky top-0 z-20 grid gap-3 border-b border-border bg-card/95 px-5 pt-4 pb-3 backdrop-blur sm:px-8 xl:hidden">
-          <div className="flex items-center justify-between">
-            <Brand />
-            <div className="flex items-center gap-4">
-              <SaveStatus compact />
-              <AccountArea compact />
-            </div>
+        {/* The form's progress, right under the site's header (E17): no second brand or menu. */}
+        <div className="sticky top-16 z-20 grid gap-3 border-b border-border bg-card/95 px-5 pt-4 pb-3 backdrop-blur sm:px-8 xl:hidden">
+          <div className="flex items-center justify-end">
+            <SaveStatus compact />
           </div>
           <SproutProgressBar current={step} />
-        </header>
+        </div>
         <div key={step} className="step-enter flex flex-1 flex-col px-5 pt-8 sm:px-10 sm:pt-11">
           {children}
         </div>
@@ -72,40 +68,5 @@ function SaveStatus({ className, compact = false }: { className?: string; compac
       />
       {text}
     </p>
-  );
-}
-
-/** Who is signed in, the way to their sites and out. */
-function AccountArea({ compact = false }: { compact?: boolean }) {
-  const { account } = useForm12();
-  return (
-    <div className="grid gap-1 text-[0.8125rem] text-ink-soft">
-      {!compact && <span className="truncate">{account.email}</span>}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/painel"
-          className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
-        >
-          Painel
-        </Link>
-        <Link
-          href="/conta"
-          className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
-        >
-          Perfil e segurança
-        </Link>
-        {!compact && (
-          <form action="/auth/sair" method="post">
-            <input type="hidden" name="voltar" value="/" />
-            <button
-              type="submit"
-              className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
-            >
-              Sair
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
   );
 }

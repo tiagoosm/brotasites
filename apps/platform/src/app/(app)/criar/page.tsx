@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function CreatePage() {
   return (
-    <main className="min-h-dvh bg-paper px-5">
+    <main className="min-h-[calc(100dvh-4rem)] bg-paper px-5">
       <Suspense fallback={<Loading />}>
         <StartForm />
       </Suspense>

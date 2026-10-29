@@ -2,9 +2,7 @@ import { ArrowRight, ExternalLink, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AccountMenu } from "@/components/account/account-menu";
 import { EmailConfirmBanner } from "@/components/account/email-banner";
-import { Brand } from "@/components/brand";
 import { AutoRefresh } from "@/components/dashboard/auto-refresh";
 import { NoticesBell } from "@/components/dashboard/notices";
 import { Notice } from "@/components/shared/page-state";
@@ -49,15 +47,8 @@ export default async function DashboardPage({
     })) ?? [];
 
   return (
-    <div className="min-h-dvh bg-paper">
-      <header className="mx-auto flex w-full max-w-[60rem] flex-wrap items-center justify-between gap-4 px-5 py-6 sm:px-8">
-        <Brand />
-        <AccountMenu
-          current="/painel"
-          extra={data && <NoticesBell notices={notices} unread={data.unread} />}
-        />
-      </header>
-      <main className="mx-auto grid w-full max-w-[60rem] gap-12 px-5 pb-20 sm:px-8">
+    <div className="min-h-[calc(100dvh-4rem)] bg-paper">
+      <main className="mx-auto grid w-full max-w-[60rem] gap-12 px-5 pt-10 pb-20 sm:px-8">
         {!data ? (
           <Notice
             title="Não foi possível abrir agora"
@@ -66,9 +57,13 @@ export default async function DashboardPage({
         ) : (
           <>
             <section aria-labelledby="ola" className="grid gap-2">
-              <h1 id="ola" className="font-display text-[2.5rem] leading-[1.05]">
-                {data.fullName.trim() ? `Olá, ${data.fullName.trim().split(" ")[0]}` : "Olá"}
-              </h1>
+              {/* The notices, beside the greeting (they lived in the old header). */}
+              <div className="flex items-start justify-between gap-4">
+                <h1 id="ola" className="font-display text-[2.5rem] leading-[1.05]">
+                  {data.fullName.trim() ? `Olá, ${data.fullName.trim().split(" ")[0]}` : "Olá"}
+                </h1>
+                <NoticesBell notices={notices} unread={data.unread} />
+              </div>
               <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.9375rem] text-ink-soft">
                 <span className="break-all">{data.email}</span>
                 <Link

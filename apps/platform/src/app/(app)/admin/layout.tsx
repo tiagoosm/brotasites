@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { MfaChallenge } from "@/components/account/mfa";
-import { Brand } from "@/components/brand";
 import { Loading, Notice, unavailable } from "@/components/shared/page-state";
 import { useRequiredAccount } from "@/lib/account";
 import { getBrowserSupabase } from "@/lib/supabase/client";
@@ -12,8 +12,23 @@ import { getBrowserSupabase } from "@/lib/supabase/client";
 // the second step (aal2, E15): the database's is_admin() checks both. Team members without it
 // turn it on or type the code here. The pages read through the admin route handlers, which
 // check the role again on every request.
+// The team's tabs, a second row under the header (E17), only once the person is an admin.
+const teamTabs = [
+  {
+    href: "/admin",
+    label: "Fila de revisão",
+    match: (path: string) => path === "/admin" || path.startsWith("/admin/sites"),
+  },
+  {
+    href: "/admin/catalogo",
+    label: "Catálogo",
+    match: (path: string) => path.startsWith("/admin/catalogo"),
+  },
+];
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const account = useRequiredAccount();
+  const pathname = usePathname();
   const [admin, setAdmin] = useState<boolean | null>(null);
   const [member, setMember] = useState(false);
   const [checks, setChecks] = useState(0);
@@ -35,30 +50,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [account.status, checks]);
 
   return (
-    <div className="min-h-dvh bg-paper">
-      <header className="mx-auto flex w-full max-w-[72rem] flex-wrap items-center justify-between gap-x-4 gap-y-6 px-5 py-6 sm:px-8">
-        <div className="flex items-center gap-3">
-          <Brand href="/admin" />
-          <span className="tag text-stem">Equipe</span>
-        </div>
+    <div className="min-h-[calc(100dvh-4rem)] bg-paper">
+      <main className="mx-auto w-full max-w-[72rem] px-5 pt-6 pb-20 sm:px-8">
         {admin && (
-          <nav aria-label="Painel" className="flex items-center gap-5 text-[0.9375rem]">
-            <Link
-              href="/admin"
-              className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
-            >
-              Fila de revisão
-            </Link>
-            <Link
-              href="/admin/catalogo"
-              className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
-            >
-              Catálogo
-            </Link>
+          <nav
+            aria-label="Área da equipe"
+            className="mb-8 flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line text-[0.9375rem]"
+          >
+            <span className="tag text-stem">Equipe</span>
+            {teamTabs.map((tab) => (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                aria-current={tab.match(pathname) ? "page" : undefined}
+                className="-mb-px inline-flex min-h-11 items-center border-b-2 border-transparent font-semibold text-leaf-deep aria-[current=page]:border-leaf-deep aria-[current=page]:text-ink"
+              >
+                {tab.label}
+              </Link>
+            ))}
           </nav>
         )}
-      </header>
-      <main className="mx-auto w-full max-w-[72rem] px-5 pb-20 sm:px-8">
         {account.status === "unavailable" ? (
           <Notice {...unavailable} />
         ) : account.status !== "signed-in" || admin === null ? (

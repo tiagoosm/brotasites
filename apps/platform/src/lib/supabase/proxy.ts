@@ -32,6 +32,8 @@ export async function updateSession(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("content-security-policy", csp);
   if (nonce) requestHeaders.set("x-nonce", nonce);
+  // The signed-in area's layout picks the footer of focus screens (sign in, sign up) by path.
+  requestHeaders.set("x-pathname", path);
 
   let response = NextResponse.next({ request: { headers: requestHeaders } });
   const pending: { name: string; value: string; options: Record<string, unknown> }[] = [];

@@ -316,6 +316,11 @@ html:has([data-wizard]) {
     animation-delay: 280ms;
   }
 
+  /* The profile menu (profile-menu.tsx) drops in quickly; nothing moves for reduced motion. */
+  .profile-menu:not([hidden]) {
+    animation: menu-drop 140ms var(--ease-out) both;
+  }
+
   @supports (animation-timeline: view()) {
     .stem {
       view-timeline: --stem-line block;
@@ -585,5 +590,12 @@ html:has([data-wizard]) {
 @keyframes menu-in {
   from {
     opacity: 0;
+  }
+}
+
+@keyframes menu-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
   }
 }
