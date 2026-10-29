@@ -23,11 +23,12 @@ export const headerLinks: readonly NavLink[] = [
   { href: "/ajuda", label: "Ajuda" },
 ];
 
-/** Signed out: sign in and create the account. */
-export const guestLinks: readonly NavLink[] = [
-  { href: "/entrar", label: "Entrar", account: true },
-  { href: "/cadastro", label: "Criar conta", account: true },
-];
+/** Signed out: one way in, to sign in or sign up ("/entrar" links to "/cadastro"). */
+export const signInLink: NavLink = {
+  href: "/entrar",
+  label: "Entrar ou cadastre-se",
+  account: true,
+};
 
 /** The profile menu ("Sair" is a form, after these). */
 export const memberLinks: readonly NavLink[] = [

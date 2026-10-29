@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
-import { footerLinks, guestLinks, memberLinks } from "./nav";
+import { footerLinks, memberLinks, signInLink } from "./nav";
 
 /**
  * The one footer of every page (E17). `compact` is the quiet single line of the focus screens
@@ -13,7 +13,7 @@ export function SiteFooter({
   signedIn: boolean;
   compact?: boolean;
 }) {
-  const links = [...footerLinks, signedIn ? memberLinks[0] : guestLinks[0]].filter(
+  const links = [...footerLinks, signedIn ? memberLinks[0] : signInLink].filter(
     (link) => link !== undefined,
   );
   const list = (

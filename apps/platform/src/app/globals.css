@@ -424,80 +424,86 @@ html:has([data-wizard]) {
   }
 }
 
-/* ---------- Specular finish on the hero's main button (specular-link.tsx) ----------
-   A cream highlight on the rim, centered on the cursor, over the solid green button. Inside,
+/* ---------- Specular finish on every "Criar meu site" button (create-site-button.tsx) ----------
+   A cream highlight on the rim, centred on the cursor, over the solid green button. Inside,
    only a sheen kept at 4%: white text on leaf is 5.25:1, and anything brighter under the
-   text would take it below 4.5:1. At rest (touch, reduced motion, no JavaScript) the light
-   sits still on the top-left of the rim. */
-
-@property --spec-x {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 16%;
-}
-
-@property --spec-y {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 0%;
-}
+   text would take it below 4.5:1. The light is its own layer, moved with transform only, inside
+   two still frames: the rim (a 2px ring, masked once) and the sheen. Nothing on the button
+   repaints while the light moves. At rest (touch, reduced motion, no JavaScript) it sits on
+   the top-left of the rim. */
 
 .specular {
   position: relative;
   isolation: isolate;
+  overflow: hidden;
 }
 
-.specular::before,
-.specular::after {
-  content: "";
+.specular-rim,
+.specular-sheen {
   position: absolute;
   inset: 0;
   z-index: -1;
   border-radius: inherit;
   pointer-events: none;
+  overflow: hidden;
 }
 
-.specular::before {
+.specular-rim {
   padding: 2px;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: var(--rim-rest, 0.75);
+  transition: opacity var(--motion-micro) var(--ease-out);
+}
+
+.specular:hover .specular-rim {
+  opacity: var(--rim-hover, 1);
+}
+
+/* A circle centred on the rest point (16% from the left, on the top edge); the script
+   translates it to the cursor. */
+.specular-light {
+  position: absolute;
+  top: 0;
+  left: 16%;
+  width: 9rem;
+  height: 9rem;
+  margin: -4.5rem 0 0 -4.5rem;
+  border-radius: 50%;
   background: radial-gradient(
-    4.5rem circle at var(--spec-x) var(--spec-y),
+    closest-side,
     rgb(250 244 222 / 0.95),
     rgb(205 232 192 / 0.5) 45%,
     transparent 75%
   );
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
-  opacity: 0.75;
-  transition: opacity var(--motion-micro) var(--ease-out);
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  pointer-events: none;
 }
 
-.specular::after {
-  background: radial-gradient(
-    8rem circle at var(--spec-x) var(--spec-y),
-    rgb(250 244 222 / 0.04),
-    transparent 70%
-  );
+.specular-light-wide {
+  width: 16rem;
+  height: 16rem;
+  margin: -8rem 0 0 -8rem;
+  background: radial-gradient(closest-side, rgb(250 244 222 / 0.04), transparent 70%);
 }
 
-.specular:hover::before {
-  opacity: 1;
+/* The header's button: the same light, quieter. */
+.specular-nav {
+  --rim-rest: 0.55;
+  --rim-hover: 0.85;
+}
+
+.specular-nav .specular-light {
+  width: 6rem;
+  height: 6rem;
+  margin: -3rem 0 0 -3rem;
 }
 
 .specular:focus-visible {
   outline: 2px solid var(--leaf-deep);
   outline-offset: 3px;
-}
-
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .specular {
-    transition:
-      transform 150ms ease-out,
-      background-color 150ms ease-out,
-      box-shadow 150ms ease-out,
-      --spec-x var(--motion-micro) var(--ease-out),
-      --spec-y var(--motion-micro) var(--ease-out);
-  }
 }
 
 /* ---------- Border glow on the price card (glow-card.tsx) ----------

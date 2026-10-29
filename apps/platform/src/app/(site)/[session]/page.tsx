@@ -1,14 +1,11 @@
-import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CreateSiteButton } from "@/components/site/create-site-button";
 import { FaqAccordion } from "@/components/site/faq-accordion";
 import { HeroRays } from "@/components/site/home/hero-rays";
 import { PriceSection } from "@/components/site/home/price-section";
-import { SpecularLink } from "@/components/site/home/specular-link";
-import { CREATE_HREF } from "@/components/site/nav";
 import { SplitWords } from "@/components/site/split-words";
 import { Stem } from "@/components/site/stem/stem";
-import { Button } from "@/components/ui/button";
 import { mainFaqs } from "@/content/faq";
 import { PLATFORM_URL } from "@/lib/site-url";
 
@@ -59,20 +56,6 @@ const heroFacts = [
   { title: "Você aprova", text: "Criar é grátis; paga só para publicar." },
 ];
 
-function CreateButton() {
-  return (
-    <Button asChild size="lg" className="group">
-      <Link href={CREATE_HREF} prefetch={false}>
-        Criar meu site
-        <ArrowRight
-          aria-hidden="true"
-          className="transition-transform duration-200 group-hover:translate-x-0.5"
-        />
-      </Link>
-    </Button>
-  );
-}
-
 export default function HomePage() {
   return (
     <>
@@ -93,13 +76,7 @@ export default function HomePage() {
               você só aprova. Sem código.
             </p>
             <div className="flex flex-wrap items-center gap-x-7 gap-y-4">
-              <SpecularLink href={CREATE_HREF} prefetch={false}>
-                Criar meu site
-                <ArrowRight
-                  aria-hidden="true"
-                  className="transition-transform duration-200 group-hover:translate-x-0.5"
-                />
-              </SpecularLink>
+              <CreateSiteButton />
               <Link
                 href="#como-funciona"
                 className="touch-target text-[0.9375rem] text-ink-soft underline underline-offset-4 hover:text-ink"
@@ -142,7 +119,7 @@ export default function HomePage() {
           </header>
           <Stem />
           <div data-reveal="" className="mt-16 pl-14 sm:mt-20 sm:pl-20">
-            <CreateButton />
+            <CreateSiteButton />
           </div>
         </div>
       </section>
@@ -219,7 +196,7 @@ export default function HomePage() {
           <p className="max-w-[40ch] text-[1.0625rem] text-ink-soft">
             Comece agora. Criar e ver o site pronto é grátis; você só paga para colocar no ar.
           </p>
-          <CreateButton />
+          <CreateSiteButton />
         </div>
       </section>
     </>
