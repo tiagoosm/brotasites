@@ -8,6 +8,8 @@
 // It only animates while the cursor moves and stops on its own once the vine settles.
 
 import { useEffect, useRef } from "react";
+import { FEATHER, onScreen, type Rect, vineAlpha } from "@/lib/motion/vine";
+import { type Avoid, watchContent } from "./vine-avoid";
 import { acceleratedWebgl2 } from "./webgl";
 
 const POINTS = 50;
@@ -21,8 +23,10 @@ in vec2 a_position;
 in vec4 a_shape;
 uniform vec2 u_resolution;
 out vec4 v_shape;
+out vec2 v_pos;
 void main() {
   v_shape = a_shape;
+  v_pos = a_position;
   vec2 clip = a_position / u_resolution * 2.0 - 1.0;
   gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
 }
@@ -34,8 +38,25 @@ uniform vec3 u_color;
 uniform float u_opacity;
 uniform float u_fade;
 uniform float u_softness;
+uniform vec4 u_rects[64];
+uniform int u_rectCount;
+uniform float u_feather;
 in vec4 v_shape;
+in vec2 v_pos;
 out vec4 outColor;
+
+// 0 over the page's content (text, buttons, cards...), 1 away from it, soft over u_feather px.
+float freeSpace(vec2 p) {
+  float visible = 1.0;
+  for (int i = 0; i < 64; i++) {
+    if (i >= u_rectCount) break;
+    vec4 r = u_rects[i];
+    vec2 d = max(vec2(r.x - p.x, r.y - p.y), vec2(p.x - r.z, p.y - r.w));
+    float dist = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
+    visible = min(visible, smoothstep(0.0, u_feather, dist));
+  }
+  return visible;
+}
 
 void main() {
   float halfWidth = v_shape.y;
@@ -46,6 +67,7 @@ void main() {
   alpha *= clamp(halfWidth / 0.5, 0.0, 1.0);
   alpha *= mix(1.0, 1.0 - smoothstep(0.0, 1.0, v_shape.w), u_fade);
   alpha *= u_opacity;
+  alpha *= freeSpace(v_pos);
   if (alpha <= 0.002) discard;
   outColor = vec4(u_color * alpha, alpha);
 }
@@ -459,6 +481,14 @@ export default function VineTrail({
       return SAMPLES * 2;
     };
 
+    let avoid: Avoid = { page: [], fixed: [] };
+    let rects: Rect[] = [];
+    const rectData = new Float32Array(64 * 4);
+    const stopWatching = watchContent((next) => {
+      avoid = next;
+      wake();
+    });
+
     const drawLeaves = () => {
       const s = settingsRef.current;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -468,7 +498,8 @@ export default function VineTrail({
         const age = (state.time - leaf.born) / s.leafLife;
         // Unfurl quickly, rest, then fade.
         const grow = 1 - (1 - smoothstep(0, 0.25, age)) ** 3;
-        const alpha = (1 - smoothstep(0.45, 1, age)) * s.opacity * 1.4;
+        const alpha =
+          (1 - smoothstep(0.45, 1, age)) * s.opacity * 1.4 * vineAlpha(leaf.x, leaf.y, rects);
         if (alpha <= 0.01) continue;
         ctx.setTransform(state.ratio, 0, 0, state.ratio, 0, 0);
         ctx.translate(leaf.x, leaf.y);
@@ -511,6 +542,13 @@ export default function VineTrail({
       gl.uniform1f(uniforms.u_opacity ?? null, s.opacity);
       gl.uniform1f(uniforms.u_fade ?? null, 1);
       gl.uniform1f(uniforms.u_softness ?? null, 0.2);
+      // The content on screen now: the page's boxes shifted by the scroll (no layout read).
+      rects = onScreen(avoid.page, avoid.fixed, window.scrollY, state.height);
+      rectData.fill(0);
+      for (const [i, rect] of rects.entries()) rectData.set(rect, i * 4);
+      gl.uniform4fv(uniforms["u_rects[0]"] ?? uniforms.u_rects ?? null, rectData);
+      gl.uniform1i(uniforms.u_rectCount ?? null, rects.length);
+      gl.uniform1f(uniforms.u_feather ?? null, FEATHER);
       for (let i = 0; i < count; i++) {
         const [first, size] = ranges[i] as [number, number];
         if (!size) continue;
@@ -556,10 +594,10 @@ export default function VineTrail({
 
     const onMove = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
-      const rect = container.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
+      // The vine covers the whole window (fixed, inset 0): no box to read on each move.
+      const x = event.clientX;
+      const y = event.clientY;
+      if (x < 0 || y < 0 || x > state.width || y > state.height) return;
       if (!state.placed) {
         // Start the vine where the cursor first appears, not in the middle of the page.
         for (const ribbon of state.ribbons) {
@@ -603,9 +641,26 @@ export default function VineTrail({
     resize();
     syncRibbons();
 
+    // A hidden tab stops drawing; back on it, the vine picks up where it was.
+    const onVisibility = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(state.raf);
+        state.raf = 0;
+        state.last = 0;
+      } else {
+        wake();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    // Scrolling moves the content under the vine: one redraw keeps it off the content.
+    window.addEventListener("scroll", wake, { passive: true });
+
     return () => {
       state.alive = false;
       cancelAnimationFrame(state.raf);
+      stopWatching();
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("scroll", wake);
       resizeObserver.disconnect();
       visibility.disconnect();
       canvas.removeEventListener("webglcontextlost", onLost);
