@@ -69,6 +69,14 @@ In this order. Nothing here was done by Claude Code; values marked "to verify" w
 
 Since 2026-10-27 the owner does not approve each task. Choices the plan reserved for the owner are taken with the recommended option and listed here; any of them can be reversed.
 
+- **E17, one header and the profile menu:**
+  - **Name and team on the public pages** (owner's choice, 2026-10-29): the prerendered public pages only know that someone is signed in, so their profile button shows the person icon and the menu reads the name, the email and "Área da equipe" from `/api/account/me` when it first opens (the four account items show at once). The signed-in pages render the initials and the full menu from the server.
+  - The menu is built in the project (no new library): the ARIA menu-button pattern, items of 44px, Escape and Tab close it, a click outside too.
+  - Signed out, the home page's header shows "Entrar" but not "Criar meu site" (its hero has the button, as before); every other page shows both. Signed in, "Criar site" shows on every page, next to the profile button.
+  - The dashboard's notices bell moved from the old header to the greeting; the team area's links became tabs under the header; the form shows its progress under the header, without a second brand or account menu.
+  - Footer: the full one everywhere, a single line on the sign-in, sign-up and password screens.
+  - **Fixed on the way**: since E16 the home page logged a React hydration error (#418): the header compared the prerendered internal address ("/visitante") with the visible one ("/") and rendered differently. The header now reads the visible address.
+  - Lighthouse of the home page, this container, phone / desktop (performance / accessibility / best practices / SEO): before (main, E16) 62 / 100 / 92 / 100 and 100 / 100 / 92 / 100 (phone LCP 4.2 s, TBT 1,190 ms; the 92 was the hydration error); after 93 / 100 / 100 / 100 and 100 / 100 / 100 / 100 (phone LCP 3.0 s, TBT 150 ms).
 - **E16, account dashboard:**
   - **Public pages, two prerendered versions** (owner's choice, 2026-10-29): `/`, `/ajuda`, `/termos` and `/privacidade` are built twice (`/visitante/...` and `/logado/...`, `src/lib/public-variant.ts`); the proxy, which already reads the session, serves the right one under the page's own address and answers 404 to the internal addresses. The pages stay static and the menu never flickers.
   - **`Vary: Cookie`**: Next.js writes its own `Vary` on every rendered page and replaces ours; it is kept on redirects and API answers. The pages that differ per session are still never stored by a shared cache: the dashboard and the account pages send `Cache-Control: private, no-store`, the public pages `private, no-cache`. To verify after the first deploy: that Vercel keeps `private` on the public pages (if it changes it to `public, max-age=0, must-revalidate`, caches still revalidate every time, so no one gets another person's menu).

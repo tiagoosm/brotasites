@@ -22,6 +22,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E14 "Experimente aqui" demo on the home page: removed (owner decision 2026-10-29)
 - [x] E15 Accounts: sign-up with password and email confirmation, sign-in, account page, security
 - [x] E16 Account dashboard: home after signing in, pending actions, site status, in-site notices
+- [x] E17 One header everywhere, the profile menu, and a home page without the demo
 
 ## Steps in detail
 
@@ -91,6 +92,10 @@ Sign-up with name, email, password and the accepted terms, with email confirmati
 ### E16 Account dashboard
 
 Signing in, signing up and confirming the email lead to `/painel` (unless a safe page was asked for with `voltar`), and signed-in people who open `/entrar` or `/cadastro` go there too. The dashboard, rendered on the server with the person's session, replaces the list at `/meus-sites` (now a 308 to `/painel`; each site's pages keep their addresses): a greeting, what needs the person (email to confirm, a direction to choose, a site to approve, a site that needs attention, a draft to continue, an incomplete profile), one card per site (status, milestones, the right button, and once published the address, hosting included until and days of changes left, from `pricing.ts`) and the in-site notices (`public.notifications`, made by database triggers on the status changes; the sentence comes from the kind, no stored text). The account menu is Painel, Criar site, Perfil e segurança, Sair. The public pages are prerendered twice, for visitors and for signed-in people, and the proxy serves the right one under the same address, so the menu never flickers. No help or contact screen, no notification emails; renewal, custom domain, charges and receipts come later.
+
+### E17 One header, the profile menu, a cleaner home page
+
+The same header and footer on every page (public pages, sign-in and password screens, the dashboard, the account, each site's page, the form, payment and the team area), with the same four links in the middle (Como funciona, Preço, Dúvidas, Ajuda). Signed out: "Entrar" and "Criar meu site". Signed in: "Criar site" and a round profile button (initials, or a person icon) whose menu holds the name and email, Painel, Criar site, Perfil e segurança, Área da equipe (team only, decided on the server) and Sair (a POST form). The menu follows the ARIA menu-button pattern (keyboard, Escape, Tab, click outside). On phones: the brand, the profile button and the full-screen sheet with the links and the account block. Signed-in pages read the session on the server for the header; the prerendered public pages keep their two variants and ask `/api/account/me` for the name and team only when the menu opens. The form keeps its progress under the header (no second brand or account menu); the team area's "Fila de revisão" and "Catálogo" are tabs inside the page. The home page loses the "Experimente aqui" demo, the "Veja um site de verdade" frame and the `/exemplo` page (owner decision of 2026-10-29); the hero fills the space with the title, the text, the buttons and three short facts.
 
 ### E14 Home demo (optional)
 
