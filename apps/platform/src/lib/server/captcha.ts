@@ -4,9 +4,12 @@
 // only carries the token and refuses to run in production without a real site key.
 //
 //   NEXT_PUBLIC_TURNSTILE_SITE_KEY  the widget's site key (the secret goes in Supabase only)
-//   NEXT_PUBLIC_CAPTCHA_MODE        "simulated" in development and tests, never in production
+//   NEXT_PUBLIC_CAPTCHA_MODE        "simulated" in development and tests, never in production;
+//                                   "off" only while the owner tests the deployed platform
+//                                   without Turnstile (docs/owner-steps.md, Testing before
+//                                   launch). Remove it before launch.
 
-export type CaptchaMode = "turnstile" | "simulated" | "misconfigured";
+export type CaptchaMode = "turnstile" | "simulated" | "off" | "misconfigured";
 
 /** Production on Vercel. */
 export function isProduction(env: Record<string, string | undefined> = process.env): boolean {
@@ -15,6 +18,7 @@ export function isProduction(env: Record<string, string | undefined> = process.e
 
 export function captchaMode(env: Record<string, string | undefined> = process.env): CaptchaMode {
   const siteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  if (env.NEXT_PUBLIC_CAPTCHA_MODE === "off") return "off";
   if (siteKey && env.NEXT_PUBLIC_CAPTCHA_MODE !== "simulated") return "turnstile";
   if (isProduction(env)) return "misconfigured";
   return env.NEXT_PUBLIC_CAPTCHA_MODE === "simulated" || !siteKey ? "simulated" : "turnstile";
@@ -27,7 +31,7 @@ export function captchaTokenFor(
 ): { token?: string } | null {
   const mode = captchaMode(env);
   if (mode === "misconfigured") return null;
-  if (mode === "simulated") return {};
+  if (mode === "simulated" || mode === "off") return {};
   return token ? { token } : null;
 }
 
