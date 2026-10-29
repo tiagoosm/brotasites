@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { AuthShell } from "@/components/account/auth-shell";
 import { SignInForm } from "./sign-in-form";
 
 export const metadata: Metadata = {
   title: "Entrar",
-  description: "Entre com um link no seu e-mail para criar e acompanhar os seus sites.",
+  description: "Entre na sua conta para criar e acompanhar os seus sites.",
+  robots: { index: false },
 };
 
 export default function SignInPage() {
   return (
-    <main className="grid min-h-dvh place-items-center bg-paper px-5 py-12">
+    <AuthShell>
       <Suspense>
         <SignInForm />
       </Suspense>
-    </main>
+    </AuthShell>
   );
 }

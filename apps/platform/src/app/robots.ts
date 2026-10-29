@@ -7,7 +7,19 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/criar", "/entrar", "/meu-site", "/meus-sites", "/admin", "/auth", "/api"],
+      disallow: [
+        "/criar",
+        "/entrar",
+        "/cadastro",
+        "/esqueci-senha",
+        "/redefinir-senha",
+        "/conta",
+        "/meu-site",
+        "/meus-sites",
+        "/admin",
+        "/auth",
+        "/api",
+      ],
     },
     sitemap: `${PLATFORM_URL}/sitemap.xml`,
   };

@@ -5,12 +5,14 @@ import { useEffect, useState } from "react";
 import { getBrowserSupabase } from "./supabase/client";
 
 // Pages that need an account (the form and "Meus sites") check the session in the browser and
-// send people to sign in, coming back to the same page afterwards.
+// send people to sign in, coming back to the same page afterwards. This is for the interface
+// only: the proxy (src/proxy.ts) already turned away requests without a session, and the routes
+// and database functions check again.
 
 export type AccountState =
   | { status: "checking" }
   | { status: "unavailable" }
-  | { status: "signed-in"; userId: string; email?: string };
+  | { status: "signed-in"; userId: string; email?: string; emailConfirmed: boolean };
 
 export function useRequiredAccount(): AccountState {
   const router = useRouter();
@@ -31,7 +33,12 @@ export function useRequiredAccount(): AccountState {
         router.replace(`/entrar?voltar=${encodeURIComponent(back)}`);
         return;
       }
-      setState({ status: "signed-in", userId: data.user.id, email: data.user.email });
+      setState({
+        status: "signed-in",
+        userId: data.user.id,
+        email: data.user.email,
+        emailConfirmed: Boolean(data.user.email_confirmed_at),
+      });
     });
     return () => {
       cancelled = true;

@@ -58,7 +58,9 @@ export async function updateSession(request: NextRequest) {
 
   if (isProtectedPath(path) && !signedIn) {
     const back = `${path}${request.nextUrl.search}`;
-    const target = new URL(`/entrar?voltar=${encodeURIComponent(back)}`, request.url);
+    // "Criar meu site" leads new people to create the account; the rest to sign in.
+    const page = path === "/criar" ? "/cadastro" : "/entrar";
+    const target = new URL(`${page}?voltar=${encodeURIComponent(back)}`, request.url);
     response = NextResponse.redirect(target, { status: 307 });
     for (const cookie of pending) response.cookies.set(cookie.name, cookie.value, cookie.options);
   }

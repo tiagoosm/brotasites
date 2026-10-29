@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { EmailConfirmBanner } from "@/components/account/email-banner";
 import { Brand } from "@/components/brand";
 import { Loading, Notice, unavailable } from "@/components/shared/page-state";
 import { useRequiredAccount } from "@/lib/account";
@@ -20,6 +21,12 @@ export default function MySitesLayout({ children }: { children: React.ReactNode 
             >
               Meus sites
             </Link>
+            <Link
+              href="/conta"
+              className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
+            >
+              Conta
+            </Link>
             <form action="/auth/sair" method="post">
               <input type="hidden" name="voltar" value="/" />
               <button
@@ -36,7 +43,10 @@ export default function MySitesLayout({ children }: { children: React.ReactNode 
         {account.status === "unavailable" ? (
           <Notice {...unavailable} />
         ) : account.status === "signed-in" ? (
-          children
+          <>
+            <EmailConfirmBanner account={account} />
+            {children}
+          </>
         ) : (
           <Loading />
         )}

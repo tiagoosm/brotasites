@@ -2,152 +2,162 @@
 
 import { ArrowRight, MailCheck } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useId, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { postJson } from "@/components/account/api";
+import { Captcha } from "@/components/account/captcha";
+import { Field, FormError } from "@/components/account/field";
+import { PasswordField } from "@/components/account/password-field";
+import { ResendConfirmation } from "@/components/account/resend-confirmation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { getBrowserSupabase } from "@/lib/supabase/client";
 import { safeNextPath } from "@/lib/supabase/env";
 
-type Status = "idle" | "sending" | "sent";
-
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-function errorMessage(status: number | undefined, code: string | undefined): string {
-  if (status === 429 || code === "over_email_send_rate_limit") {
-    return "Muitos pedidos seguidos. Espere um minuto e tente de novo.";
-  }
-  return "Não foi possível enviar o link agora. Tente de novo em instantes.";
-}
+type Mode = "password" | "link" | "link-sent";
 
 export function SignInForm() {
+  const router = useRouter();
   const params = useSearchParams();
   const next = safeNextPath(params.get("voltar"));
-  const linkFailed = params.get("erro") === "link";
-  const supabase = getBrowserSupabase();
-  const inputId = useId();
-  const errorId = useId();
+  const back = params.get("voltar") ? `?voltar=${encodeURIComponent(next)}` : "";
 
+  const [mode, setMode] = useState<Mode>("password");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
+  const [password, setPassword] = useState("");
+  const [captcha, setCaptcha] = useState<string>();
+  const [attempt, setAttempt] = useState(0);
+  const [sending, setSending] = useState(false);
+  const [fields, setFields] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(
-    linkFailed ? "Esse link expirou ou já foi usado. Peça um novo abaixo." : null,
+    params.get("erro") === "link"
+      ? "Esse link expirou ou já foi usado. Entre de novo abaixo."
+      : null,
   );
+  const [unconfirmed, setUnconfirmed] = useState(false);
 
-  async function send(event: React.FormEvent) {
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const value = email.trim();
-    if (!EMAIL.test(value)) {
-      setError("Escreva um e-mail válido, como voce@exemplo.com.");
-      return;
-    }
-    if (!supabase) return;
-    setStatus("sending");
+    setSending(true);
     setError(null);
-    const { error: sendError } = await supabase.auth.signInWithOtp({
-      email: value,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}`,
-      },
-    });
-    if (sendError) {
-      setStatus("idle");
-      setError(errorMessage(sendError.status, sendError.code));
+    setFields({});
+    setUnconfirmed(false);
+    const result =
+      mode === "password"
+        ? await postJson<{ next?: string }>("/api/auth/sign-in", {
+            email,
+            password,
+            captchaToken: captcha,
+            next,
+          })
+        : await postJson("/api/auth/link", { email, captchaToken: captcha, next });
+    setSending(false);
+    setAttempt((count) => count + 1);
+    if (result.ok) {
+      if (mode === "link") {
+        setMode("link-sent");
+        return;
+      }
+      router.replace(safeNextPath((result.data as { next?: string }).next, next));
+      router.refresh();
       return;
     }
-    setStatus("sent");
+    setFields(result.data.fields ?? {});
+    setError(result.data.error ?? "Não foi possível entrar agora. Tente de novo em instantes.");
+    setUnconfirmed(Boolean((result.data as { unconfirmed?: boolean }).unconfirmed));
+  }
+
+  if (mode === "link-sent") {
+    return (
+      <section aria-live="polite" className="grid gap-4">
+        <MailCheck aria-hidden="true" className="size-9 text-leaf" strokeWidth={1.6} />
+        <h1 className="font-display text-[2.5rem] leading-[1.05]">Confira o seu e-mail</h1>
+        <p className="text-[1.0625rem] text-ink-soft">
+          Se houver uma conta com <strong className="font-semibold text-ink">{email.trim()}</strong>
+          , enviamos um link de acesso. Abra o e-mail e toque no link para continuar.
+        </p>
+        <Button
+          type="button"
+          variant="ghost"
+          className="mt-2 justify-self-start px-0 text-leaf-deep hover:bg-transparent hover:underline"
+          onClick={() => setMode("link")}
+        >
+          Usar outro e-mail
+        </Button>
+      </section>
+    );
   }
 
   return (
-    <div className="step-enter w-full max-w-[26rem]">
-      <div>
-        <Link
-          href="/"
-          className="mb-14 inline-flex items-center gap-2.5 font-display text-[1.375rem] leading-none"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6 text-leaf">
-            <path d="M12 22V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            <path d="M12 13C12 8 8.5 5 3 5c0 5.5 3.5 8 9 8Z" fill="currentColor" />
-            <path d="M12 11c0-4.5 3-7.5 9-7.5 0 5-3 7.5-9 7.5Z" fill="currentColor" opacity=".65" />
-          </svg>
-          BrotaSites
-        </Link>
-      </div>
+    <form onSubmit={submit} noValidate className="grid gap-6">
+      <header className="grid gap-3">
+        <h1 className="font-display text-[2.5rem] leading-[1.05]">Entre na sua conta</h1>
+        <p className="text-[1.0625rem] text-ink-soft">
+          {mode === "password"
+            ? "Suas respostas e os seus sites ficam guardados na sua conta."
+            : "Mandamos um link de acesso para o seu e-mail. Toque nele para entrar."}
+        </p>
+      </header>
 
-      {status === "sent" ? (
-        <section aria-live="polite" className="grid gap-4">
-          <MailCheck aria-hidden="true" className="size-9 text-leaf" strokeWidth={1.6} />
-          <h1 className="font-display text-[2.5rem] leading-[1.05]">Confira o seu e-mail</h1>
-          <p className="text-[1.0625rem] text-ink-soft">
-            Enviamos um link para <strong className="font-semibold text-ink">{email.trim()}</strong>
-            . Abra o e-mail e toque no link para continuar de onde parou.
-          </p>
-          <Button
-            type="button"
-            variant="ghost"
-            className="mt-2 justify-self-start px-0 text-leaf-deep hover:bg-transparent hover:underline"
-            onClick={() => setStatus("idle")}
-          >
-            Usar outro e-mail
-          </Button>
-        </section>
-      ) : (
-        <form onSubmit={send} noValidate className="grid gap-6">
-          <header className="grid gap-3">
-            <h1 className="font-display text-[2.5rem] leading-[1.05]">
-              Entre para criar o seu site
-            </h1>
-            <p className="text-[1.0625rem] text-ink-soft">
-              Mandamos um link de acesso para o seu e-mail. Sem senha para lembrar. Suas respostas e
-              os seus sites ficam guardados na sua conta.
-            </p>
-          </header>
+      <FormError message={error} />
+      {unconfirmed && <ResendConfirmation email={email} next={next} />}
 
-          {supabase ? (
-            <>
-              <div className="grid gap-2">
-                <label htmlFor={inputId} className="text-[0.9375rem] font-semibold">
-                  Seu e-mail
-                </label>
-                <Input
-                  id={inputId}
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  placeholder="voce@exemplo.com"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? errorId : undefined}
-                />
-                {error && (
-                  <p id={errorId} role="alert" className="text-sm text-destructive">
-                    {error}
-                  </p>
-                )}
-              </div>
-              <Button type="submit" size="lg" disabled={status === "sending"} className="group">
-                {status === "sending" ? "Enviando…" : "Enviar link de acesso"}
-                <ArrowRight
-                  aria-hidden="true"
-                  className="transition-transform duration-200 group-hover:translate-x-0.5"
-                />
-              </Button>
-            </>
-          ) : (
-            <p className="rounded-lg border border-dashed border-border p-4 text-ink-soft">
-              O acesso por e-mail ainda não está disponível. Tente de novo mais tarde.
-            </p>
-          )}
-
-          <Link
-            href="/"
-            className="justify-self-start text-[0.9375rem] text-ink-soft underline-offset-4 hover:text-ink hover:underline"
-          >
-            Voltar para o início
-          </Link>
-        </form>
+      <Field
+        label="E-mail"
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        placeholder="voce@exemplo.com"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        error={fields.email}
+      />
+      {mode === "password" && (
+        <PasswordField
+          label="Senha"
+          autoComplete="current-password"
+          value={password}
+          onChange={setPassword}
+          error={fields.password}
+        />
       )}
-    </div>
+      <Captcha onToken={setCaptcha} resetKey={attempt} />
+      {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
+
+      <Button type="submit" size="lg" disabled={sending} className="group">
+        {sending ? "Enviando…" : mode === "password" ? "Entrar" : "Enviar link de acesso"}
+        <ArrowRight
+          aria-hidden="true"
+          className="transition-transform duration-200 group-hover:translate-x-0.5"
+        />
+      </Button>
+
+      <div className="grid gap-1 text-[0.9375rem]">
+        <button
+          type="button"
+          onClick={() => {
+            setMode(mode === "password" ? "link" : "password");
+            setError(null);
+            setFields({});
+          }}
+          className="touch-target justify-self-start font-semibold text-leaf-deep underline-offset-4 hover:underline"
+        >
+          {mode === "password" ? "Entrar com um link no e-mail" : "Entrar com a senha"}
+        </button>
+        <Link
+          href={`/esqueci-senha${back}`}
+          className="touch-target justify-self-start text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+        >
+          Esqueci a senha
+        </Link>
+        <p className="text-ink-soft">
+          Ainda não tem conta?{" "}
+          <Link
+            href={`/cadastro${back}`}
+            className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
+          >
+            Criar conta
+          </Link>
+        </p>
+      </div>
+    </form>
   );
 }

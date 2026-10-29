@@ -150,6 +150,8 @@ const rpcErrors: Record<string, string> = {
   rate_limited: "Você chegou ao limite de pedidos de hoje. Tente de novo amanhã.",
   direction_not_found: "Essa direção não está mais disponível. Atualize a página.",
   needs_v12: "Este site foi criado na versão antiga. Crie um novo site.",
+  email_not_confirmed:
+    "Confirme o seu e-mail para ver as 3 direções. Toque no link que enviamos quando você criou a conta.",
 };
 
 export class SiteActionError extends Error {}

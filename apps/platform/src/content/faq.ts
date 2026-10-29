@@ -45,7 +45,7 @@ export const faqGroups: FaqGroup[] = [
         slug: "preciso-de-conta",
         question: "Preciso criar uma conta?",
         answer:
-          "Sim, mas é rápido: você entra com o seu e-mail antes da primeira pergunta. Mandamos um link de acesso, sem senha. Assim as respostas, as fotos e os seus sites ficam guardados na sua conta.",
+          "Sim, mas é rápido: antes da primeira pergunta você cria a conta com nome, e-mail e senha, e confirma o e-mail pelo link que enviamos. Depois, pode entrar com a senha ou com um link no e-mail. Assim as respostas, as fotos e os seus sites ficam guardados na sua conta.",
       },
     ],
   },
@@ -95,7 +95,7 @@ export const faqGroups: FaqGroup[] = [
         slug: "apagar-conta",
         question: "Como apago a minha conta?",
         answer:
-          "Ainda não há um botão para isso. Por enquanto, a exclusão da conta e dos seus dados é feita a pedido, pelo contato que aparece no fim desta página.",
+          "Na página Conta, em Excluir minha conta. Por segurança, pedimos que você entre de novo e escreva o seu e-mail para confirmar. A conta, os sites, os rascunhos e as fotos são apagados e os sites publicados saem do ar. Antes, se quiser, baixe uma cópia dos seus dados na mesma página.",
       },
     ],
   },
