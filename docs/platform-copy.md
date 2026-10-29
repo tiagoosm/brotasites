@@ -34,7 +34,7 @@ Built on 2026-10-24 (design: [superpowers/specs/2026-10-24-main-site-design.md](
 - **Main button:** three on the home page: *Continuar com este site* in the hero demo, *Criar meu site* after the seven questions and in the final call.
 - **Example page (/exemplo):** the Padaria do Zé example built by the real generator, under a slim bar: *Voltar* · *Site de exemplo: a Padaria do Zé é fictícia, mas o site foi feito pelo BrotaSites.* · *Criar o meu*.
 - **Hero:** *Sete perguntas e seu site pronto.* / *Conte o que você faz e escolha uma de 3 direções para o visual. A gente monta o site e você só aprova. Sem código.* / **Ver um site de exemplo** (to /exemplo) · a smaller *Ver como funciona* text link. Beside it, the *Experimente aqui* demo: a name field and six business types update a miniature of the site (fixed example titles per type, labeled *Texto de exemplo*; *Nada é salvo aqui*), and **Continuar com este site** carries name and type to the first question (after signing in). The miniature is a sample, not a preview of the form: its status line says *Amostra*. Behind it, a soft morning light from the top right corner; in the side margins of wide screens, a faint vine follows the mouse.
-- **Como funciona:** *Sete perguntas, uma de cada vez.* / *Suas respostas ficam salvas na sua conta. Pode fechar a página e voltar depois: o andamento aparece em Meus sites.* Then the seven questions, exactly as in the form (`formSteps12`), each with one sentence from `content/stem.ts` and a still picture, ending with *Pronto. Seu site no ar.*
+- **Como funciona:** *Sete perguntas, uma de cada vez.* / *Suas respostas ficam salvas na sua conta. Pode fechar a página e voltar depois: o andamento aparece no seu painel.* Then the seven questions, exactly as in the form (`formSteps12`), each with one sentence from `content/stem.ts` and a still picture, ending with *Pronto. Seu site no ar.*
 - **O que todo site tem:** WhatsApp a um toque; Aberto ou fechado, na hora; Endereço e mapa; Feito para o celular; Pronto para o Google. All exist in the `classico` template.
 - **Quanto custa:** see Price above.
 - **Dúvidas:** the four questions marked `main` in `content/faq.ts`, and *Ver todas as dúvidas*.
@@ -63,13 +63,13 @@ Since E10 the form follows `docs/form-flow.md`. Titles, questions and descriptio
 | Seções | O que o seu site vai mostrar? | Já deixamos ligadas as seções que mais funcionam para o seu tipo de negócio. |
 | Conteúdo | O que você oferece? | Serviços, diferenciais, perguntas e fotos. Escreva do seu jeito: a gente arruma o texto. |
 | Contato | Como os clientes falam com você? | Pelo menos um canal: WhatsApp, telefone ou e-mail. |
-| Direção | Pronto para ver as 3 direções? | Envie as respostas e pode fechar a página. Avisamos em "Meus sites" quando ficarem prontas. |
+| Direção | Pronto para ver as 3 direções? | Envie as respostas e pode fechar a página. Avisamos no seu painel quando ficarem prontas. |
 | Endereço e revisão | Onde o seu site vai morar? | Escolha o endereço, confira o site pronto e aprove. |
 
 ### Microcopy
 
 - **Step label:** `Passo N de 7` on wide screens; the sprout progress shows the step on phones.
-- **Next button:** `Próximo: <etapa>` (says where it goes). Step 6: `Ver as 3 direções` (or `Criar outras 3 direções` on a redo). Step 7: `Aprovar e publicar` when the finished site is ready, otherwise `Ir para Meus sites`.
+- **Next button:** `Próximo: <etapa>` (says where it goes). Step 6: `Ver as 3 direções` (or `Criar outras 3 direções` on a redo). Step 7: `Aprovar e publicar` when the finished site is ready, otherwise `Ir para o painel`.
 - **Back:** Voltar
 - **Errors** (say what to do, never apologize; every form error is pt-BR, a test checks it): *Informe o nome do negócio.* / *Escolha o tipo de negócio.* / *Informe pelo menos um contato: WhatsApp, telefone ou e-mail.* / *Confirme que as pessoas da foto autorizaram o uso.* / *Use até 80 caracteres.* (limits vary by field)
 - **Blocked topic:** *Esse tipo de negócio a gente não atende.* / *Pelo que você escreveu, o site seria sobre {tema}, e isso a BrotaSites não publica. Nada foi cobrado. Se entendemos errado, ajuste o texto acima.*
