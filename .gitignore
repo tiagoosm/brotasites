@@ -47,7 +47,6 @@ dist-e2e-matrix/
 next-env.d.ts
 
 # Example site, generated at build time (apps/platform/scripts/build-example.mjs)
-apps/platform/public/exemplo-site/
 .previews/
 
 # Blind test kit (apps/jobs blind-test): generated sites, briefs and the answer key

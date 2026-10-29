@@ -129,16 +129,16 @@
   }
 }
 
-/* Form pages: the sticky header (phones and tablets) must never cover the title or a focused
-   field, also when the virtual keyboard shrinks the screen. From 1280px the header becomes
-   the side rail. */
+/* Form pages: the site's header and the form's progress under it (phones and tablets) must
+   never cover the title or a focused field, also when the virtual keyboard shrinks the screen.
+   From 1280px the progress becomes the side rail and only the site's header stays on top. */
 html:has([data-wizard]) {
-  scroll-padding-top: 8.5rem;
+  scroll-padding-top: 10rem;
 }
 
 @media (min-width: 1280px) {
   html:has([data-wizard]) {
-    scroll-padding-top: 2rem;
+    scroll-padding-top: 6rem;
   }
 }
 

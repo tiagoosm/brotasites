@@ -16,17 +16,20 @@ test("creating a site asks for an account first, on the server", async ({ page }
   await page.goto("/criar");
   await expect(page).toHaveURL(/\/cadastro\?voltar=%2Fcriar$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Crie a sua conta");
-  await page.getByRole("link", { name: "Entrar" }).click();
+  await page.getByRole("main").getByRole("link", { name: "Entrar" }).click();
   await expect(page).toHaveURL(/\/entrar\?voltar=%2Fcriar$/);
 });
 
 test("signed in, a new site starts at the first question", async ({ page, context }) => {
   const user = await signIn(context);
   const state = await fakeSupabase(context, user);
-  await page.goto("/criar");
+  // Nothing comes from the address anymore (the home page demo was removed in E17).
+  await page.goto("/criar?nome=Padaria%20do%20Z%C3%A9&tipo=padaria");
   await expect(page).toHaveURL(step("negocio"));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Qual é o seu negócio?");
   expect(state.site?.id).toBe(SITE);
+  await expect(page.getByLabel("Nome do negócio")).toHaveValue("");
+  await expect(page.getByLabel("Tipo de negócio")).toHaveValue("");
 });
 
 test("an unfinished draft opens where the person stopped", async ({ page, context }) => {

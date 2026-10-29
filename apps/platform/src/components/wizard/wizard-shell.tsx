@@ -29,12 +29,12 @@ export function WizardShell({ children }: { children: React.ReactNode }) {
 
       <main className="mx-auto flex w-full max-w-[44rem] min-w-0 flex-col bg-card xl:my-6 xl:rounded-2xl xl:border xl:border-border">
         {/* The form's progress, right under the site's header (E17): no second brand or menu. */}
-        <div className="sticky top-16 z-20 grid gap-3 border-b border-border bg-card/95 px-5 pt-4 pb-3 backdrop-blur sm:px-8 xl:hidden">
+        <header className="sticky top-16 z-20 grid gap-3 border-b border-border bg-card/95 px-5 pt-4 pb-3 backdrop-blur sm:px-8 xl:hidden">
           <div className="flex items-center justify-end">
             <SaveStatus compact />
           </div>
           <SproutProgressBar current={step} />
-        </div>
+        </header>
         <div key={step} className="step-enter flex flex-1 flex-col px-5 pt-8 sm:px-10 sm:pt-11">
           {children}
         </div>
