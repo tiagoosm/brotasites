@@ -57,7 +57,8 @@ export const signUpSchema = z
   .object({
     fullName: fullNameSchema,
     email: emailSchema,
-    password: passwordSchema,
+    // Length and common passwords here, so every field's error shows at once...
+    password: newPassword(undefined),
     acceptTerms: z.literal(
       true,
       "Para criar a conta, aceite os Termos e a Política de Privacidade.",
@@ -65,6 +66,7 @@ export const signUpSchema = z
     captchaToken,
     next,
   })
+  // ...and the email inside the password once the fields are valid.
   .superRefine((value, ctx) => {
     const problem = passwordProblem(value.password, value.email);
     if (problem) ctx.addIssue({ code: "custom", path: ["password"], message: problem });

@@ -20,7 +20,7 @@ const APP_PREFIXES = [
 ];
 
 /** Pages that need a session; the proxy sends people without one to /entrar. */
-export const PROTECTED_PREFIXES = ["/criar", "/meus-sites", "/meu-site", "/conta", "/admin"];
+export const PROTECTED_PREFIXES = ["/criar", "/meus-sites", "/conta", "/admin"];
 
 /** Pages and routes that are never cached nor indexed. */
 const PRIVATE_PREFIXES = [...APP_PREFIXES, "/auth", "/api"];
@@ -59,11 +59,11 @@ export function contentSecurityPolicy(
     `img-src ${list("'self'", "data:", "blob:", supabase, previews)}`,
     "font-src 'self' data:",
     `connect-src ${list("'self'", supabase, supabase?.replace(/^http/, "ws"), TURNSTILE)}`,
-    `frame-src ${list(TURNSTILE, previews)}`,
+    `frame-src ${list("'self'", TURNSTILE, previews)}`,
     "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'none'",
+    "frame-ancestors 'self'",
   ].join("; ");
 }

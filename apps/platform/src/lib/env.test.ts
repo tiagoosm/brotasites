@@ -4,8 +4,36 @@ import { safeNextPath } from "./supabase/env";
 describe("safeNextPath", () => {
   it("keeps paths inside the platform", () => {
     expect(safeNextPath("/criar/123/marca")).toBe("/criar/123/marca");
-    for (const value of ["https://exemplo.com", "//exemplo.com", "/\\exemplo.com", null, ""]) {
-      expect(safeNextPath(value)).toBe("/criar");
+    expect(safeNextPath("/meus-sites?senha=alterada")).toBe("/meus-sites?senha=alterada");
+    expect(safeNextPath("/conta#excluir")).toBe("/conta#excluir");
+  });
+
+  it("refuses every way out to another site (open redirect)", () => {
+    for (const value of [
+      "https://evil.com",
+      "http://evil.com/criar",
+      "//evil.com",
+      "///evil.com",
+      "/\\evil.com",
+      "/\\/evil.com",
+      "\\\\evil.com",
+      "/\t/evil.com",
+      "/\n/evil.com",
+      "/ /evil.com",
+      "javascript:alert(1)",
+      "JaVaScRiPt:alert(1)",
+      "data:text/html,oi",
+      "evil.com",
+      `/${"a".repeat(400)}`,
+      null,
+      undefined,
+      "",
+    ]) {
+      expect(safeNextPath(value), String(value)).toBe("/criar");
     }
+  });
+
+  it("uses the given fallback", () => {
+    expect(safeNextPath("//evil.com", "/conta")).toBe("/conta");
   });
 });

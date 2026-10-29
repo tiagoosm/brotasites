@@ -12,6 +12,9 @@ import { supabaseEnv } from "./env";
  */
 export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  // The example site (public/exemplo-site, made by the generator) is a client site: it keeps its
+  // own markup and is shown framed on /exemplo.
+  if (path.startsWith("/exemplo-site/")) return NextResponse.next();
   // CSRF: the API changes something only for the platform's own pages.
   if (path.startsWith("/api/") && !["GET", "HEAD", "OPTIONS"].includes(request.method)) {
     if (!sameOrigin(request)) {
