@@ -67,7 +67,7 @@ export const formSteps12 = [
     title: "Direção",
     question: "Pronto para ver as 3 direções?",
     description:
-      'Envie as respostas e pode fechar a página. Avisamos no seu painel quando ficarem prontas.',
+      "Envie as respostas e pode fechar a página. Avisamos no seu painel quando ficarem prontas.",
   },
   {
     slug: "endereco",
