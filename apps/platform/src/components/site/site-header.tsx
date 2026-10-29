@@ -8,10 +8,15 @@ import { createPortal } from "react-dom";
 import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CREATE_HREF, headerLinks, phoneMenuLinks } from "./nav";
+import { CREATE_HREF, guestLinks, headerLinks, memberLinks, phoneMenuLinks } from "./nav";
+import { SignOutButton } from "./sign-out";
 
-/** Quiet sticky header: brand, two links, sign in and the one primary action. */
-export function SiteHeader() {
+/**
+ * Quiet sticky header: brand, two links, sign in and the one primary action. Signed in, the
+ * account's menu instead (Painel, Criar site, Perfil e segurança, Sair). `signedIn` comes from
+ * the server (the page variant the proxy picked), so the menu never flickers.
+ */
+export function SiteHeader({ signedIn }: { signedIn: boolean }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isHome = pathname === "/";
@@ -26,26 +31,36 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-5 sm:gap-6 sm:px-8">
         <Brand />
         <nav aria-label="Principal" className="ml-auto hidden items-center gap-7 md:flex">
-          {headerLinks.map((link) => (
+          {(signedIn ? memberLinks : headerLinks).map((link) => (
             <Link
               key={link.href}
               href={link.href}
+              prefetch={link.account ? false : undefined}
               aria-current={pathname === link.href ? "page" : undefined}
               className="touch-target text-[0.9375rem] text-ink-soft transition-colors duration-150 hover:text-ink aria-[current=page]:text-ink"
             >
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/entrar"
-            prefetch={false}
-            className="touch-target text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
-          >
-            Entrar
-          </Link>
+          {signedIn ? (
+            <SignOutButton className="text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline" />
+          ) : (
+            // "Criar conta" sits next to "Entrar" where no "Criar meu site" button is shown.
+            (isHome ? guestLinks : guestLinks.slice(0, 1)).map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                prefetch={false}
+                className="touch-target text-[0.9375rem] font-semibold text-leaf-deep underline-offset-4 hover:underline"
+              >
+                {link.label}
+              </Link>
+            ))
+          )}
         </nav>
-        {/* The home page has its own buttons (at most three); the other pages get one here. */}
-        {!isHome && (
+        {/* The home page has its own buttons (at most three); the other pages get one here.
+            Signed in, "Criar site" is already in the menu. */}
+        {!isHome && !signedIn && (
           <Button
             asChild
             size="lg"
@@ -60,7 +75,7 @@ export function SiteHeader() {
           type="button"
           variant="ghost"
           size="icon-lg"
-          className={cn("touch-target -mr-2 md:hidden", isHome && "ml-auto")}
+          className={cn("touch-target -mr-2 md:hidden", (isHome || signedIn) && "ml-auto")}
           aria-label="Abrir menu"
           aria-expanded={open}
           aria-controls="menu-celular"
@@ -69,7 +84,7 @@ export function SiteHeader() {
           <Menu aria-hidden="true" className="size-5" />
         </Button>
       </div>
-      {open && <PhoneMenu onClose={() => setOpen(false)} />}
+      {open && <PhoneMenu signedIn={signedIn} onClose={() => setOpen(false)} />}
     </header>
   );
 }
@@ -79,7 +94,8 @@ export function SiteHeader() {
  * the page is inert and does not scroll, and Escape or any link closes it and brings focus
  * back to the button. The items come in one after the other (".phone-menu" in globals.css).
  */
-function PhoneMenu({ onClose }: { onClose: () => void }) {
+function PhoneMenu({ signedIn, onClose }: { signedIn: boolean; onClose: () => void }) {
+  const links = [...phoneMenuLinks, ...(signedIn ? memberLinks : guestLinks.slice(0, 1))];
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -153,12 +169,12 @@ function PhoneMenu({ onClose }: { onClose: () => void }) {
         </Button>
       </div>
       <nav aria-label="Menu" className="mt-8 grid">
-        {phoneMenuLinks.map((link, index) => (
+        {links.map((link, index) => (
           <Link
             key={link.href}
             href={link.href}
-            // The form and sign-in pages carry the account code; load it only when opened.
-            prefetch={link.href === "/entrar" ? false : undefined}
+            // The form and account pages carry the account code; load it only when opened.
+            prefetch={link.account ? false : undefined}
             onClick={onClose}
             style={{ "--item": index } as React.CSSProperties}
             className="phone-menu-item group flex min-h-14 items-center justify-between border-b border-line py-3 font-display text-[1.75rem] leading-tight text-ink transition-colors duration-150 active:text-leaf-deep"
@@ -171,17 +187,24 @@ function PhoneMenu({ onClose }: { onClose: () => void }) {
           </Link>
         ))}
       </nav>
-      <Button
-        asChild
-        size="lg"
-        className="phone-menu-item mt-auto shrink-0"
-        style={{ "--item": phoneMenuLinks.length } as React.CSSProperties}
-      >
-        <Link href={CREATE_HREF} prefetch={false} onClick={onClose}>
-          Criar meu site
-          <ArrowRight aria-hidden="true" />
-        </Link>
-      </Button>
+      {signedIn ? (
+        <SignOutButton
+          className="phone-menu-item mt-auto min-h-14 shrink-0 justify-self-start font-display text-[1.75rem] text-ink"
+          style={{ "--item": links.length } as React.CSSProperties}
+        />
+      ) : (
+        <Button
+          asChild
+          size="lg"
+          className="phone-menu-item mt-auto shrink-0"
+          style={{ "--item": links.length } as React.CSSProperties}
+        >
+          <Link href="/cadastro" prefetch={false} onClick={onClose}>
+            Criar conta
+            <ArrowRight aria-hidden="true" />
+          </Link>
+        </Button>
+      )}
     </div>,
     document.body,
   );

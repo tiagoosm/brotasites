@@ -11,6 +11,6 @@ export async function POST(request: NextRequest) {
     await supabase?.auth.signOut();
   }
   const form = await request.formData().catch(() => null);
-  const next = safeNextPath(form?.get("voltar")?.toString());
+  const next = safeNextPath(form?.get("voltar")?.toString(), "/");
   return NextResponse.redirect(new URL(next, request.url), { status: 303 });
 }

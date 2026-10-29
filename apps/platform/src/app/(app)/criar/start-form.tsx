@@ -52,7 +52,7 @@ export function StartForm() {
       <Notice
         title="Não foi possível começar"
         text="Algo falhou ao abrir o seu site. Atualize a página para tentar de novo."
-        action={{ href: "/meus-sites", label: "Ir para Meus sites" }}
+        action={{ href: "/painel", label: "Ir para o painel" }}
       />
     );
   }

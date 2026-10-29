@@ -120,7 +120,7 @@ export function AddressStep() {
       </Button>
     ) : (
       <Button asChild size="lg" className="ml-auto flex-1 sm:flex-none">
-        <Link href={`/meus-sites/${siteId}`}>Ir para Meus sites</Link>
+        <Link href={`/meus-sites/${siteId}`}>Ir para o painel</Link>
       </Button>
     );
 
@@ -182,12 +182,12 @@ export function AddressStep() {
           )}
           {status === "awaiting_approval" && (
             <p className="text-sm text-ink-soft">
-              Quer mudar algo? Ajuste as respostas e peça uma nova versão em{" "}
+              Quer mudar algo? Ajuste as respostas e peça uma nova versão na{" "}
               <Link
                 href={`/meus-sites/${siteId}`}
                 className="font-semibold text-leaf-deep underline underline-offset-4"
               >
-                Meus sites
+                página do site
               </Link>
               . {saved ? "" : "Guarde o endereço antes de aprovar."}
             </p>

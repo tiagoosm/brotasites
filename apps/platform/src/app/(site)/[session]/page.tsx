@@ -129,7 +129,7 @@ export default function HomePage() {
             />
             <p data-reveal="" className="max-w-[46ch] text-[1.125rem] text-ink-soft">
               Suas respostas ficam salvas na sua conta. Pode fechar a página e voltar depois: o
-              andamento aparece em Meus sites.
+              andamento aparece no seu painel.
             </p>
           </header>
           <Stem />

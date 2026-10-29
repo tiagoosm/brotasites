@@ -15,7 +15,7 @@ import { getBrowserSupabase } from "@/lib/supabase/client";
 import { LockedNote } from "./step-form";
 
 // Step 6: the client sends the answers and may close the page. The 3 directions show up on
-// "Meus sites" when they are ready; redoing them is unlimited until one is approved.
+// the dashboard when they are ready; redoing them is unlimited until one is approved.
 
 export function DirectionStep() {
   const router = useRouter();
@@ -73,7 +73,7 @@ export function DirectionStep() {
     </Button>
   ) : (
     <Button asChild size="lg" className="ml-auto flex-1 sm:flex-none">
-      <Link href={`/meus-sites/${siteId}`}>Acompanhar em Meus sites</Link>
+      <Link href={`/meus-sites/${siteId}`}>Acompanhar no painel</Link>
     </Button>
   );
 
@@ -91,7 +91,7 @@ export function DirectionStep() {
         {identityLocked ? (
           <LockedNote>
             Você já aprovou uma direção. A identidade do site fica como está; mudanças de conteúdo,
-            fotos e contato entram quando você pedir para montar o site de novo, em “Meus sites”.
+            fotos e contato entram quando você pedir para montar o site de novo, na página do site.
           </LockedNote>
         ) : !canSend ? (
           <LockedNote>{infoFor(status).text}</LockedNote>
@@ -128,7 +128,7 @@ export function DirectionStep() {
             </p>
             <p className="text-ink-soft">
               Leva alguns minutos. Pode fechar a página: quando ficarem prontas, as direções
-              aparecem em “Meus sites”.
+              aparecem no painel.
             </p>
           </div>
         )}

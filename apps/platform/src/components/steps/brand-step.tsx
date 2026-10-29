@@ -205,7 +205,7 @@ function ApprovedColors() {
   return (
     <SectionCard
       name="Cores do site"
-      note="As mudanças entram quando você pedir para montar o site de novo, em Meus sites."
+      note="As mudanças entram quando você pedir para montar o site de novo, na página do site."
     >
       <div className="flex flex-wrap gap-6">
         {adjustable.map(({ role, label }) => (
