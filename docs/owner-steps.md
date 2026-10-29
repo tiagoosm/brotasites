@@ -32,6 +32,15 @@ Keep this list up to date during the project. Claude Code does not create accoun
 - [ ] Check INPI before investing in the brand.
 - [ ] Decide the repository's visibility: the master plan assumes a private repository, and `tiagoosm/brotasites` is public. Adapted React Bits code (`side-rays.tsx`, `vine-trail.tsx`) is visible while it is public.
 
+## Testing before launch (no domain, no SMTP, no Turnstile)
+
+A temporary setup to try accounts on `https://brotasites.vercel.app`. Undo it before launch (steps of "Accounts (E15)" below).
+
+- Emails go through Supabase's built-in service: it sends only to the addresses of the organization's team members (Supabase "Test auth flows" guide) and only a few per hour (the current number is on that page). Test with your own email. Supabase's default English templates work; the pt-BR ones in `docs/email-templates/` can wait.
+- `NEXT_PUBLIC_CAPTCHA_MODE=off` in Vercel turns the CAPTCHA off on purpose, also in production. The platform's own rate limits keep working (they need `SUPABASE_SECRET_KEY`).
+- Owner steps: in Supabase, Authentication > URL Configuration, Site URL `https://brotasites.vercel.app` and Redirect URL `https://brotasites.vercel.app/auth/confirm**`; copy the secret key (Project Settings > API Keys) into Vercel as `SUPABASE_SECRET_KEY` (type "Sensitive", production).
+- Before launch: delete `NEXT_PUBLIC_CAPTCHA_MODE` in Vercel, then follow "Accounts (E15)".
+
 ## Accounts (E15)
 
 In this order. Nothing here was done by Claude Code; values marked "to verify" were not checked in the official pages from this session (supabase.com and resend.com were out of the session's network; Supabase facts come from its documentation search).

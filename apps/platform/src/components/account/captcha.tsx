@@ -4,7 +4,8 @@ import { useEffect, useRef } from "react";
 
 // Cloudflare Turnstile (docs/owner-steps.md, Accounts). Supabase checks the token; the widget is
 // usually invisible and asks for a click only when it doubts. Without a site key (development,
-// tests: NEXT_PUBLIC_CAPTCHA_MODE=simulated) nothing is shown and no token is sent.
+// tests: NEXT_PUBLIC_CAPTCHA_MODE=simulated; testing before launch: "off") nothing is shown and
+// no token is sent.
 
 declare global {
   interface Window {
@@ -19,7 +20,8 @@ declare global {
 const SCRIPT = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
 export const captchaSiteKey = (): string | null =>
-  process.env.NEXT_PUBLIC_CAPTCHA_MODE === "simulated"
+  process.env.NEXT_PUBLIC_CAPTCHA_MODE === "simulated" ||
+  process.env.NEXT_PUBLIC_CAPTCHA_MODE === "off"
     ? null
     : (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null);
 

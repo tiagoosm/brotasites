@@ -65,6 +65,15 @@ describe("CAPTCHA (Turnstile through Supabase)", () => {
       "turnstile",
     );
     expect(captchaMode({})).toBe("simulated");
+    // Testing before launch: off on purpose, even in production and with a site key.
+    expect(captchaMode({ VERCEL_ENV: "production", NEXT_PUBLIC_CAPTCHA_MODE: "off" })).toBe("off");
+    expect(
+      captchaTokenFor("tok", {
+        VERCEL_ENV: "production",
+        NEXT_PUBLIC_CAPTCHA_MODE: "off",
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4",
+      }),
+    ).toEqual({});
     expect(captchaMode({ NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4" })).toBe("turnstile");
   });
 
