@@ -13,9 +13,10 @@ declare
   job uuid;
   n int;
 begin
-  insert into auth.users (id, email, aud, role) values
-    (a, 'a-v12@brotasites.test', 'authenticated', 'authenticated'),
-    (b, 'b-v12@brotasites.test', 'authenticated', 'authenticated');
+  -- Confirmed emails: only those send the form (E15, checked in accounts.sql).
+  insert into auth.users (id, email, aud, role, email_confirmed_at) values
+    (a, 'a-v12@brotasites.test', 'authenticated', 'authenticated', now()),
+    (b, 'b-v12@brotasites.test', 'authenticated', 'authenticated', now());
 
   -- A creates a 1.2 site and saves the form draft.
   perform set_config('role', 'authenticated', true);

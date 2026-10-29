@@ -50,7 +50,11 @@ begin
   exception when insufficient_privilege then null;
   end;
 
-  perform set_config('request.jwt.claims', json_build_object('sub', admin, 'role', 'authenticated')::text, true);
+  -- Without the second factor (aal1) the admin is only a member, not an admin (E15).
+  perform set_config('request.jwt.claims', json_build_object('sub', admin, 'role', 'authenticated', 'aal', 'aal1')::text, true);
+  if public.is_admin() then raise exception 'FAIL: an admin without two factors is an admin'; end if;
+  if not public.is_admin_member() then raise exception 'FAIL: the admin is not a member'; end if;
+  perform set_config('request.jwt.claims', json_build_object('sub', admin, 'role', 'authenticated', 'aal', 'aal2')::text, true);
   if not public.is_admin() then raise exception 'FAIL: the admin is not an admin'; end if;
   -- Being an admin gives no access to clients' rows through the API: everything goes through the server.
   select count(*) into n from public.sites where id = site;
