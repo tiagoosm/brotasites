@@ -345,7 +345,7 @@ function PasswordSection({
     <Section title={hasPassword ? "Senha" : "Criar senha"} id="senha">
       {!hasPassword && (
         <p className="text-[0.9375rem] text-ink-soft">
-          Sua conta entra só com o link no e-mail. Crie uma senha para entrar também com ela.
+          Hoje você entra só pelo link no e-mail. Crie uma senha se quiser.
         </p>
       )}
       <form onSubmit={save} noValidate className="grid gap-5">
@@ -425,7 +425,7 @@ function SessionsSection() {
   return (
     <Section title="Aparelhos conectados" id="aparelhos">
       <p className="text-[0.9375rem] text-ink-soft">
-        Se você entrou num aparelho que não é seu, saia de todos. Depois, entre de novo neste.
+        Entrou num aparelho que não é seu? Saia de todos e entre de novo aqui.
       </p>
       <Button
         type="button"
@@ -444,8 +444,7 @@ function DataSection() {
   return (
     <Section title="Seus dados" id="baixar">
       <p className="text-[0.9375rem] text-ink-soft">
-        Baixe uma cópia de tudo o que guardamos da sua conta: perfil, aceite dos termos e, de cada
-        site, as respostas, a configuração, as direções, o histórico e os pagamentos.
+        Baixe uma cópia de tudo o que guardamos: perfil, termos, sites e pagamentos.
       </p>
       <a
         href="/api/account/export"

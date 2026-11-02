@@ -8,8 +8,7 @@ import { faqGroups } from "@/content/faq";
 
 export const metadata: Metadata = {
   title: "Ajuda",
-  description:
-    "Respostas sobre como criar o seu site no BrotaSites: as sete perguntas, fotos, seus dados, preço e publicação.",
+  description: "Como criar o seu site no BrotaSites: perguntas, fotos, dados, preço e publicação.",
   alternates: { canonical: "/ajuda" },
 };
 
@@ -33,13 +32,13 @@ export default function HelpPage() {
       title="Dúvidas sobre o BrotaSites"
       intro={
         <p>
-          Respostas curtas sobre como funciona. Se preferir ver na prática,{" "}
+          Respostas rápidas. Prefere testar?{" "}
           <Link
             href={CREATE_HREF}
             prefetch={false}
             className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
           >
-            comece a criar o seu site
+            Comece a criar
           </Link>
           : é grátis.
         </p>
@@ -74,7 +73,7 @@ export default function HelpPage() {
               .
             </>
           ) : (
-            <>O canal de contato está {PENDING} e aparece aqui assim que estiver pronto.</>
+            <>Canal de contato {PENDING}.</>
           )}
         </p>
       </ReadingSection>

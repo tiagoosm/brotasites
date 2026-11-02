@@ -56,7 +56,7 @@ export function ContentStep() {
       {on.has("servicos") && (
         <SectionCard
           name="Serviços ou produtos"
-          note="Até 9. O preço é opcional e vai para o site do jeito que você escrever."
+          note="Até 9. Preço opcional, do jeito que você escrever."
         >
           <ItemList<Service>
             items={rows(content.services, { name: "" })}
@@ -156,7 +156,7 @@ export function ContentStep() {
       {on.has("depoimentos") && draft.business?.category !== "psicologia" && (
         <SectionCard
           name="Depoimentos"
-          note="Só depoimentos reais, de clientes que autorizaram. A gente nunca inventa depoimentos."
+          note="Só reais e autorizados. Nunca inventamos depoimentos."
         >
           <ItemList<Testimonial>
             items={rows(content.testimonials as Testimonial[] | undefined, { name: "", text: "" })}
@@ -222,7 +222,7 @@ function PhotosCard({
   return (
     <SectionCard
       name="Fotos"
-      note="Até 12. Use fotos suas ou que você tem permissão para usar. Sem fotos, o site usa um topo tipográfico."
+      note="Até 12, suas ou com permissão. Sem fotos, o site fica só com texto no topo."
     >
       <details className="rounded-lg border border-border bg-paper p-4 text-[0.9375rem]">
         <summary className="cursor-pointer font-semibold">

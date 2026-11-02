@@ -47,10 +47,7 @@ export function BusinessStep() {
       }}
     >
       {identityLocked && (
-        <LockedNote>
-          A direção do site já foi aprovada. Mudanças no nome e na descrição entram quando você
-          pedir para montar o site de novo.
-        </LockedNote>
+        <LockedNote>Visual já aprovado. Mudanças aqui entram na próxima versão do site.</LockedNote>
       )}
       <SectionCard name="O básico">
         <TextField
@@ -103,7 +100,7 @@ export function BusinessStep() {
 
       <SectionCard
         name="Deixe o site com a sua cara"
-        note="Opcional, mas faz diferença: o texto do site usa só o que você contar aqui, nada é inventado."
+        note="Opcional, mas faz diferença: o site usa só o que você contar."
       >
         {storyQuestions.map(([key, question]) => (
           <TextField

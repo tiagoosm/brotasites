@@ -166,7 +166,7 @@ function SitesSection({ sites }: { sites: DashboardSite[] }) {
         <div className="grid gap-3 rounded-xl border border-dashed border-line-strong p-6">
           <h3 className="font-display text-[1.5rem] leading-tight">Crie seu primeiro site</h3>
           <p className="text-[0.9375rem] text-ink-soft">
-            Responda sete perguntas sobre o seu negócio e receba 3 direções de visual para escolher.
+            Sete perguntas e você escolhe entre 3 visuais.
           </p>
           <CreateSiteButton className="justify-self-start" />
         </div>

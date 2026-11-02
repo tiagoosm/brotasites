@@ -30,8 +30,7 @@ const choices: { id: SectionId; name: string; description: string; locked?: bool
   {
     id: "depoimentos",
     name: "Depoimentos",
-    description:
-      "Opiniões reais de clientes, com autorização. Só aparece se você cadastrar pelo menos uma.",
+    description: "Opiniões reais e autorizadas. Só aparece se houver pelo menos uma.",
   },
   {
     id: "faq",

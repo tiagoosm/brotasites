@@ -6,6 +6,7 @@ Copy for the BrotaSites platform: the public site and the form. User-facing text
 
 - **Who reads it:** people who run a business and want a site without learning technology. The copy never names the size or type of business ("pequeno negócio", "de bairro"): it talks to *seu negócio*, so a bakery, a clinic and a studio all feel addressed.
 - **Tone:** warm, plain and confident. Short sentences, everyday verbs, sentence case, no exclamation marks, no em dashes.
+- **Scannable (E19):** a reader gets each block at a glance. One idea per block; supporting text of one or two short lines; answers lead with the yes or no. Detail lives in Ajuda and the legal pages, not on every screen.
 - **Promise only what the product does.** No invented numbers, prices, testimonials or rankings. Items that depend on open decisions are marked `[pendente]`.
 - **The slogan is the structure.** The form really has seven steps, so each step's title is one of the seven questions.
 
@@ -25,19 +26,19 @@ Built on 2026-10-24 (design: [superpowers/specs/2026-10-24-main-site-design.md](
 ### Price
 
 - Model (2026-10-25): one-time payment per site, no monthly plan. All values live in `apps/platform/src/config/pricing.ts` (publish R$ 297, optional `launchPrice` shown with the regular price crossed out, 12 months of hosting, 30 days of dashboard changes, optional renewal R$ 99/year, custom domain + R$ 97, 7-day guarantee).
-- Section *Quanto custa*: *Criar, editar, ver as direções e o site pronto é grátis. Você só paga se quiser colocar o site no ar.* The guarantee and refund texts show *pendente de revisão jurídica* until `legalReviewed` is true.
+- Section *Quanto custa*: *Criar e ver o site pronto é grátis. Você só paga para publicar.* Included: hosting months, dashboard changes days, *O site é seu: baixe quando quiser*. Below: renewal (*R$ 99 por ano, se quiser renovar. Sem renovar, você baixa o site antes.*), custom domain (*+ R$ 97 para conectar. O registro do domínio é por sua conta.*), guarantee. The guarantee and refund texts show *pendente de revisão jurídica* until `legalReviewed` is true.
 - No comparisons with freelancers or competitors.
 
 ### Home page
 
 - **Header:** see "Header (every page)" below (E17, E18).
-- **Main button:** three on the home page: *Continuar com este site* in the hero demo, *Criar meu site* after the seven questions and in the final call.
-- **Hero:** *Sete perguntas e seu site pronto.* / *Conte o que você faz e escolha uma de 3 direções para o visual. A gente monta o site e você só aprova. Sem código.* / **Criar meu site** · a smaller *Ver como funciona* text link. Under them, three short facts: *Sete perguntas* (*Uma de cada vez, salvas na sua conta.*), *3 direções de visual* (*Você escolhe a que tem a sua cara.*), *Você aprova* (*Criar é grátis; paga só para publicar.*). The "Experimente aqui" demo and the example site were removed (owner decision of 2026-10-29). Behind it, a soft morning light from the top right corner; with a mouse, a faint vine follows it over the free space of the page.
-- **Como funciona:** *Sete perguntas, uma de cada vez.* / *Suas respostas ficam salvas na sua conta. Pode fechar a página e voltar depois: o andamento aparece no seu painel.* Then the seven questions, exactly as in the form (`formSteps12`), each with one sentence from `content/stem.ts` and a still picture, ending with *Pronto. Seu site no ar.*
-- **O que todo site tem:** WhatsApp a um toque; Aberto ou fechado, na hora; Endereço e mapa; Feito para o celular; Pronto para o Google. All exist in the `classico` template.
+- **Main button:** *Criar meu site*, in the hero, after the seven questions and in the final call.
+- **Hero:** *Sete perguntas e seu site pronto.* / *Você responde, escolhe o visual e aprova. A gente monta o site. Sem código.* / **Criar meu site** · a smaller *Ver como funciona* text link. Under them, three short facts: *Sete perguntas* (*Salvas na sua conta.*), *3 visuais* (*Você escolhe um.*), *Criar é grátis* (*Paga só para publicar.*). The "Experimente aqui" demo and the example site were removed (owner decision of 2026-10-29). Behind it, a soft morning light from the top right corner; with a mouse, a faint vine follows it over the free space of the page.
+- **Como funciona:** *Sete perguntas, uma de cada vez.* / *Tudo fica salvo. Feche e volte quando quiser.* Then the seven questions, exactly as in the form (`formSteps12`), each with a few words from `content/stem.ts` and a still picture, ending with *Pronto. Seu site no ar.*
+- **O que todo site tem:** *Já vem pronto, sem configurar.* WhatsApp a um toque; Aberto ou fechado, na hora; Como chegar (*Um toque abre a rota até você no mapa.*: client sites have no embedded map, only the button); Feito para o celular; Pronto para o Google. One short line each.
 - **Quanto custa:** see Price above.
 - **Dúvidas:** the four questions marked `main` in `content/faq.ts`, and *Ver todas as dúvidas*.
-- **Final call:** *Seu site está a sete perguntas de distância.* / *Comece agora. Criar e ver o site pronto é grátis; você só paga para colocar no ar.*
+- **Final call:** *Seu site começa com sete perguntas.* / *Criar é grátis. Você só paga para publicar.*
 
 ### Help, terms and privacy
 
@@ -48,7 +49,7 @@ Built on 2026-10-24 (design: [superpowers/specs/2026-10-24-main-site-design.md](
 ### Meta
 
 - **Title:** BrotaSites · Sete perguntas e seu site pronto
-- **Description:** Responda sete perguntas, escolha uma de 3 direções para o visual e receba o site do seu negócio pronto. Com WhatsApp, horários e botão Como chegar. Sem código.
+- **Description:** Responda sete perguntas, escolha o visual e receba o site do seu negócio pronto. Sem código.
 - **Share image:** `src/app/opengraph-image.png`, made by `scripts/og-image.mjs`.
 
 ## The seven questions (form)
@@ -57,12 +58,12 @@ Since E10 the form follows `docs/form-flow.md`. Titles, questions and descriptio
 
 | Step (rail) | Title (question) | Description |
 | --- | --- | --- |
-| Seu negócio | Qual é o seu negócio? | O básico primeiro. Quanto mais detalhe de verdade, mais o site fica com a sua cara. |
-| Marca e sensação | Como você quer que o seu negócio pareça? | Logo e cores são opcionais. Sem logo, a gente cria um monograma com o seu nome. |
-| Seções | O que o seu site vai mostrar? | Já deixamos ligadas as seções que mais funcionam para o seu tipo de negócio. |
-| Conteúdo | O que você oferece? | Serviços, diferenciais, perguntas e fotos. Escreva do seu jeito: a gente arruma o texto. |
+| Seu negócio | Qual é o seu negócio? | Quanto mais detalhe real, mais o site fica com a sua cara. |
+| Marca e sensação | Como você quer que o seu negócio pareça? | Logo e cores são opcionais. Sem logo, criamos um monograma. |
+| Seções | O que o seu site vai mostrar? | O essencial para o seu negócio já vem ligado. |
+| Conteúdo | O que você oferece? | Escreva do seu jeito: a gente arruma o texto. |
 | Contato | Como os clientes falam com você? | Pelo menos um canal: WhatsApp, telefone ou e-mail. |
-| Direção | Pronto para ver as 3 direções? | Envie as respostas e pode fechar a página. Avisamos no seu painel quando ficarem prontas. |
+| Direção | Pronto para ver as 3 direções? | Envie e pode fechar a página. Avisamos no painel. |
 | Endereço e revisão | Onde o seu site vai morar? | Escolha o endereço, confira o site pronto e aprove. |
 
 ### Microcopy
@@ -73,8 +74,8 @@ Since E10 the form follows `docs/form-flow.md`. Titles, questions and descriptio
 - **Errors** (say what to do, never apologize; every form error is pt-BR, a test checks it): *Informe o nome do negócio.* / *Escolha o tipo de negócio.* / *Informe pelo menos um contato: WhatsApp, telefone ou e-mail.* / *Confirme que as pessoas da foto autorizaram o uso.* / *Use até 80 caracteres.* (limits vary by field)
 - **Blocked topic:** *Esse tipo de negócio a gente não atende.* / *Pelo que você escreveu, o site seria sobre {tema}, e isso a BrotaSites não publica. Nada foi cobrado. Se entendemos errado, ajuste o texto acima.*
 - **Autosave:** Salvando… / Respostas salvas na sua conta / Salvo neste aparelho, mas não na sua conta
-- **Sign-in (/entrar):** *Entre na sua conta* / *Suas respostas e os seus sites ficam guardados na sua conta.* / E-mail, Senha, **Entrar** / *Entrar com um link no e-mail* · *Esqueci a senha*. Right under the title: *Ainda não tem conta? Cadastre-se* (E18: the header's "Entrar ou cadastre-se" leads here). Errors never say which part is wrong: *E-mail ou senha incorretos.*
-- **Sign-up (/cadastro):** *Crie a sua conta* / *É grátis. Suas respostas e os seus sites ficam guardados na sua conta.* / Seu nome, E-mail, Senha (*Pelo menos 10 caracteres. Evite senhas comuns e o seu e-mail.* and a meter: Fraca demais, Aceitável, Boa, Forte, Muito forte), *Li e aceito os Termos de uso e a Política de Privacidade.*, **Criar conta**. Then *Confira o seu e-mail* with *Reenviar e-mail de confirmação* (once a minute, with the seconds left) and *Usar outro e-mail*.
+- **Sign-in (/entrar):** *Entre na sua conta* / *Suas respostas e sites ficam guardados aqui.* / E-mail, Senha, **Entrar** / *Entrar com um link no e-mail* · *Esqueci a senha*. Right under the title: *Ainda não tem conta? Cadastre-se* (E18: the header's "Entrar ou cadastre-se" leads here). Errors never say which part is wrong: *E-mail ou senha incorretos.*
+- **Sign-up (/cadastro):** *Crie a sua conta* / *É grátis. Suas respostas e sites ficam guardados nela.* / Seu nome, E-mail, Senha (*Pelo menos 10 caracteres. Evite senhas comuns e o seu e-mail.* and a meter: Fraca demais, Aceitável, Boa, Forte, Muito forte), *Li e aceito os Termos de uso e a Política de Privacidade.*, **Criar conta**. Then *Confira o seu e-mail* with *Reenviar e-mail de confirmação* (once a minute, with the seconds left) and *Usar outro e-mail*.
 - **Same answer for any email:** *Se houver uma conta com {email}, enviamos um link…* (sign-in link, password reset, resend).
 - **Account (/conta):** *Sua conta*, then *Seus dados* (name, *WhatsApp (opcional)*), *E-mail*, *Senha* or *Criar senha*, *Verificação em duas etapas* (team only), *Aparelhos conectados* (*Sair de todos os aparelhos*), *Seus dados* (*Baixar meus dados (.json)*), *Excluir minha conta*. Sensitive changes: *Por segurança, confirme que é você: entre de novo e repita o pedido em até 10 minutos.*
 

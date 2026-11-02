@@ -116,7 +116,7 @@ const splitTitles = [
   "O que todo site tem",
   "Quanto custa",
   "Dúvidas",
-  "Seu site está a sete perguntas de distância.",
+  "Seu site começa com sete perguntas.",
 ];
 
 test("screen readers get each split title whole, once", async ({ page }) => {
