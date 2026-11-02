@@ -122,12 +122,10 @@ export function DirectionStep() {
         ) : (
           <div className="grid gap-4 text-[0.9375rem]">
             <p>
-              3 visuais: <strong>Fiel à marca</strong>, <strong>Evolução</strong> e{" "}
-              <strong>Contraste</strong>. Escolha um ou peça outros 3, quantas vezes quiser.
+              3 direções de visual: <strong>Fiel à marca</strong>, <strong>Evolução</strong> e{" "}
+              <strong>Contraste</strong>. Escolha uma ou peça outras 3, quantas vezes quiser.
             </p>
-            <p className="text-ink-soft">
-              Leva alguns minutos. Pode fechar a página: avisamos no painel.
-            </p>
+            <p className="text-ink-soft">Leva alguns minutos.</p>
           </div>
         )}
         {error && (

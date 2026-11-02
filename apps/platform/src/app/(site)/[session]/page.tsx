@@ -52,7 +52,7 @@ const features = [
 // Under the hero's buttons: the three things the page goes on to explain.
 const heroFacts = [
   { title: "Sete perguntas", text: "Salvas na sua conta." },
-  { title: "3 visuais", text: "Você escolhe um." },
+  { title: "3 direções", text: "Você escolhe uma." },
   { title: "Criar é grátis", text: "Paga só para publicar." },
 ];
 
@@ -71,7 +71,7 @@ export default function HomePage() {
             <h1 className="font-display text-[3.25rem] leading-[0.98] tracking-[-0.025em] sm:text-[5rem] lg:text-[6rem]">
               Sete perguntas <span className="block text-stem">e seu site pronto.</span>
             </h1>
-            <p className="max-w-[38ch] text-[1.1875rem] text-ink-soft sm:text-[1.3125rem]">
+            <p className="max-w-[38ch] text-pretty text-[1.1875rem] text-ink-soft sm:text-[1.3125rem]">
               Você responde, escolhe o visual e aprova. A gente monta o site. Sem código.
             </p>
             <div className="flex flex-wrap items-center gap-x-7 gap-y-4">

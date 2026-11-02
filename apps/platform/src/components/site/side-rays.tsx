@@ -305,6 +305,7 @@ export default function SideRays({
     const container = containerRef.current;
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
+    canvas.style.display = "";
 
     const gl = acceleratedWebgl2(canvas, {
       alpha: true,
@@ -315,7 +316,12 @@ export default function SideRays({
       powerPreference: "high-performance",
     });
     const shader = gl ? link(gl) : null;
-    if (!gl || !shader) return;
+    if (!gl || !shader) {
+      // No GPU: no light. A canvas whose context was dropped shows the browser's broken-canvas
+      // icon in its corner, so it is taken out of the layout.
+      canvas.style.display = "none";
+      return;
+    }
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const vao = gl.createVertexArray();
@@ -460,6 +466,7 @@ export default function SideRays({
     const onLost = (event: Event) => {
       event.preventDefault();
       lost = true;
+      canvas.style.display = "none";
       cancelAnimationFrame(raf);
       raf = 0;
     };

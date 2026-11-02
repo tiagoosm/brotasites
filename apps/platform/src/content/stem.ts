@@ -9,6 +9,6 @@ export const stemNotes: Record<FormStepSlug12, string> = {
   secoes: "Já vem o essencial ligado. Ajuste o resto.",
   conteudo: "Escreva do seu jeito: a gente arruma o texto.",
   contato: "WhatsApp, telefone, endereço e horários.",
-  direcao: "Receba 3 visuais e escolha um.",
+  direcao: "Receba 3 direções e escolha uma.",
   endereco: "Confira, aprove e publique.",
 };

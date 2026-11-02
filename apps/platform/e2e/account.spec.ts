@@ -137,7 +137,7 @@ test("without a confirmed email: the warning, and no payment on the server", asy
   await fakeSupabase(context, await signIn(context, { confirmed: false }));
   await page.goto("/painel");
   await expect(page.getByRole("complementary", { name: "Confirmação do e-mail" })).toContainText(
-    "Confirme o seu e-mail para ver os 3 visuais e pagar.",
+    "Confirme o seu e-mail para ver as 3 direções e pagar.",
   );
   const cookies = await context.cookies();
   const response = await request.post(`/api/sites/${SITE}/approve`, {
