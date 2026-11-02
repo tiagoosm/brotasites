@@ -36,7 +36,7 @@ export default function HelpPage() {
           <Link
             href={CREATE_HREF}
             prefetch={false}
-            className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
+            className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
           >
             Comece a criar
           </Link>
