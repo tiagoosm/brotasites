@@ -25,6 +25,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E17 One header everywhere, the profile menu, and a home page without the demo
 - [x] E18 Home page motion and navigation: one create-site button, repeating entrances, smooth section links, the turning price glow, an organic stem, the vine everywhere
 - [x] E19 Copy review: every client-facing text shorter and scannable at a glance
+- [x] E20 Design review: every screen checked on phone and desktop, inconsistencies fixed
 
 ## Steps in detail
 
@@ -102,6 +103,10 @@ The same header and footer on every page (public pages, sign-in and password scr
 ### E18 Home page motion and navigation
 
 Every create-site button shares the specular finish, now a composited light eased once per frame (smooth where it stuttered). The header's sign-in link reads "Entrar ou cadastre-se". Section entrances repeat each time an element returns, with a cap on simultaneous entrances and an instant final state on jumps. The links to Como funciona, Preço and Dúvidas scroll smoothly there (also from other pages). The price card's glow turns slowly by itself and hands over to the mouse without jumps. The stem in "Como funciona" is one curved, tapering stroke with leaves that bud, grow and sway, ending in a bloom. The mouse vine roams the free space of the whole public page, kept off the content. All with reduced motion, no JavaScript and touch screens covered.
+
+### E20 Design review
+
+Every screen (home, help, legal, sign-in, sign-up, password, dashboard, account, the seven steps, the site page in each state) captured on phone and desktop and reviewed. Fixed: the broken-canvas icon the hero light left without a GPU, one term for the art directions, the status dot colors, a repeated section title on the account page, a repeated heading and misaligned buttons on the directions, the order of a live site's address and download, a repeated notice on step 6, an orphan word in the hero. Details and what was left for the owner in `docs/owner-steps.md`.
 
 ### E19 Copy review
 

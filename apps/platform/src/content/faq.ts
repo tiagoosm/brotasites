@@ -67,7 +67,7 @@ export const faqGroups: FaqGroup[] = [
         slug: "o-que-sao-as-direcoes",
         question: "O que são as 3 direções?",
         answer:
-          "3 visuais criados a partir das suas respostas: Fiel à marca, Evolução e Contraste. Escolha um ou peça outros 3, quantas vezes quiser.",
+          "3 propostas de visual feitas com as suas respostas: Fiel à marca, Evolução e Contraste. Escolha uma ou peça outras 3, quantas vezes quiser.",
       },
     ],
   },

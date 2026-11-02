@@ -13,7 +13,7 @@ export function EmailConfirmBanner({ account }: { account: AccountState }) {
       className="mx-auto mb-6 grid w-full max-w-[60rem] gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-[0.9375rem] text-ink"
     >
       <p>
-        <strong>Confirme o seu e-mail</strong> para ver os 3 visuais e pagar. Toque no link que
+        <strong>Confirme o seu e-mail</strong> para ver as 3 direções e pagar. Toque no link que
         enviamos para <strong>{account.email}</strong>.
       </p>
       <ResendConfirmation email={account.email} />

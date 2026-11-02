@@ -167,7 +167,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         <section aria-labelledby="direcoes" className="grid gap-6">
           <div className="grid gap-2">
             <h2 id="direcoes" className="font-display text-[1.75rem] leading-tight">
-              Escolha uma das 3
+              As 3 direções
             </h2>
             <p className="text-[0.9375rem] text-ink-soft">
               A escolhida fixa cores, letras e formas. Textos, fotos e contato ainda mudam.
@@ -259,6 +259,19 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         </section>
       )}
 
+      {site.status === "live" && liveUrl && (
+        <a
+          href={liveUrl}
+          target="_blank"
+          rel="noopener"
+          className="inline-flex items-center gap-2 justify-self-start text-[1.0625rem] font-semibold text-leaf-deep underline underline-offset-4"
+        >
+          {liveUrl.replace("https://", "")}
+          <ExternalLink aria-hidden="true" className="size-4" />
+          <span className="sr-only">(abre em outra aba)</span>
+        </a>
+      )}
+
       {["live", "grace"].includes(site.status) && (
         <div id="baixar" className="grid scroll-mt-6 gap-2">
           <Button
@@ -284,19 +297,6 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           </Button>
           <p className="text-sm text-ink-soft">O site é seu: guarde ou hospede onde quiser.</p>
         </div>
-      )}
-
-      {site.status === "live" && liveUrl && (
-        <a
-          href={liveUrl}
-          target="_blank"
-          rel="noopener"
-          className="inline-flex items-center gap-2 justify-self-start text-[1.0625rem] font-semibold text-leaf-deep underline underline-offset-4"
-        >
-          {liveUrl.replace("https://", "")}
-          <ExternalLink aria-hidden="true" className="size-4" />
-          <span className="sr-only">(abre em outra aba)</span>
-        </a>
       )}
 
       {locked && ["awaiting_approval", "needs_attention", "live"].includes(site.status) && (
@@ -393,7 +393,8 @@ function DirectionCard({
     .slice(0, 5);
 
   return (
-    <li className="grid content-start gap-4 rounded-xl border border-input bg-card p-4">
+    // A column, so the buttons line up at the bottom whatever each note's length.
+    <li className="flex flex-col gap-4 rounded-xl border border-input bg-card p-4">
       <div className="relative">
         <Shot
           url={desktop && renders[desktop]}
@@ -424,7 +425,7 @@ function DirectionCard({
         </div>
       )}
       {confirming ? (
-        <div className="grid gap-2">
+        <div className="mt-auto grid gap-2">
           <p className="text-sm">Escolher “{label}”? A identidade fica fixa depois disso.</p>
           <div className="flex gap-2">
             <Button size="lg" disabled={busy} onClick={onChoose}>
@@ -436,7 +437,7 @@ function DirectionCard({
           </div>
         </div>
       ) : (
-        <Button size="lg" disabled={busy} onClick={() => setConfirming(true)}>
+        <Button size="lg" disabled={busy} onClick={() => setConfirming(true)} className="mt-auto">
           Escolher esta
         </Button>
       )}

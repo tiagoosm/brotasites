@@ -442,7 +442,7 @@ function SessionsSection() {
 
 function DataSection() {
   return (
-    <Section title="Seus dados" id="baixar">
+    <Section title="Cópia dos seus dados" id="baixar">
       <p className="text-[0.9375rem] text-ink-soft">
         Baixe uma cópia de tudo o que guardamos: perfil, termos, sites e pagamentos.
       </p>

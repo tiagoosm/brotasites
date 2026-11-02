@@ -69,10 +69,21 @@ In this order. Nothing here was done by Claude Code; values marked "to verify" w
 
 Since 2026-10-27 the owner does not approve each task. Choices the plan reserved for the owner are taken with the recommended option and listed here; any of them can be reversed.
 
+- **E20, design review:**
+  - **Fixed:** without a GPU the hero's light canvas lost its context and Chrome drew its broken-canvas icon in the hero's top left corner (on phones, over the title). The canvas now leaves the layout when it cannot draw, as the vine's already did.
+  - **Fixed:** one term for the art directions, *direção* (see E19 below).
+  - **Fixed:** in the dashboard a site *No ar* had a grey dot, the same as an idle one; it is now a steady green (pulsing green stays for work in progress, yellow for your turn) and problems (*Precisa de atenção*, *Suspenso*) are red.
+  - **Fixed:** the account page had two sections called *Seus dados*; the download one is now *Cópia dos seus dados*.
+  - **Fixed:** on a site's page the directions section repeated the status line (*Escolha uma das 3* twice); it is now *As 3 direções*. The three cards keep their *Escolher esta* buttons on one line, whatever each note's length.
+  - **Fixed:** a live site's page showed the download before its address; the address comes first.
+  - **Fixed:** step 6 said twice that the page can be closed.
+  - The hero line no longer leaves a lone word at the end of a line (`text-wrap: pretty`).
+  - **Kept on purpose:** the skill used for this review asks for testimonials, numbers and "social proof" in the hero; BrotaSites has no real ones yet and the project rules forbid inventing them, so none were added. It also asks for Framer Motion and new shadcn components; the page already has its own motion (E18) and adding libraries needs the owner's OK, so none were added.
+  - **Suggestions left for the owner** (not done, they change the look): a real example of a finished site in the hero once there is a real, authorized client; and on the sign-in and sign-up pages, the header's "Entrar ou cadastre-se" link could be hidden (it points to the page itself).
 - **E19, copy review:**
   - Rule used: one idea per block, supporting text of one or two short lines, answers that lead with the yes or no. Details stay in Ajuda and in the legal pages.
   - The H1 and slogan stay (*Sete perguntas e seu site pronto.*). The final call became *Seu site começa com sete perguntas.* and the hero line *Você responde, escolhe o visual e aprova. A gente monta o site. Sem código.*
-  - Client-facing text says *visual* / *3 visuais* where it said *direção de visual*; the names of the three directions (Fiel à marca, Evolução, Contraste), the status labels and the form step title *Direção* stay.
+  - The term stays *as 3 direções* everywhere (E20 reverted a short-lived *3 visuais*, which clashed with the statuses, buttons and form step that say *direção*).
   - The feature *Endereço e mapa* (*sem sair do site*) promised an embedded map, which client sites do not have; it is now *Como chegar* (*Um toque abre a rota até você no mapa.*).
   - Not changed: Termos and Privacidade (their wording waits for the lawyer), the team area, server error messages and status texts (already one line).
 - **E18, home page motion and navigation:**

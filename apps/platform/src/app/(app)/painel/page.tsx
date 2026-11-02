@@ -166,7 +166,7 @@ function SitesSection({ sites }: { sites: DashboardSite[] }) {
         <div className="grid gap-3 rounded-xl border border-dashed border-line-strong p-6">
           <h3 className="font-display text-[1.5rem] leading-tight">Crie seu primeiro site</h3>
           <p className="text-[0.9375rem] text-ink-soft">
-            Sete perguntas e você escolhe entre 3 visuais.
+            Sete perguntas e você escolhe entre 3 direções de visual.
           </p>
           <CreateSiteButton className="justify-self-start" />
         </div>
@@ -202,7 +202,16 @@ function SiteCard({ site }: { site: DashboardSite }) {
             aria-hidden="true"
             className={cn(
               "size-2 rounded-full",
-              info.yourTurn ? "bg-pollen" : info.busy ? "live-dot bg-leaf" : "bg-line-strong",
+              // Your turn: pollen. Working: a pulsing leaf. On air: a steady leaf. A problem: red.
+              info.yourTurn
+                ? "bg-pollen"
+                : info.busy
+                  ? "live-dot bg-leaf"
+                  : site.status === "live"
+                    ? "bg-leaf"
+                    : ["needs_attention", "failed", "suspended"].includes(site.status)
+                      ? "bg-destructive"
+                      : "bg-line-strong",
             )}
           />
           <span className="font-semibold">{info.label}</span>
