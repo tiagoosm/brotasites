@@ -65,6 +65,12 @@ In this order. Nothing here was done by Claude Code; values marked "to verify" w
 7. **Jobs.** Deploy `apps/jobs` again (`pnpm --filter @brotasites/jobs exec trigger deploy`): the new `site-purge` task removes deleted accounts' sites from R2 and KV.
 8. **Terms and privacy: legal review.** `/termos` and `/privacidade` are provisional (version `2026-10-draft`, marked "pendente de revisão jurídica" on the pages and in `src/content/legal.ts`). After the lawyer's review, publish the new text with a new version in `TERMS_VERSION` (`src/lib/auth/schemas.ts`) and in `private.current_terms_version()` (a new migration): everyone is asked to accept again at /conta.
 
+## Supabase keep-alive (2026-11-02)
+
+- Done for you: `CRON_SECRET` was created in Vercel (production, sensitive) and a daily Claude scheduled task checks the database; see `docs/hosting.md`, "Keeping Supabase awake".
+- After this merges, Vercel deploys the cron with the next production deployment. You can check it in Vercel > the project > Settings > Cron Jobs (it lists `/api/cron/keep-alive`), and run it once from there.
+- Supabase still emails a warning about a week before pausing; if one ever arrives, open the project in the Supabase dashboard once and tell me.
+
 ## Decisions to review
 
 Since 2026-10-27 the owner does not approve each task. Choices the plan reserved for the owner are taken with the recommended option and listed here; any of them can be reversed.

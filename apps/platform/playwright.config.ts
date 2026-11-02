@@ -55,6 +55,8 @@ export default defineConfig({
         NEXT_PUBLIC_SUPABASE_URL: FAKE_SUPABASE,
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_e2e_test",
         SUPABASE_SECRET_KEY: "sb_secret_e2e_test",
+        // The daily keep-alive's bearer token (Vercel Cron), a test value.
+        CRON_SECRET: "e2e-cron-secret",
         NEXT_PUBLIC_CAPTCHA_MODE: "simulated",
         NEXT_PUBLIC_PREVIEW_ORIGIN: "https://previa.sites.localhost",
         NEXT_PUBLIC_BASE_DOMAIN: "sites.localhost",

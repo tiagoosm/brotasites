@@ -25,6 +25,15 @@ A single Cloudflare Worker serves every site (`apps/sites-worker`). Do not use "
 - **Private preview of the finished site:** R2 key `previews/{siteId}/{token}/...`, served by `apps/sites-worker` at `previa.{BASE_DOMAIN}/{siteId}/{token}/` with `noindex`, `no-store` and the strict CSP. The token has 192 random bits (24 bytes, base64url). The platform links to it with `NEXT_PUBLIC_PREVIEW_ORIGIN`. In development the local runner serves the same paths at `http://127.0.0.1:4500`.
 - **Photos:** clients upload into the private `site-uploads` bucket; the job re-encodes each photo (no metadata) before any site uses it, so only clean copies reach R2.
 
+## Keeping Supabase awake (2026-11-02)
+
+Supabase pauses Free plan projects with too little database activity over 7 days; its docs say "a few user requests to the database each day" are typically enough (supabase.com/docs/guides/platform/free-project-pausing). The project was paused once for inactivity before launch. Two daily layers now keep it active:
+
+1. **Vercel Cron** (`apps/platform/vercel.json`): every day at 11:17 UTC (08:17 in Brasília) Vercel calls `GET /api/cron/keep-alive` on the production deployment. The route checks the `CRON_SECRET` bearer token (set in Vercel, production only; never in the repository), then runs three read-only count queries (sites, profiles, notifications) with the server key. Anyone else gets 401. Vercel's Hobby limits on cron jobs (how many, how often, timing precision) are to verify in vercel.com/docs/cron-jobs/usage-and-pricing; one job a day is the least any plan allows.
+2. **Claude scheduled task** "Supabase keep-alive diário" (19:43 in Brasília): it checks the project's status, restores it if it was paused, and runs five read-only queries through the Supabase connector. It runs in the Claude Code session that created it, so it lasts while that session exists.
+
+If the project is paused anyway: Supabase Dashboard > the project > Resume project (possible for 90 days). Moving to Supabase Pro removes pausing altogether.
+
 ## Costs
 
 R2 and Workers: see the table in `CLAUDE.md` (checked on 2026-10-25). The platform (Next.js) runs on Vercel (Pro before charging clients).
