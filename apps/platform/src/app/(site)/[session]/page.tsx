@@ -12,7 +12,7 @@ import { PLATFORM_URL } from "@/lib/site-url";
 export const metadata: Metadata = {
   title: { absolute: "BrotaSites · Sete perguntas e seu site pronto" },
   description:
-    "Responda sete perguntas, escolha uma de 3 direções para o visual e receba o site do seu negócio pronto. Com WhatsApp, horários e botão Como chegar. Sem código.",
+    "Responda sete perguntas, escolha o visual e receba o site do seu negócio pronto. Sem código.",
   alternates: { canonical: "/" },
 };
 
@@ -29,31 +29,31 @@ const organization = {
 const features = [
   {
     title: "WhatsApp a um toque",
-    text: "Um botão fixo leva o cliente direto para a conversa com você.",
+    text: "Botão fixo que abre a conversa com você.",
   },
   {
     title: "Aberto ou fechado, na hora",
-    text: "O site mostra se você está aberto agora, a partir do seu horário de funcionamento.",
+    text: "O site mostra se você está aberto agora.",
   },
   {
-    title: "Endereço e mapa",
-    text: "Quem procura você encontra o caminho sem sair do site.",
+    title: "Como chegar",
+    text: "Um toque abre a rota até você no mapa.",
   },
   {
     title: "Feito para o celular",
-    text: "Abre rápido e fica bonito na tela onde seus clientes estão.",
+    text: "Rápido e bonito na tela do seu cliente.",
   },
   {
     title: "Pronto para o Google",
-    text: "Título, descrição e as informações do negócio já vêm configurados.",
+    text: "Título, descrição e dados do negócio já configurados.",
   },
 ];
 
 // Under the hero's buttons: the three things the page goes on to explain.
 const heroFacts = [
-  { title: "Sete perguntas", text: "Uma de cada vez, salvas na sua conta." },
-  { title: "3 direções de visual", text: "Você escolhe a que tem a sua cara." },
-  { title: "Você aprova", text: "Criar é grátis; paga só para publicar." },
+  { title: "Sete perguntas", text: "Salvas na sua conta." },
+  { title: "3 visuais", text: "Você escolhe um." },
+  { title: "Criar é grátis", text: "Paga só para publicar." },
 ];
 
 export default function HomePage() {
@@ -72,8 +72,7 @@ export default function HomePage() {
               Sete perguntas <span className="block text-stem">e seu site pronto.</span>
             </h1>
             <p className="max-w-[38ch] text-[1.1875rem] text-ink-soft sm:text-[1.3125rem]">
-              Conte o que você faz e escolha uma de 3 direções para o visual. A gente monta o site e
-              você só aprova. Sem código.
+              Você responde, escolhe o visual e aprova. A gente monta o site. Sem código.
             </p>
             <div className="flex flex-wrap items-center gap-x-7 gap-y-4">
               <CreateSiteButton />
@@ -113,8 +112,7 @@ export default function HomePage() {
               segments={[{ text: "Sete perguntas, uma de cada vez." }]}
             />
             <p data-reveal="" className="max-w-[46ch] text-[1.125rem] text-ink-soft">
-              Suas respostas ficam salvas na sua conta. Pode fechar a página e voltar depois: o
-              andamento aparece no seu painel.
+              Tudo fica salvo. Feche e volte quando quiser.
             </p>
           </header>
           <Stem />
@@ -136,7 +134,7 @@ export default function HomePage() {
             segments={[{ text: "O que todo site tem" }]}
           />
           <p data-reveal="" className="text-[1.0625rem] text-ink-soft">
-            Você não precisa pedir nem configurar. Vem em todo site, em todos os modelos.
+            Já vem pronto, sem configurar.
           </p>
         </header>
         <ul className="border-t border-line">
@@ -191,10 +189,10 @@ export default function HomePage() {
             as="h2"
             id="final-titulo"
             className="font-display text-[2.5rem] leading-[1.05] sm:text-[3.5rem]"
-            segments={[{ text: "Seu site está a sete perguntas de distância." }]}
+            segments={[{ text: "Seu site começa com sete perguntas." }]}
           />
           <p className="max-w-[40ch] text-[1.0625rem] text-ink-soft">
-            Comece agora. Criar e ver o site pronto é grátis; você só paga para colocar no ar.
+            Criar é grátis. Você só paga para publicar.
           </p>
           <CreateSiteButton />
         </div>

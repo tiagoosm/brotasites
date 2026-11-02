@@ -124,8 +124,8 @@ export function MfaEnroll({ onDone }: { onDone: () => void }) {
       <div className="grid gap-3">
         <FormError message={error} />
         <p className="text-[0.9375rem] text-ink-soft">
-          Use um aplicativo autenticador no celular, como Google Authenticator, Microsoft
-          Authenticator ou Authy. A cada entrada, além da senha, ele mostra um código de 6 números.
+          Além da senha, um código de 6 números do app autenticador (Google Authenticator, Authy ou
+          outro).
         </p>
         <Button type="button" size="lg" onClick={start} className="justify-self-start">
           <ShieldCheck aria-hidden="true" />

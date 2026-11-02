@@ -169,7 +169,7 @@ test("brand after approval: the style stays, the colors can change with AA", asy
   const primary = page.getByLabel("Cor principal (botões)");
   await expect(primary).toHaveValue("#b45309");
   await primary.fill("#f2e8d5");
-  await expect(page.getByText(/o texto ficaria difícil de ler/)).toBeVisible();
+  await expect(page.getByText(/Essa cor dificulta a leitura/)).toBeVisible();
   await expect.poll(() => state.draft.colorOverrides).toEqual({ primary: "#F2E8D5" });
   await page.getByRole("button", { name: "Voltar às cores aprovadas" }).click();
   await expect(primary).toHaveValue("#b45309");

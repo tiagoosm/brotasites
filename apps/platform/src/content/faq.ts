@@ -31,21 +31,19 @@ export const faqGroups: FaqGroup[] = [
       {
         slug: "preciso-entender-de-tecnologia",
         question: "Preciso entender de tecnologia?",
-        answer:
-          "Não. Se você manda mensagem no WhatsApp, consegue criar o seu site. São sete perguntas, uma por tela. Depois, você escolhe uma de 3 direções para o visual e confere o site pronto antes de publicar.",
+        answer: "Não. Se você usa WhatsApp, consegue. Sete perguntas, uma por tela.",
         main: true,
       },
       {
         slug: "quanto-tempo-leva",
         question: "Quanto tempo leva?",
-        answer:
-          "Depende de quanto você quer escrever. Dá para responder tudo de uma vez ou aos poucos: as respostas ficam salvas e você continua de onde parou.",
+        answer: "Depende de você. Tudo fica salvo: continue de onde parou.",
       },
       {
         slug: "preciso-de-conta",
         question: "Preciso criar uma conta?",
         answer:
-          "Sim, mas é rápido: antes da primeira pergunta você cria a conta com nome, e-mail e senha, e confirma o e-mail pelo link que enviamos. Depois, pode entrar com a senha ou com um link no e-mail. Assim as respostas, as fotos e os seus sites ficam guardados na sua conta.",
+          "Sim: nome, e-mail e senha, e você confirma o e-mail. É onde suas respostas e sites ficam guardados.",
       },
     ],
   },
@@ -57,20 +55,19 @@ export const faqGroups: FaqGroup[] = [
         slug: "posso-voltar-e-mudar",
         question: "Posso voltar e mudar uma resposta?",
         answer:
-          "Pode. Use o caminho das perguntas ao lado do formulário ou o botão Voltar. Depois de escolher a direção, textos, fotos, contato e seções ainda mudam; cores e estilo ficam como você aprovou.",
+          "Pode, a qualquer momento. Depois de escolher o visual, só cores e estilo ficam fixos.",
       },
       {
         slug: "sem-fotos",
         question: "E se eu não tiver fotos agora?",
-        answer:
-          "O site fica bonito mesmo sem fotos. Você pode enviar as suas a qualquer momento antes de publicar.",
+        answer: "Sem problema. O site fica bonito sem fotos, e você envia depois.",
         main: true,
       },
       {
         slug: "o-que-sao-as-direcoes",
         question: "O que são as 3 direções?",
         answer:
-          "São 3 caminhos para o visual do site, criados com as suas respostas: Fiel à marca, Evolução e Contraste. Você escolhe um, ou pede outros 3, quantas vezes quiser. Não precisa esperar com a página aberta: elas aparecem no seu painel quando ficam prontas.",
+          "3 visuais criados a partir das suas respostas: Fiel à marca, Evolução e Contraste. Escolha um ou peça outros 3, quantas vezes quiser.",
       },
     ],
   },
@@ -82,20 +79,19 @@ export const faqGroups: FaqGroup[] = [
         slug: "inventam-informacoes",
         question: "Vocês vão inventar informações sobre o meu negócio?",
         answer:
-          "Não. Preços, horários, endereço, contatos e depoimentos vêm só do que você informar. A seção de depoimentos só aparece se você cadastrar opiniões reais.",
+          "Não. Preços, horários, endereço, contatos e depoimentos vêm só das suas respostas.",
         main: true,
       },
       {
         slug: "quem-ve-o-rascunho",
         question: "Quem vê o meu rascunho?",
-        answer:
-          "Só você. Ele fica na sua conta, e só a sua conta tem acesso a ele. O site pronto fica num endereço particular, que não aparece no Google, até você publicar.",
+        answer: "Só você. Até publicar, o site fica num endereço particular, fora do Google.",
       },
       {
         slug: "apagar-conta",
         question: "Como apago a minha conta?",
         answer:
-          "Na página Conta, em Excluir minha conta. Por segurança, pedimos que você entre de novo e escreva o seu e-mail para confirmar. A conta, os sites, os rascunhos e as fotos são apagados e os sites publicados saem do ar. Antes, se quiser, baixe uma cópia dos seus dados na mesma página.",
+          "Em Conta, Excluir minha conta. Tudo é apagado e os sites saem do ar. Antes, se quiser, baixe uma cópia dos seus dados.",
       },
     ],
   },
@@ -106,23 +102,23 @@ export const faqGroups: FaqGroup[] = [
       {
         slug: "quanto-custa",
         question: "Quanto custa?",
-        answer: `Criar, editar, ver as direções e o site pronto é grátis. Para publicar, você paga ${launchNote} uma vez só, com ${pricing.hostingMonths} meses de hospedagem, ajustes pelo painel nos primeiros ${pricing.adjustmentsDays} dias e o direito de baixar o site quando quiser. Depois de ${pricing.hostingMonths} meses, manter no ar custa ${formatBRL(pricing.renewalPerYear)} por ano, se você quiser.`,
+        answer: `Criar é grátis. Publicar custa ${launchNote}, uma vez só, com ${pricing.hostingMonths} meses de hospedagem e ${pricing.adjustmentsDays} dias de ajustes. Depois, ${formatBRL(pricing.renewalPerYear)} por ano, se quiser renovar.`,
         main: true,
       },
       {
         slug: "endereco-do-site",
         question: "Qual vai ser o endereço do meu site?",
-        answer: `Você escolhe na última pergunta, no formato seu-negocio.brotasites.com. Se quiser um domínio próprio, como seunegocio.com.br, conectar custa + ${formatBRL(pricing.customDomain)}: você registra o domínio e paga o registro direto ao registrador.`,
+        answer: `seu-negocio.brotasites.com, escolhido na última pergunta. Domínio próprio (seunegocio.com.br): + ${formatBRL(pricing.customDomain)} para conectar; o registro é por sua conta.`,
       },
       {
         slug: "mudar-depois",
         question: "Posso mudar o site depois de publicar?",
-        answer: `Pode. Nos primeiros ${pricing.adjustmentsDays} dias depois de publicar, os ajustes pelo painel estão incluídos. Depois disso, você pode pedir ajustes à parte, com o valor informado antes.`,
+        answer: `Pode. Ajustes incluídos por ${pricing.adjustmentsDays} dias. Depois, à parte, com o valor informado antes.`,
       },
       {
         slug: "nao-quiser-mais",
         question: "E se eu não quiser mais?",
-        answer: `O site é seu: você pode baixar o site pronto a qualquer momento e hospedá-lo onde quiser. Se não renovar depois dos ${pricing.hostingMonths} meses, ele sai do ar, e você pode baixá-lo antes. Nos primeiros ${pricing.guaranteeDays} dias depois de pagar, se não gostar, devolvemos o valor${legalNote}.`,
+        answer: `O site é seu: baixe quando quiser. Sem renovar, ele sai do ar depois de ${pricing.hostingMonths} meses. Em até ${pricing.guaranteeDays} dias do pagamento, devolvemos o valor${legalNote}.`,
       },
     ],
   },

@@ -90,8 +90,8 @@ export function DirectionStep() {
       <div className="grid gap-6">
         {identityLocked ? (
           <LockedNote>
-            Você já aprovou uma direção. A identidade do site fica como está; mudanças de conteúdo,
-            fotos e contato entram quando você pedir para montar o site de novo, na página do site.
+            Visual já aprovado. Mudanças de conteúdo entram quando você pedir uma nova versão na
+            página do site.
           </LockedNote>
         ) : !canSend ? (
           <LockedNote>{infoFor(status).text}</LockedNote>
@@ -122,13 +122,11 @@ export function DirectionStep() {
         ) : (
           <div className="grid gap-4 text-[0.9375rem]">
             <p>
-              A gente cria 3 caminhos para o visual do seu site: <strong>Fiel à marca</strong>,{" "}
-              <strong>Evolução</strong> e <strong>Contraste</strong>. Você escolhe um, ou pede
-              outros 3, quantas vezes quiser.
+              3 visuais: <strong>Fiel à marca</strong>, <strong>Evolução</strong> e{" "}
+              <strong>Contraste</strong>. Escolha um ou peça outros 3, quantas vezes quiser.
             </p>
             <p className="text-ink-soft">
-              Leva alguns minutos. Pode fechar a página: quando ficarem prontas, as direções
-              aparecem no painel.
+              Leva alguns minutos. Pode fechar a página: avisamos no painel.
             </p>
           </div>
         )}

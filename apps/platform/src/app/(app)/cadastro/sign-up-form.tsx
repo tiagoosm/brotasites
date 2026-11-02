@@ -63,7 +63,7 @@ export function SignUpForm() {
         <p className="text-[1.0625rem] text-ink-soft">
           Enviamos um link de confirmação para{" "}
           <strong className="font-semibold text-ink">{email.trim()}</strong>. Toque nele para
-          confirmar o e-mail e entrar. Se não encontrar, olhe também a caixa de spam.
+          entrar. Não achou? Veja o spam.
         </p>
         <ResendConfirmation email={email} next={next} />
         <Button
@@ -86,7 +86,7 @@ export function SignUpForm() {
       <header className="grid gap-3">
         <h1 className="font-display text-[2.5rem] leading-[1.05]">Crie a sua conta</h1>
         <p className="text-[1.0625rem] text-ink-soft">
-          É grátis. Suas respostas e os seus sites ficam guardados na sua conta.
+          É grátis. Suas respostas e sites ficam guardados nela.
         </p>
       </header>
 

@@ -57,7 +57,7 @@ export function ForgotPasswordForm() {
           <header className="grid gap-3">
             <h1 className="font-display text-[2.5rem] leading-[1.05]">Esqueceu a senha?</h1>
             <p className="text-[1.0625rem] text-ink-soft">
-              Escreva o e-mail da sua conta. Mandamos um link para você criar uma nova senha.
+              Informe seu e-mail. Mandamos um link para criar uma nova senha.
             </p>
           </header>
           <FormError message={error} />

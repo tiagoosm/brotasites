@@ -53,8 +53,7 @@ export function BrandStep() {
     >
       {identityLocked && (
         <LockedNote>
-          A identidade visual já foi aprovada: o estilo e as sensações ficam como estão. Você ainda
-          pode trocar o logo e ajustar as cores do site.
+          Visual já aprovado. Você ainda pode trocar o logo e ajustar as cores.
         </LockedNote>
       )}
       {identityLocked && <ApprovedColors />}
@@ -91,7 +90,7 @@ export function BrandStep() {
 
       <SectionCard
         name="Cores da marca"
-        note="Opcional, até 3. A gente monta a paleta a partir delas e garante a leitura dos textos."
+        note="Opcional, até 3. A paleta sai delas, sempre legível."
       >
         <fieldset disabled={identityLocked} className="flex flex-wrap items-center gap-3">
           <legend className="sr-only">Cores da marca</legend>
@@ -138,7 +137,7 @@ export function BrandStep() {
 
       <ChoiceGroup
         legend="Que sensação o site deve passar?"
-        hint="Escolha até 2. Sem escolha, a gente usa o mais comum para o seu tipo de negócio."
+        hint="Até 2. Sem escolha, usamos o mais comum no seu ramo."
       >
         <div className="grid gap-2">
           {feelings.map((feeling) => {
@@ -203,10 +202,7 @@ function ApprovedColors() {
   const changed = Object.keys(overrides).length > 0;
 
   return (
-    <SectionCard
-      name="Cores do site"
-      note="As mudanças entram quando você pedir para montar o site de novo, na página do site."
-    >
+    <SectionCard name="Cores do site" note="Entram na próxima versão, pedida na página do site.">
       <div className="flex flex-wrap gap-6">
         {adjustable.map(({ role, label }) => (
           <label
@@ -230,8 +226,7 @@ function ApprovedColors() {
       </div>
       {hardToRead && (
         <p role="status" className="text-sm text-ink-soft">
-          Com essa cor, o texto ficaria difícil de ler. A gente ajusta um pouco o tom ao montar o
-          site.
+          Essa cor dificulta a leitura. Ajustamos o tom ao montar o site.
         </p>
       )}
       {changed && (

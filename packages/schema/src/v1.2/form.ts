@@ -34,27 +34,25 @@ export const formSteps12 = [
     slug: "negocio",
     title: "Seu negócio",
     question: "Qual é o seu negócio?",
-    description:
-      "O básico primeiro. Quanto mais detalhe de verdade, mais o site fica com a sua cara.",
+    description: "Quanto mais detalhe real, mais o site fica com a sua cara.",
   },
   {
     slug: "marca",
     title: "Marca e sensação",
     question: "Como você quer que o seu negócio pareça?",
-    description: "Logo e cores são opcionais. Sem logo, a gente cria um monograma com o seu nome.",
+    description: "Logo e cores são opcionais. Sem logo, criamos um monograma.",
   },
   {
     slug: "secoes",
     title: "Seções",
     question: "O que o seu site vai mostrar?",
-    description: "Já deixamos ligadas as seções que mais funcionam para o seu tipo de negócio.",
+    description: "O essencial para o seu negócio já vem ligado.",
   },
   {
     slug: "conteudo",
     title: "Conteúdo",
     question: "O que você oferece?",
-    description:
-      "Serviços, diferenciais, perguntas e fotos. Escreva do seu jeito: a gente arruma o texto.",
+    description: "Escreva do seu jeito: a gente arruma o texto.",
   },
   {
     slug: "contato",
@@ -66,8 +64,7 @@ export const formSteps12 = [
     slug: "direcao",
     title: "Direção",
     question: "Pronto para ver as 3 direções?",
-    description:
-      "Envie as respostas e pode fechar a página. Avisamos no seu painel quando ficarem prontas.",
+    description: "Envie e pode fechar a página. Avisamos no painel.",
   },
   {
     slug: "endereco",

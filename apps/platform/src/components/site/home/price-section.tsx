@@ -31,7 +31,7 @@ export function PriceSection() {
   const included = [
     `${pricing.hostingMonths} meses de hospedagem`,
     `Ajustes pelo painel nos primeiros ${pricing.adjustmentsDays} dias`,
-    "O site é seu: baixe o site pronto quando quiser e hospede onde preferir",
+    "O site é seu: baixe quando quiser",
   ];
   return (
     <section id="preco" aria-labelledby="preco-titulo" className="scroll-mt-16 bg-table">
@@ -44,8 +44,7 @@ export function PriceSection() {
             segments={[{ text: "Quanto custa" }]}
           />
           <p data-reveal="" className="text-[1.0625rem] text-ink-soft">
-            Criar, editar, ver as direções e o site pronto é grátis. Você só paga se quiser colocar
-            o site no ar.
+            Criar e ver o site pronto é grátis. Você só paga para publicar.
           </p>
         </header>
 
@@ -81,15 +80,15 @@ export function PriceSection() {
             <div data-reveal="" className="grid content-start gap-1.5">
               <dt className="font-semibold">Depois de {pricing.hostingMonths} meses</dt>
               <dd className="text-[0.9375rem] text-ink-soft">
-                Manter no ar custa {formatBRL(pricing.renewalPerYear)} por ano, se você quiser. Quem
-                não renovar pode baixar o site antes de ele sair do ar.
+                {formatBRL(pricing.renewalPerYear)} por ano, se quiser renovar. Sem renovar, você
+                baixa o site antes.
               </dd>
             </div>
             <div data-reveal="" className="grid content-start gap-1.5">
               <dt className="font-semibold">Domínio próprio</dt>
               <dd className="text-[0.9375rem] text-ink-soft">
-                + {formatBRL(pricing.customDomain)} para conectar. Você registra o domínio e paga o
-                registro direto ao registrador.
+                + {formatBRL(pricing.customDomain)} para conectar. O registro do domínio é por sua
+                conta.
               </dd>
             </div>
             <div data-reveal="" className="grid content-start gap-1.5">

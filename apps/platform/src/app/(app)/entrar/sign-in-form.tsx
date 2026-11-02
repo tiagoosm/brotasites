@@ -72,7 +72,7 @@ export function SignInForm() {
         <h1 className="font-display text-[2.5rem] leading-[1.05]">Confira o seu e-mail</h1>
         <p className="text-[1.0625rem] text-ink-soft">
           Se houver uma conta com <strong className="font-semibold text-ink">{email.trim()}</strong>
-          , enviamos um link de acesso. Abra o e-mail e toque no link para continuar.
+          , enviamos um link de acesso. Toque nele para continuar.
         </p>
         <Button
           type="button"
@@ -92,8 +92,8 @@ export function SignInForm() {
         <h1 className="font-display text-[2.5rem] leading-[1.05]">Entre na sua conta</h1>
         <p className="text-[1.0625rem] text-ink-soft">
           {mode === "password"
-            ? "Suas respostas e os seus sites ficam guardados na sua conta."
-            : "Mandamos um link de acesso para o seu e-mail. Toque nele para entrar."}
+            ? "Suas respostas e sites ficam guardados aqui."
+            : "Mandamos um link para o seu e-mail. Toque nele para entrar."}
         </p>
         {/* The header's "Entrar ou cadastre-se" leads here: signing up is one tap away. */}
         <p className="rounded-lg border border-leaf/30 bg-leaf/5 px-4 py-3 text-[0.9375rem]">

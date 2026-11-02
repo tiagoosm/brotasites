@@ -69,6 +69,12 @@ In this order. Nothing here was done by Claude Code; values marked "to verify" w
 
 Since 2026-10-27 the owner does not approve each task. Choices the plan reserved for the owner are taken with the recommended option and listed here; any of them can be reversed.
 
+- **E19, copy review:**
+  - Rule used: one idea per block, supporting text of one or two short lines, answers that lead with the yes or no. Details stay in Ajuda and in the legal pages.
+  - The H1 and slogan stay (*Sete perguntas e seu site pronto.*). The final call became *Seu site começa com sete perguntas.* and the hero line *Você responde, escolhe o visual e aprova. A gente monta o site. Sem código.*
+  - Client-facing text says *visual* / *3 visuais* where it said *direção de visual*; the names of the three directions (Fiel à marca, Evolução, Contraste), the status labels and the form step title *Direção* stay.
+  - The feature *Endereço e mapa* (*sem sair do site*) promised an embedded map, which client sites do not have; it is now *Como chegar* (*Um toque abre a rota até você no mapa.*).
+  - Not changed: Termos and Privacidade (their wording waits for the lawyer), the team area, server error messages and status texts (already one line).
 - **E18, home page motion and navigation:**
   - **Price glow (item 4):** instead of animating the gradient's angle (a registered `--glow-angle`, which repaints the gradient every frame), the arc is a square with a conic gradient that turns with `rotate` on its own layer inside the masked rim (and the blurred halo): only compositing each frame. The mouse eases it the short way round with requestAnimationFrame; on leave the CSS turn restarts from that angle (a negative `animation-delay`).
   - **Section scroll (item 5):** a small requestAnimationFrame scroller, not CSS `scroll-behavior: smooth` (which fixes neither the duration nor the curve, and would also change the back button and every other anchor). 600 to 900 ms by distance, ease-in-out cubic, stops under the 64px header (the section's `scroll-margin-top`). From another page the target is kept in `sessionStorage`, the home page opens at the top and then scrolls (a direct load of `/#preco` still jumps, as browsers do).

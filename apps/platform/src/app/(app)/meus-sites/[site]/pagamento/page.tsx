@@ -71,10 +71,7 @@ function Payment() {
       </div>
       <div className="grid gap-3 rounded-lg border border-pollen/60 bg-pollen/10 p-4 text-[0.9375rem]">
         <p className="font-semibold">Ambiente de teste</p>
-        <p>
-          O pagamento por Pix e cartão ainda não está ligado. Este botão simula um pagamento
-          aprovado; nada é cobrado.
-        </p>
+        <p>Pix e cartão ainda não estão ligados. Este botão simula o pagamento; nada é cobrado.</p>
       </div>
       {error && (
         <p role="alert" className="text-[0.9375rem] font-semibold text-destructive">

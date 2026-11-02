@@ -24,6 +24,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E16 Account dashboard: home after signing in, pending actions, site status, in-site notices
 - [x] E17 One header everywhere, the profile menu, and a home page without the demo
 - [x] E18 Home page motion and navigation: one create-site button, repeating entrances, smooth section links, the turning price glow, an organic stem, the vine everywhere
+- [x] E19 Copy review: every client-facing text shorter and scannable at a glance
 
 ## Steps in detail
 
@@ -101,6 +102,10 @@ The same header and footer on every page (public pages, sign-in and password scr
 ### E18 Home page motion and navigation
 
 Every create-site button shares the specular finish, now a composited light eased once per frame (smooth where it stuttered). The header's sign-in link reads "Entrar ou cadastre-se". Section entrances repeat each time an element returns, with a cap on simultaneous entrances and an instant final state on jumps. The links to Como funciona, Preço and Dúvidas scroll smoothly there (also from other pages). The price card's glow turns slowly by itself and hands over to the mouse without jumps. The stem in "Como funciona" is one curved, tapering stroke with leaves that bud, grow and sway, ending in a bloom. The mouse vine roams the free space of the whole public page, kept off the content. All with reduced motion, no JavaScript and touch screens covered.
+
+### E19 Copy review
+
+Every client-facing text was cut to what a reader gets at a glance: the home page (hero, facts, features, price, final call), the stem notes, the help answers, the form step descriptions and notes, sign-in and sign-up, the dashboard, the site page, the account page and the email banner. Facts, prices (from `pricing.ts`), the legal review marks and the rules on testimonials stay. "Endereço e mapa" became "Como chegar", matching what client sites have. Legal texts and the admin area were left as they are.
 
 ### E14 Home demo (optional)
 

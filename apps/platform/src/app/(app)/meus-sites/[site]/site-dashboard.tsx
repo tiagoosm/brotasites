@@ -170,8 +170,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
               Escolha uma das 3
             </h2>
             <p className="text-[0.9375rem] text-ink-soft">
-              Escolher uma direção fixa a identidade do site (cores, letras e formas). Depois, ainda
-              dá para mudar textos, fotos, contato e seções.
+              A escolhida fixa cores, letras e formas. Textos, fotos e contato ainda mudam.
             </p>
           </div>
           <ul className="grid gap-5 md:grid-cols-3">
@@ -283,9 +282,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           >
             Baixar o site (.zip)
           </Button>
-          <p className="text-sm text-ink-soft">
-            O site é seu: uma cópia com todos os arquivos, para guardar ou hospedar onde quiser.
-          </p>
+          <p className="text-sm text-ink-soft">O site é seu: guarde ou hospede onde quiser.</p>
         </div>
       )}
 
@@ -308,8 +305,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
             Pedir ajustes
           </h2>
           <p className="text-[0.9375rem] text-ink-soft">
-            Mude o que quiser nas respostas e peça uma nova versão. A identidade aprovada continua a
-            mesma.
+            Mude as respostas e peça uma nova versão. O visual aprovado continua.
             {site.status === "live" &&
               ` Ajustes incluídos por ${pricing.adjustmentsDays} dias depois de publicar.`}
           </p>
