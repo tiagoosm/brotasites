@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-// An unexpected error while showing a page (Murphy): say so plainly, keep the person's work
+// An unexpected error on a signed-in page (Murphy; the public pages are static): say so plainly, keep the person's work
 // (answers are saved in the account as they go) and offer to try again or go somewhere safe.
 export default function PageError({ retry }: { error: unknown; retry: () => void }) {
   return (

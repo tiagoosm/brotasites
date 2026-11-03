@@ -25,7 +25,7 @@ Audited on 2026-11-03 against [ux-laws.md](ux-laws.md). Every screen of the plat
 | --- | --- | --- | --- | --- |
 | 1 | Doherty | Form "Próximo": no visible change for **1,650 ms** after the click (CPU ×4, 1.5 s network); the next step renders on the server and nothing said so | High | Fixed: the button turns busy (spinner, `aria-busy`) at once; test asserts < 400 ms |
 | 2 | Fitts | Site page (live and ready to approve) **wider than a 360px screen**: "Montar o site de novo com as mudanças" did not wrap, so the whole column was 369px | High | Fixed: the button wraps |
-| 3 | Murphy, Jakob | No 404 or error page: unknown addresses showed Next.js's default **in English**, with no logo and **0 links** | High | Fixed: `app/not-found.tsx` (pt-BR, logo, "Ir para o início", "Ir para o painel") and `app/error.tsx` ("Tentar de novo") |
+| 3 | Murphy, Jakob | No 404 or error page: unknown addresses showed Next.js's default **in English**, with no logo and **0 links** | High | Fixed: `app/not-found.tsx` (pt-BR, logo, "Ir para o início", "Ir para o painel") and `app/(app)/error.tsx` for the signed-in pages ("Tentar de novo"; the public pages are static) |
 | 4 | Murphy, Fitts | Team area: "Suspender" (takes a client site off the air) acted on **one click, 56px from "Aprovar"** at 1280px | Medium | Fixed: moved to the far end of the row and asks "Confirmar suspensão" |
 | 5 | Von Restorff, Occam | Dashboard: the same action highlighted twice (pending list and the site card): **4 primary buttons at 360px, 5 at 1280px** | Medium | Fixed: the card's button is secondary; the pending list holds the highlight |
 | 6 | Fitts | Sign-in: "Entrar com um link no e-mail" and "Esqueci a senha" **23px tall, 4px apart** | Medium | Fixed: 24px apart, each with its 44px area |
