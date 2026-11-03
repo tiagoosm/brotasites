@@ -126,6 +126,7 @@ brotasites/
 - `owner-steps.md`: accounts and decisions that depend on the owner.
 - `platform-design.md`, `platform-copy.md`: the platform's own look and copy (not client sites).
 - `ux-laws.md`: the 20 UX laws, the rule each sets here, how it is checked, and the review checklist. `ux-audit.md`: the first audit against them (E22).
+- `design-references.md`: third-party style references reviewed (principles only), what was kept and what was discarded.
 
 ## Open questions (owner's decision)
 

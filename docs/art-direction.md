@@ -69,7 +69,7 @@ AA contrast, no sideways scroll at 360, 768 and 1280 px, no external request, we
 
 ## References used (principles)
 
-Food: Drizzle, Food Ora, Swirlzy, Ember & Oak. Beauty: Hairdo, Barber Elite, Dragon Capital, Stay Route. Events and creatives: Unmapped, Chainly, Epidemic Sound. Structure and finish: Ranty (floating card with differentiators), Corebit (growing frame, giant blurred name in the background), Agentix (large numbers, word in italics, counters), Senti (grid lines and arches), Solar Foods (blurred gradient), Uni (gradient with grain, handwritten labels, icon grid, FAQ accordion), Five Pathways (dotted line stitching the sections), Squarespace (dark-to-light transition), Rulebase (text lighting up by word, texture), Glide (grid of colored icons), Celestia Smiles (expandable cards; no 3D, no "before and after").
+Food: Drizzle, Food Ora, Swirlzy, Ember & Oak. Beauty: Hairdo, Barber Elite, Dragon Capital, Stay Route. Events and creatives: Unmapped, Chainly, Epidemic Sound. Structure and finish: Ranty (floating card with differentiators), Corebit (growing frame, giant blurred name in the background), Agentix (large numbers, word in italics, counters), Senti (grid lines and arches), Solar Foods (blurred gradient), Uni (gradient with grain, handwritten labels, icon grid, FAQ accordion), Five Pathways (dotted line stitching the sections), Squarespace (dark-to-light transition), Rulebase (text lighting up by word, texture), Glide (grid of colored icons), Celestia Smiles (expandable cards; no 3D, no "before and after"). More references, with the principle taken from each one and where it maps to the personalities, are in `design-references.md`.
 
 ## What is left out
 

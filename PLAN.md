@@ -27,6 +27,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E19 Copy review: every client-facing text shorter and scannable at a glance
 - [x] E20 Design review: every screen checked on phone and desktop, inconsistencies fixed
 - [x] E22 UX laws: audit of every screen against the 20 laws, fixes, `docs/ux-laws.md` and automatic checks
+- [x] E23 Design references from Refero Styles (docs only)
 
 ## Steps in detail
 
