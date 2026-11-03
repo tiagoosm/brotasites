@@ -49,6 +49,10 @@ export const limits = {
   account: { ip: { max: 30, windowSeconds: 3600 }, email: { max: 10, windowSeconds: 3600 } },
   // Dashboard notices (E16): the second key is the account, not an email.
   notices: { ip: { max: 300, windowSeconds: 3600 }, email: { max: 120, windowSeconds: 3600 } },
+  // Creating, discarding and asking for directions (E24): the second key is the account.
+  sites: { ip: { max: 120, windowSeconds: 3600 }, email: { max: 60, windowSeconds: 3600 } },
+  // The team panel's actions and account openings (E24); the second key is the member.
+  admin: { ip: { max: 600, windowSeconds: 3600 }, email: { max: 300, windowSeconds: 3600 } },
 } as const;
 
 export function rulesFor(

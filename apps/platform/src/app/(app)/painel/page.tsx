@@ -10,7 +10,9 @@ import { CreateSiteButton } from "@/components/site/create-site-button";
 import { Button } from "@/components/ui/button";
 import {
   type DashboardSite,
+  daysUntil,
   formatDate,
+  idleDeadline,
   includedWindow,
   liveAddress,
   milestones,
@@ -19,7 +21,8 @@ import {
   pendingActions,
   siteAction,
 } from "@/lib/dashboard";
-import { loadDashboard } from "@/lib/server/dashboard";
+import { siteSlotCopy } from "@/lib/limits-copy";
+import { type DashboardData, loadDashboard } from "@/lib/server/dashboard";
 import { infoFor } from "@/lib/site-status";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +44,11 @@ export default async function DashboardPage({
   const notices =
     data?.notices.map((notice) => ({
       id: notice.id,
-      text: noticeText(notice.kind, notice.siteId ? names.get(notice.siteId) : undefined),
+      text: noticeText(
+        notice.kind,
+        notice.siteId ? names.get(notice.siteId) : undefined,
+        notice.daysLeft,
+      ),
       href: noticeHref(notice),
       date: formatDate(notice.createdAt),
       unread: !notice.readAt,
@@ -84,7 +91,7 @@ export default async function DashboardPage({
               )}
             </section>
             <PendingSection data={data} />
-            <SitesSection sites={data.sites} />
+            <SitesSection sites={data.sites} slots={data.slots} />
             {data.sites.some((site) => infoFor(site.status).busy) && <AutoRefresh />}
           </>
         )}
@@ -146,22 +153,43 @@ function PendingSection({
   );
 }
 
-function SitesSection({ sites }: { sites: DashboardSite[] }) {
+function SitesSection({ sites, slots }: { sites: DashboardSite[]; slots: DashboardData["slots"] }) {
+  // One unpaid site in progress per account (E24); the database decides, this only explains.
+  const full = slots.open >= slots.allowed;
   return (
     <section aria-labelledby="seus-sites" className="grid gap-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h2 id="seus-sites" className="font-display text-[1.75rem] leading-tight">
           Seus sites
         </h2>
-        {sites.length > 0 && (
-          <Button asChild variant="outline" size="lg">
-            <Link href="/criar?novo=1">
+        {sites.length > 0 &&
+          (full ? (
+            <Button variant="outline" size="lg" disabled aria-describedby="vaga-de-site">
               <Plus aria-hidden="true" />
               Criar outro site
-            </Link>
-          </Button>
-        )}
+            </Button>
+          ) : (
+            <Button asChild variant="outline" size="lg">
+              <Link href="/criar?novo=1">
+                <Plus aria-hidden="true" />
+                Criar outro site
+              </Link>
+            </Button>
+          ))}
       </div>
+      {sites.length > 0 && full && (
+        <p id="vaga-de-site" className="text-[0.9375rem] text-ink-soft">
+          {siteSlotCopy.blocked}{" "}
+          {slots.openSiteId && (
+            <Link
+              href={`/meus-sites/${slots.openSiteId}`}
+              className="touch-target font-semibold text-leaf-deep underline underline-offset-4"
+            >
+              {siteSlotCopy.openSite}
+            </Link>
+          )}
+        </p>
+      )}
       {sites.length === 0 ? (
         <div className="grid gap-3 rounded-xl border border-dashed border-line-strong p-6">
           <h3 className="font-display text-[1.5rem] leading-tight">Crie seu primeiro site</h3>
@@ -187,6 +215,8 @@ function SiteCard({ site }: { site: DashboardSite }) {
   const included = site.status === "live" ? includedWindow(site.publishedAt) : null;
   const address = liveAddress(site.subdomain);
   const steps = milestones(site);
+  // Unpaid and waiting on the person: when the cleanup would delete it (E24).
+  const deadline = idleDeadline(site);
   const headingId = `site-${site.id}`;
   return (
     <li
@@ -224,6 +254,15 @@ function SiteCard({ site }: { site: DashboardSite }) {
           Última mudança em {formatDate(site.updatedAt)}
         </p>
       </div>
+
+      {deadline && (
+        <p className="text-[0.8125rem] text-ink-soft">
+          Guardado até {formatDate(deadline.toISOString())}.{" "}
+          {daysUntil(deadline) <= 7
+            ? "Sem novidades, ele será apagado."
+            : "Qualquer mudança renova o prazo."}
+        </p>
+      )}
 
       {steps.length > 0 && (
         <ol

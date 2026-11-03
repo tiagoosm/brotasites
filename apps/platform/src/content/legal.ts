@@ -1,7 +1,14 @@
+import { limits } from "@/config/limits";
 import { formatBRL, LEGAL_REVIEW_PENDING, pricing } from "@/config/pricing";
 import { PENDING } from "./contact";
 
-// Prices and conditions come from src/config/pricing.ts.
+// Prices and conditions come from src/config/pricing.ts; the limits from src/config/limits.ts.
+const idleDays = limits.idleDaysBeforeDeletion;
+// "7 dias antes e de novo na véspera" (from deletionWarningDays: 7 and 1).
+const warnDays = limits.deletionWarningDays
+  .map((days) => (days === 1 ? "na véspera" : `${days} dias antes`))
+  .join(" e de novo ");
+const freeRedos = limits.freeDirectionRounds - 1;
 const publishPriceText =
   pricing.launchPrice === null
     ? formatBRL(pricing.publish)
@@ -61,6 +68,8 @@ export const privacySections: LegalSection[] = [
           "Enviar os e-mails da sua conta: confirmação do e-mail, link de acesso, redefinição de senha e troca de e-mail. Não enviamos outros e-mails.",
           "Proteger as contas contra robôs e tentativas de invasão.",
           "Gerar e publicar o seu site, quando você pedir.",
+          "Atender você no suporte: a nossa equipe pode ver o seu nome, o seu e-mail, as datas da conta e os seus sites, com o custo de cada um. Cada consulta a uma conta fica registrada.",
+          "Medir quanto custa criar cada site, sem guardar o texto que você escreveu nessa medição.",
         ],
       },
       "Usamos esses dados para prestar o serviço que você pediu (Lei Geral de Proteção de Dados, art. 7º, V). Não vendemos seus dados.",
@@ -107,6 +116,7 @@ export const privacySections: LegalSection[] = [
     title: "Por quanto tempo guardamos",
     blocks: [
       "Guardamos os dados da sua conta, os rascunhos e as fotos enquanto a conta existir. Você pode excluir a conta a qualquer momento, na página Conta: apagamos a conta, os sites, os rascunhos e as fotos, e tiramos do ar os sites publicados. Os registros de pagamentos feitos ficam guardados pelo prazo que a lei fiscal exige.",
+      `Um site não pago, sem nenhuma ação sua por ${idleDays} dias, é apagado com as respostas e as fotos dele. Avisamos no seu painel ${warnDays}. Depois de apagado, fica só um registro sem dados pessoais (a etapa a que o site chegou e o custo dele), para as nossas contas.`,
     ],
   },
   {
@@ -157,6 +167,9 @@ export const termsSections: LegalSection[] = [
     blocks: [
       "O BrotaSites ajuda você a criar o site do seu negócio respondendo sete perguntas. Com as respostas, criamos 3 direções para o visual; você escolhe uma e confere o site pronto antes de publicar.",
       `Criar, editar, ver as direções e o site pronto é grátis. Publicar o site custa ${publishPriceText}, em pagamento único, e você só paga se decidir publicar.`,
+      `Cada site tem ${limits.freeDirectionRounds} rodadas de direções grátis: a primeira e mais ${freeRedos} refazeres. Depois, você pode pedir mais 1 rodada a cada ${limits.extraRoundWaitMinutes} minutos.`,
+      `Cada conta tem ${limits.openSitesPerAccount} site não pago em andamento por vez. Para criar outro, publique o que está em andamento ou descarte-o.`,
+      `Um site não pago, sem nenhuma ação sua por ${idleDays} dias, é apagado. Avisamos no seu painel ${warnDays}.`,
       "O serviço está em desenvolvimento: funções podem mudar, ser incluídas ou retiradas.",
     ],
   },

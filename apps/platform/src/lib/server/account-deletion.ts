@@ -24,7 +24,7 @@ export interface DeletionResult {
 }
 
 /** Every file under a folder (Storage lists one level at a time). */
-async function filesUnder(
+export async function filesUnder(
   db: SupabaseClient,
   bucket: string,
   prefix: string,
@@ -42,7 +42,11 @@ async function filesUnder(
   return paths;
 }
 
-async function removeFolder(db: SupabaseClient, bucket: string, prefix: string): Promise<number> {
+export async function removeFolder(
+  db: SupabaseClient,
+  bucket: string,
+  prefix: string,
+): Promise<number> {
   const paths = await filesUnder(db, bucket, prefix);
   for (let i = 0; i < paths.length; i += 100) {
     await db.storage.from(bucket).remove(paths.slice(i, i + 100));

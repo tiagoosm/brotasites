@@ -1,3 +1,4 @@
+import { limits } from "@/config/limits";
 import { formatBRL, LEGAL_REVIEW_PENDING, pricing } from "@/config/pricing";
 
 // Questions and answers for /ajuda; the ones marked `main` also appear on the home page.
@@ -66,8 +67,7 @@ export const faqGroups: FaqGroup[] = [
       {
         slug: "o-que-sao-as-direcoes",
         question: "O que são as 3 direções?",
-        answer:
-          "3 propostas de visual feitas com as suas respostas: Fiel à marca, Evolução e Contraste. Escolha uma ou peça outras 3, quantas vezes quiser.",
+        answer: `3 propostas de visual feitas com as suas respostas: Fiel à marca, Evolução e Contraste. Escolha uma ou peça outras 3: são ${limits.freeDirectionRounds - 1} refazeres grátis, depois 1 por hora.`,
       },
     ],
   },

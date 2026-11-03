@@ -13,6 +13,8 @@ export interface DashboardData {
   sites: DashboardSite[];
   notices: Notice[];
   unread: number;
+  /** The place for a new site (E24): unpaid sites in progress, the allowance, and which one. */
+  slots: { open: number; allowed: number; openSiteId: string | null };
 }
 
 const MILESTONE_EVENTS = ["directions_ready", "site_built"];
@@ -26,6 +28,8 @@ interface SiteRow {
   updated_at: string;
   approved_at: string | null;
   published_at: string | null;
+  last_activity_at?: string | null;
+  keep_until?: string | null;
   site_configs: { name: string | null; completed: string[] | null }[] | null;
   site_events: { kind: string; created_at: string }[] | null;
 }
@@ -50,6 +54,8 @@ function toSite(row: SiteRow): DashboardSite {
     completed: config?.completed ?? [],
     directionsReadyAt: first("directions_ready"),
     builtAt: first("site_built"),
+    lastActivityAt: row.last_activity_at ?? null,
+    keepUntil: row.keep_until ?? null,
   };
 }
 
@@ -61,22 +67,23 @@ export async function loadDashboard(): Promise<DashboardData | null> {
   const user = auth.user;
   if (!user) return null;
 
-  const [profile, sites, notices, unread] = await Promise.all([
+  const [profile, sites, notices, unread, slots] = await Promise.all([
     supabase.from("profiles").select("full_name").maybeSingle(),
     supabase
       .from("sites")
       .select(
-        "id, status, subdomain, status_message, created_at, updated_at, approved_at, published_at, site_configs(name:draft->business->>name, completed), site_events(kind, created_at)",
+        "id, status, subdomain, status_message, created_at, updated_at, approved_at, published_at, last_activity_at, keep_until, site_configs(name:draft->business->>name, completed), site_events(kind, created_at)",
       )
       .eq("schema_version", "1.2")
       .in("site_events.kind", MILESTONE_EVENTS)
       .order("updated_at", { ascending: false }),
     supabase
       .from("notifications")
-      .select("id, kind, site_id, created_at, read_at")
+      .select("id, kind, site_id, created_at, read_at, days_left")
       .order("created_at", { ascending: false })
       .limit(15),
     supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null),
+    supabase.rpc("my_site_slots"),
   ]);
   if (sites.error) throw sites.error;
 
@@ -93,6 +100,7 @@ export async function loadDashboard(): Promise<DashboardData | null> {
         site_id: string | null;
         created_at: string;
         read_at: string | null;
+        days_left?: number | null;
       }[]
     ).map((row) => ({
       id: row.id,
@@ -100,7 +108,13 @@ export async function loadDashboard(): Promise<DashboardData | null> {
       siteId: row.site_id,
       createdAt: row.created_at,
       readAt: row.read_at,
+      daysLeft: row.days_left ?? null,
     })),
     unread: unread.count ?? 0,
+    slots: {
+      open: Number((slots.data as { open?: number } | null)?.open ?? 0),
+      allowed: Number((slots.data as { allowed?: number } | null)?.allowed ?? 1),
+      openSiteId: (slots.data as { openSiteId?: string | null } | null)?.openSiteId ?? null,
+    },
   };
 }

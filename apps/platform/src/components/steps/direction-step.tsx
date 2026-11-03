@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { StepFooter } from "@/components/wizard/step-footer";
 import { StepHeader } from "@/components/wizard/step-header";
+import { limits } from "@/config/limits";
 import { useForm12 } from "@/lib/form-store";
 import { infoFor } from "@/lib/site-status";
 import { requestDirections, SiteActionError, saveDraft } from "@/lib/sites";
@@ -15,7 +16,9 @@ import { getBrowserSupabase } from "@/lib/supabase/client";
 import { LockedNote } from "./step-form";
 
 // Step 6: the client sends the answers and may close the page. The 3 directions show up on
-// the dashboard when they are ready; redoing them is unlimited until one is approved.
+// the dashboard when they are ready. Redoing them has 2 free redos, then one per hour (E24).
+
+const redos = limits.freeDirectionRounds - 1;
 
 export function DirectionStep() {
   const router = useRouter();
@@ -36,7 +39,7 @@ export function DirectionStep() {
       // The saved draft is what the job reads: save it now instead of waiting for the autosave.
       const steps = completed.includes("direcao") ? completed : [...completed, "direcao" as const];
       await saveDraft(supabase, siteId, draft, steps);
-      await requestDirections(supabase, siteId);
+      await requestDirections(siteId);
       completeStep("direcao");
       router.push(`/meus-sites/${siteId}`);
     } catch (caught) {
@@ -123,7 +126,8 @@ export function DirectionStep() {
           <div className="grid gap-4 text-[0.9375rem]">
             <p>
               3 direções de visual: <strong>Fiel à marca</strong>, <strong>Evolução</strong> e{" "}
-              <strong>Contraste</strong>. Escolha uma ou peça outras 3, quantas vezes quiser.
+              <strong>Contraste</strong>. Escolha uma ou peça outras 3: são {redos} refazeres
+              grátis.
             </p>
             <p className="text-ink-soft">Leva alguns minutos.</p>
           </div>

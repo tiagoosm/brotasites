@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Loading, Notice, unavailable } from "@/components/shared/page-state";
 import { useRequiredAccount } from "@/lib/account";
-import { createSite, listSites, loadSite } from "@/lib/sites";
+import { siteSlotCopy } from "@/lib/limits-copy";
+import { createSite, listSites, loadSite, SiteInProgressError } from "@/lib/sites";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 
 // "/criar": signing in comes first (docs/form-flow.md). Then the latest draft opens where the
@@ -16,6 +17,8 @@ export function StartForm() {
   const params = useSearchParams();
   const account = useRequiredAccount();
   const [failed, setFailed] = useState(false);
+  // One unpaid site in progress per account (E24): the site to finish or discard first.
+  const [blocked, setBlocked] = useState<{ siteId: string | null } | null>(null);
   const started = useRef(false);
 
   useEffect(() => {
@@ -35,12 +38,27 @@ export function StartForm() {
         router.replace(`/criar/${draftSite.id}/${next.slug}`);
         return;
       }
-      const siteId = await createSite(supabase);
+      const siteId = await createSite();
       router.replace(`/criar/${siteId}/negocio`);
-    })().catch(() => setFailed(true));
+    })().catch((error) => {
+      if (error instanceof SiteInProgressError) setBlocked({ siteId: error.siteId });
+      else setFailed(true);
+    });
   }, [account.status, params, router]);
 
   if (account.status === "unavailable") return <Notice {...unavailable} />;
+  if (blocked) {
+    return (
+      <Notice
+        title="Você já tem um site em andamento"
+        text={siteSlotCopy.blocked}
+        action={{
+          href: blocked.siteId ? `/meus-sites/${blocked.siteId}` : "/painel",
+          label: siteSlotCopy.openSite,
+        }}
+      />
+    );
+  }
   if (failed) {
     return (
       <Notice
