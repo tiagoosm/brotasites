@@ -30,7 +30,14 @@ import {
 import { delimit } from "./data.js";
 import { draftCopy } from "./draft.js";
 import { checkFacts } from "./facts.js";
-import { type Caller, LimitReached, MemoryUsageStore, SpendingGuard } from "./limits.js";
+import {
+  type Caller,
+  LimitReached,
+  MemoryUsageStore,
+  type MeteredTask,
+  type ModelCall,
+  SpendingGuard,
+} from "./limits.js";
 import { type AiTask, type ModelClient, ModelError } from "./model.js";
 import { playbookFor } from "./playbooks.js";
 import { costOf } from "./prices.js";
@@ -107,10 +114,18 @@ export class AiDirector implements EngineProvider {
     return this.options.model.modelId;
   }
 
+  /**
+   * A model call made outside the director (the reviewer agent), for the cost log only: it does
+   * not count in the daily budget, as before (E24 keeps the AI's limits as they were).
+   */
+  async logCall(call: ModelCall): Promise<void> {
+    await this.guard.logCall(call);
+  }
+
   /** One model call, its cost recorded; the parsed answer or the problems with it. */
   private async ask<T>(
     task: AiTask,
-    siteId: string,
+    meter: { task: MeteredTask; caller: Caller },
     schema: z.ZodType<T>,
     system: string,
     prompt: string,
@@ -133,8 +148,21 @@ export class AiDirector implements EngineProvider {
       throw error;
     }
     const costUsd = costOf(response.model, response.usage);
-    await this.guard.record(costUsd);
-    this.emit({ type: "model-call", task, siteId, model: response.model, costUsd });
+    await this.guard.record(costUsd, {
+      task: meter.task,
+      model: response.model,
+      usage: response.usage,
+      costUsd,
+      siteId: meter.caller.siteId,
+      accountId: meter.caller.accountId,
+    });
+    this.emit({
+      type: "model-call",
+      task,
+      siteId: meter.caller.siteId,
+      model: response.model,
+      costUsd,
+    });
     let json: unknown;
     try {
       json = JSON.parse(response.text);
@@ -215,7 +243,7 @@ export class AiDirector implements EngineProvider {
       for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
         const answer = await this.ask(
           "art-director",
-          siteId,
+          { task: "directions", caller },
           schema,
           artDirectorSystem,
           problems.length > 0 ? basePrompt + retryNote(problems) : basePrompt,
@@ -370,7 +398,8 @@ ${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos
       for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
         const answer = await this.ask(
           "copy",
-          caller.siteId,
+          // Copy redone with the reviewer's or the team's notes is a rewrite in the cost log.
+          { task: notes.length > 0 ? "rewrite" : "copy", caller },
           schema,
           system,
           problems.length > 0 ? basePrompt + retryNote(problems) : basePrompt,

@@ -1,4 +1,5 @@
 import type { AiTask } from "./model.js";
+import type { Usage } from "./prices.js";
 
 // Spending guards (docs/ai-and-reviewer.md, AI security): AI rounds per site and per account
 // per day, and a global daily budget with an alert. Past a limit the AI is not called and the
@@ -23,6 +24,19 @@ export const defaultLimits: LimitsConfig = {
   alertRatio: 0.8,
 };
 
+/** What each model call is for, in the cost log (E24): "rewrite" is copy redone with notes. */
+export type MeteredTask = "directions" | "copy" | "review" | "rewrite";
+
+/** One model call, as the cost log keeps it: no prompt and no answer. */
+export interface ModelCall {
+  task: MeteredTask;
+  model: string;
+  usage: Usage;
+  costUsd: number;
+  siteId?: string;
+  accountId?: string;
+}
+
 export interface UsageStore {
   /** Adds one round and returns the new count for that key. */
   countRound(key: string): Promise<number>;
@@ -32,12 +46,20 @@ export interface UsageStore {
   spend(day: string): Promise<number>;
   /** True the first time it is called for a day (one alert per day). */
   claimAlert(day: string): Promise<boolean>;
+  /** Keeps one model call in the cost log (Supabase: ai_calls). Optional: memory stores skip it. */
+  logCall?(call: ModelCall): Promise<void>;
 }
 
 export class MemoryUsageStore implements UsageStore {
   private readonly counts = new Map<string, number>();
   private readonly spent = new Map<string, number>();
   private readonly alerted = new Set<string>();
+  /** The cost log, kept for tests. */
+  readonly calls: ModelCall[] = [];
+
+  async logCall(call: ModelCall): Promise<void> {
+    this.calls.push(call);
+  }
 
   async countRound(key: string): Promise<number> {
     const next = (this.counts.get(key) ?? 0) + 1;
@@ -83,6 +105,9 @@ export class SpendingGuard {
     private readonly limits: LimitsConfig = defaultLimits,
     private readonly onAlert: BudgetAlert = () => {},
     private readonly now: () => Date = () => new Date(),
+    /** The cost log is best effort: a failure is reported here and never stops the site. */
+    private readonly onLogError: (error: unknown) => void = (error) =>
+      console.warn(`AI cost log failed: ${error instanceof Error ? error.message : String(error)}`),
   ) {}
 
   private keys(task: AiTask, caller: Caller) {
@@ -110,15 +135,32 @@ export class SpendingGuard {
     await this.store.countRound(account);
   }
 
-  /** Records what a request cost and raises the alert once a day past the alert ratio. */
-  async record(usd: number): Promise<void> {
+  /**
+   * Records what a request cost and raises the alert once a day past the alert ratio. With the
+   * call's details, it also goes to the cost log: the one place every model call is written.
+   */
+  async record(usd: number, call?: ModelCall): Promise<void> {
     const day = dayOf(this.now());
+    if (call) await this.logCall(call);
     const total = await this.store.addSpend(day, usd);
     if (
       total >= this.limits.dailyBudgetUsd * this.limits.alertRatio &&
       (await this.store.claimAlert(day))
     ) {
       this.onAlert({ day, spentUsd: total, budgetUsd: this.limits.dailyBudgetUsd });
+    }
+  }
+
+  /**
+   * Writes one call to the cost log, never throwing: measuring must not break a site's
+   * generation. Calls outside the budget (the reviewer's, which never counted in it) come here
+   * directly.
+   */
+  async logCall(call: ModelCall): Promise<void> {
+    try {
+      await this.store.logCall?.(call);
+    } catch (error) {
+      this.onLogError(error);
     }
   }
 }

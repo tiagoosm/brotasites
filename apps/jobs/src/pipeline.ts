@@ -195,10 +195,26 @@ export async function runBuild(deps: PipelineDeps, job: Job): Promise<void> {
       : [];
     const copy = await deps.ai.writeCopy(form, caller, { notes: adminNotes });
     let reviewBuilds = 0;
+    // Each reviewer call goes to the cost log too (E24), best effort.
+    const agent: ReviewerAgent = {
+      review: async (input) => {
+        const result = await deps.agent.review(input);
+        if (result.call) {
+          await deps.ai.logCall({
+            task: "review",
+            model: result.call.model,
+            usage: result.call.usage,
+            costUsd: result.costUsd,
+            ...caller,
+          });
+        }
+        return result;
+      },
+    };
     const report = await reviewSite({
       config: copy.config,
       form,
-      agent: deps.agent,
+      agent,
       browser: deps.browserChecks,
       build: async (config) => ({
         distDir: await build(deps, workspace, config, `review-${reviewBuilds++}`),
