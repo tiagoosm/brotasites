@@ -65,7 +65,7 @@ export default async function DashboardPage({
                 </h1>
                 <NoticesBell notices={notices} unread={data.unread} />
               </div>
-              <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.9375rem] text-ink-soft">
+              <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-3 text-[0.9375rem] text-ink-soft">
                 <span className="break-all">{data.email}</span>
                 <Link
                   href="/conta"
@@ -273,7 +273,9 @@ function SiteCard({ site }: { site: DashboardSite }) {
       )}
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-        <Button asChild size="lg" variant={info.yourTurn ? "default" : "outline"}>
+        {/* Secondary here: the same action is the primary one under "Precisa de você" (one
+            highlight per action, Von Restorff). */}
+        <Button asChild size="lg" variant="outline">
           <Link href={action.href}>
             {action.label}
             <span className="sr-only">: {site.name}</span>

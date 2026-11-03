@@ -102,7 +102,7 @@ export function SectionsStep() {
                   checked={enabled}
                   disabled={unavailable}
                   onCheckedChange={(value) => toggle(choice.id, value)}
-                  className="relative h-7 w-12 shrink-0 cursor-pointer rounded-full bg-line-strong transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-leaf"
+                  className="touch-target relative h-7 w-12 shrink-0 cursor-pointer rounded-full bg-line-strong transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-leaf"
                 >
                   <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow-sm transition-transform duration-200 ease-[var(--ease-out)] data-[state=checked]:translate-x-[1.375rem]" />
                 </Switch.Root>

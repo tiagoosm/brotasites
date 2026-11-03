@@ -26,6 +26,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E18 Home page motion and navigation: one create-site button, repeating entrances, smooth section links, the turning price glow, an organic stem, the vine everywhere
 - [x] E19 Copy review: every client-facing text shorter and scannable at a glance
 - [x] E20 Design review: every screen checked on phone and desktop, inconsistencies fixed
+- [x] E22 UX laws: audit of every screen against the 20 laws, fixes, `docs/ux-laws.md` and automatic checks
 
 ## Steps in detail
 
@@ -103,6 +104,23 @@ The same header and footer on every page (public pages, sign-in and password scr
 ### E18 Home page motion and navigation
 
 Every create-site button shares the specular finish, now a composited light eased once per frame (smooth where it stuttered). The header's sign-in link reads "Entrar ou cadastre-se". Section entrances repeat each time an element returns, with a cap on simultaneous entrances and an instant final state on jumps. The links to Como funciona, Preço and Dúvidas scroll smoothly there (also from other pages). The price card's glow turns slowly by itself and hands over to the mouse without jumps. The stem in "Como funciona" is one curved, tapering stroke with leaves that bud, grow and sway, ending in a bloom. The mouse vine roams the free space of the whole public page, kept off the content. All with reduced motion, no JavaScript and touch screens covered.
+
+### E22 UX laws
+
+Every screen was measured against the owner's 20 UX laws (19 distinct: Fitts is listed twice) at 360, 768 and 1280px. The report is `docs/ux-audit.md`.
+
+Fixed:
+
+- the form's "Próximo" gave no feedback for 1.65s on a slow phone;
+- the site page scrolled sideways at 360px;
+- there were no 404 or error pages;
+- suspending a site in the team area took one click, next to "Aprovar";
+- the dashboard highlighted the same action twice;
+- several tap targets were under 44px;
+- field errors sat after their hints;
+- ".json" in the account page.
+
+The practice is fixed in `docs/ux-laws.md` (rules and checklist), a rule in `CLAUDE.md` and `e2e/ux-laws.spec.ts`. Proposals for the generated sites are recorded in the audit, without changing the catalog.
 
 ### E20 Design review
 

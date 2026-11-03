@@ -4,7 +4,7 @@ import {
   type FormStepSlug12 as FormStepSlug,
   formSteps12 as formSteps,
 } from "@brotasites/schema/v1.2";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useForm12 } from "@/lib/form-store";
@@ -13,10 +13,13 @@ import { useForm12 } from "@/lib/form-store";
 export function StepFooter({
   step,
   action,
+  pending = false,
 }: {
   step: FormStepSlug;
   /** Replaces the next-step button (sending the answers, approving the site). */
   action?: React.ReactNode;
+  /** The next step is on its way: the button says so and takes no second click. */
+  pending?: boolean;
 }) {
   const { siteId } = useForm12();
   const index = formSteps.findIndex((s) => s.slug === step);
@@ -35,12 +38,25 @@ export function StepFooter({
         </Button>
       )}
       {action ?? (
-        <Button type="submit" size="lg" className="group ml-auto flex-1 sm:flex-none">
+        <Button
+          type="submit"
+          size="lg"
+          aria-disabled={pending || undefined}
+          aria-busy={pending || undefined}
+          onClick={(event) => {
+            if (pending) event.preventDefault();
+          }}
+          className="group ml-auto flex-1 aria-busy:opacity-80 sm:flex-none"
+        >
           {label}
-          <ArrowRight
-            aria-hidden="true"
-            className="transition-transform duration-200 group-hover:translate-x-0.5"
-          />
+          {pending ? (
+            <LoaderCircle aria-hidden="true" className="animate-spin" />
+          ) : (
+            <ArrowRight
+              aria-hidden="true"
+              className="transition-transform duration-200 group-hover:translate-x-0.5"
+            />
+          )}
         </Button>
       )}
     </div>

@@ -9,6 +9,7 @@ import { EmailConfirmBanner } from "@/components/account/email-banner";
 import { Field, FormError } from "@/components/account/field";
 import { MfaEnroll } from "@/components/account/mfa";
 import { PasswordField } from "@/components/account/password-field";
+import { TermsLinks } from "@/components/account/terms-links";
 import { Loading, Notice, unavailable } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
 import { type AccountState, useRequiredAccount } from "@/lib/account";
@@ -231,25 +232,10 @@ function TermsSection({ onSaved }: { onSaved: () => void }) {
             className="mt-0.5 size-6 shrink-0 accent-leaf"
           />
           <label htmlFor={id} className="text-[0.9375rem]">
-            Li e aceito os{" "}
-            <Link
-              href="/termos"
-              target="_blank"
-              className="font-semibold text-leaf-deep underline underline-offset-4"
-            >
-              Termos de uso
-            </Link>{" "}
-            e a{" "}
-            <Link
-              href="/privacidade"
-              target="_blank"
-              className="font-semibold text-leaf-deep underline underline-offset-4"
-            >
-              Política de Privacidade
-            </Link>
-            .
+            Li e aceito os Termos de uso e a Política de Privacidade.
           </label>
         </div>
+        <TermsLinks />
         <Button type="submit" size="lg" className="justify-self-start">
           Aceitar
         </Button>
@@ -451,7 +437,7 @@ function DataSection() {
         download
         className="touch-target inline-flex h-12 items-center justify-self-start rounded-full border border-border bg-background px-7 font-semibold hover:bg-accent"
       >
-        Baixar meus dados (.json)
+        Baixar meus dados
       </a>
     </Section>
   );

@@ -185,7 +185,7 @@ export function AddressStep() {
               Quer mudar algo? Ajuste as respostas e peça uma nova versão na{" "}
               <Link
                 href={`/meus-sites/${siteId}`}
-                className="font-semibold text-leaf-deep underline underline-offset-4"
+                className="touch-target font-semibold text-leaf-deep underline underline-offset-4"
               >
                 página do site
               </Link>
@@ -421,7 +421,7 @@ function Summary() {
             <span className="tag text-stem">{formSteps12.find((s) => s.slug === slug)?.title}</span>
             <Link
               href={`/criar/${siteId}/${slug}`}
-              className="text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
+              className="touch-target text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
             >
               Mudar
             </Link>

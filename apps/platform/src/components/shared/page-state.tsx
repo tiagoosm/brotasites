@@ -30,7 +30,7 @@ export function Notice({
       {action && (
         <Link
           href={action.href}
-          className="font-semibold text-leaf-deep underline underline-offset-4"
+          className="touch-target justify-self-center font-semibold text-leaf-deep underline underline-offset-4"
         >
           {action.label}
         </Link>

@@ -264,7 +264,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           href={liveUrl}
           target="_blank"
           rel="noopener"
-          className="inline-flex items-center gap-2 justify-self-start text-[1.0625rem] font-semibold text-leaf-deep underline underline-offset-4"
+          className="touch-target inline-flex items-center gap-2 justify-self-start text-[1.0625rem] font-semibold text-leaf-deep underline underline-offset-4"
         >
           {liveUrl.replace("https://", "")}
           <ExternalLink aria-hidden="true" className="size-4" />
@@ -309,7 +309,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
             {site.status === "live" &&
               ` Ajustes incluídos por ${pricing.adjustmentsDays} dias depois de publicar.`}
           </p>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-[0.9375rem]">
+          <div className="flex flex-wrap gap-x-6 gap-y-6 text-[0.9375rem]">
             {[
               ["conteudo", "Textos, serviços e fotos"],
               ["contato", "Contato e horários"],
@@ -328,7 +328,8 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           <Button
             variant="outline"
             size="lg"
-            className="justify-self-start"
+            // Wraps on phones: on one line it was wider than a 360px screen.
+            className="h-auto min-h-12 justify-self-start py-3 text-center whitespace-normal"
             disabled={acting !== null}
             onClick={() =>
               act("rebuild", async () => {

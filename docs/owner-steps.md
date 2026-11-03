@@ -71,6 +71,18 @@ In this order. Nothing here was done by Claude Code; values marked "to verify" w
 - After this merges, Vercel deploys the cron with the next production deployment. You can check it in Vercel > the project > Settings > Cron Jobs (it lists `/api/cron/keep-alive`), and run it once from there.
 - Supabase still emails a warning about a week before pausing; if one ever arrives, open the project in the Supabase dashboard once and tell me.
 
+## UX laws (E22)
+
+The audit is in `docs/ux-audit.md`. These items wait on you:
+
+- **CEP lookup (Tesler):** filling city and state from the CEP needs a lookup service (for example ViaCEP or BrasilAPI; terms and limits to verify). Choose one, or keep typing them in.
+- **Time estimate (Parkinson):** the home page has no "leva uns N minutos" because there is no measured figure and the project never invents numbers. After the first real clients, the time can be measured and stated.
+- **"Site no ar" (peak-end):** today it says "Seu site está no ar.". A warmer end is proposed for your OK: "Seu site está no ar. Compartilhe o endereço com seus clientes." plus the address.
+- **Generated sites:**
+  - Show the floating WhatsApp button only after the hero's button leaves the screen, so the first screen shows the action fewer than 3 times.
+  - Cap "Sobre" paragraphs at 25 words.
+  - Both go through the catalog cycle (E6/E11) if you approve.
+
 ## Decisions to review
 
 Since 2026-10-27 the owner does not approve each task. Choices the plan reserved for the owner are taken with the recommended option and listed here; any of them can be reversed.
