@@ -124,6 +124,7 @@ brotasites/
 - `blind-test.md`: the "does not look like AI" criterion.
 - `owner-steps.md`: accounts and decisions that depend on the owner.
 - `platform-design.md`, `platform-copy.md`: the platform's own look and copy (not client sites).
+- `design-references.md`: third-party style references reviewed (principles only), what was kept and what was discarded.
 
 ## Open questions (owner's decision)
 
