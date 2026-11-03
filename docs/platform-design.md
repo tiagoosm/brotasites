@@ -4,14 +4,14 @@ Art direction for the BrotaSites platform (form, dashboard and marketing pages).
 
 ## Idea
 
-The name is BrotaSites: the client's site *sprouts*. The platform is a botanical plate (herbarium sheet): cool paper, ink-green line work, specimen-tag labels. It stays quiet so the client's site in the preview is the star.
+The name is BrotaSites: the client's site *sprouts*. The platform is a botanical plate (herbarium sheet): cool paper, ink-green line work, specimen-tag labels. It stays quiet so the client's site (the 3 directions and the finished site) is the star.
 
 ## Tokens
 
 | Token | Hex | Use |
 | --- | --- | --- |
 | Paper | `#F7F8F3` | Page background, rail |
-| Table | `#ECEEE7` | Surface the live preview sits on |
+| Table | `#ECEEE7` | Surface the form's card and the price section sit on |
 | Surface | `#FFFFFF` | Form column, inputs |
 | Ink | `#14241B` | Text |
 | Ink soft | `#4D5C53` | Secondary text |
@@ -20,7 +20,7 @@ The name is BrotaSites: the client's site *sprouts*. The platform is a botanical
 | Leaf deep | `#22603A` | Hover, text on leaf wash |
 | Leaf wash | `#E2EFE4` | Selected tag background, leaves |
 | Stem | `#2F5D45` | Botanical line work, step tags |
-| Pollen | `#E2B23C` | Only for "now": the current question and the live preview marker |
+| Pollen | `#E2B23C` | Only for "now" and "your turn": the current question, the client's pending items |
 
 Defined as CSS variables in `apps/platform/src/app/globals.css` and mapped to shadcn/ui tokens. There is no dark theme yet; shadcn `dark:` styles only apply under an explicit `.dark` class.
 
@@ -65,7 +65,7 @@ Nothing runs over 900ms, except what follows the scroll.
 - Home page stem (E18): one curved stroke snaking gently through the questions (`lib/motion/stem.ts`, measured by `stem-geometry.tsx` with a ResizeObserver), tapering from 4.2px at the base (top) to 1.4px at the young tip, dark stem green to leaf green. A mask line drawn with the scroll (stroke-dashoffset on a normalized path, CSS scroll-driven animation) reveals it. When the tip reaches a question its leaf buds from the stem, grows and opens with a slight turn and a small sway (1.1s); small leaflets and a curl of tendril grow between questions; four hand-drawn leaf shapes, alternating sides, sizes and angles. The last question blooms (five petals, a soft pollen glow). Young leaves keep a slow 2.5° sway on screen. Whole and open without support, without JavaScript or with reduced motion.
 - Form stem: drawing (stroke-dashoffset, 900ms ease-in-out) and leaf unfurling (700ms ease-out).
 - Question content rises in with a short stagger when the step changes.
-- The live marker pings slowly; the bud breathes.
+- The dashboard's "working" dot pings slowly; the bud breathes.
 - One header on every page (E17), sticky, 64px: the brand, the four links centered, and the account on the right (a 44px round profile button with the initials). The profile menu drops 4px in 140ms (nothing for reduced motion). Phone menu: the sheet fades in and its items rise in one after the other, the main button last (about 0.65s in all). It is rendered in the body, outside the header, whose backdrop blur would otherwise squeeze the fixed sheet into the header's height. On the form, the progress sits right under the header (the stem rail from 1280px).
 - Buttons press to 0.97. Every "Criar meu site" / "Criar site" button (hero, after the questions, closing call, header, phone menu, the dashboard's first site) has the specular finish (E18, `create-site-button.tsx`): a cream light on its rim that follows the mouse, quieter on the header's smaller button (still, on the top-left, on touch screens and with reduced motion). The light is its own layer moved only with transform, eased once per frame toward the cursor; the button's box is read on enter, scroll and resize, never on a move. Inside, the sheen stays at 4% so the white text keeps at least 4.5:1.
 - Price card glow (E18): the lit arc turns round the border once every 12s at rest (a CSS animation of `rotate` on its own layer); the mouse takes over, easing the short way round to the cursor, and the turn resumes from where it stopped. Touch screens keep the turn; reduced motion keeps a still glow. Paused off screen and in a hidden tab.
@@ -75,6 +75,18 @@ Nothing runs over 900ms, except what follows the scroll.
 
 ## Layout
 
-- Desktop (≥1280px): questions rail | form column | live preview on the table.
-- 1024 to 1279px: form | preview; the stem moves to the header.
-- Phones: form only, header with the horizontal stem, a sticky footer with "Ver prévia" and the next button; the preview opens full screen.
+There is no live preview (owner decision of 2026-10-27, removed in E10).
+
+- Desktop (≥1280px): questions rail | the form's card on the table.
+- Below 1280px: the form only; the progress ("Passo N de 7" and a horizontal stem) sits under the header.
+- Phones: a sticky footer holds "Voltar" and the next button, within thumb reach.
+
+## UX laws
+
+Every interface change is reviewed against [ux-laws.md](ux-laws.md) (its checklist) before the step is done, and the PR summary lists the laws touched and any conflict. Rules that shape this design system:
+
+- One filled button per block; the same action is never highlighted twice.
+- Every target has its own 44px area.
+- A field's error sits right under it, before its hint.
+- Every click shows a change in under 400ms (busy state on the button).
+- Destructive actions sit apart from the main one and ask for confirmation.

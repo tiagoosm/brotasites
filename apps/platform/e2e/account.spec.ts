@@ -78,7 +78,7 @@ test("downloading the data: only the person's, no secrets", async ({ page, reque
   await createUser(request, { email: theirs });
   await signInWithPassword(page, mine, PASSWORD, "/conta");
   const download = page.waitForEvent("download");
-  await page.getByRole("link", { name: "Baixar meus dados (.json)" }).click();
+  await page.getByRole("link", { name: "Baixar meus dados" }).click();
   const file = await (await download).path();
   const { readFileSync } = await import("node:fs");
   const text = readFileSync(file, "utf8");

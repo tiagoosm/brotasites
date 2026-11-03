@@ -325,6 +325,8 @@ function Decision({
   const noteId = useId();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  // Suspending takes a site off the air: a second, deliberate click (Murphy).
+  const [confirmSuspend, setConfirmSuspend] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const reviewable = status === "in_review" || status === "needs_attention";
 
@@ -399,12 +401,28 @@ function Decision({
           >
             Retirar a suspensão
           </Button>
+        ) : confirmSuspend ? (
+          // Far from the approve button (Fitts): on its own at the end of the row.
+          <span className="flex flex-wrap items-center gap-3 sm:ml-auto">
+            <Button
+              size="lg"
+              variant="destructive"
+              disabled={busy}
+              onClick={() => void decide("suspend")}
+            >
+              Confirmar suspensão
+            </Button>
+            <Button size="lg" variant="ghost" onClick={() => setConfirmSuspend(false)}>
+              Cancelar
+            </Button>
+          </span>
         ) : (
           <Button
             size="lg"
-            variant="destructive"
+            variant="outline"
             disabled={busy}
-            onClick={() => void decide("suspend")}
+            onClick={() => setConfirmSuspend(true)}
+            className="text-destructive sm:ml-auto"
           >
             Suspender
           </Button>

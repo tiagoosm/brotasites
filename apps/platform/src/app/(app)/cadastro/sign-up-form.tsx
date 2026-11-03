@@ -9,6 +9,7 @@ import { Captcha } from "@/components/account/captcha";
 import { Field, FormError } from "@/components/account/field";
 import { PasswordField } from "@/components/account/password-field";
 import { ResendConfirmation } from "@/components/account/resend-confirmation";
+import { TermsLinks } from "@/components/account/terms-links";
 import { Button } from "@/components/ui/button";
 import { safeNextPath } from "@/lib/supabase/env";
 
@@ -131,23 +132,7 @@ export function SignUpForm() {
             className="mt-0.5 size-6 shrink-0 accent-leaf"
           />
           <label htmlFor={termsId} className="text-[0.9375rem]">
-            Li e aceito os{" "}
-            <Link
-              href="/termos"
-              target="_blank"
-              className="font-semibold text-leaf-deep underline underline-offset-4"
-            >
-              Termos de uso
-            </Link>{" "}
-            e a{" "}
-            <Link
-              href="/privacidade"
-              target="_blank"
-              className="font-semibold text-leaf-deep underline underline-offset-4"
-            >
-              Política de Privacidade
-            </Link>
-            .
+            Li e aceito os Termos de uso e a Política de Privacidade.
           </label>
         </div>
         {fields.acceptTerms && (
@@ -155,6 +140,7 @@ export function SignUpForm() {
             {fields.acceptTerms}
           </p>
         )}
+        <TermsLinks />
       </div>
 
       <Captcha onToken={setCaptcha} resetKey={attempt} />

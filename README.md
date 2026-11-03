@@ -178,6 +178,7 @@ The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec p
 - [`docs/owner-steps.md`](docs/owner-steps.md): accounts and decisions that depend on the owner
 - [`docs/final-report.md`](docs/final-report.md): the final verification (E13): what is in, what was cut, numbers
 - [`docs/platform-design.md`](docs/platform-design.md) and [`docs/platform-copy.md`](docs/platform-copy.md): the platform's own look and copy
+- [`docs/ux-laws.md`](docs/ux-laws.md): the UX laws every interface step is reviewed against ([first audit](docs/ux-audit.md))
 
 ## License
 

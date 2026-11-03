@@ -2,6 +2,7 @@
 
 import { type FormStepSlug12, formSteps12 } from "@brotasites/schema/v1.2";
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { StepFooter } from "@/components/wizard/step-footer";
 import { StepHeader } from "@/components/wizard/step-header";
 import { useForm12 } from "@/lib/form-store";
@@ -22,6 +23,9 @@ export function StepForm({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  // The next step renders on the server: until it arrives, "Próximo" shows it is on its way
+  // (Doherty: an answer to the click well under 400ms, even on a slow phone).
+  const [opening, startOpening] = useTransition();
   const { completeStep, siteId } = useForm12();
   const index = formSteps12.findIndex((s) => s.slug === step);
   const next = formSteps12[index + 1];
@@ -41,7 +45,7 @@ export function StepForm({
         }
         if (status) status.textContent = "";
         completeStep(step);
-        if (next) router.push(`/criar/${siteId}/${next.slug}`);
+        if (next) startOpening(() => router.push(`/criar/${siteId}/${next.slug}`));
       }}
     >
       <StepHeader step={step} />
@@ -52,7 +56,7 @@ export function StepForm({
         tabIndex={-1}
         className="mt-6 text-[0.9375rem] font-semibold text-destructive empty:hidden"
       />
-      <StepFooter step={step} action={action} />
+      <StepFooter step={step} action={action} pending={opening} />
     </form>
   );
 }

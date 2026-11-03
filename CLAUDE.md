@@ -15,6 +15,7 @@ Project owner: Tiago da Silva Machado (github.com/tiagoosm). Product language (U
 - Work in steps (PLAN.md). One branch per step (`step-N-name`), one pull request per step, never merged without the owner's OK. Stop at the end of each step and show a short summary.
 - When a step says ASK THE OWNER, present the options with costs and limits checked in the official documentation and wait for the choice.
 - Run lint, tests and build before saying a step is done.
+- Before saying an interface step is done, review what changed against `docs/ux-laws.md` (its checklist) and list in the PR summary the laws touched and any conflict with a product decision.
 - Do not install technologies outside the stack below without asking. Pin stable versions in `package.json`. Never use `latest`.
 - Never commit secrets (API keys, tokens). Use `.env.local` (gitignored) and keep a `.env.example` up to date.
 - Small commits, messages in English in the imperative mood (e.g. "Add Zod schema for the landing page").
@@ -124,6 +125,7 @@ brotasites/
 - `blind-test.md`: the "does not look like AI" criterion.
 - `owner-steps.md`: accounts and decisions that depend on the owner.
 - `platform-design.md`, `platform-copy.md`: the platform's own look and copy (not client sites).
+- `ux-laws.md`: the 20 UX laws, the rule each sets here, how it is checked, and the review checklist. `ux-audit.md`: the first audit against them (E22).
 - `design-references.md`: third-party style references reviewed (principles only), what was kept and what was discarded.
 
 ## Open questions (owner's decision)

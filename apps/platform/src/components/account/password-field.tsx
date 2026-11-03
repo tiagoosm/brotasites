@@ -63,6 +63,12 @@ export function PasswordField({
           )}
         </button>
       </div>
+      {/* The error first, right under the field (proximity); the rule and the meter after. */}
+      {error && (
+        <p id={errorId} className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
       {meter && (
         <div id={hintId} className="grid gap-1.5 text-sm text-ink-soft">
           <p>Pelo menos {PASSWORD_MIN} caracteres. Evite senhas comuns e o seu e-mail.</p>
@@ -82,11 +88,6 @@ export function PasswordField({
             </div>
           )}
         </div>
-      )}
-      {error && (
-        <p id={errorId} className="text-sm text-destructive">
-          {error}
-        </p>
       )}
     </div>
   );

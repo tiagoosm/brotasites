@@ -140,7 +140,8 @@ export function SignInForm() {
         />
       </Button>
 
-      <div className="grid gap-1 text-[0.9375rem]">
+      {/* 24px apart: each keeps its own 44px tap area (Fitts). */}
+      <div className="grid gap-6 text-[0.9375rem]">
         <button
           type="button"
           onClick={() => {

@@ -33,14 +33,15 @@ export function Field({
         aria-describedby={describedBy}
         {...input}
       />
-      {hint && (
-        <p id={hintId} className="text-sm text-ink-soft">
-          {hint}
-        </p>
-      )}
+      {/* The error first, right under the field (proximity). */}
       {error && (
         <p id={errorId} className="text-sm text-destructive">
           {error}
+        </p>
+      )}
+      {hint && (
+        <p id={hintId} className="text-sm text-ink-soft">
+          {hint}
         </p>
       )}
     </div>
