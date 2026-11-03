@@ -225,7 +225,7 @@ function PhotosCard({
       note="Até 12, suas ou com permissão. Sem fotos, o site fica só com texto no topo."
     >
       <details className="rounded-lg border border-border bg-paper p-4 text-[0.9375rem]">
-        <summary className="cursor-pointer font-semibold">
+        <summary className="-my-2.5 cursor-pointer py-2.5 font-semibold">
           Como tirar boas fotos com o celular
         </summary>
         <ul className="mt-3 grid list-disc gap-1.5 pl-5 text-ink-soft">
