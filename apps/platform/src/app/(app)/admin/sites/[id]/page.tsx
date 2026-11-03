@@ -5,6 +5,7 @@ import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
+import { TeamAction } from "@/components/admin/team-action";
 import { Loading, Notice } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/config/pricing";
@@ -122,6 +123,31 @@ export default function AdminSitePage() {
         </p>
         {site.status_message && <p className="text-[0.9375rem]">{site.status_message}</p>}
       </header>
+
+      {/* Team exceptions for this site (E24), each logged with the reason. */}
+      <section
+        aria-labelledby="excecoes"
+        className="grid gap-4 rounded-xl border border-input bg-card p-5"
+      >
+        <h2 id="excecoes" className="font-display text-[1.5rem]">
+          Exceções
+        </h2>
+        <div className="flex flex-wrap gap-6">
+          <TeamAction
+            action="grant_round"
+            target={{ siteId: site.id }}
+            label="Liberar 1 rodada extra de direções"
+            confirmLabel="Confirmar a rodada extra"
+          />
+          <TeamAction
+            action="extend_cleanup"
+            target={{ siteId: site.id }}
+            days={14}
+            label="Adiar a limpeza em 14 dias"
+            confirmLabel="Confirmar o adiamento"
+          />
+        </div>
+      </section>
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <div className="grid content-start gap-10">

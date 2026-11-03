@@ -13,7 +13,8 @@ export const adminErrors = {
   badRequest: "Pedido inválido.",
 } as const;
 
-export type AdminContext = { userId: string; db: SupabaseClient };
+/** The member's id, the secret-key client, and the member's own session (for the E24 panel's reads). */
+export type AdminContext = { userId: string; db: SupabaseClient; session: SupabaseClient };
 
 export async function requireAdmin(
   request?: Request,
@@ -31,7 +32,15 @@ export async function requireAdmin(
   if (!auth.user) return { error: fail(401, errors.signedOut) };
   const { data: isAdmin } = await supabase.rpc("is_admin");
   if (isAdmin !== true) return { error: fail(403, adminErrors.forbidden) };
-  return { userId: auth.user.id, db };
+  return { userId: auth.user.id, db, session: supabase };
 }
 
 export const isUuid = (value: string) => /^[0-9a-f-]{36}$/i.test(value);
+
+/** The pt-BR answer for an error of the team panel's database functions (E24). */
+export function teamRpcError(message: string | undefined): NextResponse {
+  if (message?.includes("forbidden")) return fail(403, adminErrors.forbidden);
+  if (message?.includes("bad_request")) return fail(400, adminErrors.badRequest);
+  if (message?.includes("not_found")) return fail(404, "Não encontrado.");
+  return fail(503, errors.unavailable);
+}
