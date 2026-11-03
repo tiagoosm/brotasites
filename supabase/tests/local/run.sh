@@ -46,4 +46,5 @@ for check in "$root"/supabase/tests/*.sql; do
     failed=1
   fi
 done
+TMPDIR="$work" bash "$here/race.sh" -h "$work" -p "$port" -U postgres -d postgres || failed=1
 exit "$failed"

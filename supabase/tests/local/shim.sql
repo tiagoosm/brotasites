@@ -22,6 +22,7 @@ create table auth.users (
   raw_user_meta_data jsonb,
   encrypted_password varchar(255),
   email_confirmed_at timestamptz,
+  last_sign_in_at timestamptz,
   created_at timestamptz not null default now()
 );
 create function auth.uid() returns uuid language sql stable as $$
