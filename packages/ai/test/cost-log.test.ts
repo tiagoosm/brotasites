@@ -82,7 +82,13 @@ describe("cost log", () => {
       registry: new MemoryRegistry(),
       guard: new SpendingGuard(store),
     });
-    await ai.logCall({ task: "review", model: "claude-opus-5-5", usage, costUsd: 0.014, ...caller });
+    await ai.logCall({
+      task: "review",
+      model: "claude-opus-5-5",
+      usage,
+      costUsd: 0.014,
+      ...caller,
+    });
     expect(store.calls).toHaveLength(1);
     expect(await store.spend(new Intl.DateTimeFormat("en-CA").format(new Date()))).toBe(0);
   });
@@ -93,12 +99,8 @@ describe("cost log", () => {
       throw new Error("database down");
     };
     const errors: unknown[] = [];
-    const guard = new SpendingGuard(
-      store,
-      undefined,
-      undefined,
-      undefined,
-      (error) => errors.push(error),
+    const guard = new SpendingGuard(store, undefined, undefined, undefined, (error) =>
+      errors.push(error),
     );
     const ai = new AiDirector({
       model: new ScriptedModelClient([composition()], "claude-opus-5-5"),

@@ -120,6 +120,16 @@ export interface FakeState {
   admin?: boolean;
   /** Bodies posted to the admin route handlers, by path. */
   adminPosts: { path: string; body: Record<string, unknown> }[];
+  /** Rounds of directions used on the site, the free ones and when the next one opens (E24). */
+  quota: { used: number; free: number; availableAt: string | null };
+  /** The account already has another unpaid site in progress (E24): creating answers 409. */
+  openSiteId?: string | null;
+  /** The site was discarded (POST /api/sites/:id/discard). */
+  discarded?: boolean;
+  /** Admin reads with their query string (E24 panel: search, filters, pages). */
+  adminGets: string[];
+  /** The AI spend of the panel's fake (E24); empty means "sem dados ainda". */
+  spentUsd?: number;
 }
 
 export function siteRow(status = "draft", extra: Partial<NonNullable<FakeState["site"]>> = {}) {
@@ -180,6 +190,8 @@ export async function fakeSupabase(
     removed: [],
     api: [],
     adminPosts: [],
+    quota: { used: 1, free: 3, availableAt: null },
+    adminGets: [],
     ...initial,
   };
   const json = (body: unknown, status = 200) => ({
@@ -225,6 +237,8 @@ export async function fakeSupabase(
         setStatus("building", { approved_direction: String(body.p_direction_id) });
         event("direction_chosen", "Direção escolhida. Estamos montando o site.");
         return route.fulfill(json("job-build"));
+      case "directions_quota":
+        return route.fulfill(json(state.quota));
       case "is_admin":
         return route.fulfill(json(state.admin === true));
       case "request_rebuild":
@@ -329,6 +343,43 @@ export async function fakeSupabase(
     state.api.push(url.pathname);
     if (url.pathname.startsWith("/api/admin/")) return answerAdmin(route, url, state, json);
     if (url.pathname === "/api/jobs/start") return route.fulfill(json({ started: false }));
+    // E24: creating a site, a round of directions and discarding go through the server, which
+    // applies the limits in the database.
+    if (url.pathname === "/api/sites" && route.request().method() === "POST") {
+      if (state.openSiteId) {
+        return route.fulfill(
+          json(
+            {
+              error:
+                "Termine e publique o site que está em andamento para criar outro. Ou descarte-o.",
+              siteId: state.openSiteId,
+            },
+            409,
+          ),
+        );
+      }
+      state.site = siteRow();
+      return route.fulfill(json({ id: SITE }, 201));
+    }
+    if (url.pathname.endsWith("/directions") && route.request().method() === "POST") {
+      state.rpc.push({ name: "request_directions", body: { p_site_id: SITE } });
+      if (state.quota.availableAt) {
+        return route.fulfill(
+          json({ error: "Você já usou os refazeres grátis. Tente de novo mais tarde." }, 429),
+        );
+      }
+      state.quota = { ...state.quota, used: state.quota.used + 1 };
+      setStatus("generating_directions");
+      event("directions_requested", "Respostas recebidas. Estamos criando as 3 direções.");
+      return route.fulfill(json({ used: state.quota.used, free: state.quota.free }));
+    }
+    if (url.pathname.endsWith("/discard") && route.request().method() === "POST") {
+      const body = (route.request().postDataJSON() ?? {}) as { confirm?: boolean };
+      if (body.confirm !== true) return route.fulfill(json({ error: "Confirme." }, 400));
+      state.discarded = true;
+      state.site = null;
+      return route.fulfill(json({ removed: true }));
+    }
     if (url.pathname.endsWith("/renders")) {
       const urls: Record<string, string> = {};
       for (const direction of state.directions) {
@@ -397,9 +448,15 @@ type Json = (
 function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
   if (!state.admin) return route.fulfill(json({ error: "Esta área é só para a equipe." }, 403));
   const request = route.request();
+  if (request.method() === "GET") state.adminGets.push(`${url.pathname}${url.search}`);
   if (request.method() === "POST") {
     const body = (request.postDataJSON() ?? {}) as Record<string, unknown>;
     state.adminPosts.push({ path: url.pathname, body });
+    if (url.pathname === "/api/admin/limits") {
+      const note = String(body.note ?? "").trim();
+      if (note.length < 3) return route.fulfill(json({ error: "Escreva o motivo." }, 400));
+      return route.fulfill(json({ ok: true }));
+    }
     if (url.pathname.endsWith("/decide") && state.site) {
       const next: Record<string, string> = {
         approve: "awaiting_approval",
@@ -434,6 +491,8 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
                 city: business.city ?? null,
                 state: business.state ?? null,
                 review: "changesNeeded",
+                costUsd: 0.42,
+                rounds: 2,
               },
             ]
           : [],
@@ -470,6 +529,59 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
       }),
     );
   }
+  if (url.pathname === "/api/admin/overview") return route.fulfill(json(overviewFor(state)));
+  if (url.pathname === "/api/admin/costs") return route.fulfill(json(costsFor(state)));
+  if (url.pathname === "/api/admin/accounts") return route.fulfill(json(accountsFor(url)));
+  if (url.pathname.startsWith("/api/admin/accounts/")) {
+    const account = fakeAccounts.find((row) => url.pathname.endsWith(row.userId));
+    if (!account) return route.fulfill(json({ error: "Conta não encontrada." }, 404));
+    return route.fulfill(
+      json({
+        ...account,
+        lastSignInAt: "2026-11-01T12:00:00Z",
+        allowedOpenSites: 1,
+        slotGrant: null,
+        sites: [
+          {
+            siteId: SITE,
+            name: "Padaria do Zé",
+            status: "awaiting_direction_choice",
+            paid: false,
+            costUsd: account.costUsd,
+            rounds: 3,
+            freeRounds: 3,
+            nextRoundAt: "2026-11-03T18:40:00Z",
+            deletesAt: "2026-12-01T12:00:00Z",
+          },
+        ],
+        events: [],
+      }),
+    );
+  }
+  if (url.pathname === "/api/admin/limits") {
+    return route.fulfill(
+      json({
+        database: {
+          freeDirectionRounds: 3,
+          extraRoundWaitSeconds: 3600,
+          openSitesPerAccount: 1,
+          idleDays: 30,
+          syncedAt: "2026-11-03T12:00:00Z",
+          deletingWithin7Days: 1,
+          slotGrants: 0,
+        },
+        config: {
+          freeDirectionRounds: 3,
+          extraRoundWaitMinutes: 60,
+          openSitesPerAccount: 1,
+          idleDaysBeforeDeletion: 30,
+          deletionWarningDays: [7, 1],
+        },
+        budget: BUDGET,
+        upcoming: [{ siteId: SITE, status: "draft", deadline: "2026-11-08T12:00:00Z" }],
+      }),
+    );
+  }
   if (url.pathname === "/api/admin/catalog") {
     const metrics = {
       suggested: 6,
@@ -492,4 +604,111 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
     );
   }
   return route.fulfill(json({ error: "not found" }, 404));
+}
+
+const BUDGET = {
+  dailyBudgetUsd: 20,
+  alertRatio: 0.8,
+  roundsPerSitePerDay: 20,
+  roundsPerAccountPerDay: 40,
+  usdToBrl: 5.5,
+};
+
+/** Accounts of the panel's fake, for search, filters and the detail page (E24). */
+export const fakeAccounts = [
+  {
+    userId: "a0000000-0000-4000-8000-000000000001",
+    email: "ze@padariadoze.com.br",
+    name: "Zé da Padaria",
+    createdAt: "2026-10-21T10:00:00Z",
+    confirmed: true,
+    openSites: 1,
+    paidSites: 0,
+    atLimit: true,
+    costUsd: 1.5,
+  },
+  {
+    userId: "a0000000-0000-4000-8000-000000000002",
+    email: "ana@bolosdaana.com.br",
+    name: "Ana",
+    createdAt: "2026-10-25T10:00:00Z",
+    confirmed: false,
+    openSites: 0,
+    paidSites: 1,
+    atLimit: false,
+    costUsd: 0.2,
+  },
+];
+
+function accountsFor(url: URL) {
+  const q = (url.searchParams.get("q") ?? "").toLowerCase();
+  const filter = url.searchParams.get("filter") ?? "";
+  const rows = fakeAccounts.filter(
+    (row) =>
+      (!q || row.email.includes(q) || row.name.toLowerCase().includes(q)) &&
+      (filter !== "confirmed" || row.confirmed) &&
+      (filter !== "open" || row.openSites > 0) &&
+      (filter !== "paid" || row.paidSites > 0) &&
+      (filter !== "limit" || row.atLimit),
+  );
+  return { total: rows.length, rows, page: 0, pageSize: 25 };
+}
+
+function overviewFor(state: FakeState) {
+  const spent = state.spentUsd ?? 0;
+  const empty = spent === 0;
+  const funnel = empty
+    ? { created: 0, directions: 0, chosen: 0, built: 0, approved: 0, paid: 0, live: 0 }
+    : { created: 4, directions: 3, chosen: 2, built: 1, approved: 1, paid: 1, live: 1 };
+  const period = {
+    accounts: empty ? 0 : 3,
+    confirmed: empty ? 0 : 2,
+    funnel,
+    costUsd: empty ? 0 : 1.7,
+    aiCalls: empty ? 0 : 5,
+    paidSites: empty ? 0 : 1,
+    costPerSite: empty ? null : 0.425,
+    costPerPaidSite: empty ? null : 1.7,
+  };
+  return {
+    overview: {
+      "7": period,
+      "30": period,
+      all: period,
+      abandoned: empty ? {} : { "1": 1 },
+      today: { day: "2026-11-03", spentUsd: spent },
+    },
+    budget: BUDGET,
+  };
+}
+
+function costsFor(state: FakeState) {
+  const empty = (state.spentUsd ?? 0) === 0;
+  return {
+    costs: {
+      byDay: empty ? [] : [{ day: "2026-11-03", usd: 1.7, calls: 5 }],
+      byTask: empty
+        ? []
+        : [
+            { task: "directions", usd: 1, calls: 2 },
+            { task: "copy", usd: 0.7, calls: 3 },
+          ],
+      byModel: [],
+      topSites: [],
+      topAccounts: [],
+      perSite: {
+        sites: empty ? 0 : 2,
+        average: empty ? null : 0.75,
+        median: empty ? null : 0.75,
+        paidUsd: empty ? 0 : 1,
+        unpaidUsd: empty ? 0 : 0.5,
+        paidSites: empty ? 0 : 1,
+        unpaidSites: empty ? 0 : 1,
+      },
+      removedUsd: 0,
+      jobs: [],
+    },
+    budget: BUDGET,
+    today: { spentUsd: state.spentUsd ?? 0 },
+  };
 }

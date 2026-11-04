@@ -164,6 +164,7 @@ const server = createServer(async (req, res) => {
       sites: body.sites ?? [],
       notices: body.notices ?? [],
       fullName: body.fullName,
+      slots: body.slots,
     });
     return send(res, 200, {});
   }
@@ -318,6 +319,12 @@ const server = createServer(async (req, res) => {
   if (path === "/rest/v1/rpc/is_admin_member") {
     const user = bearerUser(req);
     return send(res, 200, Boolean(user && team.has(user.id)));
+  }
+  if (path === "/rest/v1/rpc/my_site_slots") {
+    // E24: unpaid sites in progress against the account's allowance (one, unless the team adds).
+    const user = bearerUser(req);
+    const board = user && dashboards.get(user.id);
+    return send(res, 200, board?.slots ?? { open: 0, allowed: 1, openSiteId: null });
   }
   if (path === "/rest/v1/rpc/server_rate_limit") {
     const body = await readJson(req);

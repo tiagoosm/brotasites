@@ -35,7 +35,8 @@ test("sending the answers starts the directions and opens the dashboard", async 
   await expect(page.getByRole("status").first()).toContainText("Criando as 3 direções");
   await expect(page.getByText("Respostas recebidas. Estamos criando as 3 direções.")).toBeVisible();
   expect(state.rpc.map((call) => call.name)).toContain("request_directions");
-  expect(state.api).toContain("/api/jobs/start");
+  // The server asks the database (with the limits) and starts the job itself.
+  expect(state.api).toContain(`/api/sites/${SITE}/directions`);
   expect(state.saved.at(-1)?.completed).toContain("direcao");
 });
 
