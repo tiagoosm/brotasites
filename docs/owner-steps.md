@@ -83,9 +83,25 @@ The audit is in `docs/ux-audit.md`. These items wait on you:
   - Cap "Sobre" paragraphs at 25 words.
   - Both go through the catalog cycle (E6/E11) if you approve.
 
+## Cost limits and team panel (E24)
+
+1. **Apply the migration** `supabase/migrations/20261103000000_cost_and_admin.sql` in the Supabase project, after all the earlier ones (SQL editor, or `supabase db push`), and run the database tests locally first (`bash supabase/tests/local/run.sh`). Until it is applied, creating a site, asking for directions and the team panel answer with an error, because the platform now calls the new functions.
+2. **Legal review:** Terms and Privacy now say that unpaid sites idle for 30 days are deleted (with warnings on the dashboard), that the team can see account data for support, and that the cost of each AI call is measured. Still marked "pendente de revisão jurídica".
+3. **Exchange rate:** the panel's estimates in reais use R$ 5,50 per dollar, marked "to verify" in `apps/platform/src/config/limits.ts` (`usdToBrl`). Update the rate and `checkedOn` when you check it; it is never used for a price.
+4. **Email warning (future):** the deletion warning is in-site only, because this round sends no notification emails. When an email provider is chosen, a warning email 7 days before is the natural next step.
+5. **Daily AI budget:** the panel reads `AI_DAILY_BUDGET_USD` (default US$ 20) and `AI_BUDGET_ALERT_RATIO` (default 0.8). Set them in Vercel and in the jobs' environment if you want other values.
+
 ## Decisions to review
 
 Since 2026-10-27 the owner does not approve each task. Choices the plan reserved for the owner are taken with the recommended option and listed here; any of them can be reversed.
+
+- **E24, cost control:**
+  - Sites that wait on us (generating, building, in review) are never deleted for inactivity, only those that wait on the client.
+  - The cleanup runs inside the existing keep-alive cron (one schedule), not in a second cron.
+  - The reviewer's model calls are recorded in `ai_calls` but still do not count toward the daily AI budget, as before E24.
+  - Opening the payment counts as activity (a payment created or updated renews the deadline).
+  - The profile menu's "Criar site" still opens `/criar`, which explains why a second site cannot start; only the dashboard button is disabled.
+  - The Terms version was not bumped: the text is still a draft waiting for legal review, so nobody is asked to accept again yet.
 
 - **E20, design review:**
   - **Fixed:** without a GPU the hero's light canvas lost its context and Chrome drew its broken-canvas icon in the hero's top left corner (on phones, over the title). The canvas now leaves the layout when it cannot draw, as the vine's already did.

@@ -14,6 +14,7 @@ import {
   outputSchema,
   playbookFor,
   sourceTexts,
+  type Usage,
 } from "@brotasites/ai";
 import { type SectionId, type SiteConfig, sectionIds } from "@brotasites/schema/v1.2";
 import { z } from "zod";
@@ -71,6 +72,8 @@ export interface AgentResult {
   findings: Finding[];
   costUsd: number;
   source: "simulated" | "model";
+  /** The model and its token counts, for the cost log (E24); absent when no call was made. */
+  call?: { model: string; usage: Usage };
 }
 
 export interface ReviewerAgent {
@@ -258,6 +261,7 @@ ${delimit({
       throw error;
     }
     const costUsd = costOf(response.model, response.usage);
+    const call = { model: response.model, usage: response.usage };
     let parsed: ReturnType<typeof agentAnswerSchema.safeParse>;
     try {
       parsed = agentAnswerSchema.safeParse(JSON.parse(response.text));
@@ -276,9 +280,10 @@ ${delimit({
         ],
         costUsd,
         source: "model",
+        call,
       };
     }
-    return { findings: findingsFromAnswer(parsed.data), costUsd, source: "model" };
+    return { findings: findingsFromAnswer(parsed.data), costUsd, source: "model", call };
   }
 }
 

@@ -1,4 +1,5 @@
 import { formSteps12 } from "@brotasites/schema/v1.2";
+import { limits } from "@/config/limits";
 import { pricing } from "@/config/pricing";
 import { infoFor } from "./site-status";
 import { SITES_DOMAIN } from "./site-url";
@@ -21,6 +22,9 @@ export interface DashboardSite {
   /** The first time the 3 directions were ready and the site was built (site_events). */
   directionsReadyAt: string | null;
   builtAt: string | null;
+  /** The person's last action on the site and a later date the team set (E24 cleanup). */
+  lastActivityAt?: string | null;
+  keepUntil?: string | null;
 }
 
 const ZONE = "America/Sao_Paulo";
@@ -112,6 +116,43 @@ export function siteAction(site: DashboardSite): { label: string; href: string }
     default:
       return { label: "Ver detalhes", href: siteHref(site.id) };
   }
+}
+
+// The idle cleanup (E24) -----------------------------------------------------------------------
+
+/**
+ * Statuses where an unpaid site waits on the person: only these are ever deleted for being idle.
+ * Generating, building and in review wait on us; paid, live, suspended and grace never go.
+ */
+export const IDLE_STATUSES = [
+  "draft",
+  "awaiting_direction_choice",
+  "awaiting_approval",
+  "needs_attention",
+] as const;
+
+/**
+ * When an idle site would be deleted: idleDays after the person's last action, or later if the
+ * team extended it. Null when the rule does not apply (wrong status, no date: in doubt, never).
+ * The database applies the same rule (private.idle_deadline, private.idle_candidate).
+ */
+export function idleDeadline(
+  site: Pick<DashboardSite, "status" | "lastActivityAt" | "keepUntil">,
+  idleDays: number = limits.idleDaysBeforeDeletion,
+): Date | null {
+  if (!(IDLE_STATUSES as readonly string[]).includes(site.status) || !site.lastActivityAt) {
+    return null;
+  }
+  const last = new Date(site.lastActivityAt);
+  if (Number.isNaN(last.getTime())) return null;
+  const deadline = new Date(last.getTime() + idleDays * 86_400_000);
+  const keep = site.keepUntil ? new Date(site.keepUntil) : null;
+  return keep && !Number.isNaN(keep.getTime()) && keep > deadline ? keep : deadline;
+}
+
+/** Whole days left before the deletion, counted in Brazil's calendar (0 = today). */
+export function daysUntil(deadline: Date, now: Date = new Date()): number {
+  return Math.max(0, dayNumber(brazilDay(deadline)) - dayNumber(brazilDay(now)));
 }
 
 export interface Milestone {
@@ -219,7 +260,8 @@ export type NoticeKind =
   | "site_published"
   | "site_suspended"
   | "site_suspension_lifted"
-  | "email_confirmed";
+  | "email_confirmed"
+  | "site_deletion_warning";
 
 export interface Notice {
   id: string;
@@ -227,9 +269,11 @@ export interface Notice {
   siteId: string | null;
   createdAt: string;
   readAt: string | null;
+  /** For a deletion warning: the days left when it was made. */
+  daysLeft?: number | null;
 }
 
-const noticeTexts: Record<NoticeKind, (site: string) => string> = {
+const noticeTexts: Record<NoticeKind, (site: string, daysLeft?: number | null) => string> = {
   directions_ready: (site) => `As 3 direções de ${site} estão prontas.`,
   site_ready_for_approval: (site) => `${site} está pronto para você conferir.`,
   changes_requested: (site) => `Nossa equipe pediu ajustes em ${site}. Estamos montando de novo.`,
@@ -237,11 +281,19 @@ const noticeTexts: Record<NoticeKind, (site: string) => string> = {
   site_suspended: (site) => `${site} foi suspenso. Veja os motivos na página do site.`,
   site_suspension_lifted: (site) => `A suspensão de ${site} foi retirada.`,
   email_confirmed: () => "Seu e-mail foi confirmado.",
+  site_deletion_warning: (site, daysLeft) =>
+    (daysLeft ?? 0) <= 1
+      ? `${site} será apagado amanhã se não houver novidades.`
+      : `${site} será apagado em ${daysLeft} dias se não houver novidades.`,
 };
 
 /** The pt-BR sentence of a notice; the site's name is plain text (rendered escaped). */
-export function noticeText(kind: NoticeKind, siteName: string | undefined): string {
-  return (noticeTexts[kind] ?? (() => "Novidade na sua conta."))(siteName || "Seu site");
+export function noticeText(
+  kind: NoticeKind,
+  siteName: string | undefined,
+  daysLeft?: number | null,
+): string {
+  return (noticeTexts[kind] ?? (() => "Novidade na sua conta."))(siteName || "Seu site", daysLeft);
 }
 
 /** Where a notice leads. */

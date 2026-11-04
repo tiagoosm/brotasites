@@ -109,6 +109,23 @@ export function supabaseStore(db: SupabaseClient): PipelineStore {
     async claimAlert(day) {
       return check(await db.rpc("ai_claim_alert", { p_day: day }), "AI alert") === true;
     },
+    // The cost log (E24): tokens and cost, never the prompt or the answer.
+    async logCall(call) {
+      check(
+        await db.from("ai_calls").insert({
+          site_id: call.siteId ?? null,
+          account_id: call.accountId ?? null,
+          task: call.task,
+          model: call.model.slice(0, 80),
+          input_tokens: call.usage.inputTokens,
+          output_tokens: call.usage.outputTokens,
+          cache_write_tokens: call.usage.cacheWriteTokens,
+          cache_read_tokens: call.usage.cacheReadTokens,
+          cost_usd: call.costUsd,
+        }),
+        "AI cost log",
+      );
+    },
   };
 
   const cache: AiCache = {

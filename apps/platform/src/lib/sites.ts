@@ -92,15 +92,33 @@ export async function loadSite(
   return { ...site, draft: config?.draft ?? {}, completed: config?.completed ?? [] };
 }
 
-/** A new 1.2 site with an empty draft. */
-export async function createSite(supabase: SupabaseClient, draft: FormDraft = {}): Promise<string> {
-  const { data, error } = await supabase.from("sites").insert({}).select("id").single();
-  if (error || !data) throw error ?? new Error("site not created");
-  const { error: configError } = await supabase
-    .from("site_configs")
-    .insert({ site_id: data.id, draft, completed: [] });
-  if (configError) throw configError;
-  return data.id as string;
+/** Why a new site could not start: the account already has one in progress (E24). */
+export class SiteInProgressError extends Error {
+  constructor(
+    message: string,
+    readonly siteId: string | null,
+  ) {
+    super(message);
+  }
+}
+
+/** A new 1.2 site with an empty draft, through the server (one unpaid site in progress). */
+export async function createSite(): Promise<string> {
+  const response = await fetch("/api/sites", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: "{}",
+  });
+  const body = (await response.json().catch(() => ({}))) as {
+    id?: string;
+    error?: string;
+    siteId?: string | null;
+  };
+  if (response.status === 409) {
+    throw new SiteInProgressError(body.error ?? "", body.siteId ?? null);
+  }
+  if (!response.ok || !body.id) throw new Error("site not created");
+  return body.id;
 }
 
 export async function saveDraft(
@@ -150,6 +168,7 @@ const rpcErrors: Record<string, string> = {
   rate_limited: "Você chegou ao limite de pedidos de hoje. Tente de novo amanhã.",
   direction_not_found: "Essa direção não está mais disponível. Atualize a página.",
   needs_v12: "Este site foi criado na versão antiga. Crie um novo site.",
+  directions_wait: "Você já usou os refazeres grátis. Tente de novo mais tarde.",
   email_not_confirmed:
     "Confirme o seu e-mail para ver as 3 direções. Toque no link que enviamos quando você criou a conta.",
 };
@@ -182,8 +201,50 @@ async function startJob(jobId: string): Promise<void> {
   }).catch(() => {});
 }
 
-export async function requestDirections(supabase: SupabaseClient, siteId: string) {
-  await startJob(await rpc(supabase, "request_directions", { p_site_id: siteId }));
+/** Rounds of directions used and free, and when the next one opens (E24). */
+export interface DirectionsQuota {
+  used: number;
+  free: number;
+  availableAt: string | null;
+}
+
+export async function loadDirectionsQuota(
+  supabase: SupabaseClient,
+  siteId: string,
+): Promise<DirectionsQuota | null> {
+  const { data, error } = await supabase.rpc("directions_quota", { p_site_id: siteId });
+  if (error || !data) return null;
+  return data as DirectionsQuota;
+}
+
+/** Asks for a round of directions; the server decides with the limits (and starts the job). */
+export async function requestDirections(siteId: string): Promise<void> {
+  const response = await fetch(`/api/sites/${siteId}/directions`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: "{}",
+  });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new SiteActionError(
+      body.error ?? "Não foi possível fazer isso agora. Tente de novo em instantes.",
+    );
+  }
+}
+
+/** Discards an unpaid site and everything in it (after the person confirmed). */
+export async function discardSite(siteId: string): Promise<void> {
+  const response = await fetch(`/api/sites/${siteId}/discard`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ confirm: true }),
+  });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new SiteActionError(
+      body.error ?? "Não foi possível descartar agora. Tente de novo em instantes.",
+    );
+  }
 }
 
 export async function chooseDirection(

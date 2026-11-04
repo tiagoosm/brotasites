@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Loading, Notice } from "@/components/shared/page-state";
 import { adminGet } from "@/lib/admin/client";
+import { formatUsd } from "@/lib/admin/format";
 import { infoFor } from "@/lib/site-status";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,8 @@ interface QueueItem {
   city: string | null;
   state: string | null;
   review: string | null;
+  costUsd: number | null;
+  rounds: number | null;
 }
 
 const tabs = [
@@ -92,6 +95,9 @@ export default function AdminQueuePage() {
                     [item.city, item.state].filter(Boolean).join(" - "),
                     infoFor(item.status).label,
                     item.review && reviewLabels[item.review],
+                    item.costUsd !== null && `IA ${formatUsd(item.costUsd)}`,
+                    item.rounds !== null &&
+                      `${item.rounds} ${item.rounds === 1 ? "rodada" : "rodadas"} de direções`,
                     `desde ${new Date(item.updatedAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`,
                   ]
                     .filter(Boolean)

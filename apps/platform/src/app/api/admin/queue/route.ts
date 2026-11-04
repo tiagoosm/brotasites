@@ -23,6 +23,12 @@ export async function GET() {
         .in("site_id", ids)
         .order("created_at", { ascending: false })
     : { data: [] };
+  // Each site's AI cost and rounds of directions (E24), aggregated by the database.
+  const { data: costs } = ids.length
+    ? await admin.session.rpc("admin_site_costs", { p_site_ids: ids })
+    : { data: {} };
+  const costOf = (id: string) =>
+    ((costs ?? {}) as Record<string, { costUsd: number; rounds: number }>)[id] ?? null;
   const latest = new Map<string, string>();
   for (const report of reports ?? []) {
     if (!latest.has(report.site_id as string))
@@ -44,6 +50,8 @@ export async function GET() {
         city: business.city ?? null,
         state: business.state ?? null,
         review: latest.get(site.id as string) ?? null,
+        costUsd: costOf(site.id as string)?.costUsd ?? null,
+        rounds: costOf(site.id as string)?.rounds ?? null,
       };
     }),
     { headers: { "cache-control": "private, no-store" } },

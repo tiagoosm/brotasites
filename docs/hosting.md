@@ -34,6 +34,10 @@ Supabase pauses Free plan projects with too little database activity over 7 days
 
 If the project is paused anyway: Supabase Dashboard > the project > Resume project (possible for 90 days). Moving to Supabase Pro removes pausing altogether.
 
+## Cleaning up idle sites (E24)
+
+The same daily Vercel Cron that keeps Supabase awake (`/api/cron/keep-alive`) also runs the cleanup (`apps/platform/src/lib/server/cleanup.ts`): first the dashboard warnings (7 days and 1 day before), then the sites past their deadline, at most 25 per run, each removed in the database and then its files (uploads, images, renders, the preview pointer in KV, and the purge job for anything published). One schedule instead of two keeps within the Hobby plan's cron limits (to verify in the Vercel docs before adding more). The team panel's `/admin/limites` shows a dry run of what the next 7 days would delete.
+
 ## Costs
 
 R2 and Workers: see the table in `CLAUDE.md` (checked on 2026-10-25). The platform (Next.js) runs on Vercel (Pro before charging clients).

@@ -7,15 +7,19 @@ import { useCallback, useEffect, useState } from "react";
 import { Loading, Notice } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
 import { pricing } from "@/config/pricing";
+import { extraRoundRule, nextRoundAt, redoUsage } from "@/lib/limits-copy";
 import { infoFor } from "@/lib/site-status";
 import { SITES_DOMAIN } from "@/lib/site-url";
 import {
   approveSite,
   chooseDirection,
   type DirectionRow,
+  type DirectionsQuota,
   directionLabels,
+  discardSite,
   type EventRow,
   loadDirections,
+  loadDirectionsQuota,
   loadEvents,
   loadSite,
   previewUrl,
@@ -44,7 +48,12 @@ interface View {
   directions: DirectionRow[];
   events: EventRow[];
   renders: Record<string, string>;
+  /** Rounds of directions used and free (E24), while choosing. */
+  quota: DirectionsQuota | null;
 }
+
+// Where an unpaid site waits on the person, they may discard it (E24).
+const DISCARDABLE = ["draft", "awaiting_direction_choice", "awaiting_approval", "needs_attention"];
 
 export function SiteDashboard({ siteId }: { siteId: string }) {
   const router = useRouter();
@@ -62,15 +71,17 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         return;
       }
       const choosing = site.status === "awaiting_direction_choice";
-      const [events, directions, renders] = await Promise.all([
+      const [events, directions, renders, quota] = await Promise.all([
         loadEvents(supabase, siteId),
         choosing ? loadDirections(supabase, siteId, site.round) : Promise.resolve([]),
         choosing ? renderUrls(siteId) : Promise.resolve({}),
+        choosing ? loadDirectionsQuota(supabase, siteId) : Promise.resolve(null),
       ]);
       setView((current) => ({
         site,
         events,
         directions,
+        quota,
         // Keep addresses already signed, so the images do not flash on each refresh.
         renders: { ...(typeof current === "object" && current ? current.renders : {}), ...renders },
       }));
@@ -119,7 +130,12 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
   if (view === "failed")
     return <Notice title="Não foi possível abrir agora" text="Tente de novo em instantes." />;
 
-  const { site, directions, events, renders } = view;
+  const { site, directions, events, renders, quota } = view;
+  // The next round opens later (E24): the button says why instead of failing on click.
+  const waitUntil =
+    quota?.availableAt && new Date(quota.availableAt) > new Date()
+      ? new Date(quota.availableAt)
+      : null;
   const supabase = getBrowserSupabase();
   const info = infoFor(site.status);
   const name = site.draft.business?.name || "Site sem nome";
@@ -189,25 +205,31 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
               />
             ))}
           </ul>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-            <Button
-              variant="outline"
-              size="lg"
-              disabled={acting !== null}
-              onClick={() =>
-                act("redo", async () => {
-                  if (supabase) await requestDirections(supabase, site.id);
-                })
-              }
-            >
-              {acting === "redo" ? "Pedindo…" : "Nenhuma serviu: criar outras 3"}
-            </Button>
-            <Link
-              href={`/criar/${site.id}/marca`}
-              className="touch-target text-sm font-semibold text-leaf-deep underline underline-offset-4"
-            >
-              Mudar cores ou sensação antes
-            </Link>
+          <div className="grid gap-3">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+              <Button
+                variant="outline"
+                size="lg"
+                disabled={acting !== null || waitUntil !== null}
+                aria-describedby="refazer-info"
+                onClick={() => act("redo", () => requestDirections(site.id))}
+              >
+                {acting === "redo" ? "Pedindo…" : "Nenhuma serviu: criar outras 3"}
+              </Button>
+              <Link
+                href={`/criar/${site.id}/marca`}
+                className="touch-target text-sm font-semibold text-leaf-deep underline underline-offset-4"
+              >
+                Mudar cores ou sensação antes
+              </Link>
+            </div>
+            {quota && (
+              <p id="refazer-info" className="text-sm text-ink-soft">
+                {waitUntil
+                  ? `${nextRoundAt(waitUntil)} ${extraRoundRule}`
+                  : redoUsage(quota.used, quota.free)}
+              </p>
+            )}
           </div>
         </section>
       )}
@@ -348,6 +370,28 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         </Button>
       )}
 
+      {DISCARDABLE.includes(site.status) && (
+        <DiscardSite
+          busy={acting !== null}
+          onDiscard={async () => {
+            // Not through act(): reloading a site that is gone would flash "not found".
+            setActing("discard");
+            setError(null);
+            try {
+              await discardSite(site.id);
+              router.push("/painel");
+            } catch (caught) {
+              setError(
+                caught instanceof SiteActionError
+                  ? caught.message
+                  : "Não foi possível descartar agora. Tente de novo.",
+              );
+              setActing(null);
+            }
+          }}
+        />
+      )}
+
       {events.length > 0 && (
         <section aria-labelledby="historico" className="grid gap-4">
           <h2 id="historico" className="font-display text-[1.375rem] leading-tight">
@@ -456,5 +500,45 @@ function Shot({ url, alt, className }: { url?: string | false; alt: string; clas
         <span className="sr-only">{alt}</span>
       )}
     </div>
+  );
+}
+
+/** Discarding is final, so it takes a second, deliberate click (Murphy), away from the main actions. */
+function DiscardSite({ busy, onDiscard }: { busy: boolean; onDiscard: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  return (
+    <section aria-labelledby="descartar" className="grid gap-3 border-t border-line pt-8">
+      <h2 id="descartar" className="text-[1.0625rem] font-semibold">
+        Descartar este site
+      </h2>
+      {confirming ? (
+        <div className="grid gap-3">
+          <p className="text-[0.9375rem]">
+            Apagar este site, as respostas e as fotos? Isso não pode ser desfeito.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Button variant="destructive" size="lg" disabled={busy} onClick={onDiscard}>
+              Sim, descartar
+            </Button>
+            <Button variant="ghost" size="lg" onClick={() => setConfirming(false)}>
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="text-[0.9375rem] text-ink-soft">Libera a vaga para criar outro site.</p>
+          <Button
+            variant="outline"
+            size="lg"
+            className="justify-self-start text-destructive"
+            disabled={busy}
+            onClick={() => setConfirming(true)}
+          >
+            Descartar este site
+          </Button>
+        </>
+      )}
+    </section>
   );
 }

@@ -24,6 +24,27 @@ const teamTabs = [
     label: "Catálogo",
     match: (path: string) => path.startsWith("/admin/catalogo"),
   },
+  // E24: the numbers, the costs, the accounts and the limits.
+  {
+    href: "/admin/visao-geral",
+    label: "Visão geral",
+    match: (path: string) => path.startsWith("/admin/visao-geral"),
+  },
+  {
+    href: "/admin/custos",
+    label: "Custos",
+    match: (path: string) => path.startsWith("/admin/custos"),
+  },
+  {
+    href: "/admin/contas",
+    label: "Contas",
+    match: (path: string) => path.startsWith("/admin/contas"),
+  },
+  {
+    href: "/admin/limites",
+    label: "Limites",
+    match: (path: string) => path.startsWith("/admin/limites"),
+  },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
