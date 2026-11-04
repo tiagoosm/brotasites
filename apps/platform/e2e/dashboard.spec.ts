@@ -330,3 +330,30 @@ test("the dashboard passes axe, with 44px targets and no sideways scroll", async
   const small = await findSmallTargetsWhileScrolling(page);
   expect(small).toEqual([]);
 });
+
+test("the pulsing dot of a busy site stays the size of the dot", async ({
+  page,
+  context,
+  request,
+}) => {
+  // Regression: the ring (::after, inset: 0) had no positioned parent and covered the whole
+  // page, which flashed yellow every 2.2 s while a site was being worked on.
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  const who = person();
+  await board(request, who.id, { sites: [row("generating_directions", { name: "Real Dente" })] });
+  await signIn(context, { user: who });
+  await page.goto("/painel");
+  const dot = page.locator(".live-dot");
+  await expect(dot).toHaveCount(1);
+  const sizes = await dot.evaluate((element) => {
+    const ring = getComputedStyle(element, "::after");
+    const box = element.getBoundingClientRect();
+    return {
+      dot: [box.width, box.height],
+      ring: [ring.width, ring.height],
+      name: ring.animationName,
+    };
+  });
+  expect(sizes.name).toBe("live-ping");
+  expect(sizes.ring).toEqual(sizes.dot.map((value) => `${value}px`));
+});
