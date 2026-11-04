@@ -32,6 +32,21 @@ Keep this list up to date during the project. Claude Code does not create accoun
 - [ ] Check INPI before investing in the brand.
 - [ ] Decide the repository's visibility: the master plan assumes a private repository, and `tiagoosm/brotasites` is public. Adapted React Bits code (`side-rays.tsx`, `vine-trail.tsx`) is visible while it is public.
 
+## Making generation run in production (checked on 2026-11-04)
+
+What was found: the site "Real Dente" has been in "Criando as 3 direções" since 2026-10-29. Its job is in `public.jobs` with `status = queued` and `attempts = 0`: nothing ever picked it up. Vercel has no `TRIGGER_SECRET_KEY`, so the platform cannot hand jobs to Trigger.dev (`apps/platform/src/lib/server/jobs.ts` returns without starting it), and there is no runner in production. The code is not broken; the production side of the queue was never set up.
+
+What a job needs to run (`apps/jobs/src/env.ts`):
+
+1. **Trigger.dev** (account and project are yours): create the project, put its ref in `TRIGGER_PROJECT_REF`, and deploy the tasks from a machine with the repository: `pnpm --filter @brotasites/jobs exec trigger deploy`.
+2. **Variables in Trigger.dev** (production environment of that project), because the jobs run there, not on Vercel:
+   - `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY` (the same values as in Vercel).
+   - `AI_MODE=simulated` to test without spending, or `AI_MODE=live` with `ANTHROPIC_API_KEY`, `AI_MODEL_ID` and `AI_EFFORT` (the Anthropic item above), plus the budget variables if you want other values.
+   - `CLOUDFLARE_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `CLOUDFLARE_KV_NAMESPACE_ID`, `CLOUDFLARE_KV_API_TOKEN` and `BASE_DOMAIN` (the Cloudflare item above). Today the jobs refuse to start without the R2 variables, even for the directions, whose screenshots go to Supabase Storage; only the finished site needs R2.
+   - `REVIEW_SKIP_HUMAN=false`.
+3. **Variables in Vercel:** `TRIGGER_SECRET_KEY` (the production secret key of that project, marked sensitive), then `NEXT_PUBLIC_PREVIEW_ORIGIN`, `NEXT_PUBLIC_BASE_DOMAIN`, `EXPORT_SECRET` and the two KV variables once Cloudflare exists. Redeploy so the server reads them.
+4. **The job already waiting:** setting the key does not start jobs queued before it. After step 3, discard "Real Dente" in its page and create it again (a code change could also restart jobs left queued; not done yet).
+
 ## Testing before launch (no domain, no SMTP, no Turnstile)
 
 A temporary setup to try accounts on `https://brotasites.vercel.app`. Undo it before launch (steps of "Accounts (E15)" below).
@@ -85,7 +100,7 @@ The audit is in `docs/ux-audit.md`. These items wait on you:
 
 ## Cost limits and team panel (E24)
 
-1. **Apply the migration** `supabase/migrations/20261103000000_cost_and_admin.sql` in the Supabase project, after all the earlier ones (SQL editor, or `supabase db push`), and run the database tests locally first (`bash supabase/tests/local/run.sh`). Until it is applied, creating a site, asking for directions and the team panel answer with an error, because the platform now calls the new functions.
+1. **Migration:** done on 2026-11-04 (applied by Claude Code at the owner's request, as `cost_and_admin`), after checking every table, column and constraint it uses.
 2. **Legal review:** Terms and Privacy now say that unpaid sites idle for 30 days are deleted (with warnings on the dashboard), that the team can see account data for support, and that the cost of each AI call is measured. Still marked "pendente de revisão jurídica".
 3. **Exchange rate:** the panel's estimates in reais use R$ 5,50 per dollar, marked "to verify" in `apps/platform/src/config/limits.ts` (`usdToBrl`). Update the rate and `checkedOn` when you check it; it is never used for a price.
 4. **Email warning (future):** the deletion warning is in-site only, because this round sends no notification emails. When an email provider is chosen, a warning email 7 days before is the natural next step.
