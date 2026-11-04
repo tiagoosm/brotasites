@@ -203,6 +203,12 @@ html:has([data-wizard]) {
     animation: bud-breathe 2600ms var(--ease-in-out) infinite;
   }
 
+  /* The ring is anchored to its dot: without a positioned dot, inset: 0 stretched it over the
+     whole page and the dashboard flashed yellow every 2.2 s while a site was being worked on. */
+  .live-dot {
+    position: relative;
+  }
+
   .live-dot::after {
     content: "";
     position: absolute;
