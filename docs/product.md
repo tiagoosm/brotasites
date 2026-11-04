@@ -21,6 +21,14 @@ Every value shown on a page, in the FAQ or at checkout comes from this file. Nev
 
 Creating, editing and seeing the directions and the finished site: free. Charged only to publish. Included: 12 months of hosting, 30 days of changes through the dashboard, download of the static site. After 12 months, keeping it online costs R$ 99 per year (optional); a client who does not renew can download the site before it goes offline (grace period defined in `docs/abuse-and-content.md`). Custom domain: + R$ 97, and the client pays the registrar directly for the domain.
 
+## Limits (E24)
+
+All values live in `apps/platform/src/config/limits.ts`; the database enforces them.
+
+- **Directions:** 3 free rounds per site (the first and 2 redos). After that, 1 more round per hour. The count never resets. Choosing one of the 3 is never blocked. The site page says "Você usou 1 de 2 refazeres grátis" and, while waiting, "Próxima rodada disponível às 15h40".
+- **Sites in progress:** 1 unpaid site in progress per account. A paid site frees the slot. The client can finish it, or discard it (with confirmation). Accounts that already had more keep them. The team can grant an extra slot, with a reason.
+- **Idle sites:** an unpaid site waiting on the client (draft, choosing a direction, approving, needs attention) with no action for 30 days is deleted. The dashboard warns 7 days and 1 day before, and each card says until when it is kept. Any change renews the deadline. Sites that wait on us (generating, building, in review) and paid sites are never deleted. The team can postpone a deletion.
+
 ## Site status
 
 | Status | What the client sees | Who acts |

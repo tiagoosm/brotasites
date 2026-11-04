@@ -52,6 +52,14 @@ Header (E17, as built):
 - One header everywhere. Who is signed in comes from the server: the signed-in pages read the session, name and team flag in their layout; the prerendered public pages ask `/api/account/me` (the person's own name, email and team flag, `no-store`) only when the profile menu opens. Names and emails are rendered as text (escaped), never as HTML, and never put in a URL. "Área da equipe" is only a link: `/admin` is still checked on the server and needs the second step (aal2).
 - With the `/exemplo` page gone (it framed the example site), the platform's CSP no longer allows framing: `frame-ancestors 'none'` (was `'self'`) and `frame-src` only for Turnstile (was also `'self'` and the previews).
 
+### Cost limits and team access (E24)
+
+- Limits are enforced in the database, not only in the interface: round limit with a row lock, one open site with an advisory lock in a trigger, values sent by the server routes and validated (out of range is refused, `bad_limits`).
+- `ai_calls`, `site_removals` and `account_site_slots` have RLS on and no client policy: the server writes them, the team reads aggregates through `security definer` functions that call `private.require_admin()` (admin list plus aal2). The browser never holds a service key.
+- The team's account detail is logged on each opening (`admin_decisions`, `view_account`), and every exception (extra round, extra site slot, postponed cleanup) is logged with who, when, the reason, and the values before and after.
+- `ai_calls` stores no prompt and no client text; its site and account columns become null when they are deleted.
+- The cleanup deletes only unpaid sites that wait on the client, in batches, idempotently; anything doubtful is skipped.
+
 ## 6. Payments
 
 Publish only after a confirmed webhook, with idempotency; never trust the browser. No card data in our system. Webhook authentication as in the provider's documentation (to verify).

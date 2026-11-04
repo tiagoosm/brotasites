@@ -28,6 +28,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E20 Design review: every screen checked on phone and desktop, inconsistencies fixed
 - [x] E22 UX laws: audit of every screen against the 20 laws, fixes, `docs/ux-laws.md` and automatic checks
 - [x] E23 Design references from Refero Styles (docs only)
+- [x] E24 Cost control (limits and cleanup) and the team panel
 
 ## Steps in detail
 
@@ -105,6 +106,17 @@ The same header and footer on every page (public pages, sign-in and password scr
 ### E18 Home page motion and navigation
 
 Every create-site button shares the specular finish, now a composited light eased once per frame (smooth where it stuttered). The header's sign-in link reads "Entrar ou cadastre-se". Section entrances repeat each time an element returns, with a cap on simultaneous entrances and an instant final state on jumps. The links to Como funciona, Preço and Dúvidas scroll smoothly there (also from other pages). The price card's glow turns slowly by itself and hands over to the mouse without jumps. The stem in "Como funciona" is one curved, tapering stroke with leaves that bud, grow and sway, ending in a bloom. The mouse vine roams the free space of the whole public page, kept off the content. All with reduced motion, no JavaScript and touch screens covered.
+
+### E24 Cost control and the team panel
+
+Owner's decisions (2026-11-03): keep the AI art director; model, effort and price unchanged; Turnstile, IP limits and email settings untouched. Built:
+
+- `apps/platform/src/config/limits.ts`: 3 free rounds of directions per site, then 1 per hour (never reset); 1 unpaid site in progress per account; unpaid sites idle for 30 days deleted, with warnings 7 days and 1 day before; a USD to BRL rate for estimates only, marked "to verify".
+- The database enforces them (`supabase/migrations/20261103000000_cost_and_admin.sql`): the server routes send the values, validated there, and the client's own calls use the last values sent. Rounds take a row lock; new sites an advisory lock. Proven with two concurrent sessions (`supabase/tests/local/race.sh`).
+- Discarding an unpaid site (with confirmation) through the same purge path as account deletion, recorded in `site_removals`.
+- `ai_calls`: every model call (directions, copy, review, rewrite) with model, tokens and cost in USD, no prompts; written by the server only, read by the team through functions; rows survive deletion without personal data.
+- The team panel: `/admin/visao-geral` (funnel, abandoned sites, cost, BRL estimate, daily budget with the 80% alert), `/admin/custos`, `/admin/contas` (search, filters, sort, pages; each opened account is logged), `/admin/limites` (values in force, dry run, logged exceptions with before and after). The queue shows each site's cost and rounds.
+- Daily cleanup inside the existing keep-alive cron: warnings, then removal of due sites in idempotent batches; in doubt, nothing is deleted. Terms and Privacy updated (still pending legal review).
 
 ### E22 UX laws
 
