@@ -25,12 +25,6 @@ export default function StepPage() {
   const { ready, missing, siteId, completed, isReachable } = useForm12();
   const step = formSteps12.find((s) => s.slug === passo);
   const ahead = Boolean(step && ready && !missing && !isReachable(step.slug));
-  useEffect(() => {
-    if (step) {
-      const number = formSteps12.findIndex((s) => s.slug === step.slug) + 1;
-      document.title = `Passo ${number} de ${formSteps12.length}: ${step.title} · BrotaSites`;
-    }
-  }, [step]);
   // A step ahead of the person's progress sends them to the first one still open.
   useEffect(() => {
     if (!ahead) return;
