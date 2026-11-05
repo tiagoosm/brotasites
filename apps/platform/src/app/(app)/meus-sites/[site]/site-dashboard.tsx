@@ -4,11 +4,12 @@ import { ArrowRight, ExternalLink, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { DiscardSite } from "@/components/dashboard/discard-site";
 import { Loading, Notice } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
 import { pricing } from "@/config/pricing";
 import { extraRoundRule, nextRoundAt, redoUsage } from "@/lib/limits-copy";
-import { infoFor } from "@/lib/site-status";
+import { canDiscard, infoFor } from "@/lib/site-status";
 import { SITES_DOMAIN } from "@/lib/site-url";
 import {
   approveSite,
@@ -16,7 +17,6 @@ import {
   type DirectionRow,
   type DirectionsQuota,
   directionLabels,
-  discardSite,
   type EventRow,
   loadDirections,
   loadDirectionsQuota,
@@ -53,7 +53,6 @@ interface View {
 }
 
 // Where an unpaid site waits on the person, they may discard it (E24).
-const DISCARDABLE = ["draft", "awaiting_direction_choice", "awaiting_approval", "needs_attention"];
 
 export function SiteDashboard({ siteId }: { siteId: string }) {
   const router = useRouter();
@@ -370,25 +369,12 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         </Button>
       )}
 
-      {DISCARDABLE.includes(site.status) && (
+      {canDiscard(site.status) && (
         <DiscardSite
+          siteId={site.id}
+          siteName={name}
           busy={acting !== null}
-          onDiscard={async () => {
-            // Not through act(): reloading a site that is gone would flash "not found".
-            setActing("discard");
-            setError(null);
-            try {
-              await discardSite(site.id);
-              router.push("/painel");
-            } catch (caught) {
-              setError(
-                caught instanceof SiteActionError
-                  ? caught.message
-                  : "Não foi possível descartar agora. Tente de novo.",
-              );
-              setActing(null);
-            }
-          }}
+          working={infoFor(site.status).busy}
         />
       )}
 
@@ -500,45 +486,5 @@ function Shot({ url, alt, className }: { url?: string | false; alt: string; clas
         <span className="sr-only">{alt}</span>
       )}
     </div>
-  );
-}
-
-/** Discarding is final, so it takes a second, deliberate click (Murphy), away from the main actions. */
-function DiscardSite({ busy, onDiscard }: { busy: boolean; onDiscard: () => void }) {
-  const [confirming, setConfirming] = useState(false);
-  return (
-    <section aria-labelledby="descartar" className="grid gap-3 border-t border-line pt-8">
-      <h2 id="descartar" className="text-[1.0625rem] font-semibold">
-        Descartar este site
-      </h2>
-      {confirming ? (
-        <div className="grid gap-3">
-          <p className="text-[0.9375rem]">
-            Apagar este site, as respostas e as fotos? Isso não pode ser desfeito.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="destructive" size="lg" disabled={busy} onClick={onDiscard}>
-              Sim, descartar
-            </Button>
-            <Button variant="ghost" size="lg" onClick={() => setConfirming(false)}>
-              Cancelar
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <>
-          <p className="text-[0.9375rem] text-ink-soft">Libera a vaga para criar outro site.</p>
-          <Button
-            variant="outline"
-            size="lg"
-            className="justify-self-start text-destructive"
-            disabled={busy}
-            onClick={() => setConfirming(true)}
-          >
-            Descartar este site
-          </Button>
-        </>
-      )}
-    </section>
   );
 }

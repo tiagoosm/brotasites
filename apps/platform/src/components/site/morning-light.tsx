@@ -3,13 +3,14 @@
 import dynamic from "next/dynamic";
 
 // Morning light on the herbarium sheet: a soft pollen and leaf-green glow from the top right
-// corner, with wide, slow beams reaching across the hero. Loaded after the page, in the
-// browser only, so it never delays the first paint; the page looks complete without it.
-const SideRays = dynamic(() => import("../side-rays"), { ssr: false });
+// corner, with wide, slow beams. Since 2026-11-05 it lights the sign-in page, not the home
+// page (owner's decision). Loaded after the page, in the browser only, so it never delays the
+// first paint; the page looks complete without it.
+const SideRays = dynamic(() => import("./side-rays"), { ssr: false });
 
-export function HeroRays() {
+export function MorningLight() {
   return (
-    // On phones the hero is narrow and tall, so the same light covers more text: tone it down.
+    // On phones the column is narrow and tall, so the same light covers more text: tone it down.
     <div
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 -z-10 opacity-40 sm:opacity-65 lg:opacity-85"

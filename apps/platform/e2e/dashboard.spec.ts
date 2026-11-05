@@ -71,15 +71,14 @@ test("with no sites: an invitation, and nothing pending", async ({ page, context
   await expect(page.getByRole("main").getByText(who.email)).toBeVisible();
   await expect(page.getByText("Tudo em dia.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Crie seu primeiro site" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Criar meu site" })).toHaveAttribute(
-    "href",
-    "/criar",
-  );
+  await expect(
+    page.getByRole("main").getByRole("link", { name: "Criar meu site" }),
+  ).toHaveAttribute("href", "/criar");
   // The account lives in the profile menu of the one header (E17), read on the server.
   await page.getByRole("button", { name: "Menu da conta de Zé da Padaria" }).click();
   await expect(page.getByRole("menuitem")).toHaveText([
     "Painel",
-    "Criar site",
+    "Criar meu site",
     "Perfil e segurança",
     "Sair",
   ]);

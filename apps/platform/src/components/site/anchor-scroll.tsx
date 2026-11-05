@@ -6,7 +6,8 @@ import { easeInOut, scrollDuration, scrollTarget, sectionOf } from "@/lib/motion
 import { visiblePath } from "./nav";
 
 // The links to the home page's sections (Como funciona, Preço, Dúvidas: header, phone menu,
-// footer, hero) scroll there smoothly (E18), in about 0.6 to 0.9 s with an ease-in-out curve,
+// footer, hero) and the tables of contents of the reading pages (Ajuda, Termos, Privacidade,
+// links marked data-smooth-scroll) scroll there smoothly (E18), in about 0.6 to 0.9 s with an ease-in-out curve,
 // stopping under the sticky header (the section's scroll-margin-top), then move the focus to
 // the section's title and put the "#" in the address. From another page, the home page opens
 // and then scrolls. Any wheel, touch or key stops it at once; reduced motion jumps straight
@@ -89,6 +90,16 @@ export function AnchorScroll() {
       if (event.defaultPrevented || event.button !== 0) return;
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const link = (event.target as Element | null)?.closest?.("a");
+      // A reading page's table of contents (Ajuda, Termos, Privacidade): the same smooth
+      // scroll, to a section of that page.
+      const local = link?.hasAttribute("data-smooth-scroll")
+        ? /^#([a-z0-9-]+)$/.exec(link.getAttribute("href") ?? "")?.[1]
+        : undefined;
+      if (link && local && document.getElementById(local)) {
+        event.preventDefault();
+        soon(() => scrollToSection(local));
+        return;
+      }
       const id = sectionOf(link?.getAttribute("href") ?? null);
       if (!link || !id || link.target === "_blank") return;
       event.preventDefault();

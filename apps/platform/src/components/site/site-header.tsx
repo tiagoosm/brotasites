@@ -24,7 +24,7 @@ import { SignOutButton } from "./sign-out";
 /**
  * The one header of every page (E17): the brand, the same four links (Como funciona, Preço,
  * Dúvidas, Ajuda), and the account on the right: "Entrar" and "Criar meu site" signed out, or
- * "Criar site" and the profile menu signed in. Who is signed in comes from the server (the
+ * "Criar meu site" and the profile menu signed in. Who is signed in comes from the server (the
  * public page variant the proxy picked, or the session the signed-in pages read), never from
  * the browser, so nothing flickers. Up to 768px: the brand, the profile button and the menu.
  */
@@ -105,7 +105,7 @@ export function SiteHeader({ session }: { session: HeaderSession }) {
  * back to the button. The items come in one after the other (".phone-menu" in globals.css).
  */
 function PhoneMenu({ session, onClose }: { session: HeaderSession; onClose: () => void }) {
-  // The middle links, then the account: its menu signed in ("Criar site" is the main button at
+  // The middle links, then the account: its menu signed in ("Criar meu site" is the main button at
   // the bottom), or "Entrar ou cadastre-se" signed out; the main button creates the site.
   const account = session.signedIn
     ? accountItems(session.known ? session.team : false).filter((link) => link.href !== CREATE_HREF)
@@ -221,9 +221,7 @@ function PhoneMenu({ session, onClose }: { session: HeaderSession; onClose: () =
         className="phone-menu-item mt-auto grid shrink-0 pt-8"
         style={{ "--item": links.length + 1 } as React.CSSProperties}
       >
-        <CreateSiteButton onClick={onClose}>
-          {session.signedIn ? "Criar site" : "Criar meu site"}
-        </CreateSiteButton>
+        <CreateSiteButton onClick={onClose}>Criar meu site</CreateSiteButton>
       </div>
     </div>,
     document.body,

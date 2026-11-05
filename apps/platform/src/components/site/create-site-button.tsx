@@ -7,7 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CREATE_HREF } from "./nav";
 
-// Every button that leads to creating a site ("Criar meu site", "Criar site") has the same
+// Every button that leads to creating a site ("Criar meu site") has the same
 // specular finish (E18): a cream highlight on the rim, centred on the cursor, over the solid
 // green button, and a faint sheen inside (".specular" in globals.css).
 //
