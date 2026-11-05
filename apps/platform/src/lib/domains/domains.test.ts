@@ -153,7 +153,7 @@ describe("Cloudflare provider (against a stand-in of its API)", () => {
         method,
         url,
         body: init?.body ? JSON.parse(String(init.body)) : undefined,
-        auth: (init?.headers as Record<string, string>).authorization ?? "",
+        auth: (init?.headers as Record<string, string> | undefined)?.authorization ?? "",
       });
       const answer = responses[`${method} ${url.replace(/^.*custom_hostnames/, "")}`];
       if (answer === undefined) return new Response("{}", { status: 404 });
