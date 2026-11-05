@@ -112,11 +112,11 @@ test("with reduced motion nothing waits or moves", async ({ browser }) => {
 // Titles revealed word by word (split-words.tsx).
 
 const splitTitles = [
-  "Sete perguntas, uma de cada vez.",
+  "5 passos, um de cada vez.",
   "O que todo site tem",
   "Quanto custa",
   "Dúvidas",
-  "Seu site começa com sete perguntas.",
+  "Seu site começa com 5 passos.",
 ];
 
 test("screen readers get each split title whole, once", async ({ page }) => {
@@ -157,7 +157,7 @@ test("split titles wrap exactly like plain text", async ({ page }) => {
 test("the hero title stays still, so the largest paint is not delayed", async ({ page }) => {
   await page.goto("/");
   const title = page.getByRole("heading", { level: 1 });
-  await expect(title).toHaveText("Sete perguntas e seu site pronto.");
+  await expect(title).toHaveText("5 passos e seu site pronto.");
   expect(await title.evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(
     0,
   );

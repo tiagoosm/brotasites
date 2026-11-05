@@ -410,6 +410,11 @@ test.describe("team panel", () => {
     await page.goto("/admin/limites");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Limites");
     await expect(page.getByText("Serão apagados nos próximos 7 dias:")).toContainText("1 site");
+    // Client domains against the 100 the hosting includes, with the alert from 80 (E25).
+    await expect(page.getByText("84 de 100 incluídos", { exact: true })).toBeVisible();
+    await expect(page.getByRole("status").first()).toContainText(
+      "Domínios de clientes: 84 de 100 incluídos.",
+    );
     await page.getByRole("button", { name: "Adiar 14 dias" }).click();
     await page.getByLabel("Motivo (fica no log)").fill("Cliente pediu mais prazo.");
     await page.getByRole("button", { name: "Confirmar o adiamento" }).click();

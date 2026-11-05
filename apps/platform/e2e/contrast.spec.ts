@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { findContrastIssuesWhileScrolling } from "./support/contrast";
-import { allBefore, padaria, SITE, siteRow, threeDirections, withSite } from "./support/supabase";
+import { allSteps, padaria, SITE, siteRow, threeDirections, withSite } from "./support/supabase";
 
 // Every text on the public pages meets WCAG AA contrast, at every point of the scroll and
 // with or without motion.
@@ -20,7 +20,7 @@ for (const path of ["/", "/ajuda", ...signedIn]) {
       await withSite(context, {
         site: siteRow("awaiting_direction_choice"),
         draft: padaria,
-        completed: allBefore("endereco"),
+        completed: allSteps,
         directions: threeDirections,
         admin: path.startsWith("/admin"),
       });

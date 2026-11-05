@@ -78,7 +78,7 @@ Nothing runs over 900ms, except what follows the scroll.
 There is no live preview (owner decision of 2026-10-27, removed in E10).
 
 - Desktop (≥1280px): questions rail | the form's card on the table.
-- Below 1280px: the form only; the progress ("Passo N de 7" and a horizontal stem) sits under the header.
+- Below 1280px: the form only; the progress ("Passo N de 5" and a horizontal stem) sits under the header.
 - Phones: a sticky footer holds "Voltar" and the next button, within thumb reach.
 
 ## UX laws

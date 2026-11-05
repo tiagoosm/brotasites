@@ -194,9 +194,7 @@ function SitesSection({ sites, slots }: { sites: DashboardSite[]; slots: Dashboa
       {sites.length === 0 ? (
         <div className="grid gap-3 rounded-xl border border-dashed border-line-strong p-6">
           <h3 className="font-display text-[1.5rem] leading-tight">Crie seu primeiro site</h3>
-          <p className="text-[0.9375rem] text-ink-soft">
-            Sete perguntas e você escolhe entre 3 direções de visual.
-          </p>
+          <p className="text-[0.9375rem] text-ink-soft">5 passos e você escolhe entre 3 visuais.</p>
           <CreateSiteButton className="justify-self-start" />
         </div>
       ) : (

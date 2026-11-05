@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { allBefore, padaria, SITE, siteRow, threeDirections, withSite } from "./support/supabase";
+import { allSteps, padaria, SITE, siteRow, threeDirections, withSite } from "./support/supabase";
 import { findSmallTargetsWhileScrolling } from "./support/targets";
 
 // Every link, button and choice can be tapped on a 44 x 44px area that belongs to it.
@@ -21,7 +21,7 @@ for (const path of ["/", "/ajuda", "/termos", "/privacidade", ...signedIn]) {
       await withSite(context, {
         site: siteRow("awaiting_direction_choice"),
         draft: padaria,
-        completed: allBefore("endereco"),
+        completed: allSteps,
         directions: threeDirections,
         admin: path.startsWith("/admin"),
       });

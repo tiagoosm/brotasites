@@ -20,6 +20,8 @@ export interface SiteRecord {
   previous?: string;
   state: SiteState;
   updatedAt: string;
+  /** The client's own domain when it is the main address (E25), set by the platform. */
+  canonicalHost?: string;
 }
 
 const states: readonly SiteState[] = ["active", "grace", "suspended", "offline"];
@@ -101,6 +103,8 @@ export async function publishVersion(
     state:
       current?.state === "suspended" || current?.state === "offline" ? current.state : "active",
     updatedAt: new Date().toISOString(),
+    // Publishing never changes the main address the client chose.
+    ...(current?.canonicalHost ? { canonicalHost: current.canonicalHost } : {}),
   };
   await writeSiteRecord(options, subdomain, record);
   return record;

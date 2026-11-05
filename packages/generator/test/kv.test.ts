@@ -72,6 +72,17 @@ describe("site pointers in KV", () => {
     expect(await setSiteState(options, "nao-existe", "suspended")).toBeNull();
   });
 
+  it("never changes the main address the client chose by publishing (E25)", async () => {
+    const { options, kv } = fakeCloudflare();
+    await publishVersion(options, "casa-verde", "v1");
+    const record = JSON.parse(kv.get("site:casa-verde") ?? "");
+    kv.set("site:casa-verde", JSON.stringify({ ...record, canonicalHost: "www.casaverde.com.br" }));
+    expect(await publishVersion(options, "casa-verde", "v2")).toMatchObject({
+      version: "v2",
+      canonicalHost: "www.casaverde.com.br",
+    });
+  });
+
   it("records the preview token with its expiry", async () => {
     const { options, kv, calls } = fakeCloudflare();
     await putPreviewRecord(options, "site-1", "tok", Date.parse("2026-10-28T00:00:00Z"));

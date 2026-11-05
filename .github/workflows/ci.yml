@@ -58,6 +58,14 @@ jobs:
           path: packages/templates/playwright-report
           retention-days: 7
 
+      - name: Upload the platform's e2e results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: platform-e2e-results
+          path: apps/platform/test-results
+          retention-days: 7
+
   security:
     name: Dependency audit and secret scan
     runs-on: ubuntu-latest

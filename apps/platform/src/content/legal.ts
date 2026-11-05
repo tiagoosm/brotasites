@@ -37,7 +37,7 @@ export const privacySections: LegalSection[] = [
     id: "quem-somos",
     title: "Quem cuida dos seus dados",
     blocks: [
-      "O BrotaSites é uma plataforma, ainda em desenvolvimento, para criar o site de um negócio respondendo sete perguntas.",
+      "O BrotaSites é uma plataforma, ainda em desenvolvimento, para criar o site de um negócio em 5 passos.",
       `Responsável pelo tratamento dos dados (controlador): ${PENDING}. Contato para assuntos de privacidade: ${PENDING}.`,
     ],
   },
@@ -116,7 +116,7 @@ export const privacySections: LegalSection[] = [
     title: "Por quanto tempo guardamos",
     blocks: [
       "Guardamos os dados da sua conta, os rascunhos e as fotos enquanto a conta existir. Você pode excluir a conta a qualquer momento, na página Conta: apagamos a conta, os sites, os rascunhos e as fotos, e tiramos do ar os sites publicados. Os registros de pagamentos feitos ficam guardados pelo prazo que a lei fiscal exige.",
-      `Um site não pago, sem nenhuma ação sua por ${idleDays} dias, é apagado com as respostas e as fotos dele. Avisamos no seu painel ${warnDays}. Depois de apagado, fica só um registro sem dados pessoais (a etapa a que o site chegou e o custo dele), para as nossas contas.`,
+      `Um site não pago, sem nenhuma ação sua por ${idleDays} dias, é apagado com as respostas e as fotos dele. Avisamos no seu painel ${warnDays}. Depois de apagado, fica só um registro sem dados pessoais (até onde o site chegou e o custo dele), para as nossas contas.`,
     ],
   },
   {
@@ -165,7 +165,7 @@ export const termsSections: LegalSection[] = [
     id: "servico",
     title: "O serviço",
     blocks: [
-      "O BrotaSites ajuda você a criar o site do seu negócio respondendo sete perguntas. Com as respostas, criamos 3 direções para o visual; você escolhe uma e confere o site pronto antes de publicar.",
+      "O BrotaSites ajuda você a criar o site do seu negócio em 5 passos. Com as respostas, criamos 3 direções para o visual; você escolhe uma e confere o site pronto antes de publicar.",
       `Criar, editar, ver as direções e o site pronto é grátis. Publicar o site custa ${publishPriceText}, em pagamento único, e você só paga se decidir publicar.`,
       `Cada site tem ${limits.freeDirectionRounds} rodadas de direções grátis: a primeira e mais ${freeRedos} refazeres. Depois, você pode pedir mais 1 rodada a cada ${limits.extraRoundWaitMinutes} minutos.`,
       `Cada conta tem ${limits.openSitesPerAccount} site não pago em andamento por vez. Para criar outro, publique o que está em andamento ou descarte-o.`,
@@ -183,7 +183,7 @@ export const termsSections: LegalSection[] = [
           `O pagamento para publicar inclui ${pricing.hostingMonths} meses de hospedagem no endereço seunegocio.brotasites.com e ajustes pelo painel nos primeiros ${pricing.adjustmentsDays} dias. Depois desse prazo, ajustes podem ser pedidos à parte, com o valor informado antes.`,
           `O site é seu: você pode baixar o site pronto a qualquer momento e hospedá-lo onde quiser.`,
           `Depois dos ${pricing.hostingMonths} meses, manter o site no ar custa ${formatBRL(pricing.renewalPerYear)} por ano, de forma opcional. Se não houver renovação, o site sai do ar, e você pode baixá-lo antes.`,
-          `Conectar um domínio próprio custa ${formatBRL(pricing.customDomain)}. O registro do domínio é feito e pago por você, direto ao registrador.`,
+          "Conectar um domínio próprio está incluído e é opcional. O registro e a renovação do domínio são feitos e pagos por você, direto ao registrador. A BrotaSites não vende nem registra domínios e não responde por domínio vencido nem por falha do registrador; o site continua no endereço seunegocio.brotasites.com.",
           `Garantia de ${pricing.guaranteeDays} dias: se não gostar, devolvemos o valor pago.`,
         ],
       },

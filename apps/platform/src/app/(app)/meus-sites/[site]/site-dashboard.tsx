@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { DiscardSite } from "@/components/dashboard/discard-site";
+import { CustomDomain } from "@/components/domains/custom-domain";
 import { Loading, Notice } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
 import { pricing } from "@/config/pricing";
@@ -272,7 +273,9 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
                 </Button>
               ) : (
                 <Button asChild size="lg">
-                  <Link href={`/criar/${site.id}/endereco`}>Escolher o endereço e aprovar</Link>
+                  <Link href={`/meus-sites/${site.id}/publicar`}>
+                    Publicar: endereço e aprovação
+                  </Link>
                 </Button>
               )}
             </div>
@@ -365,7 +368,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
 
       {site.status === "needs_attention" && !locked && (
         <Button asChild size="lg" className="justify-self-start">
-          <Link href={`/criar/${site.id}/direcao`}>Revisar as respostas e tentar de novo</Link>
+          <Link href={`/criar/${site.id}/contato`}>Revisar as respostas e tentar de novo</Link>
         </Button>
       )}
 
@@ -375,6 +378,14 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           siteName={name}
           busy={acting !== null}
           working={infoFor(site.status).busy}
+        />
+      )}
+
+      {["publishing", "live", "grace", "suspended"].includes(site.status) && (
+        <CustomDomain
+          siteId={site.id}
+          siteAddress={liveUrl ? liveUrl.replace("https://", "") : null}
+          wish={site.draft.site?.customDomain}
         />
       )}
 

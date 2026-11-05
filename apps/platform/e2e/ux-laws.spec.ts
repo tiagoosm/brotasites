@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { expect, type Page, test } from "@playwright/test";
 import {
   allBefore,
+  allSteps,
   padaria,
   SITE,
   SUPABASE,
@@ -18,7 +19,7 @@ import { findSmallTargetsWhileScrolling } from "./support/targets";
 type Setup = (page: Page) => Promise<void>;
 
 const site =
-  (status: string, step = "endereco"): Setup =>
+  (status: string, step?: string): Setup =>
   async (page) => {
     await withSite(page.context(), {
       site: siteRow(status, {
@@ -28,7 +29,7 @@ const site =
           : null,
       }),
       draft: padaria,
-      completed: allBefore(step),
+      completed: step ? allBefore(step) : allSteps,
       directions: threeDirections,
     });
   };
@@ -69,7 +70,8 @@ const screens: [string, string, Setup?][] = [
   ["passo 1", `/criar/${SITE}/negocio`, site("draft", "negocio")],
   ["passo 3", `/criar/${SITE}/secoes`, site("draft", "secoes")],
   ["passo 4", `/criar/${SITE}/conteudo`, site("draft", "conteudo")],
-  ["passo 7", `/criar/${SITE}/endereco`, site("awaiting_approval")],
+  ["passo 5 (enviar)", `/criar/${SITE}/contato`, site("draft", "contato")],
+  ["publicar", `/meus-sites/${SITE}/publicar`, site("awaiting_approval")],
   ["escolha das direções", `/meus-sites/${SITE}`, site("awaiting_direction_choice")],
   ["site pronto", `/meus-sites/${SITE}`, site("awaiting_approval")],
   ["site no ar", `/meus-sites/${SITE}`, site("live")],
@@ -216,7 +218,7 @@ test("Gradient de meta: the form always shows how far along it is", async ({ pag
   await page.goto(`/criar/${SITE}/conteudo`);
   await expect(
     page
-      .getByText(/Passo\s*4\s*de\s*7/i)
+      .getByText(/Passo\s*4\s*de\s*5/i)
       .filter({ visible: true })
       .first(),
   ).toBeVisible();

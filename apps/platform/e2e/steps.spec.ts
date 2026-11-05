@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import {
   allBefore,
+  allSteps,
   padaria,
   SITE,
   siteRow,
@@ -90,7 +91,7 @@ test("contact: one channel at least, a place, and structured hours", async ({ pa
     completed: allBefore("contato"),
   });
   await page.goto(at("contato"));
-  const next = page.getByRole("button", { name: "Próximo: direção" });
+  const next = page.getByRole("button", { name: "Enviar e ver as direções" });
   await next.click();
   await expect(page.locator("#step-problem")).toHaveText(
     "Informe pelo menos um contato: WhatsApp, telefone ou e-mail.",
@@ -114,7 +115,8 @@ test("contact: one channel at least, a place, and structured hours", async ({ pa
   await page.getByLabel("Fecha").first().fill("12:00");
 
   await next.click();
-  await expect(page).toHaveURL(new RegExp(at("direcao")));
+  // The 5th step sends the answers and opens the site's page (no step 6 any more).
+  await expect(page).toHaveURL(new RegExp(`/meus-sites/${SITE}$`));
   await expect
     .poll(() => state.draft.contact)
     .toMatchObject({
@@ -147,8 +149,8 @@ test("contact: by appointment and 24 hours need no schedule", async ({ page, con
   await page.getByText("Sob agendamento").click();
   await expect(page.getByLabel("Abre")).toHaveCount(0);
   await page.getByText("24 horas").click();
-  await page.getByRole("button", { name: "Próximo: direção" }).click();
-  await expect(page).toHaveURL(new RegExp(at("direcao")));
+  await page.getByRole("button", { name: "Enviar e ver as direções" }).click();
+  await expect(page).toHaveURL(new RegExp(`/meus-sites/${SITE}$`));
   await expect
     .poll(() => state.draft.contact)
     .toMatchObject({ openingHours: { mode: "always", rules: [] } });
@@ -161,7 +163,7 @@ test("brand after approval: the style stays, the colors can change with AA", asy
   const state = await withSite(context, {
     site: siteRow("awaiting_approval", { approved_direction: threeDirections[0]?.id ?? null }),
     draft: padaria,
-    completed: allBefore("endereco"),
+    completed: allSteps,
     directions: threeDirections,
   });
   await page.goto(at("marca"));

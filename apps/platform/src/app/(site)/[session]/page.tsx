@@ -9,9 +9,9 @@ import { mainFaqs } from "@/content/faq";
 import { PLATFORM_URL } from "@/lib/site-url";
 
 export const metadata: Metadata = {
-  title: { absolute: "BrotaSites · Sete perguntas e seu site pronto" },
+  title: { absolute: "BrotaSites · 5 passos e seu site pronto" },
   description:
-    "Responda sete perguntas, escolha o visual e receba o site do seu negócio pronto. Sem código.",
+    "5 passos e seu site pronto. Responda, escolha entre 3 visuais e publique. Sem código.",
   alternates: { canonical: "/" },
 };
 
@@ -21,7 +21,7 @@ const organization = {
   "@type": "Organization",
   name: "BrotaSites",
   url: PLATFORM_URL,
-  slogan: "Sete perguntas e seu site pronto.",
+  slogan: "5 passos e seu site pronto.",
   description: metadata.description,
 };
 
@@ -50,7 +50,7 @@ const features = [
 
 // Under the hero's buttons: the three things the page goes on to explain.
 const heroFacts = [
-  { title: "Sete perguntas", text: "Salvas na sua conta." },
+  { title: "5 passos", text: "Salvos na sua conta." },
   { title: "3 direções", text: "Você escolhe uma." },
   { title: "Criar é grátis", text: "Paga só para publicar." },
 ];
@@ -67,10 +67,10 @@ export default function HomePage() {
         <section className="mx-auto grid min-h-[calc(100svh-4rem)] max-w-6xl content-center px-5 pt-12 pb-20 sm:px-8 sm:pt-20 sm:pb-28 lg:min-h-[44rem]">
           <div className="hero-enter grid max-w-[52rem] gap-7 sm:gap-8">
             <h1 className="font-display text-[3.25rem] leading-[0.98] tracking-[-0.025em] sm:text-[5rem] lg:text-[6rem]">
-              Sete perguntas <span className="block text-stem">e seu site pronto.</span>
+              5 passos <span className="block text-stem">e seu site pronto.</span>
             </h1>
             <p className="max-w-[38ch] text-pretty text-[1.1875rem] text-ink-soft sm:text-[1.3125rem]">
-              Você responde, escolhe o visual e aprova. A gente monta o site. Sem código.
+              Responda, escolha entre 3 visuais e publique.
             </p>
             <div className="flex flex-wrap items-center gap-x-7 gap-y-4">
               <CreateSiteButton />
@@ -107,7 +107,7 @@ export default function HomePage() {
               as="h2"
               id="como-funciona-titulo"
               className="max-w-[16ch] font-display text-[2.5rem] leading-[1.05] sm:text-[3.5rem]"
-              segments={[{ text: "Sete perguntas, uma de cada vez." }]}
+              segments={[{ text: "5 passos, um de cada vez." }]}
             />
             <p data-reveal="" className="max-w-[46ch] text-[1.125rem] text-ink-soft">
               Tudo fica salvo. Feche e volte quando quiser.
@@ -187,7 +187,7 @@ export default function HomePage() {
             as="h2"
             id="final-titulo"
             className="font-display text-[2.5rem] leading-[1.05] sm:text-[3.5rem]"
-            segments={[{ text: "Seu site começa com sete perguntas." }]}
+            segments={[{ text: "Seu site começa com 5 passos." }]}
           />
           <p className="max-w-[40ch] text-[1.0625rem] text-ink-soft">
             Criar é grátis. Você só paga para publicar.

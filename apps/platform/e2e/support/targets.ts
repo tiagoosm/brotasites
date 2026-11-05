@@ -33,8 +33,10 @@ export function findSmallTargets(page: Page): Promise<SmallTarget[]> {
       const cx = box.left + box.width / 2;
       const cy = box.top + box.height / 2;
       // Its square runs past the screen edge: nothing can be hit there, so it is checked at
-      // the next scroll position (steps are half a screen).
-      if (cy - HALF < 0 || cy + HALF > window.innerHeight) continue;
+      // the next scroll position (steps are half a screen). The last row of pixels is
+      // innerHeight - 1, and elementFromPoint rounds its point (811.6 is 812): past that
+      // row it finds nothing.
+      if (cy - HALF < 0 || Math.round(cy + HALF) > window.innerHeight - 1) continue;
       // Covered right now (e.g. under a sticky header or footer): checked at another scroll.
       const center = document.elementFromPoint(cx, cy);
       if (!center || !(center === element || element.contains(center))) continue;
@@ -53,7 +55,8 @@ export function findSmallTargets(page: Page): Promise<SmallTarget[]> {
               .slice(0, 40),
             hitBy: hit
               ? `${hit.tagName.toLowerCase()} "${(hit.textContent ?? "").trim().slice(0, 24)}" at ${dx},${dy} (box ${Math.round(box.width)}x${Math.round(box.height)})`
-              : "nothing",
+              : // Outside what the page can hit: say where, to tell an edge from a scrollbar.
+                `nothing at ${Math.round(cx + dx)},${Math.round(cy + dy)} (box ${Math.round(box.left)},${Math.round(box.top)} ${Math.round(box.width)}x${Math.round(box.height)}, viewport ${window.innerWidth}x${window.innerHeight}, client ${document.documentElement.clientWidth}x${document.documentElement.clientHeight}, scroll ${Math.round(window.scrollX)},${Math.round(window.scrollY)})`,
           });
           break;
         }

@@ -32,7 +32,7 @@ export const faqGroups: FaqGroup[] = [
       {
         slug: "preciso-entender-de-tecnologia",
         question: "Preciso entender de tecnologia?",
-        answer: "Não. Se você usa WhatsApp, consegue. Sete perguntas, uma por tela.",
+        answer: "Não. Se você usa WhatsApp, consegue. 5 passos, um por tela.",
         main: true,
       },
       {
@@ -49,8 +49,8 @@ export const faqGroups: FaqGroup[] = [
     ],
   },
   {
-    slug: "as-sete-perguntas",
-    title: "As sete perguntas",
+    slug: "os-5-passos",
+    title: "Os 5 passos",
     items: [
       {
         slug: "posso-voltar-e-mudar",
@@ -108,7 +108,7 @@ export const faqGroups: FaqGroup[] = [
       {
         slug: "endereco-do-site",
         question: "Qual vai ser o endereço do meu site?",
-        answer: `seu-negocio.brotasites.com, escolhido na última pergunta. Domínio próprio (seunegocio.com.br): + ${formatBRL(pricing.customDomain)} para conectar; o registro é por sua conta.`,
+        answer: `seu-negocio.brotasites.com, escolhido na hora de publicar. Domínio próprio (seunegocio.com.br): incluído, se você quiser. O registro e a renovação do domínio são por sua conta, no registrador.`,
       },
       {
         slug: "mudar-depois",

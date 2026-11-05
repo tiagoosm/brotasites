@@ -22,6 +22,13 @@ export const limits = {
    * used for a price.
    */
   usdToBrl: { rate: 5.5, checkedOn: null as string | null, toVerify: true },
+  /**
+   * Client domains (E25): Cloudflare for SaaS includes 100 custom hostnames, then US$ 0.10 each
+   * a month (official docs, 2026-11-05; to verify in the owner's account). The team panel warns
+   * from `domainsAlertAt` on.
+   */
+  domainsIncluded: 100,
+  domainsAlertAt: 80,
 } as const;
 
 export const extraRoundWaitSeconds = limits.extraRoundWaitMinutes * 60;

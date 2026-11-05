@@ -8,16 +8,15 @@ Copy for the BrotaSites platform: the public site and the form. User-facing text
 - **Tone:** warm, plain and confident. Short sentences, everyday verbs, sentence case, no exclamation marks, no em dashes.
 - **Scannable (E19):** a reader gets each block at a glance. One idea per block; supporting text of one or two short lines; answers lead with the yes or no. Detail lives in Ajuda and the legal pages, not on every screen.
 - **Promise only what the product does.** No invented numbers, prices, testimonials or rankings. Items that depend on open decisions are marked `[pendente]`.
-- **The slogan is the structure.** The form really has seven steps, so each step's title is one of the seven questions.
+- **The slogan is the structure.** The form really has 5 steps (E25, owner's decision of 2026-11-05: *passo*, never *etapa* nor *pergunta* for the form's parts), and the support line always says the rest: choosing among 3 looks and publishing. The client is never led to think the site comes out ready without choosing and approving.
 
 ## Slogan
 
-**Sete perguntas e seu site pronto.**
+**5 passos e seu site pronto.**
 
-Alternatives kept for A/B tests:
+Support line, right under it wherever there is room (hero, page description, footer, share image): *Responda, escolha entre 3 visuais e publique.*
 
-- *Sete perguntas. Seu site pronto.* Two beats, more poster-like.
-- *Responda sete perguntas e publique seu site.* Puts the action first.
+Until 2026-11-05 the slogan was *Sete perguntas e seu site pronto.*; of those 7 items, the last two were not questions (sending and seeing the 3 directions; the address, approval and payment), and each item held several questions.
 
 ## Public site
 
@@ -25,34 +24,34 @@ Built on 2026-10-24 (design: [superpowers/specs/2026-10-24-main-site-design.md](
 
 ### Price
 
-- Model (2026-10-25): one-time payment per site, no monthly plan. All values live in `apps/platform/src/config/pricing.ts` (publish R$ 297, optional `launchPrice` shown with the regular price crossed out, 12 months of hosting, 30 days of dashboard changes, optional renewal R$ 99/year, custom domain + R$ 97, 7-day guarantee).
-- Section *Quanto custa*: *Criar e ver o site pronto é grátis. Você só paga para publicar.* Included: hosting months, dashboard changes days, *O site é seu: baixe quando quiser*. Below: renewal (*R$ 99 por ano, se quiser renovar. Sem renovar, você baixa o site antes.*), custom domain (*+ R$ 97 para conectar. O registro do domínio é por sua conta.*), guarantee. The guarantee and refund texts show *pendente de revisão jurídica* until `legalReviewed` is true.
+- Model (2026-10-25): one-time payment per site, no monthly plan. All values live in `apps/platform/src/config/pricing.ts` (publish R$ 297, optional `launchPrice` shown with the regular price crossed out, 12 months of hosting, 30 days of dashboard changes, optional renewal R$ 99/year, the client's own domain included and optional since 2026-11-04 (`customDomainIncluded`), 7-day guarantee).
+- Section *Quanto custa*: *Criar e ver o site pronto é grátis. Você só paga para publicar.* Included: hosting months, dashboard changes days, *O site é seu: baixe quando quiser*, *Domínio próprio, se você quiser (o registro do domínio é por sua conta)* (`customDomainNote`). Below: renewal (*R$ 99 por ano, se quiser renovar. Sem renovar, você baixa o site antes.*) and the guarantee. The guarantee and refund texts show *pendente de revisão jurídica* until `legalReviewed` is true.
 - No comparisons with freelancers or competitors.
 
 ### Home page
 
 - **Header:** see "Header (every page)" below (E17, E18).
-- **Main button:** *Criar meu site*, in the hero, after the seven questions and in the final call.
-- **Hero:** *Sete perguntas e seu site pronto.* / *Você responde, escolhe o visual e aprova. A gente monta o site. Sem código.* / **Criar meu site** · a smaller *Ver como funciona* text link. Under them, three short facts: *Sete perguntas* (*Salvas na sua conta.*), *3 direções* (*Você escolhe uma.*), *Criar é grátis* (*Paga só para publicar.*). One term for the art directions on every screen: *direção*. The "Experimente aqui" demo and the example site were removed (owner decision of 2026-10-29). With a mouse, a faint vine follows it over the free space of the page. The soft morning light from the top right corner moved to the sign-in page (owner's decision of 2026-11-05).
-- **Como funciona:** *Sete perguntas, uma de cada vez.* / *Tudo fica salvo. Feche e volte quando quiser.* Then the seven questions, exactly as in the form (`formSteps12`), each with a few words from `content/stem.ts` and a still picture, ending with *Pronto. Seu site no ar.*
+- **Main button:** *Criar meu site*, in the hero, after the 5 steps and in the final call.
+- **Hero:** *5 passos e seu site pronto.* / *Responda, escolha entre 3 visuais e publique.* / **Criar meu site** · a smaller *Ver como funciona* text link. Under them, three short facts: *5 passos* (*Salvos na sua conta.*), *3 direções* (*Você escolhe uma.*), *Criar é grátis* (*Paga só para publicar.*). One term for the art directions on every screen: *direção*. The "Experimente aqui" demo and the example site were removed (owner decision of 2026-10-29). With a mouse, a faint vine follows it over the free space of the page. The soft morning light from the top right corner moved to the sign-in page (owner's decision of 2026-11-05).
+- **Como funciona:** *5 passos, um de cada vez.* / *Tudo fica salvo. Feche e volte quando quiser.* Then the 5 steps, exactly as in the form (`formSteps12`), each labeled *Passo N de 5 · {título}* with a few words from `content/stem.ts` and a still picture, then two closings without a number: *Escolha entre 3 visuais* (*Receba 3 propostas feitas com as suas respostas e escolha uma. Depois, confira, aprove e publique.*) and *Pronto. Seu site no ar.*
 - **O que todo site tem:** *Já vem pronto, sem configurar.* WhatsApp a um toque; Aberto ou fechado, na hora; Como chegar (*Um toque abre a rota até você no mapa.*: client sites have no embedded map, only the button); Feito para o celular; Pronto para o Google. One short line each.
 - **Quanto custa:** see Price above.
 - **Dúvidas:** the four questions marked `main` in `content/faq.ts`, and *Ver todas as dúvidas*.
-- **Final call:** *Seu site começa com sete perguntas.* / *Criar é grátis. Você só paga para publicar.*
+- **Final call:** *Seu site começa com 5 passos.* / *Criar é grátis. Você só paga para publicar.*
 
 ### Help, terms and privacy
 
-- Help answers say only what the product does today. Open decisions are stated as such: custom domain *ainda não está disponível*; changes after publishing *ainda está sendo definida*; account deletion is done on request.
+- Help answers say only what the product does today. Open decisions are stated as such; changes after publishing *ainda está sendo definida*; account deletion is done on request.
 - Terms and privacy are first drafts in plain language, marked *Versão inicial, em revisão jurídica*. They need a lawyer's review before BrotaSites accepts clients.
 - Responsible party and contact e-mail: pending (`src/content/contact.ts`). Pages say *a definir*; nothing shows an address until it exists.
 
 ### Meta
 
-- **Title:** BrotaSites · Sete perguntas e seu site pronto
-- **Description:** Responda sete perguntas, escolha o visual e receba o site do seu negócio pronto. Sem código.
-- **Share image:** `src/app/opengraph-image.png`, made by `scripts/og-image.mjs`.
+- **Title:** BrotaSites · 5 passos e seu site pronto
+- **Description:** 5 passos e seu site pronto. Responda, escolha entre 3 visuais e publique. Sem código.
+- **Share image:** `src/app/opengraph-image.png`, made by `scripts/og-image.mjs`: *5 passos e seu site pronto.* with the support line underneath (alt text in `opengraph-image.alt.txt`). The footer and the web app manifest say the same.
 
-## The seven questions (form)
+## The 5 steps (form)
 
 Since E10 the form follows `docs/form-flow.md`. Titles, questions and descriptions live in `formSteps12` (`packages/schema/src/v1.2/form.ts`).
 
@@ -63,13 +62,14 @@ Since E10 the form follows `docs/form-flow.md`. Titles, questions and descriptio
 | Seções | O que o seu site vai mostrar? | O essencial para o seu negócio já vem ligado. |
 | Conteúdo | O que você oferece? | Escreva do seu jeito: a gente arruma o texto. |
 | Contato | Como os clientes falam com você? | Pelo menos um canal: WhatsApp, telefone ou e-mail. |
-| Direção | Pronto para ver as 3 direções? | Envie e pode fechar a página. Avisamos no painel. |
-| Endereço e revisão | Onde o seu site vai morar? | Escolha o endereço, confira o site pronto e aprove. |
+
+
+After the 5 steps, two phases that are not numbered: choosing one of the 3 directions (on the site's page, *Escolha uma das 3*) and **Publicar** (`/meus-sites/<site>/publicar`: *Onde o seu site vai morar?* / *Escolha o endereço, confira o site pronto e aprove.*).
 
 ### Microcopy
 
-- **Step label:** `Passo N de 7` on wide screens; the sprout progress shows the step on phones.
-- **Next button:** `Próximo: <etapa>` (says where it goes). Step 6: `Ver as 3 direções` (or `Criar outras 3 direções` on a redo). Step 7: `Aprovar e publicar` when the finished site is ready, otherwise `Ir para o painel`.
+- **Step label:** `Passo N de 5` on wide screens; the sprout progress shows `Passo N de 5` on phones. The page title is *Passo N de 5: {título}*.
+- **Next button:** `Próximo: <passo>` (says where it goes). Step 5 ends with *Confira antes de enviar* (the answers of steps 1 to 4, each with *Mudar*) and **Enviar e ver as direções** (after sending, *Salvar e voltar ao site*). Publicar: **Aprovar e publicar** when the finished site is ready, otherwise *Acompanhar o site*.
 - **Back:** Voltar
 - **Errors** (say what to do, never apologize; every form error is pt-BR, a test checks it): *Informe o nome do negócio.* / *Escolha o tipo de negócio.* / *Informe pelo menos um contato: WhatsApp, telefone ou e-mail.* / *Confirme que as pessoas da foto autorizaram o uso.* / *Use até 80 caracteres.* (limits vary by field)
 - **Blocked topic:** *Esse tipo de negócio a gente não atende.* / *Pelo que você escreveu, o site seria sobre {tema}, e isso a BrotaSites não publica. Nada foi cobrado. Se entendemos errado, ajuste o texto acima.*
@@ -95,6 +95,10 @@ Since E10 the form follows `docs/form-flow.md`. Titles, questions and descriptio
 - **Finished site:** *Um endereço particular, só para você conferir. Ele não aparece no Google.* / *Ver o site pronto* / *Aprovar e publicar*.
 - **Changes:** *Pedir ajustes* / *Mude o que quiser nas respostas e peça uma nova versão. A identidade aprovada continua a mesma.* / *Montar o site de novo com as mudanças*.
 - **Payment (stub):** *Publicar o site* / *Pagamento único. Sem mensalidade.* / *Ambiente de teste: o pagamento por Pix e cartão ainda não está ligado. Este botão simula um pagamento aprovado; nada é cobrado.* / *Simular pagamento aprovado*.
+
+## The client's own domain (E25)
+
+On the page of a published site, *Usar o seu próprio domínio* / *Opcional e incluído no preço: o site também abre em seunegocio.com.br. O registro do domínio é por sua conta, no registrador.* Field *Seu domínio* and **Conectar domínio**. States (`lib/domains/copy.ts`): *Aguardando configuração*, *Verificando*, *Ativo*, *Com problema* (with the reason: the records are gone, 7 days without finding them, refused, or connected in another service, each ending in *tente de novo*), *Removido*. *Como configurar*: where the DNS is at the registrar, the records with **Copiar** (*Copiado*), the redirect of the root to the www, how long it may take, what to check if it fails. **Verificar agora**, *Endereço principal* (the own domain or the BrotaSites address), *Remover domínio* with *Desconectar {domínio}? O site continua no endereço da BrotaSites.* Refusals say how to fix the input and never show the hosting's text. On Publicar, *Domínio próprio (opcional)* / *Seu domínio, se tiver*, only a note. Notices: *O domínio próprio de {site} está ativo.* and *Não conseguimos verificar o domínio próprio de {site}.*
 
 ## Admin panel (team only)
 

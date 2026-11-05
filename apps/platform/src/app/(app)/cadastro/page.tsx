@@ -5,7 +5,7 @@ import { SignUpForm } from "./sign-up-form";
 
 export const metadata: Metadata = {
   title: "Criar conta",
-  description: "Crie a sua conta para responder as sete perguntas e guardar os seus sites.",
+  description: "Crie a sua conta para responder os 5 passos e guardar os seus sites.",
   robots: { index: false },
 };
 

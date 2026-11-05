@@ -116,7 +116,9 @@ test("each status shows its label, what is pending and the right button", async 
     "Complete o seu perfil",
   ]);
   await expect(pending.getByText("Falta uma foto da fachada.")).toBeVisible();
-  await expect(pending.getByText("Continue de onde parou: Marca e sensação.")).toBeVisible();
+  await expect(
+    pending.getByText("Continue de onde parou: passo 2 de 5 (Marca e sensação)."),
+  ).toBeVisible();
 
   const card = (name: string) =>
     page.getByRole("region", { name: "Seus sites" }).getByRole("listitem", { name });
@@ -128,7 +130,7 @@ test("each status shows its label, what is pending and the right button", async 
   await expect(
     card("Bolos da Ana").getByRole("link", { name: /^Escolher direção/ }),
   ).toHaveAttribute("href", `/meus-sites/${sites[1]?.id}`);
-  await expect(card("Oficina do Beto").getByRole("link", { name: /^Revisar/ })).toBeVisible();
+  await expect(card("Oficina do Beto").getByRole("link", { name: /^Publicar/ })).toBeVisible();
   await expect(card("Barbearia")).toContainText("Montando seu site");
   await expect(card("Barbearia").getByRole("list", { name: "Linha do tempo" })).toContainText(
     "Direções prontas",

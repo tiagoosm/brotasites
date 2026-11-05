@@ -1,4 +1,4 @@
-import { formSteps12 } from "@brotasites/schema/v1.2";
+import { formSteps12, knownSteps } from "@brotasites/schema/v1.2";
 import { limits } from "@/config/limits";
 import { pricing } from "@/config/pricing";
 import { infoFor } from "./site-status";
@@ -93,10 +93,27 @@ export function liveAddress(subdomain: string | null): string | null {
   return subdomain ? `${subdomain}.${SITES_DOMAIN}` : null;
 }
 
-/** The first form step still unanswered: where "Continuar" opens a draft. */
-export function resumeStep(completed: string[]): { slug: string; title: string } {
-  const step = formSteps12.find((item) => !completed.includes(item.slug)) ?? formSteps12[0];
-  return { slug: step.slug, title: step.title };
+/**
+ * The first form step still unanswered: where "Continuar" opens a draft. With the 5 steps
+ * answered but not sent yet, the last one, where the answers are sent. Old slugs of the former
+ * 7-step form ("direcao", "endereco") are ignored.
+ */
+export function resumeStep(completed: readonly string[]): {
+  slug: string;
+  title: string;
+  number: number;
+} {
+  const known = knownSteps(completed);
+  const index = formSteps12.findIndex((item) => !known.includes(item.slug));
+  const at = index === -1 ? formSteps12.length - 1 : index;
+  const step = formSteps12[at] ?? formSteps12[0];
+  return { slug: step.slug, title: step.title, number: at + 1 };
+}
+
+/** "passo 2 de 5 (Marca e sensação)". */
+export function resumeLabel(completed: readonly string[]): string {
+  const step = resumeStep(completed);
+  return `passo ${step.number} de ${formSteps12.length} (${step.title})`;
 }
 
 const siteHref = (id: string) => `/meus-sites/${id}`;
@@ -109,7 +126,7 @@ export function siteAction(site: DashboardSite): { label: string; href: string }
     case "awaiting_direction_choice":
       return { label: "Escolher direção", href: siteHref(site.id) };
     case "awaiting_approval":
-      return { label: "Revisar", href: siteHref(site.id) };
+      return { label: "Publicar", href: `${siteHref(site.id)}/publicar` };
     case "live":
     case "grace":
       return { label: "Baixar o site", href: `${siteHref(site.id)}#baixar` };
@@ -227,7 +244,7 @@ export function pendingActions(input: {
     const action = siteAction(site);
     const text =
       site.status === "draft"
-        ? `Continue de onde parou: ${resumeStep(site.completed).title}.`
+        ? `Continue de onde parou: ${resumeLabel(site.completed)}.`
         : site.status === "needs_attention" && site.statusMessage
           ? site.statusMessage
           : info.text;
@@ -261,7 +278,9 @@ export type NoticeKind =
   | "site_suspended"
   | "site_suspension_lifted"
   | "email_confirmed"
-  | "site_deletion_warning";
+  | "site_deletion_warning"
+  | "domain_active"
+  | "domain_failed";
 
 export interface Notice {
   id: string;
@@ -285,6 +304,8 @@ const noticeTexts: Record<NoticeKind, (site: string, daysLeft?: number | null) =
     (daysLeft ?? 0) <= 1
       ? `${site} será apagado amanhã se não houver novidades.`
       : `${site} será apagado em ${daysLeft} dias se não houver novidades.`,
+  domain_active: (site) => `O domínio próprio de ${site} está ativo.`,
+  domain_failed: (site) => `Não conseguimos verificar o domínio próprio de ${site}.`,
 };
 
 /** The pt-BR sentence of a notice; the site's name is plain text (rendered escaped). */
@@ -298,5 +319,8 @@ export function noticeText(
 
 /** Where a notice leads. */
 export function noticeHref(notice: Pick<Notice, "kind" | "siteId">): string {
+  if (notice.siteId && (notice.kind === "domain_active" || notice.kind === "domain_failed")) {
+    return `${siteHref(notice.siteId)}#dominio`;
+  }
   return notice.siteId ? siteHref(notice.siteId) : "/painel";
 }

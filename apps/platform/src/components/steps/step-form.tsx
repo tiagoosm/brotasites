@@ -15,11 +15,14 @@ export function StepForm({
   step,
   validate,
   action,
+  onDone,
   children,
 }: {
   step: FormStepSlug12;
   validate?: () => string | null;
   action?: React.ReactNode;
+  /** Instead of opening the next step (the 5th step sends the answers). */
+  onDone?: () => void;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -45,7 +48,8 @@ export function StepForm({
         }
         if (status) status.textContent = "";
         completeStep(step);
-        if (next) startOpening(() => router.push(`/criar/${siteId}/${next.slug}`));
+        if (onDone) onDone();
+        else if (next) startOpening(() => router.push(`/criar/${siteId}/${next.slug}`));
       }}
     >
       <StepHeader step={step} />

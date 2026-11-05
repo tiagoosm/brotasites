@@ -32,6 +32,17 @@ Keep this list up to date during the project. Claude Code does not create accoun
 - [ ] Check INPI before investing in the brand.
 - [ ] Decide the repository's visibility: the master plan assumes a private repository, and `tiagoosm/brotasites` is public. Adapted React Bits code (`side-rays.tsx`, `vine-trail.tsx`) is visible while it is public.
 
+## Client domains (E25)
+
+Included in the price and optional. The code runs against a simulated hosting (`DOMAINS_MODE=simulated`, development only); the calls to Cloudflare for SaaS are written and have never been run. To turn it on:
+
+1. **Cloudflare for SaaS** on the `BASE_DOMAIN` zone (after the Cloudflare and `BASE_DOMAIN` items above): in the zone, SSL/TLS > Custom Hostnames, enable it; create the fallback origin (for example `fallback.<BASE_DOMAIN>`, a proxied record the Worker answers on); create the CNAME target `clientes.<BASE_DOMAIN>` (proxied, pointing to the fallback origin).
+2. **API token** with the least permission for custom hostnames on that zone only (Cloudflare's docs name "SSL and Certificates: Edit"; **to verify** when creating it). Put `CLOUDFLARE_SAAS_ZONE_ID`, `CLOUDFLARE_SAAS_API_TOKEN`, `CUSTOM_DOMAIN_TARGET=clientes.<BASE_DOMAIN>` and `DOMAINS_MODE=cloudflare` in Vercel (server only), plus the KV variables if not there yet. Never `simulated` in production.
+3. **Apply the migration** `supabase/migrations/20261105000000_site_domains.sql` (after the E24 one) and run the database tests locally first.
+4. **Confirm in the account** that 100 custom hostnames are included and the price of each extra one (official docs, 2026-11-05: 100 included on Free, Pro and Business, then $0.10 a month each, up to 50,000; **to verify**). The team panel (`/admin/limites`) shows "Domínios de clientes: N de 100 incluídos" and warns from 80. Past 100, each new domain costs at Cloudflare; the yearly renewal covers it. If the account answers "quota" (error 1405), Cloudflare's sales team allocates more.
+5. **Legal review** of the Terms: the connection is included; registering and renewing the domain are the client's; BrotaSites is not responsible for an expired domain or a registrar's failure (marked pending review).
+6. **Decide** whether the team helps clients with their DNS, and whether that help is paid. Today the page only gives the step by step and promises no help.
+
 ## Making generation run in production (checked on 2026-11-04)
 
 What was found: the site "Real Dente" has been in "Criando as 3 direções" since 2026-10-29. Its job is in `public.jobs` with `status = queued` and `attempts = 0`: nothing ever picked it up. Vercel has no `TRIGGER_SECRET_KEY`, so the platform cannot hand jobs to Trigger.dev (`apps/platform/src/lib/server/jobs.ts` returns without starting it), and there is no runner in production. The code is not broken; the production side of the queue was never set up.
@@ -110,6 +121,15 @@ The audit is in `docs/ux-audit.md`. These items wait on you:
 
 Since 2026-10-27 the owner does not approve each task. Choices the plan reserved for the owner are taken with the recommended option and listed here; any of them can be reversed.
 
+- **E25, 5 steps and client domains:**
+  - The word is *passo* everywhere the client reads it. Exceptions kept: *Verificação em duas etapas* (the usual name of two-factor sign-in) and *Perguntas frequentes* (a section of the client's site).
+  - Publicar lives at `/meus-sites/<site>/publicar`; the dashboard's button for a finished site is *Publicar*. The site's timeline keeps its named milestones (no numbers).
+  - The 5th step sends the answers; a site already sent saves and goes back to its page (*Salvar e voltar ao site*); asking for 3 new directions stays on the site's page.
+  - The www pair: the www is connected and the root redirects to it, because pointing a root domain needs Cloudflare's Enterprise "apex proxying". Another subdomain connects as typed.
+  - The client's own domain becomes the main address once active (they can switch back); a suspended site keeps its domain mapped and shows the suspension page there.
+  - The domain check uses the Public Suffix List as a data file in the repository (MPL 2.0, server only) instead of installing a library.
+  - The HTML canonical link of the generated pages changes with the next build, not at once.
+  - Database migrations: none for the 5 steps (no table or function names the steps); `20261105000000_site_domains.sql` for the domains.
 - **E24, cost control:**
   - Sites that wait on us (generating, building, in review) are never deleted for inactivity, only those that wait on the client.
   - The cleanup runs inside the existing keep-alive cron (one schedule), not in a second cron.

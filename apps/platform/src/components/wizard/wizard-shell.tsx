@@ -11,8 +11,8 @@ import { SproutProgress, SproutProgressBar } from "./sprout-progress";
 // and the finished site on the dashboard.
 
 export function WizardShell({ children }: { children: React.ReactNode }) {
-  const params = useParams<{ etapa?: string }>();
-  const step = (formSteps12.find((s) => s.slug === params.etapa)?.slug ??
+  const params = useParams<{ passo?: string }>();
+  const step = (formSteps12.find((s) => s.slug === params.passo)?.slug ??
     "negocio") as FormStepSlug12;
 
   return (

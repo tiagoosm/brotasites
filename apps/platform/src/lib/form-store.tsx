@@ -1,6 +1,11 @@
 "use client";
 
-import { type FormDraft, type FormStepSlug12, formSteps12 } from "@brotasites/schema/v1.2";
+import {
+  type FormDraft,
+  type FormStepSlug12,
+  formSteps12,
+  knownSteps,
+} from "@brotasites/schema/v1.2";
 import {
   createContext,
   useCallback,
@@ -120,7 +125,8 @@ export function FormProvider({
       const local = readLocal(siteId);
       const useLocal = local && local.updatedAt > Date.parse(row.updated_at);
       setDraft(useLocal ? local.draft : remoteDraft);
-      setCompleted((useLocal ? local.completed : remoteCompleted) as FormStepSlug12[]);
+      // Old drafts may list the steps 6 and 7 of the former 7-step form: dropped here.
+      setCompleted(knownSteps(useLocal ? local.completed : remoteCompleted));
       if (useLocal) dirty.current = true;
       setReady(true);
     })();

@@ -16,6 +16,8 @@ export async function GET() {
   if ("error" in admin) return admin.error;
   const { data, error } = await admin.session.rpc("admin_limits");
   if (error) return teamRpcError(error.message);
+  // Client domains against what the hosting includes (E25).
+  const domains = await admin.session.rpc("admin_domains");
   // The dry run: what the cleanup would remove in the next 7 days (secret key, server only).
   const db = getAdminSupabase();
   const upcoming = db
@@ -29,6 +31,7 @@ export async function GET() {
     database: data,
     config: limits,
     budget: aiBudget(),
+    domains: domains.error ? null : domains.data,
     upcoming: (
       (upcoming.data ?? []) as { site_id: string; status: string; deadline: string }[]
     ).map((row) => ({ siteId: row.site_id, status: row.status, deadline: row.deadline })),

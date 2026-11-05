@@ -181,27 +181,13 @@ function DirectionExcerpt() {
   );
 }
 
-function AddressExcerpt() {
-  return (
-    <Card>
-      <div className="flex h-12 items-center rounded-lg border border-leaf px-4 font-mono text-[0.875rem] ring-4 ring-leaf/15">
-        <span>padaria-do-ze</span>
-        <span className="text-ink-soft">.brotasites.com</span>
-      </div>
-      <p className="mt-2.5 flex items-center gap-2 text-sm font-semibold text-leaf-deep">
-        <Check className="size-4" />
-        Disponível.
-      </p>
-    </Card>
-  );
-}
-
 export const excerpts: Record<FormStepSlug12, () => React.ReactNode> = {
   negocio: BusinessExcerpt,
   marca: BrandExcerpt,
   secoes: SectionsExcerpt,
   conteudo: ContentExcerpt,
   contato: ContactExcerpt,
-  direcao: DirectionExcerpt,
-  endereco: AddressExcerpt,
 };
+
+/** The excerpt of the first closing (the 3 looks), outside the 5 steps. */
+export const ChoiceExcerpt = DirectionExcerpt;

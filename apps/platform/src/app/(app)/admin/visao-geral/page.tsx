@@ -132,7 +132,7 @@ export default function OverviewPage() {
           <table className="w-full text-left text-[0.9375rem]">
             <thead className="text-[0.8125rem] text-ink-soft">
               <tr>
-                <th className="py-2 font-normal">Etapa</th>
+                <th className="py-2 font-normal">Fase</th>
                 <th className="py-2 font-normal">Sites</th>
                 <th className="py-2 font-normal">Passaram da anterior</th>
               </tr>
@@ -156,7 +156,7 @@ export default function OverviewPage() {
 
       <PanelSection id="abandonados" title="Abandonados">
         <p className="text-[0.9375rem] text-ink-soft">
-          Não pagos e sem nenhuma ação da pessoa há mais de 7 dias, pela última etapa alcançada.
+          Não pagos e sem nenhuma ação da pessoa há mais de 7 dias, pela última fase alcançada.
         </p>
         {abandoned.length === 0 ? (
           <p>Nenhum agora.</p>

@@ -13,6 +13,24 @@ const nextConfig: NextConfig = {
         destination: "/criar",
         permanent: false,
       },
+      // The 7-step form became 5 steps (E25): the old step 6 (sending, the 3 directions) is the
+      // site's page, the old step 7 (address, approval, payment) its "Publicar" page. Both decide
+      // by the site's status. "/criar/<site>/etapa/<step>" (an earlier spelling) keeps working.
+      {
+        source: "/criar/:site/direcao",
+        destination: "/meus-sites/:site",
+        permanent: true,
+      },
+      {
+        source: "/criar/:site/endereco",
+        destination: "/meus-sites/:site/publicar",
+        permanent: true,
+      },
+      {
+        source: "/criar/:site/etapa/:passo",
+        destination: "/criar/:site/:passo",
+        permanent: true,
+      },
     ];
   },
 };

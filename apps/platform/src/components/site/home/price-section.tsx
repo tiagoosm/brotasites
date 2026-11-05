@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
 import { GlowCard } from "@/components/site/home/glow-card";
 import { SplitWords } from "@/components/site/split-words";
-import { formatBRL, LEGAL_REVIEW_PENDING, pricing } from "@/config/pricing";
+import { customDomainNote, formatBRL, LEGAL_REVIEW_PENDING, pricing } from "@/config/pricing";
 
 // "Quanto custa": creating is free, publishing is a one-time payment. Every value comes from
 // src/config/pricing.ts.
@@ -32,6 +32,7 @@ export function PriceSection() {
     `${pricing.hostingMonths} meses de hospedagem`,
     `Ajustes pelo painel nos primeiros ${pricing.adjustmentsDays} dias`,
     "O site é seu: baixe quando quiser",
+    ...(pricing.customDomainIncluded ? [customDomainNote] : []),
   ];
   return (
     <section id="preco" aria-labelledby="preco-titulo" className="scroll-mt-16 bg-table">
@@ -76,19 +77,12 @@ export function PriceSection() {
             </div>
           </GlowCard>
 
-          <dl className="grid gap-5 sm:grid-cols-3 sm:gap-6">
+          <dl className="grid gap-5 sm:grid-cols-2 sm:gap-6">
             <div data-reveal="" className="grid content-start gap-1.5">
               <dt className="font-semibold">Depois de {pricing.hostingMonths} meses</dt>
               <dd className="text-[0.9375rem] text-ink-soft">
                 {formatBRL(pricing.renewalPerYear)} por ano, se quiser renovar. Sem renovar, você
                 baixa o site antes.
-              </dd>
-            </div>
-            <div data-reveal="" className="grid content-start gap-1.5">
-              <dt className="font-semibold">Domínio próprio</dt>
-              <dd className="text-[0.9375rem] text-ink-soft">
-                + {formatBRL(pricing.customDomain)} para conectar. O registro do domínio é por sua
-                conta.
               </dd>
             </div>
             <div data-reveal="" className="grid content-start gap-1.5">

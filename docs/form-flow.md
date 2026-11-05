@@ -1,6 +1,6 @@
-# Form flow (7 steps)
+# Form flow (5 steps)
 
-Target flow from the master plan (2026-10-27), built in step E10. It replaces the previous flow (business, template, colors, sections, content, contact, address) and removes the live preview: the client no longer sees the site while answering.
+Target flow from the master plan (2026-10-27), built in step E10. Since E25 (owner's decision of 2026-11-05) the form has 5 steps, the ones that ask for information; choosing the look and publishing come after them, on the site's own pages, and are not numbered. The word is *passo* everywhere the client reads it. It replaces the previous flow (business, template, colors, sections, content, contact, address) and removes the live preview: the client no longer sees the site while answering.
 
 UI copy shown to the client is in pt-BR; labels quoted below are the actual pt-BR texts.
 
@@ -22,8 +22,14 @@ Signing in is required to create a site (decision of 2026-10-27, replacing the d
 3. **Seções (sections):** the system suggests the family's sections; the client turns them on or off. Testimonials only turn on with a real testimonial.
 4. **Conteúdo (content):** services or products (name, short description, up to 9), differentiators (up to 8, short), FAQ (optional), real testimonials with name and authorization, photos (up to 12, with a guide on how to take them). Image authorization confirmation when people appear, and parents' or guardians' authorization when minors appear.
 5. **Contato (contact):** WhatsApp, phone, email (at least one channel). Full address, or "não tenho endereço fixo" with a list of neighborhoods or cities served. Structured opening hours: day chips, shortcuts ("Seg a Sex", "Seg a Sáb", "Todos os dias"), "copiar para os outros dias", "sob agendamento" and "24 horas" options. Instagram and Facebook. Professional registration when the family requires it.
-6. **Escolha da direção (direction choice, asynchronous):** the client sends the answers and can close the page. When the 3 directions are ready, the dashboard shows the "Escolha uma das 3" card. 3 free rounds per site (the first and 2 redos), then 1 more round per hour; the count never resets, and choosing is never blocked (values in `apps/platform/src/config/limits.ts`). Choosing one locks the identity.
-7. **Endereço e revisão (address and review):** subdomain choice (validation and availability in real time), summary of the answers, the finished-site screen, change requests, approval and payment (stub).
+The 5th step ends with a short look at the answers of steps 1 to 4 (each with a link back) and **Enviar e ver as direções**: the answers are saved, the directions are requested and the client goes to the site's page. Drafts saved by the former 7-step form may list `direcao` and `endereco` as done; they are ignored when read (`knownSteps`), the answers stay.
+
+## After the 5 steps (not numbered)
+
+- **Escolha da direção (direction choice, asynchronous):** the client can close the page after sending. When the 3 directions are ready, the dashboard shows the "Escolha uma das 3" card. 3 free rounds per site (the first and 2 redos), then 1 more round per hour; the count never resets, and choosing is never blocked (values in `apps/platform/src/config/limits.ts`). Choosing one locks the identity.
+- **Publicar (`/meus-sites/<site>/publicar`):** subdomain choice (validation and availability in real time), summary of the answers, the finished-site screen, change requests, approval and payment (stub). Before a direction is chosen it only says what comes first.
+
+Old addresses keep working (permanent redirects in `apps/platform/next.config.ts`): `/criar/<site>/direcao` leads to the site's page, `/criar/<site>/endereco` to Publicar, and `/criar/<site>/etapa/<passo>` to `/criar/<site>/<passo>`.
 
 ## Minimum to generate
 

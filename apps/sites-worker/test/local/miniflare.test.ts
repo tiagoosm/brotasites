@@ -36,6 +36,21 @@ beforeAll(async () => {
   );
   await HOSTING.put("site:loja", JSON.stringify({ version: "v1", state: "suspended" }));
   await HOSTING.put("domain:www.padariadoze.com.br", "padaria-do-ze");
+  // E25: a site whose own domain is the main address, with the root of the www pair.
+  await SITES.put("sites/casa-verde/v1/index.html", "<h1>Casa Verde</h1>", {
+    httpMetadata: { contentType: "text/html; charset=utf-8" },
+    customMetadata: { csp: "strict" },
+  });
+  await HOSTING.put(
+    "site:casa-verde",
+    JSON.stringify({ version: "v1", state: "active", canonicalHost: "www.casaverde.com.br" }),
+  );
+  await HOSTING.put("domain:www.casaverde.com.br", "casa-verde");
+  await HOSTING.put(
+    "domain:casaverde.com.br",
+    JSON.stringify({ subdomain: "casa-verde", redirectTo: "www.casaverde.com.br" }),
+  );
+  await HOSTING.put("domain:www.lojasuspensa.com.br", "loja");
   await proxy.dispose();
   worker = await unstable_dev("src/index.ts", {
     config: "wrangler.jsonc",
@@ -52,7 +67,7 @@ afterAll(async () => {
 });
 
 const get = (host: string, path = "/") =>
-  worker.fetch(`http://${host}${path}`, { headers: { host } });
+  worker.fetch(`http://${host}${path}`, { headers: { host }, redirect: "manual" });
 
 describe("sites Worker in Miniflare", () => {
   it("serves the version KV points to, with the strict headers", async () => {
@@ -64,9 +79,30 @@ describe("sites Worker in Miniflare", () => {
   });
 
   it("serves a custom domain and keeps a suspended site off", async () => {
-    expect(await (await get("www.padariadoze.com.br")).text()).toBe("<h1>Versão 2</h1>");
+    // The BrotaSites address is the main one here: the own domain redirects to it (E25).
+    const own = await get("www.padariadoze.com.br", "/cardapio");
+    expect(own.status).toBe(308);
+    expect(own.headers.get("location")).toBe("https://padaria-do-ze.sites.localhost/cardapio");
     const suspended = await get("loja.sites.localhost");
     expect(suspended.status).toBe(503);
+    expect((await get("www.lojasuspensa.com.br")).status).toBe(503);
+  });
+
+  it("serves the own domain when it is the main address, and the www pair (E25)", async () => {
+    const own = await get("www.casaverde.com.br");
+    expect(own.status).toBe(200);
+    expect(await own.text()).toBe("<h1>Casa Verde</h1>");
+    expect(own.headers.get("content-security-policy")).toBe(
+      (await get("padaria-do-ze.sites.localhost")).headers.get("content-security-policy"),
+    );
+    const base = await get("casa-verde.sites.localhost", "/sobre");
+    expect(base.status).toBe(308);
+    expect(base.headers.get("location")).toBe("https://www.casaverde.com.br/sobre");
+    const root = await get("casaverde.com.br");
+    expect(root.status).toBe(308);
+    expect(root.headers.get("location")).toBe("https://www.casaverde.com.br/");
+    // Removed (no KV record): the same 404 as an unknown host.
+    expect((await get("www.removido.com.br")).status).toBe(404);
   });
 
   it("hands over the export with a valid signature only", async () => {
