@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function SignInPage() {
   return (
-    <AuthShell>
+    <AuthShell light>
       <Suspense>
         <SignInForm />
       </Suspense>

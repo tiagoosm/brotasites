@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CreateSiteButton } from "@/components/site/create-site-button";
 import { FaqAccordion } from "@/components/site/faq-accordion";
-import { HeroRays } from "@/components/site/home/hero-rays";
 import { PriceSection } from "@/components/site/home/price-section";
 import { SplitWords } from "@/components/site/split-words";
 import { Stem } from "@/components/site/stem/stem";
@@ -65,7 +64,6 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }}
       />
       <div className="relative isolate overflow-hidden">
-        <HeroRays />
         <section className="mx-auto grid min-h-[calc(100svh-4rem)] max-w-6xl content-center px-5 pt-12 pb-20 sm:px-8 sm:pt-20 sm:pb-28 lg:min-h-[44rem]">
           <div className="hero-enter grid max-w-[52rem] gap-7 sm:gap-8">
             <h1 className="font-display text-[3.25rem] leading-[0.98] tracking-[-0.025em] sm:text-[5rem] lg:text-[6rem]">
