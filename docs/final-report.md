@@ -35,7 +35,7 @@ Two more fixes came from Lighthouse (the home page's WebGL decorations, under Nu
 - **Not deployed, by the rules of this work:** the jobs on Trigger.dev, the E10 and E11 migrations on the Supabase project, Cloudflare (R2, KV, the Worker, DNS), the real AI model. All of it is listed, in order, in `docs/owner-steps.md`.
 - **Payments:** an interface and a stub only (Asaas is out of scope for now, as planned). Prices live in `apps/platform/src/config/pricing.ts`.
 - **Renewal and the end of the 12 months:** the Worker already serves the `grace` and `offline` states, but nothing sets them yet; renewal at R$ 99/year is not built.
-- **Custom domains:** the Worker serves them through a KV record; ordering one in the dashboard (+ R$ 97), the DNS instructions for the client and Cloudflare for SaaS are not built.
+- **Custom domains:** included in the price since 2026-11-04. The Worker serves them through a KV record; the flow on the site's page (E25) is built against a simulated provider; the real Cloudflare for SaaS calls are written but not run until the owner sets up the account.
 - **Paid changes after 30 days:** the price is in `pricing.ts`, the flow is not built.
 - **Notification emails:** none, by decision (only the magic sign-in link).
 - **The restricted code layer** for variants made outside the catalog stays off (`docs/catalog-promotion.md`).

@@ -24,8 +24,8 @@ Built on 2026-10-24 (design: [superpowers/specs/2026-10-24-main-site-design.md](
 
 ### Price
 
-- Model (2026-10-25): one-time payment per site, no monthly plan. All values live in `apps/platform/src/config/pricing.ts` (publish R$ 297, optional `launchPrice` shown with the regular price crossed out, 12 months of hosting, 30 days of dashboard changes, optional renewal R$ 99/year, custom domain + R$ 97, 7-day guarantee).
-- Section *Quanto custa*: *Criar e ver o site pronto é grátis. Você só paga para publicar.* Included: hosting months, dashboard changes days, *O site é seu: baixe quando quiser*. Below: renewal (*R$ 99 por ano, se quiser renovar. Sem renovar, você baixa o site antes.*), custom domain (*+ R$ 97 para conectar. O registro do domínio é por sua conta.*), guarantee. The guarantee and refund texts show *pendente de revisão jurídica* until `legalReviewed` is true.
+- Model (2026-10-25): one-time payment per site, no monthly plan. All values live in `apps/platform/src/config/pricing.ts` (publish R$ 297, optional `launchPrice` shown with the regular price crossed out, 12 months of hosting, 30 days of dashboard changes, optional renewal R$ 99/year, the client's own domain included and optional since 2026-11-04 (`customDomainIncluded`), 7-day guarantee).
+- Section *Quanto custa*: *Criar e ver o site pronto é grátis. Você só paga para publicar.* Included: hosting months, dashboard changes days, *O site é seu: baixe quando quiser*, *Domínio próprio, se você quiser (o registro do domínio é por sua conta)* (`customDomainNote`). Below: renewal (*R$ 99 por ano, se quiser renovar. Sem renovar, você baixa o site antes.*) and the guarantee. The guarantee and refund texts show *pendente de revisão jurídica* until `legalReviewed` is true.
 - No comparisons with freelancers or competitors.
 
 ### Home page
@@ -41,7 +41,7 @@ Built on 2026-10-24 (design: [superpowers/specs/2026-10-24-main-site-design.md](
 
 ### Help, terms and privacy
 
-- Help answers say only what the product does today. Open decisions are stated as such: custom domain *ainda não está disponível*; changes after publishing *ainda está sendo definida*; account deletion is done on request.
+- Help answers say only what the product does today. Open decisions are stated as such; changes after publishing *ainda está sendo definida*; account deletion is done on request.
 - Terms and privacy are first drafts in plain language, marked *Versão inicial, em revisão jurídica*. They need a lawyer's review before BrotaSites accepts clients.
 - Responsible party and contact e-mail: pending (`src/content/contact.ts`). Pages say *a definir*; nothing shows an address until it exists.
 

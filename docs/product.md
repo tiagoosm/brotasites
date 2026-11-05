@@ -11,7 +11,7 @@ Every value lives in `apps/platform/src/config/pricing.ts`:
 | `hostingMonths` | 12 | Hosting included |
 | `adjustmentsDays` | 30 | Changes through the dashboard included after publishing |
 | `renewalPerYear` | 99 | Optional yearly renewal |
-| `customDomain` | 97 | Connecting a custom domain |
+| `customDomainIncluded` | `true` | Connecting the client's own domain: included and optional, no price (decision of 2026-11-04) |
 | `guaranteeDays` | 7 | Money-back guarantee (legal text PENDING REVIEW) |
 | `legalReviewed` | `false` | Until true, guarantee and refund texts carry a "pendente de revisão jurídica" mark |
 
@@ -19,7 +19,7 @@ Every value shown on a page, in the FAQ or at checkout comes from this file. Nev
 
 ## What is included
 
-Creating, editing and seeing the directions and the finished site: free. Charged only to publish. Included: 12 months of hosting, 30 days of changes through the dashboard, download of the static site. After 12 months, keeping it online costs R$ 99 per year (optional); a client who does not renew can download the site before it goes offline (grace period defined in `docs/abuse-and-content.md`). Custom domain: + R$ 97, and the client pays the registrar directly for the domain.
+Creating, editing and seeing the directions and the finished site: free. Charged only to publish. Included: 12 months of hosting, 30 days of changes through the dashboard, download of the static site. After 12 months, keeping it online costs R$ 99 per year (optional); a client who does not renew can download the site before it goes offline (grace period defined in `docs/abuse-and-content.md`). The client's own domain: included and optional (decision of 2026-11-04). The client registers, pays and renews the domain at the registrar; BrotaSites never sells nor registers domains; without one, the site stays at `seunegocio.<BASE_DOMAIN>`.
 
 ## Limits (E24)
 

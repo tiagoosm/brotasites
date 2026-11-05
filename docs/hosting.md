@@ -14,7 +14,7 @@ A single Cloudflare Worker serves every site (`apps/sites-worker`). Do not use "
 - **Publish** (`deployToR2`): upload the version and its .zip to R2, then switch `site:{subdomain}` in KV, keeping the previous version. Rolling back is `rollbackSite`, one KV write. Publishing never lifts a suspension.
 - **Export:** the platform gives the paying owner of a live site a link valid for 10 minutes, `previa.{BASE_DOMAIN}/_export/{subdomain}?exp=...&sig=...` (HMAC-SHA256 with `EXPORT_SECRET`, shared by the platform and the Worker); the Worker streams that version's .zip.
 - **Suspension:** an admin's suspension (E11) sets the state in KV through the Cloudflare API; it can take up to 60 s to reach every location.
-- **Custom domain:** Cloudflare for SaaS (verified on 2026-10-25: 100 custom hostnames included, then $0.10 each per month; confirm in the docs when implementing). The Worker already serves a host mapped in KV; ordering, DNS instructions for the client and the status check on the dashboard come with the custom-domain product (+ R$ 97).
+- **Custom domain:** included in the price and optional (decision of 2026-11-04). Cloudflare for SaaS on the `BASE_DOMAIN` zone (100 custom hostnames included, then $0.10 each per month: **to verify** in the owner's account). The flow on the site's page (asking, DNS instructions, verification, activation) is E25, see "Client domains (E25)" below.
 - **Batch rebuild:** when the template is fixed, regenerate every site from its JSON and locked identity, with a visual comparison, a gradual rollout and a quick rollback (not built yet).
 - **Locally:** `pnpm --filter @brotasites/sites-worker dev` runs the Worker in Miniflare with local R2 and KV; `test/local/miniflare.test.ts` does the same in CI.
 

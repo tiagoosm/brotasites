@@ -16,8 +16,12 @@ export const pricing = {
   adjustmentsDays: 30,
   /** Optional yearly renewal to keep the site online after the included hosting, in BRL. */
   renewalPerYear: 99,
-  /** Connecting a custom domain, in BRL (the client registers and pays for the domain). */
-  customDomain: 97,
+  /**
+   * Connecting the client's own domain is included and optional (owner's decision of
+   * 2026-11-04): no price of its own. The client registers, pays and renews the domain at the
+   * registrar; BrotaSites never sells nor registers domains.
+   */
+  customDomainIncluded: true,
   /** Money-back guarantee, in days. */
   guaranteeDays: 7,
   /**
@@ -45,3 +49,7 @@ export function publishPrice(): number {
 }
 
 export const LEGAL_REVIEW_PENDING = "pendente de revisão jurídica";
+
+/** The one sentence about the client's own domain, wherever the price is listed. */
+export const customDomainNote =
+  "Domínio próprio, se você quiser (o registro do domínio é por sua conta)";
