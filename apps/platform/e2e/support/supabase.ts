@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { BrowserContext, Route } from "@playwright/test";
+import { checkDomain } from "../../src/lib/domains/validate";
 
 // A fake Supabase for e2e: the platform points at http://localhost:54390 (see
 // playwright.config.ts), the session is a cookie made here and every auth, database and
@@ -130,6 +131,19 @@ export interface FakeState {
   adminGets: string[];
   /** The AI spend of the panel's fake (E24); empty means "sem dados ainda". */
   spentUsd?: number;
+  /** The site's own domain (E25), as the route handlers return it. */
+  domain?: FakeDomain | null;
+  /** Domains another site already uses (E25). */
+  takenDomains?: string[];
+}
+
+export interface FakeDomain {
+  host: string;
+  aliasHost: string | null;
+  status: "pending" | "verifying" | "active" | "failed";
+  primary: boolean;
+  records: { type: string; name: string; value: string; purpose: string }[];
+  failure: string | null;
 }
 
 export function siteRow(status = "draft", extra: Partial<NonNullable<FakeState["site"]>> = {}) {
@@ -380,6 +394,8 @@ export async function fakeSupabase(
       event("directions_requested", "Respostas recebidas. Estamos criando as 3 direções.");
       return route.fulfill(json({ used: state.quota.used, free: state.quota.free }));
     }
+    if (/\/api\/sites\/[^/]+\/domain/.test(url.pathname))
+      return answerDomain(route, url, state, json);
     if (url.pathname.endsWith("/discard") && route.request().method() === "POST") {
       const body = (route.request().postDataJSON() ?? {}) as { confirm?: boolean };
       if (body.confirm !== true) return route.fulfill(json({ error: "Confirme." }, 400));
@@ -583,8 +599,11 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
           openSitesPerAccount: 1,
           idleDaysBeforeDeletion: 30,
           deletionWarningDays: [7, 1],
+          domainsIncluded: 100,
+          domainsAlertAt: 80,
         },
         budget: BUDGET,
+        domains: { active: 80, waiting: 3, failed: 1, inUse: 84 },
         upcoming: [{ siteId: SITE, status: "draft", deadline: "2026-11-08T12:00:00Z" }],
       }),
     );
@@ -718,4 +737,78 @@ function costsFor(state: FakeState) {
     budget: BUDGET,
     today: { spentUsd: state.spentUsd ?? 0 },
   };
+}
+
+const PAID = ["publishing", "live", "grace", "suspended"];
+
+/**
+ * The client's own domain (E25), as the route handlers answer with DOMAINS_MODE=simulated: the
+ * real check of the domain (lib/domains/validate.ts), then the simulated hosting ("pendente..."
+ * never validates, "recusado..." is refused, anything else is active on the first check).
+ */
+function answerDomain(route: Route, url: URL, state: FakeState, json: Json) {
+  const request = route.request();
+  const action = url.pathname.split("/domain")[1] ?? "";
+  const paid = Boolean(state.site && PAID.includes(state.site.status));
+  if (!state.site || !url.pathname.includes(`/api/sites/${state.site.id}/`)) {
+    return route.fulfill(json({ error: "Não encontramos este site na sua conta." }, 404));
+  }
+  if (request.method() === "GET") {
+    return route.fulfill(json({ domain: state.domain ?? null, paid, available: true }));
+  }
+  const body = (request.postDataJSON() ?? {}) as Record<string, unknown>;
+  if (action === "") {
+    if (!paid) {
+      return route.fulfill(
+        json({ error: "O domínio próprio fica disponível depois que o site for publicado." }, 409),
+      );
+    }
+    const checked = checkDomain(String(body.host ?? ""), {
+      baseDomain: "sites.localhost",
+      platformHosts: ["localhost", "previa.sites.localhost"],
+    });
+    if (!checked.ok) return route.fulfill(json({ error: checked.message }, 400));
+    if ((state.takenDomains ?? []).includes(checked.host)) {
+      return route.fulfill(json({ error: "Esse domínio já está conectado a outro site." }, 409));
+    }
+    state.domain = {
+      host: checked.host,
+      aliasHost: checked.alias,
+      status: "pending",
+      primary: true,
+      failure: null,
+      records: [
+        { type: "CNAME", name: checked.host, value: "clientes.sites.localhost", purpose: "route" },
+        {
+          type: "TXT",
+          name: `_cf-custom-hostname.${checked.host}`,
+          value: "simulado-123",
+          purpose: "ownership",
+        },
+      ],
+    };
+    return route.fulfill(json({ domain: state.domain }, 201));
+  }
+  if (!state.domain) {
+    return route.fulfill(json({ error: "Este site não tem domínio próprio conectado." }, 404));
+  }
+  if (action === "/check") {
+    const host = state.domain.host;
+    state.domain = host.startsWith("pendente")
+      ? { ...state.domain, status: "verifying" }
+      : host.startsWith("recusado")
+        ? { ...state.domain, status: "failed", failure: "refused" }
+        : { ...state.domain, status: "active" };
+    return route.fulfill(json({ domain: state.domain }));
+  }
+  if (action === "/primary") {
+    state.domain = { ...state.domain, primary: body.primary === true };
+    return route.fulfill(json({ domain: state.domain }));
+  }
+  if (action === "/remove") {
+    if (body.confirm !== true) return route.fulfill(json({ error: "Confirme." }, 400));
+    state.domain = null;
+    return route.fulfill(json({ removed: true }));
+  }
+  return route.fulfill(json({ error: "not found" }, 404));
 }

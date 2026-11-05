@@ -278,7 +278,9 @@ export type NoticeKind =
   | "site_suspended"
   | "site_suspension_lifted"
   | "email_confirmed"
-  | "site_deletion_warning";
+  | "site_deletion_warning"
+  | "domain_active"
+  | "domain_failed";
 
 export interface Notice {
   id: string;
@@ -302,6 +304,8 @@ const noticeTexts: Record<NoticeKind, (site: string, daysLeft?: number | null) =
     (daysLeft ?? 0) <= 1
       ? `${site} será apagado amanhã se não houver novidades.`
       : `${site} será apagado em ${daysLeft} dias se não houver novidades.`,
+  domain_active: (site) => `O domínio próprio de ${site} está ativo.`,
+  domain_failed: (site) => `Não conseguimos verificar o domínio próprio de ${site}.`,
 };
 
 /** The pt-BR sentence of a notice; the site's name is plain text (rendered escaped). */
@@ -315,5 +319,8 @@ export function noticeText(
 
 /** Where a notice leads. */
 export function noticeHref(notice: Pick<Notice, "kind" | "siteId">): string {
+  if (notice.siteId && (notice.kind === "domain_active" || notice.kind === "domain_failed")) {
+    return `${siteHref(notice.siteId)}#dominio`;
+  }
   return notice.siteId ? siteHref(notice.siteId) : "/painel";
 }

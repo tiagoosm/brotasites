@@ -7,7 +7,7 @@ import { TeamAction } from "@/components/admin/team-action";
 import { Loading, Notice } from "@/components/shared/page-state";
 import type { AiBudget } from "@/lib/admin/budget";
 import { adminGet } from "@/lib/admin/client";
-import { dateTime, formatCount, formatUsd } from "@/lib/admin/format";
+import { dateTime, formatCount, formatUsd, NO_DATA } from "@/lib/admin/format";
 import { infoFor } from "@/lib/site-status";
 
 // Team panel, limits and actions (E24): the values in force and what the cleanup will remove in
@@ -30,9 +30,13 @@ interface Data {
     openSitesPerAccount: number;
     idleDaysBeforeDeletion: number;
     deletionWarningDays: number[];
+    domainsIncluded: number;
+    domainsAlertAt: number;
   };
   budget: AiBudget;
   upcoming: { siteId: string; status: string; deadline: string }[];
+  /** Client domains (E25); null when the database could not say. */
+  domains: { active: number; waiting: number; failed: number; inUse: number } | null;
 }
 
 export default function LimitsPage() {
@@ -47,11 +51,23 @@ export default function LimitsPage() {
   }, [load]);
   if (error) return <Notice title="Não foi possível abrir os limites" text={error} />;
   if (!data) return <Loading />;
-  const { config, database, budget } = data;
+  const { config, database, budget, domains } = data;
+  const domainsUsed = domains?.inUse ?? 0;
 
   return (
     <div className="grid gap-10">
       <h1 className="font-display text-[2.5rem] leading-[1.05]">Limites</h1>
+
+      {domains && domainsUsed >= config.domainsAlertAt && (
+        <p
+          role="status"
+          className="rounded-lg border border-pollen/60 bg-pollen/10 p-3 text-[0.9375rem] font-semibold"
+        >
+          {domainsUsed >= config.domainsIncluded
+            ? `Os ${config.domainsIncluded} domínios incluídos acabaram: cada novo custa US$ 0,10 por mês na Cloudflare (a verificar). Veja docs/owner-steps.md.`
+            : `Domínios de clientes: ${domainsUsed} de ${config.domainsIncluded} incluídos. Veja docs/owner-steps.md antes de passar de ${config.domainsIncluded}.`}
+        </p>
+      )}
 
       <PanelSection id="vigentes" title="Valores em vigor">
         <dl className="grid gap-3 sm:grid-cols-3">
@@ -83,6 +99,19 @@ export default function LimitsPage() {
             note={`${budget.roundsPerAccountPerDay} por conta`}
           />
           <Stat label="Exceções de vaga em vigor" value={formatCount(database.slotGrants)} />
+          <Stat
+            label="Domínios de clientes"
+            value={
+              domains
+                ? `${formatCount(domainsUsed)} de ${config.domainsIncluded} incluídos`
+                : NO_DATA
+            }
+            note={
+              domains
+                ? `${formatCount(domains.active)} ativos, ${formatCount(domains.waiting)} aguardando, ${formatCount(domains.failed)} com problema.`
+                : undefined
+            }
+          />
         </dl>
         <p className="text-[0.8125rem] text-ink-soft">
           Valores de config/limits.ts. O banco recebeu os últimos em {dateTime(database.syncedAt)}.

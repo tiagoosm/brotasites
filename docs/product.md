@@ -29,6 +29,10 @@ All values live in `apps/platform/src/config/limits.ts`; the database enforces t
 - **Sites in progress:** 1 unpaid site in progress per account. A paid site frees the slot. The client can finish it, or discard it (with confirmation) from the dashboard card or the site's page, in any unpaid status in progress, drafts included and also while we work on it (the round in progress is lost). Accounts that already had more keep them. The team can grant an extra slot, with a reason.
 - **Idle sites:** an unpaid site waiting on the client (draft, choosing a direction, approving, needs attention) with no action for 30 days is deleted. The dashboard warns 7 days and 1 day before, and each card says until when it is kept. Any change renews the deadline. Sites that wait on us (generating, building, in review) and paid sites are never deleted. The team can postpone a deletion.
 
+## Client's own domain (E25)
+
+Included and optional. On the page of a published site: *Usar o seu próprio domínio*. States the client sees: *Aguardando configuração*, *Verificando*, *Ativo*, *Com problema* (with what to do), and *Removido*. Only a paid site can connect one; before that, Publicar only notes the domain the client means to use. The BrotaSites address keeps working; the client chooses the main address and the other redirects to it. Details in `docs/hosting.md`, "Client domains (E25)".
+
 ## Site status
 
 | Status | What the client sees | Who acts |

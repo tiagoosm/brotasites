@@ -38,6 +38,18 @@ const values: Record<string, string> = {
   "site:loja-antiga": JSON.stringify({ version: "v1", state: "offline" }),
   "site:loja-carencia": JSON.stringify({ version: "v1", state: "grace" }),
   "domain:www.oficinanova.com.br": "oficina-nova",
+  // E25: a client domain that is the main address, with its root as the pair's alias.
+  "site:casa-verde": JSON.stringify({
+    version: "v1",
+    state: "active",
+    canonicalHost: "www.casaverde.com.br",
+  }),
+  "domain:www.casaverde.com.br": "casa-verde",
+  "domain:casaverde.com.br": JSON.stringify({
+    subdomain: "casa-verde",
+    redirectTo: "www.casaverde.com.br",
+  }),
+  "domain:www.lojasuspensa.com.br": "loja-suspensa",
 };
 
 const env: Env = {
@@ -56,6 +68,11 @@ const env: Env = {
       customMetadata: { csp: "strict" },
     },
     "sites/oficina-nova/v0/index.html": { body: "versão anterior", type: "text/html" },
+    "sites/casa-verde/v1/index.html": {
+      body: "<h1>Casa Verde</h1>",
+      type: "text/html",
+      customMetadata: { csp: "strict" },
+    },
     "exports/oficina-nova/v1.zip": { body: "PK-zip", type: "application/zip" },
     "sites/loja-suspensa/v1/index.html": { body: "<h1>Loja</h1>", type: "text/html" },
     "sites/loja-antiga/v1/index.html": { body: "<h1>Loja</h1>", type: "text/html" },
@@ -251,10 +268,48 @@ describe("hosting records in KV (E12)", () => {
   });
 
   it("serves a client's own domain from the KV map, and nothing for unknown domains", async () => {
-    expect(await (await get("https://www.oficinanova.com.br/")).text()).toBe("<h1>Oficina</h1>");
-    expect((await get("https://www.outrodominio.com.br/")).status).toBe(404);
+    const own = await get("https://www.casaverde.com.br/");
+    expect(own.status).toBe(200);
+    expect(await own.text()).toBe("<h1>Casa Verde</h1>");
+    // A host that is not mapped (never connected, or removed) gets the same 404 as a missing
+    // page, so nothing tells which domains exist.
+    const unknown = await get("https://www.outrodominio.com.br/");
+    expect(unknown.status).toBe(404);
+    expect(await unknown.text()).toBe(await (await get("https://nada.brotasites.com/")).text());
     // A subdomain of the base domain is never looked up as a custom domain.
     expect((await get("https://x.y.brotasites.com/")).status).toBe(404);
+  });
+
+  it("keeps one main address: the other one redirects to it, path and query kept (E25)", async () => {
+    // The own domain is the main address: the BrotaSites address goes there.
+    const base = await get("https://casa-verde.brotasites.com/cardapio/?a=1");
+    expect(base.status).toBe(308);
+    expect(base.headers.get("location")).toBe("https://www.casaverde.com.br/cardapio/?a=1");
+    // The root of the www pair goes to the www.
+    const root = await get("https://casaverde.com.br/contato");
+    expect(root.status).toBe(308);
+    expect(root.headers.get("location")).toBe("https://www.casaverde.com.br/contato");
+    // The BrotaSites address is the main one: the own domain goes there.
+    const own = await get("https://www.oficinanova.com.br/servicos");
+    expect(own.status).toBe(308);
+    expect(own.headers.get("location")).toBe("https://oficina-nova.brotasites.com/servicos");
+    expect(await (await get("https://oficina-nova.brotasites.com/")).text()).toBe(
+      "<h1>Oficina</h1>",
+    );
+  });
+
+  it("a suspended site shows its page on its own domain too, without redirecting", async () => {
+    const response = await get("https://www.lojasuspensa.com.br/");
+    expect(response.status).toBe(503);
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("sends the same security headers on the own domain as on the BrotaSites address", async () => {
+    const own = await get("https://www.casaverde.com.br/");
+    const strict = await get("https://oficina-nova.brotasites.com/");
+    for (const name of ["content-security-policy", "x-content-type-options", "referrer-policy"]) {
+      expect(own.headers.get(name), name).toBe(strict.headers.get(name));
+    }
   });
 
   it("opens a preview only with the recorded token, before it expires", async () => {

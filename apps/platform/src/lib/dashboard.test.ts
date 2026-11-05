@@ -179,3 +179,16 @@ describe("public pages per session", () => {
     expect(isVariantPath("/")).toBe(false);
   });
 });
+
+describe("domain notices (E25)", () => {
+  it("say what happened with the own domain and lead to it on the site's page", () => {
+    expect(noticeText("domain_active", "Padaria do Zé")).toBe(
+      "O domínio próprio de Padaria do Zé está ativo.",
+    );
+    expect(noticeText("domain_failed", "Padaria do Zé")).toBe(
+      "Não conseguimos verificar o domínio próprio de Padaria do Zé.",
+    );
+    expect(noticeHref({ kind: "domain_failed", siteId: "s1" })).toBe("/meus-sites/s1#dominio");
+    expect(noticeHref({ kind: "site_published", siteId: "s1" })).toBe("/meus-sites/s1");
+  });
+});

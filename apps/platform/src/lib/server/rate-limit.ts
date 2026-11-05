@@ -53,6 +53,9 @@ export const limits = {
   sites: { ip: { max: 120, windowSeconds: 3600 }, email: { max: 60, windowSeconds: 3600 } },
   // The team panel's actions and account openings (E24); the second key is the member.
   admin: { ip: { max: 600, windowSeconds: 3600 }, email: { max: 300, windowSeconds: 3600 } },
+  // Connecting and checking a client's own domain (E25): per IP an hour, per account a day; the
+  // site's own daily limit is in lib/server/domains.ts. Too many tries only wait, never block.
+  domains: { ip: { max: 60, windowSeconds: 3600 }, email: { max: 40, windowSeconds: 86_400 } },
 } as const;
 
 export function rulesFor(

@@ -166,6 +166,19 @@ export function PublishPhase() {
             ))}
         </SectionCard>
 
+        <SectionCard
+          name="Domínio próprio (opcional)"
+          note="Incluído no preço. Você conecta depois que o site for publicado, na página do site. O registro do domínio é por sua conta."
+        >
+          <WishField
+            value={draft.site?.customDomain ?? ""}
+            disabled={addressLocked}
+            onChange={(customDomain) =>
+              updateDraft((d) => ({ ...d, site: { ...d.site, customDomain } }))
+            }
+          />
+        </SectionCard>
+
         <SectionCard name="Site pronto">
           <p className="text-[0.9375rem]">
             <strong>{infoFor(status).label}.</strong> {infoFor(status).text}
@@ -364,4 +377,36 @@ function AvailabilityNote({
         </p>
       );
   }
+}
+
+/** The domain the client means to connect later: a note in the draft, nothing more. */
+function WishField({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+}) {
+  const id = useId();
+  return (
+    <div className="grid gap-2.5">
+      <label htmlFor={id} className="text-[0.9375rem] font-semibold">
+        Seu domínio, se tiver
+      </label>
+      <input
+        id={id}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value.trim().toLowerCase())}
+        placeholder="seunegocio.com.br"
+        maxLength={253}
+        autoComplete="off"
+        autoCapitalize="none"
+        spellCheck={false}
+        className="h-13 rounded-lg border border-input bg-card px-4 font-mono text-[0.9375rem] outline-none focus:border-leaf focus:ring-4 focus:ring-leaf/15"
+      />
+    </div>
+  );
 }

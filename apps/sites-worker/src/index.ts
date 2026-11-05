@@ -13,7 +13,8 @@
 //   sites/<subdomain>/current            the live deploy, for sites published before KV
 // And in Workers KV (packages/generator/src/kv.ts):
 //   site:<subdomain>   {"version", "previous", "state"}: the live deploy and the site's state
-//   domain:<host>      the subdomain a client's custom domain serves
+//   domain:<host>      the subdomain a client's custom domain serves; or, for the root of a www
+//                      pair, {"subdomain", "redirectTo": <host>} (E25)
 //   preview:<site id>  {"token", "expiresAt"}: the only token that opens the preview
 // A new deploy is uploaded in full before its pointer changes, so visitors never see a
 // half-updated site. A suspended site shows a neutral page; an offline one says it left.
@@ -38,6 +39,8 @@ export type SiteState = "active" | "grace" | "suspended" | "offline";
 export interface SiteRecord {
   version: string;
   state: SiteState;
+  /** The client's own domain when it is the main address (E25): the other one redirects to it. */
+  canonicalHost?: string;
 }
 
 const STATES: readonly SiteState[] = ["active", "grace", "suspended", "offline"];
@@ -120,12 +123,19 @@ async function readJson(env: Env, key: string): Promise<Record<string, unknown> 
 export async function siteRecord(env: Env, subdomain: string): Promise<SiteRecord | null> {
   const record = await readJson(env, `site:${subdomain}`);
   if (record) {
-    const { version, state } = record;
-    return typeof version === "string" &&
-      VERSION.test(version) &&
-      STATES.includes(state as SiteState)
-      ? { version, state: state as SiteState }
-      : null;
+    const { version, state, canonicalHost } = record;
+    if (
+      typeof version !== "string" ||
+      !VERSION.test(version) ||
+      !STATES.includes(state as SiteState)
+    ) {
+      return null;
+    }
+    return {
+      version,
+      state: state as SiteState,
+      ...(typeof canonicalHost === "string" && HOST.test(canonicalHost) ? { canonicalHost } : {}),
+    };
   }
   const pointer = await env.SITES.get(`sites/${subdomain}/current`);
   const deploy = pointer ? (await pointer.text()).trim() : "";
@@ -136,7 +146,7 @@ const suspended = () =>
   page(503, "Site indisponível", "Este site está temporariamente fora do ar.");
 const offline = () => page(410, "Site fora do ar", "Este site não está mais no ar.");
 
-/** A site's page or file, or the page for its state; null when the site does not exist. */
+/** A site's page or file by path (the testing address), or the page for its state. */
 async function serveSite(
   request: Request,
   env: Env,
@@ -148,6 +158,61 @@ async function serveSite(
   if (record.state === "suspended") return suspended();
   if (record.state === "offline") return offline();
   return serveFile(request, env, subdomain, record.version, pathname);
+}
+
+/** A permanent redirect to the same path and query on another host. */
+function moved(url: URL, host: string): Response {
+  return new Response(null, {
+    status: 308,
+    headers: {
+      location: `https://${host}${url.pathname}${url.search}`,
+      "cache-control": "no-store",
+    },
+  });
+}
+
+/**
+ * A site's page or file, or the page for its state; null when the site does not exist. One
+ * canonical address (E25): when the client's own domain is the main one, the BrotaSites address
+ * redirects to it; when it is not, the own domain redirects to the BrotaSites address. A
+ * suspended or offline site shows its page wherever it is asked, without redirecting.
+ */
+async function serveHost(
+  request: Request,
+  env: Env,
+  subdomain: string,
+  url: URL,
+  via: "base" | "domain",
+): Promise<Response | null> {
+  const record = await siteRecord(env, subdomain);
+  if (!record) return null;
+  if (record.state === "suspended") return suspended();
+  if (record.state === "offline") return offline();
+  const host = url.hostname.toLowerCase();
+  if (via === "base" && record.canonicalHost && record.canonicalHost !== host) {
+    return moved(url, record.canonicalHost);
+  }
+  if (via === "domain" && record.canonicalHost !== host) {
+    return moved(url, `${subdomain}.${env.BASE_DOMAIN}`);
+  }
+  return serveFile(request, env, subdomain, record.version, url.pathname);
+}
+
+/** A client domain's KV record: the subdomain it serves, or the www host its root goes to. */
+export function parseDomainRecord(
+  raw: string | null,
+): { subdomain: string; redirectTo?: string } | null {
+  if (!raw) return null;
+  if (SUBDOMAIN.test(raw)) return { subdomain: raw };
+  try {
+    const value = JSON.parse(raw) as { subdomain?: unknown; redirectTo?: unknown };
+    if (typeof value.subdomain !== "string" || !SUBDOMAIN.test(value.subdomain)) return null;
+    return typeof value.redirectTo === "string" && HOST.test(value.redirectTo)
+      ? { subdomain: value.subdomain, redirectTo: value.redirectTo }
+      : { subdomain: value.subdomain };
+  } catch {
+    return null;
+  }
 }
 
 /** Serves one file of a deploy, or null when it does not exist. */
@@ -328,12 +393,13 @@ export default {
 
     // A client's site on the base domain, or on their own domain (Cloudflare for SaaS).
     const host = url.hostname.toLowerCase();
-    let subdomain = siteFromHost(host, env.BASE_DOMAIN);
-    if (!subdomain && !host.endsWith(`.${env.BASE_DOMAIN}`) && HOST.test(host)) {
-      const mapped = await env.HOSTING.get(`domain:${host}`);
-      subdomain = mapped && SUBDOMAIN.test(mapped) ? mapped : null;
-    }
-    if (!subdomain) return notFound();
-    return (await serveSite(request, env, subdomain, url.pathname)) ?? notFound();
+    const subdomain = siteFromHost(host, env.BASE_DOMAIN);
+    if (subdomain) return (await serveHost(request, env, subdomain, url, "base")) ?? notFound();
+    // An unknown host gets the same 404 as a missing page: nothing says which domains exist.
+    if (host.endsWith(`.${env.BASE_DOMAIN}`) || !HOST.test(host)) return notFound();
+    const mapped = parseDomainRecord(await env.HOSTING.get(`domain:${host}`));
+    if (!mapped) return notFound();
+    if (mapped.redirectTo) return moved(url, mapped.redirectTo);
+    return (await serveHost(request, env, mapped.subdomain, url, "domain")) ?? notFound();
   },
 } satisfies ExportedHandler<Env>;

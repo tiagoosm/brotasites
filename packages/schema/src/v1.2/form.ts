@@ -280,7 +280,8 @@ export interface FormDraft {
   sections?: SectionId[];
   content?: Partial<z.input<typeof contentAnswersSchema>>;
   contact?: Partial<z.input<typeof contactAnswersSchema>>;
-  site?: { subdomain?: string };
+  /** The address, and a domain the client means to connect after publishing (E25, only a note). */
+  site?: { subdomain?: string; customDomain?: string };
   /**
    * Colors the client changes after approving a direction (the identity stays locked). The
    * build keeps them only with AA contrast, pulling them to the nearest passing tone if needed.
@@ -296,7 +297,14 @@ export const formDraftSchema = z
     sections: z.array(z.enum(sectionIds)).optional(),
     content: z.record(z.string(), z.unknown()).optional(),
     contact: z.record(z.string(), z.unknown()).optional(),
-    site: z.object({ subdomain: subdomainSchema.optional() }).optional(),
+    site: z
+      .object({
+        subdomain: subdomainSchema.optional(),
+        // A domain the client means to connect after publishing (E25): only a note, never
+        // verified nor served from here; the site's page connects it once the site is paid.
+        customDomain: z.string().trim().max(253).optional(),
+      })
+      .optional(),
     colorOverrides: z
       .object({ primary: hexColorSchema.optional(), accent: hexColorSchema.optional() })
       .optional(),

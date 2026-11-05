@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { DiscardSite } from "@/components/dashboard/discard-site";
+import { CustomDomain } from "@/components/domains/custom-domain";
 import { Loading, Notice } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
 import { pricing } from "@/config/pricing";
@@ -377,6 +378,14 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           siteName={name}
           busy={acting !== null}
           working={infoFor(site.status).busy}
+        />
+      )}
+
+      {["publishing", "live", "grace", "suspended"].includes(site.status) && (
+        <CustomDomain
+          siteId={site.id}
+          siteAddress={liveUrl ? liveUrl.replace("https://", "") : null}
+          wish={site.draft.site?.customDomain}
         />
       )}
 

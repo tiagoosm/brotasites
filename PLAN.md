@@ -29,6 +29,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E22 UX laws: audit of every screen against the 20 laws, fixes, `docs/ux-laws.md` and automatic checks
 - [x] E23 Design references from Refero Styles (docs only)
 - [x] E24 Cost control (limits and cleanup) and the team panel
+- [x] E25 "5 passos" everywhere, the client's own domain included in the price, and the flow to connect it
 
 ## Steps in detail
 
@@ -106,6 +107,14 @@ The same header and footer on every page (public pages, sign-in and password scr
 ### E18 Home page motion and navigation
 
 Every create-site button shares the specular finish, now a composited light eased once per frame (smooth where it stuttered). The header's sign-in link reads "Entrar ou cadastre-se". Section entrances repeat each time an element returns, with a cap on simultaneous entrances and an instant final state on jumps. The links to Como funciona, Preço and Dúvidas scroll smoothly there (also from other pages). The price card's glow turns slowly by itself and hands over to the mouse without jumps. The stem in "Como funciona" is one curved, tapering stroke with leaves that bud, grow and sway, ending in a bloom. The mouse vine roams the free space of the whole public page, kept off the content. All with reduced motion, no JavaScript and touch screens covered.
+
+### E25 5 steps and the client's own domain
+
+Three parts, three commits (owner's decisions of 2026-11-04 and 2026-11-05):
+
+- **5 passos:** the promise is "5 passos e seu site pronto" with "Responda, escolha entre 3 visuais e publique." under it. The form has the 5 steps that ask for information; the 5th sends the answers after a short review; choosing the look and publishing (`/meus-sites/<site>/publicar`) are not numbered. Old addresses redirect, old drafts open, the home page stem has 5 points and 2 closings, the share image was redrawn.
+- **Domain included:** the client's own domain is included in the price and optional (`customDomainIncluded`); the client still registers and pays for it.
+- **Connecting it:** checks on the server (Public Suffix List, reserved and platform names, imitations), `site_domains` with atomic state changes and RLS, a hosting interface with a simulated provider and the Cloudflare for SaaS one (written, not run), DNS steps with copy buttons, "Verificar agora" and a daily check for 7 days, notices, one canonical address in the Worker (www pair, 308), cleanup when a site goes, and the count against the 100 included domains in the team panel.
 
 ### E24 Cost control and the team panel
 

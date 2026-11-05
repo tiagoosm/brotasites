@@ -68,6 +68,16 @@ Publish only after a confirmed webhook, with idempotency; never trust the browse
 
 Ownership verification of custom domains (Cloudflare for SaaS). Subdomains only with `a-z`, `0-9` and hyphen, no `xn--`, with a list of reserved names and of names that imitate banks, government bodies and brands. Quarantine before a cancelled subdomain can be reused.
 
+Client domains (E25, `apps/platform/src/lib/domains/validate.ts`, `supabase/migrations/20261105000000_site_domains.sql`):
+
+- **Format, on the server:** a full host in lowercase (common ways of writing it are tidied: spaces around, case, `https://`, a trailing slash or dot); refused with scheme paths, a port, spaces, `@`, a wildcard, an IP, non-ASCII or punycode (`xn--`) labels, more than 253 characters or a label over 63. It must have a public suffix (the Public Suffix List, ICANN section, kept in the repository).
+- **Refused names:** `BASE_DOMAIN` and its subdomains, the platform's own hosts (its address, the previews', `brotasites.com`, `vercel.app`, `workers.dev`, `pages.dev`), test and reserved names (`localhost`, `.test`, `.example`, `.invalid`, `.local`, `example.com`...), the suffixes only government, justice, the armed forces and banks register in Brazil (`gov.br`, `jus.br`, `leg.br`, `mil.br`, `mp.br`, `def.br`, `b.br`), and names with the imitation words of `reserved.ts` (whole words, and the longer brands inside a name).
+- **One domain per site, one site per domain:** unique indexes on the hosts in use and one per site, in the database; only a paid site can connect one; only its owner reads it (RLS) and only the server's functions write.
+- **Ownership before serving:** a domain is written to KV only once the hosting says both the hostname and its certificate are active. Typing a domain never activates it.
+- **Limits:** asking, checking and removing count per IP (60 an hour), per account (40 a day) and per site (30 a day), in the database limiter. Too many tries only wait.
+- **No hanging domains:** removing, a failure after activation, or deleting the site take the domain out of KV and the hosting (`domain_purges` for deleted sites). The BrotaSites address never depends on the own domain.
+- **Messages:** pt-BR, with what to do; never the hosting's own text, an internal code or another person's data. No personal data in URLs.
+
 ## 8. Accounts and supply chain
 
 2FA on every account (GitHub, Vercel, Cloudflare, Supabase, Asaas, registrar) and a transfer lock on the domain (owner steps). Tokens with the least privilege. Separate environments (dev and production). Secret scanning with push protection. Pinned versions, dependency audit in CI, restricted install scripts. Generated sites have no runtime dependencies.

@@ -1,13 +1,16 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { domainProvider } from "@/lib/domains/provider";
 import { runIdleCleanup } from "@/lib/server/cleanup";
+import { runDomainRoutine } from "@/lib/server/domains";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 
 // Keeps the Supabase project awake. Supabase pauses Free plan projects that get too few
 // database queries over a week ("a few user requests to the database each day" is enough,
 // docs/hosting.md). Vercel Cron calls this once a day (vercel.json) with the CRON_SECRET as a
 // bearer token; anyone else gets 401. It counts rows, then (E24) runs the daily cleanup of
-// unpaid sites left idle (lib/server/cleanup.ts): one schedule for both, the one the project has.
+// unpaid sites left idle (lib/server/cleanup.ts) and (E25) the checks of client domains still
+// waiting, for up to 7 days (lib/server/domains.ts): one schedule for all, the one the project has.
 
 const TABLES = ["sites", "profiles", "notifications"] as const;
 
@@ -44,12 +47,17 @@ export async function GET(request: Request) {
     console.warn(`cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
     return null;
   });
+  const domains = await runDomainRoutine(supabase, domainProvider()).catch((error: unknown) => {
+    console.warn(`domain checks failed: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  });
   return NextResponse.json(
     {
       ok,
       at: new Date().toISOString(),
       queries: results.map(({ table, ok }) => ({ table, ok })),
       cleanup,
+      domains,
     },
     { status: ok ? 200 : 502, headers: noStore },
   );

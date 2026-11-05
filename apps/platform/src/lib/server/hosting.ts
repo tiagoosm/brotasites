@@ -66,3 +66,56 @@ export async function deleteHostingKey(
     throw new Error(`KV delete failed (${response.status})`);
   return "deleted";
 }
+
+/** Writes a key in KV (a client domain's pointer); "off" without the Cloudflare variables. */
+export async function putHostingKey(
+  key: string,
+  value: string,
+  fetcher: typeof fetch = fetch,
+): Promise<"saved" | "off"> {
+  const url = kvUrl(key);
+  if (!url) return "off";
+  const response = await fetcher(url, {
+    method: "PUT",
+    headers: {
+      authorization: `Bearer ${process.env.CLOUDFLARE_KV_API_TOKEN}`,
+      "content-type": "text/plain",
+    },
+    body: value,
+  });
+  if (!response.ok) throw new Error(`KV write failed (${response.status})`);
+  return "saved";
+}
+
+/**
+ * The site's main address (E25): its own domain, or null for the BrotaSites address. The Worker
+ * redirects the other one to it (apps/sites-worker, canonicalHost). Kept in the site's record,
+ * which publishing preserves (packages/generator/src/kv.ts).
+ */
+export async function setCanonicalHost(
+  subdomain: string,
+  host: string | null,
+  fetcher: typeof fetch = fetch,
+): Promise<"synced" | "not-published" | "off"> {
+  const url = kvUrl(`site:${subdomain}`);
+  if (!url) return "off";
+  const headers = { authorization: `Bearer ${process.env.CLOUDFLARE_KV_API_TOKEN}` };
+  const current = await fetcher(url, { headers, cache: "no-store" });
+  if (current.status === 404) return "not-published";
+  if (!current.ok) throw new Error(`KV read failed (${current.status})`);
+  const { canonicalHost: _old, ...record } = JSON.parse(await current.text()) as Record<
+    string,
+    unknown
+  >;
+  const saved = await fetcher(url, {
+    method: "PUT",
+    headers: { ...headers, "content-type": "text/plain" },
+    body: JSON.stringify({
+      ...record,
+      ...(host ? { canonicalHost: host } : {}),
+      updatedAt: new Date().toISOString(),
+    }),
+  });
+  if (!saved.ok) throw new Error(`KV write failed (${saved.status})`);
+  return "synced";
+}
