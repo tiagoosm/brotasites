@@ -60,13 +60,7 @@ function apiRoutes(
 }
 
 // The account routes that work without a session on purpose (signing up and in).
-const PUBLIC = [
-  "/api/auth/sign-up",
-  "/api/auth/sign-in",
-  "/api/auth/link",
-  "/api/auth/recover",
-  "/api/auth/resend",
-];
+const PUBLIC = ["/api/auth/sign-up", "/api/auth/sign-in", "/api/auth/recover", "/api/auth/resend"];
 
 test("no route answers without a session, and none takes a write from another site", async ({
   request,

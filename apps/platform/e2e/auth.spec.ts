@@ -95,20 +95,22 @@ test("the same answer for an email with and without an account", async ({ page, 
   expect((await mails(request, taken)).map((mail) => mail.type)).toEqual(["recovery"]);
 });
 
-test("signing in with the password and with a link", async ({ page, request }) => {
+test("signing in is with the password only: no sign-in link by email", async ({
+  page,
+  request,
+}) => {
   const email = uniqueEmail("entrar");
   await createUser(request, { email });
+  await page.goto("/entrar?voltar=%2Fconta");
+  await expect(page.getByText(/link no e-mail|link de acesso/)).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Esqueci a senha" })).toBeVisible();
+  const gone = await page.evaluate(
+    async () => (await fetch("/api/auth/link", { method: "POST", body: "{}" })).status,
+  );
+  expect(gone).toBe(404);
   await signInWithPassword(page, email, PASSWORD, "/conta");
   await expect(page).toHaveURL(/\/conta$/);
-
-  await page.context().clearCookies();
-  await page.goto("/entrar?voltar=%2Fconta");
-  await page.getByRole("button", { name: "Entrar com um link no e-mail" }).click();
-  await page.getByLabel("E-mail").fill(email);
-  await page.getByRole("button", { name: "Enviar link de acesso" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Confira o seu e-mail");
-  await page.goto(linkOf(await lastMail(request, email, "magiclink")));
-  await expect(page).toHaveURL(/\/conta$/);
+  expect((await mails(request, email)).map((mail) => mail.type)).not.toContain("magiclink");
 });
 
 test("without a page to go back to, signing in and confirming lead to the dashboard", async ({

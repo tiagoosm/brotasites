@@ -4,18 +4,11 @@ import { safeNextPath } from "@/lib/supabase/env";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 // Every link in an email lands here (docs/email-templates): the sign-up confirmation, the
-// sign-in link, the password reset and the email change. Each carries a single-use token_hash
+// password reset and the email change (the sign-in link was removed on 2026-11-05). Each carries a single-use token_hash
 // (or a PKCE code). The next page is always inside the platform (safeNextPath), taken from
 // `next` or from the `next` of the redirect_to the email template passes along.
 
-const TYPES: readonly EmailOtpType[] = [
-  "signup",
-  "email",
-  "magiclink",
-  "recovery",
-  "email_change",
-  "invite",
-];
+const TYPES: readonly EmailOtpType[] = ["signup", "email", "recovery", "email_change", "invite"];
 
 function nextFrom(url: URL): string {
   const direct = url.searchParams.get("next");

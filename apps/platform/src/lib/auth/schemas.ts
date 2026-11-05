@@ -79,7 +79,7 @@ export const signInSchema = z.object({
   next,
 });
 
-/** The sign-in link, "forgot password" and resending the confirmation: just an email. */
+/** "Forgot password" and resending the confirmation: just an email. */
 export const emailOnlySchema = z.object({ email: emailSchema, captchaToken, next });
 
 export const profileSchema = z.object({

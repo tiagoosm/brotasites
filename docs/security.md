@@ -28,7 +28,7 @@ See `ai-and-reviewer.md`: delimited data, no tools and no secrets, closed JSON, 
 - Rate limits on sign-in, form, AI and upload. Bot protection on sign-up.
 - The Supabase service key only on the server, never in the browser.
 - Security headers and CSP on the platform too.
-- Single-use, short-lived magic links; never reveal whether an email exists.
+- Single-use, short-lived email links (confirmation, password reset, email change); never reveal whether an email exists. There is no sign-in link by email (removed on 2026-11-05): signing in is with the email and password only.
 
 Accounts (E15, as built):
 

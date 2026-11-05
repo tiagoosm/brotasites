@@ -80,6 +80,7 @@ There is no live preview (owner decision of 2026-10-27, removed in E10).
 - Desktop (≥1280px): questions rail | the form's card on the table.
 - Below 1280px: the form only; the progress ("Passo N de 5" and a horizontal stem) sits under the header.
 - Phones: a sticky footer holds "Voltar" and the next button, within thumb reach.
+- Account pages (`AuthShell`): one white card (16px radius, line border, soft tinted shadow) centered on the paper, at most 28rem wide. Sign-in (`/entrar`) and sign-up (`/cadastro`) are the same frame with a different card, and both carry the morning light behind the card, never over its text (owner's decision of 2026-11-05). The password pages use the same card without the light.
 
 ## UX laws
 
