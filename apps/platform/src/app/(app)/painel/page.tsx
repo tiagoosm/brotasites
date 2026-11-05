@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EmailConfirmBanner } from "@/components/account/email-banner";
 import { AutoRefresh } from "@/components/dashboard/auto-refresh";
+import { DiscardSite } from "@/components/dashboard/discard-site";
 import { NoticesBell } from "@/components/dashboard/notices";
 import { Notice } from "@/components/shared/page-state";
 import { CreateSiteButton } from "@/components/site/create-site-button";
@@ -23,7 +24,7 @@ import {
 } from "@/lib/dashboard";
 import { siteSlotCopy } from "@/lib/limits-copy";
 import { type DashboardData, loadDashboard } from "@/lib/server/dashboard";
-import { infoFor } from "@/lib/site-status";
+import { canDiscard, infoFor } from "@/lib/site-status";
 import { cn } from "@/lib/utils";
 
 // The account's home (E16): what needs the person, their sites and the notices. Rendered on the
@@ -341,6 +342,9 @@ function SiteCard({ site }: { site: DashboardSite }) {
           >
             Detalhes<span className="sr-only"> de {site.name}</span>
           </Link>
+        )}
+        {canDiscard(site.status) && (
+          <DiscardSite compact siteId={site.id} siteName={site.name} working={info.busy} />
         )}
       </div>
     </li>

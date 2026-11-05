@@ -115,7 +115,7 @@ Since 2026-10-27 the owner does not approve each task. Choices the plan reserved
   - The cleanup runs inside the existing keep-alive cron (one schedule), not in a second cron.
   - The reviewer's model calls are recorded in `ai_calls` but still do not count toward the daily AI budget, as before E24.
   - Opening the payment counts as activity (a payment created or updated renews the deadline).
-  - The profile menu's "Criar site" still opens `/criar`, which explains why a second site cannot start; only the dashboard button is disabled.
+  - The profile menu's "Criar meu site" still opens `/criar`, which explains why a second site cannot start; only the dashboard button is disabled.
   - The Terms version was not bumped: the text is still a draft waiting for legal review, so nobody is asked to accept again yet.
 
 - **E20, design review:**

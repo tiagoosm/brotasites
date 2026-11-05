@@ -191,6 +191,59 @@ test.describe("one unpaid site in progress", () => {
     expect(state.discarded).toBe(true);
   });
 
+  test("a draft, or a site we are working on, can be discarded from the dashboard card", async ({
+    page,
+    context,
+    request,
+  }) => {
+    const who = person();
+    const working = row("generating_directions", {
+      site_configs: { name: "Real Dente", completed: [] },
+    });
+    await board(request, who.id, {
+      sites: [working, row("live", { site_configs: { name: "Bolos da Ana", completed: [] } })],
+      slots: { open: 1, allowed: 1, openSiteId: working.id },
+    });
+    await signIn(context, { user: who });
+    const discarded: string[] = [];
+    await page.route("**/api/sites/*/discard", async (route) => {
+      expect(route.request().postDataJSON()).toEqual({ confirm: true });
+      discarded.push(new URL(route.request().url()).pathname);
+      await route.fulfill({ json: { discarded: true } });
+    });
+    await page.goto("/painel");
+    const sites = page.getByRole("region", { name: "Seus sites" });
+    // A published site has no discard button.
+    await expect(
+      sites
+        .getByRole("listitem", { name: "Bolos da Ana" })
+        .getByRole("button", { name: /Descartar/ }),
+    ).toHaveCount(0);
+    const card = sites.getByRole("listitem", { name: "Real Dente" });
+    await card.getByRole("button", { name: "Descartar Real Dente" }).click();
+    await expect(card).toContainText(
+      "Apagar Real Dente, as respostas e as fotos? O que estamos preparando para ele para na hora. Isso não pode ser desfeito.",
+    );
+    await card.getByRole("button", { name: "Cancelar" }).click();
+    expect(discarded).toEqual([]);
+    await card.getByRole("button", { name: "Descartar Real Dente" }).click();
+    await card.getByRole("button", { name: "Sim, descartar" }).click();
+    await expect.poll(() => discarded).toEqual([`/api/sites/${working.id}/discard`]);
+  });
+
+  test("a site being worked on can be discarded from its page too", async ({ page, context }) => {
+    const state = await withSite(context, {
+      site: siteRow("generating_directions"),
+      draft: padaria,
+    });
+    await page.goto(dashboardOf(SITE));
+    await page.getByRole("button", { name: "Descartar este site" }).click();
+    await expect(page.getByText(/O que estamos preparando para ele para na hora\./)).toBeVisible();
+    await page.getByRole("button", { name: "Sim, descartar" }).click();
+    await expect(page).toHaveURL(/\/painel$/);
+    expect(state.discarded).toBe(true);
+  });
+
   test("a paid or published site has no discard button", async ({ page, context }) => {
     await withSite(context, { site: siteRow("live", { subdomain: "padaria-do-ze" }) });
     await page.goto(dashboardOf(SITE));

@@ -107,3 +107,22 @@ export const designOpen: readonly string[] = [
   "awaiting_direction_choice",
   "needs_attention",
 ];
+
+/**
+ * The statuses in which the person can discard a site: every unpaid site still being made,
+ * also while we work on it (the round in progress is lost; a paid site is never discarded, and
+ * the database refuses it: private.remove_unpaid_site).
+ */
+export const DISCARDABLE_STATUSES = [
+  "draft",
+  "generating_directions",
+  "awaiting_direction_choice",
+  "building",
+  "in_review",
+  "awaiting_approval",
+  "needs_attention",
+] as const;
+
+export function canDiscard(status: string): boolean {
+  return (DISCARDABLE_STATUSES as readonly string[]).includes(status);
+}
