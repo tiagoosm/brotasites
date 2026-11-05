@@ -27,6 +27,7 @@ export function ReadingPage({
         <li key={entry.id}>
           <a
             href={`#${entry.id}`}
+            data-smooth-scroll
             className="flex min-h-11 items-center text-ink-soft transition-colors duration-150 hover:text-ink"
           >
             {entry.label}
