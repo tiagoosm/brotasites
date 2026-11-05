@@ -1,7 +1,8 @@
 import { expect, type Page, test } from "@playwright/test";
 
-// The morning light (morning-light.tsx over side-rays.tsx, WebGL) lights the sign-in page since
-// 2026-11-05, no longer the home page. It draws only with a GPU and only while it is on screen.
+// The morning light (morning-light.tsx over side-rays.tsx, WebGL) lights the sign-in and sign-up
+// pages since 2026-11-05, no longer the home page, always behind their card. It draws only with a
+// GPU and only while it is on screen.
 
 const draws = (page: Page) =>
   page.evaluate(() => (window as unknown as { rayDraws: number }).rayDraws);
@@ -29,14 +30,60 @@ function countDraws(page: Page, asIfGpu: boolean) {
   }, asIfGpu);
 }
 
-test("the light rays draw on the sign-in page, and no longer on the home page", async ({
-  page,
-}) => {
+for (const path of ["/entrar", "/cadastro"]) {
+  test(`the light rays draw on ${path}, behind the card`, async ({ page }) => {
+    test.setTimeout(90_000);
+    await countDraws(page, true);
+    await page.goto(path);
+    await expect.poll(() => draws(page), { timeout: 15_000 }).toBeGreaterThan(5);
+    // The card is on top: its whole face belongs to it, not to the light's canvas.
+    const covered = await page.evaluate(() => {
+      const card = document.querySelector("[data-auth-card]") as HTMLElement;
+      const box = card.getBoundingClientRect();
+      const points = [
+        [box.left + 24, box.top + 24],
+        [box.right - 24, box.top + 24],
+        [box.left + box.width / 2, box.top + box.height / 2],
+        [box.left + 24, Math.min(box.bottom, window.innerHeight) - 24],
+      ];
+      return points.every(([x, y]) => {
+        const hit = document.elementFromPoint(x as number, y as number);
+        return Boolean(hit && card.contains(hit));
+      });
+    });
+    expect(covered).toBe(true);
+    const lightBehind = await page.evaluate(() => {
+      // The light's layer, the main's first child, stacks under the card.
+      const layer = document.querySelector("main > [aria-hidden='true']");
+      return layer?.querySelector("canvas") ? Number(getComputedStyle(layer).zIndex) : 0;
+    });
+    expect(lightBehind).toBeLessThan(0);
+  });
+}
+
+test("the sign-in and sign-up pages share one frame, only the card changes", async ({ page }) => {
+  const frame = async (path: string) => {
+    await page.goto(path);
+    return page.evaluate(() => {
+      const card = document.querySelector("[data-auth-card]") as HTMLElement;
+      const style = getComputedStyle(card);
+      return {
+        main: document.querySelector("main")?.className,
+        width: Math.round(card.getBoundingClientRect().width),
+        radius: style.borderRadius,
+        background: style.backgroundColor,
+        light: Boolean(document.querySelector("main > [aria-hidden='true']")),
+      };
+    });
+  };
+  const signIn = await frame("/entrar");
+  expect(signIn.light).toBe(true);
+  expect(await frame("/cadastro")).toEqual(signIn);
+});
+
+test("the home page has no light rays", async ({ page }) => {
   test.setTimeout(90_000);
   await countDraws(page, true);
-  await page.goto("/entrar");
-  await expect.poll(() => draws(page), { timeout: 15_000 }).toBeGreaterThan(5);
-
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await page.waitForTimeout(1500);

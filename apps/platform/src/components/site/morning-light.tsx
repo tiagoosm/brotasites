@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 
 // Morning light on the herbarium sheet: a soft pollen and leaf-green glow from the top right
-// corner, with wide, slow beams. Since 2026-11-05 it lights the sign-in page, not the home
+// corner, with wide, slow beams. Since 2026-11-05 it lights the sign-in and sign-up pages, behind their card, not the home
 // page (owner's decision). Loaded after the page, in the browser only, so it never delays the
 // first paint; the page looks complete without it.
 const SideRays = dynamic(() => import("./side-rays"), { ssr: false });
