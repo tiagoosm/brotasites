@@ -106,7 +106,7 @@ pnpm --filter @brotasites/reviewer calibrate
 
 ## Accounts
 
-`/cadastro` creates the account (name, email, password, the terms); the confirmation link signs the person in. `/entrar` takes the password or sends a sign-in link; `/esqueci-senha` sends a link to `/redefinir-senha`. `/conta` edits the name and WhatsApp, the email (confirmed by link) and the password, signs out the other devices, downloads the data as JSON and deletes the account. Every request goes through the platform's routes (`/api/auth/*`, `/api/account/*`) with an Origin check, Zod, rate limits per IP and email, and Cloudflare Turnstile checked by Supabase; the signed-in pages are refused on the server (`src/proxy.ts`). Setup (SMTP, Supabase settings, email templates in `docs/email-templates/`, Turnstile, two-step verification for the team) is in `docs/owner-steps.md`, Accounts.
+`/cadastro` creates the account (name, email, password, the terms); the confirmation link signs the person in. `/entrar` takes the email and password (the sign-in link by email was removed on 2026-11-05); `/esqueci-senha` sends a link to `/redefinir-senha`. `/conta` edits the name and WhatsApp, the email (confirmed by link) and the password, signs out the other devices, downloads the data as JSON and deletes the account. Every request goes through the platform's routes (`/api/auth/*`, `/api/account/*`) with an Origin check, Zod, rate limits per IP and email, and Cloudflare Turnstile checked by Supabase; the signed-in pages are refused on the server (`src/proxy.ts`). Setup (SMTP, Supabase settings, email templates in `docs/email-templates/`, Turnstile, two-step verification for the team) is in `docs/owner-steps.md`, Accounts.
 
 ## Admin panel
 
@@ -147,7 +147,7 @@ Copy `.env.example` to `apps/platform/.env.local` and fill in `NEXT_PUBLIC_SUPAB
 Dashboard settings (Authentication):
 
 - **URL Configuration:** add `http://localhost:3000/**` (and later the production domain) to Redirect URLs.
-- **Email templates:** the four pt-BR templates of `docs/email-templates/` (confirmation, sign-in link, password reset, email change), which link to `/auth/confirm` with a `token_hash`, so the link also works when opened on another device. The rest of the Authentication settings are in `docs/owner-steps.md`, Accounts.
+- **Email templates:** the three pt-BR templates of `docs/email-templates/` (confirmation, password reset, email change), which link to `/auth/confirm` with a `token_hash`, so the link also works when opened on another device. The rest of the Authentication settings are in `docs/owner-steps.md`, Accounts.
 - **SMTP:** the built-in sender is rate limited and meant for testing; production needs a custom SMTP provider.
 
 ## Tests

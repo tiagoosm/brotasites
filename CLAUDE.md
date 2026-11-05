@@ -28,7 +28,7 @@ Project owner: Tiago da Silva Machado (github.com/tiagoosm). Product language (U
 
 - TypeScript everywhere. Monorepo with pnpm + Turborepo.
 - Platform (form, client dashboard, admin, API): Next.js (App Router), Tailwind and shadcn/ui, hosted on Vercel. The Hobby plan is limited to non-commercial, personal use: move to Pro before charging clients.
-- Database, auth (email and password with email confirmation, plus a sign-in link) and file storage: Supabase, for platform data only. RLS on every table.
+- Database, auth (email and password with email confirmation; the sign-in link by email was removed on 2026-11-05) and file storage: Supabase, for platform data only. RLS on every table.
 - Validation: Zod in `packages/schema`, the single source of truth for the form, API, AI, engine and generator. Spec: `docs/schema-1.2.md`.
 - Generated sites: Astro + Tailwind, static HTML, no database, no external requests.
 - Site hosting: one Cloudflare Worker + R2 + KV, on a base domain separate from the platform's (`BASE_DOMAIN`). Client custom domains through Cloudflare for SaaS. See "Site hosting: options and limits" and `docs/hosting.md`.
@@ -49,7 +49,7 @@ Project owner: Tiago da Silva Machado (github.com/tiagoosm). Product language (U
 
 ## Product rules
 
-- No loading screen: generation is asynchronous. The client sends the form and can close the page; status shows on the account dashboard (`/painel`), with in-site notices. No notification emails in this round; the only emails sent are the account's own (email confirmation, sign-in link, password reset, email change).
+- No loading screen: generation is asynchronous. The client sends the form and can close the page; status shows on the account dashboard (`/painel`), with in-site notices. No notification emails in this round; the only emails sent are the account's own (email confirmation, password reset, email change).
 - There is no live preview while answering the form (decision of 2026-10-27). The client sees only the 3 art directions and the finished site (private address, not indexed, with a token).
 - Directions: "Fiel à marca", "Evolução", "Contraste". 3 free rounds of directions per site (the first and 2 redos), then 1 round per hour; the count never resets and choosing is never blocked. One unpaid site in progress per account. Unpaid sites idle for 30 days are deleted, with dashboard warnings 7 days and 1 day before. Every value lives in `apps/platform/src/config/limits.ts`. After approval the identity is locked; only content, images, contact details, sections and colors (with AA contrast) can change.
 - Every site goes through the automatic reviewer and, at first, through human review in the admin queue.
@@ -131,7 +131,7 @@ brotasites/
 ## Open questions (owner's decision)
 
 - Job queue and AI model (steps E10 and E8, with checked options).
-- SMTP provider for the magic link (suggestion to verify: Resend).
+- SMTP provider for the account emails (suggestion to verify: Resend).
 - `BASE_DOMAIN` for client sites.
 - Legal texts (Terms, Privacy, guarantee and refund) and invoicing: with a lawyer and an accountant.
 - Launch price: 197 or 297 (`launchPrice` in `pricing.ts`).

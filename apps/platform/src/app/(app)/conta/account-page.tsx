@@ -323,7 +323,7 @@ function PasswordSection({
     setSaved(
       hasPassword
         ? "Senha trocada. Os outros aparelhos vão precisar entrar de novo."
-        : "Senha criada. Agora você também pode entrar com ela.",
+        : "Senha criada. Agora você entra com ela.",
     );
     onSaved();
   }
@@ -331,7 +331,7 @@ function PasswordSection({
     <Section title={hasPassword ? "Senha" : "Criar senha"} id="senha">
       {!hasPassword && (
         <p className="text-[0.9375rem] text-ink-soft">
-          Hoje você entra só pelo link no e-mail. Crie uma senha se quiser.
+          Sua conta ainda não tem senha. Crie uma para entrar com o seu e-mail e a senha.
         </p>
       )}
       <form onSubmit={save} noValidate className="grid gap-5">

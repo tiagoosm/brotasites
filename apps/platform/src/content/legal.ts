@@ -65,7 +65,7 @@ export const privacySections: LegalSection[] = [
         list: [
           "Criar as 3 direções para o visual e montar o seu site com as suas respostas.",
           "Guardar o seu rascunho na sua conta, para você continuar de qualquer aparelho.",
-          "Enviar os e-mails da sua conta: confirmação do e-mail, link de acesso, redefinição de senha e troca de e-mail. Não enviamos outros e-mails.",
+          "Enviar os e-mails da sua conta: confirmação do e-mail, redefinição de senha e troca de e-mail. Não enviamos outros e-mails.",
           "Proteger as contas contra robôs e tentativas de invasão.",
           "Gerar e publicar o seu site, quando você pedir.",
           "Atender você no suporte: a nossa equipe pode ver o seu nome, o seu e-mail, as datas da conta e os seus sites, com o custo de cada um. Cada consulta a uma conta fica registrada.",
@@ -193,7 +193,7 @@ export const termsSections: LegalSection[] = [
     id: "conta",
     title: "Sua conta",
     blocks: [
-      "Você cria a conta com seu nome, seu e-mail e uma senha, e confirma o e-mail pelo link que enviamos. Depois, entra com a senha ou com um link de acesso enviado ao e-mail. Use um e-mail que seja seu e cuide do acesso a ele e da sua senha, porque quem acessa o e-mail consegue entrar na conta.",
+      "Você cria a conta com seu nome, seu e-mail e uma senha, e confirma o e-mail pelo link que enviamos. Depois, entra com o e-mail e a senha. Use um e-mail que seja seu e cuide do acesso a ele e da sua senha, porque quem acessa o e-mail consegue entrar na conta.",
       "Você pode baixar seus dados e excluir a conta a qualquer momento, na página Conta.",
     ],
   },
