@@ -83,7 +83,7 @@ test.describe("the same header everywhere", () => {
       await expect(nav.getByRole("link")).toHaveText(middle);
       await expect(profileButton(page)).toBeVisible();
       await expect(
-        banner(page).getByRole("link", { name: "Criar site", exact: true }),
+        banner(page).getByRole("link", { name: "Criar meu site", exact: true }),
       ).toBeVisible();
       // No account links loose in the bar: they are in the profile menu.
       for (const name of [
@@ -129,7 +129,7 @@ test("the profile menu works with the keyboard", async ({ page, context, request
   await expect(button).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByRole("menu")).toBeVisible();
   await expect(page.getByText("Zé da Padaria", { exact: true })).toBeVisible();
-  await expect(items).toHaveText(["Painel", "Criar site", "Perfil e segurança", "Sair"]);
+  await expect(items).toHaveText(["Painel", "Criar meu site", "Perfil e segurança", "Sair"]);
   await expect(items.first()).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(items.nth(1)).toBeFocused();
@@ -184,7 +184,7 @@ test("the team sees Área da equipe, others do not", async ({ page, context, req
   await profileButton(page).click();
   await expect(page.getByRole("menuitem")).toHaveText([
     "Painel",
-    "Criar site",
+    "Criar meu site",
     "Perfil e segurança",
     "Sair",
   ]);
@@ -212,13 +212,13 @@ test("on phones the sheet lists the links and the account", async ({ page, conte
   await expect(profileButton(page)).toBeVisible();
   await banner(page).getByRole("button", { name: "Abrir menu" }).click();
   const sheet = page.getByRole("dialog", { name: "Menu" });
-  // The account block, then "Criar site" as the sheet's main button (E18).
+  // The account block, then "Criar meu site" as the sheet's main button (E18).
   await expect(sheet.getByRole("link")).toHaveText([
     ...middle,
     "Painel",
     "Perfil e segurança",
     "Área da equipe",
-    "Criar site",
+    "Criar meu site",
   ]);
   await expect(sheet.locator("a[data-create-site]")).toHaveClass(/specular/);
   await expect(sheet.getByText("Sua conta")).toBeVisible();

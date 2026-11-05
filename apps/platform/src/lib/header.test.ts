@@ -63,19 +63,19 @@ describe("what the header shows", () => {
   it("offers the main button by state", () => {
     expect(mainButton(visitor, false)?.label).toBe("Criar meu site");
     expect(mainButton(visitor, true)).toBeNull();
-    expect(mainButton(member, true)?.label).toBe("Criar site");
+    expect(mainButton(member, true)?.label).toBe("Criar meu site");
     expect(mainButton(unknown, false)?.href).toBe("/criar");
   });
 
   it("puts the account in the profile menu, and the team link only for the team", () => {
     expect(accountItems(false).map((link) => link.label)).toEqual([
       "Painel",
-      "Criar site",
+      "Criar meu site",
       "Perfil e segurança",
     ]);
     expect(accountItems(true).map((link) => link.label)).toEqual([
       "Painel",
-      "Criar site",
+      "Criar meu site",
       "Perfil e segurança",
       "Área da equipe",
     ]);

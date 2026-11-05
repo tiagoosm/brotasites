@@ -33,7 +33,7 @@ export const signInLink: NavLink = {
 /** The profile menu ("Sair" is a form, after these). */
 export const memberLinks: readonly NavLink[] = [
   { href: DASHBOARD_HREF, label: "Painel", account: true },
-  { href: CREATE_HREF, label: "Criar site", account: true },
+  { href: CREATE_HREF, label: "Criar meu site", account: true },
   { href: ACCOUNT_HREF, label: "Perfil e segurança", account: true },
 ];
 
@@ -62,7 +62,7 @@ export function accountItems(team: boolean): readonly NavLink[] {
 
 /** The main button on the right, if any: not on the home page for visitors (its hero has it). */
 export function mainButton(session: HeaderSession, isHome: boolean): NavLink | null {
-  if (session.signedIn) return { href: CREATE_HREF, label: "Criar site", account: true };
+  if (session.signedIn) return { href: CREATE_HREF, label: "Criar meu site", account: true };
   return isHome ? null : { href: CREATE_HREF, label: "Criar meu site", account: true };
 }
 
