@@ -14,7 +14,7 @@ The platform (`apps/platform`) runs on Vercel, project `brotasites`, linked to t
 
 ## How it works
 
-1. The client creates an account (name, email, password, accepted terms; the email is confirmed by link) or signs in, and answers 7 mobile-first steps: business, brand and feeling, sections, content and photos, contact and hours, then sends them (`docs/form-flow.md`). The draft is saved in the account at every step.
+1. The client creates an account (name, email, password, accepted terms; the email is confirmed by link) or signs in, and answers 5 mobile-first steps: business, brand and feeling, sections, content and photos, contact and hours, and sends them from the 5th step after a short review (`docs/form-flow.md`). The draft is saved in the account at every step.
 2. A job draws 3 art directions with the deterministic identity engine and the AI art director; the client picks one on the site's page, reached from the dashboard (or asks for 3 more). Choosing locks the identity.
 3. Another job builds the site: the answers become one configuration JSON (Zod schema 1.2), the AI (Claude) rewrites the text without inventing facts, the reviewer checks it, and a private preview goes up.
 4. After a person's review, the client sees the finished site at a private address, asks for changes or approves, and pays once to publish.
@@ -166,7 +166,7 @@ The first e2e run needs the browser: `pnpm --filter @brotasites/templates exec p
 - [`PLAN.md`](PLAN.md): build plan, one step and one pull request at a time
 - [`CLAUDE.md`](CLAUDE.md): project conventions, decisions and AI rules
 - [`docs/product.md`](docs/product.md): pricing, what is included, site statuses
-- [`docs/form-flow.md`](docs/form-flow.md): the 7 form steps (target flow)
+- [`docs/form-flow.md`](docs/form-flow.md): the 5 form steps, then choosing the look and publishing
 - [`docs/schema-1.2.md`](docs/schema-1.2.md): configuration JSON (v1.2); v1.1 in [`docs/legacy/`](docs/legacy/)
 - [`docs/site-config.example.json`](docs/site-config.example.json): filled-in example (a bakery), v1.2, and [`docs/site-config.schema.json`](docs/site-config.schema.json), its JSON Schema generated from Zod
 - [`docs/categories.md`](docs/categories.md): families, categories and blocked categories

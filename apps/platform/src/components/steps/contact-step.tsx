@@ -15,9 +15,10 @@ import { useForm12 } from "@/lib/form-store";
 import { Confirm } from "./content-step";
 import { SectionCard, TextField } from "./fields";
 import { defaultHours, HoursEditor } from "./hours-editor";
+import { SendButton, SendReview, useSendAnswers } from "./send-answers";
 import { StepForm } from "./step-form";
 
-// Step 5: how customers reach the business. Everything here is factual and goes to the site
+// Step 5 of 5: how customers reach the business, then the answers are sent (E25). Everything here is factual and goes to the site
 // as typed; the form only tidies the format (digits, ZIP code, user names).
 
 type Contact = NonNullable<FormDraft["contact"]>;
@@ -63,10 +64,13 @@ export function ContactStep() {
   const fixed = contact.hasFixedAddress ?? true;
   const family = familyOf(draft.business?.category);
   const needsRegistration = family ? familyInfo[family].requiresRegistration : false;
+  const sender = useSendAnswers();
 
   return (
     <StepForm
       step="contato"
+      onDone={() => void sender.send()}
+      action={<SendButton sender={sender} />}
       validate={() => {
         const answers = contactAnswers(contact);
         if (
@@ -191,6 +195,7 @@ export function ContactStep() {
           </div>
         </SectionCard>
       )}
+      <SendReview sender={sender} />
     </StepForm>
   );
 }

@@ -167,10 +167,17 @@ export const padaria = {
   },
 };
 
-const stepSlugs = ["negocio", "marca", "secoes", "conteudo", "contato", "direcao", "endereco"];
+const stepSlugs = ["negocio", "marca", "secoes", "conteudo", "contato"];
 
 /** The steps before `slug`, as completed. */
-export const allBefore = (slug: string) => stepSlugs.slice(0, stepSlugs.indexOf(slug));
+export const allBefore = (slug: string) => {
+  const index = stepSlugs.indexOf(slug);
+  if (index === -1) throw new Error(`not a step of the 5-step form: ${slug}`);
+  return stepSlugs.slice(0, index);
+};
+
+/** The 5 steps, all answered. */
+export const allSteps = [...stepSlugs];
 
 export async function fakeSupabase(
   context: BrowserContext,

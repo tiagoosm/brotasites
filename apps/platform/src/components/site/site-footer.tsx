@@ -49,7 +49,7 @@ export function SiteFooter({
         <div className="grid gap-3">
           <Brand />
           <p className="max-w-[28ch] text-[0.9375rem] text-ink-soft">
-            Sete perguntas e seu site pronto.
+            5 passos e seu site pronto. Responda, escolha entre 3 visuais e publique.
           </p>
         </div>
         <nav aria-label="Rodapé">{list}</nav>

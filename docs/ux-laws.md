@@ -7,7 +7,7 @@ Product decisions in `CLAUDE.md` ("Product rules") take precedence over any law 
 - no loading screen (generation is asynchronous);
 - no live preview while answering;
 - the client sees only the 3 directions and the finished site;
-- 7 form steps;
+- 5 form steps (then choosing the look and publishing, not numbered);
 - no notification e-mails;
 - never invent numbers.
 
@@ -21,7 +21,7 @@ When a law asks for something those decisions rule out, record the conflict and 
 | 2, 8 | Fitts (Lei de Fitts: tamanho e distância) | Big, near targets are faster to hit | Every link, button and choice has its own 44×44px area. The main action is within thumb reach on phones (the form's sticky footer). "Voltar" and "Próximo" stay in fixed places. Destructive actions sit apart from the main one and ask for confirmation | Automatic (`targets.ts` on every screen, at 360 and 1280px); manual for placement |
 | 3 | Jakob (Lei de Jakob) | People expect the site to work like the others they use | The logo goes home and the account is on the right. "Entrar ou cadastre-se". Labels sit above fields. E-mail and password use `autocomplete`, and the password has show/hide. Links are underlined or clearly links. The footer has the terms. A 404 page in pt-BR has a way back | Automatic (labels, 404); manual for the rest |
 | 4 | Proximity (Lei da Proximidade) | Things near each other look related | A label sits right above its field and the error right under it, before any hint. A button sits next to what it acts on. Space between groups is larger than space inside them | Automatic (errors within 48px of their field) |
-| 5 | Miller (Lei de Miller) | Working memory is small; group things into chunks | Nothing has to be remembered from one screen to the next. Long lists are grouped. Step 7 shows a review of the answers before approving | Manual |
+| 5 | Miller (Lei de Miller) | Working memory is small; group things into chunks | Nothing has to be remembered from one screen to the next. Long lists are grouped. Step 5 shows a short review of the answers before sending, and Publicar shows it again before approving | Manual |
 | 6 | Doherty (Limiar de Doherty) | Interaction flows when the system answers in under ~400ms | Every click shows a change at once ("Enviando…", disabled, busy). Slow work (generating, publishing) runs in the background with its status on the dashboard; there is no loading screen | Automatic ("Próximo" turns busy in under 400ms with CPU ×4 and a slow network) |
 | 7 | Von Restorff (Efeito Von Restorff) | What stands out is what is remembered | One highlighted (filled) action per block. The same action is never highlighted twice on a screen. Equal choices (the 3 directions) each get one in their own card | Automatic (no block with two filled buttons) |
 | 9 | Serial position (Efeito de posição serial) | First and last items are remembered best | The most important goes first and last: the promise opens the home page and "Criar meu site" closes it. The header puts "Como funciona" first and the account last. The profile menu puts "Painel" first and "Sair" last | Manual |
@@ -33,9 +33,9 @@ When a law asks for something those decisions rule out, record the conflict and 
 | 15 | Murphy (Lei de Murphy) | What can go wrong will | Confirm before destructive actions (delete the account, suspend a site). Keep drafts. Errors never lose data. 404 and error pages offer a way back | Automatic (404); manual for the rest |
 | 16 | Similarity (Lei da Semelhança) | Things that look alike seem to belong together | The same style means the same function: one primary button style, one link style, one site card. Different styles only for different functions | Manual |
 | 17 | Uniform connectedness (Conectividade uniforme) | Things joined by a line, border or background read as one | Group a unit with a card, a line or a background (a site with its status and actions; the form's stem). Do not join unrelated things | Manual |
-| 18 | Parkinson (Lei de Parkinson) | Work expands to fill the time available | Short, bounded tasks: 7 short steps. Clear limits are stated (link expiry, included changes for 30 days). No time estimate until real sessions are measured | Manual |
+| 18 | Parkinson (Lei de Parkinson) | Work expands to fill the time available | Short, bounded tasks: 5 short steps. Clear limits are stated (link expiry, included changes for 30 days). No time estimate until real sessions are measured | Manual |
 | 19 | Cognitive load (Carga cognitiva) | Effort spent on the interface is taken from the task | Short, scannable text (E19), one subject per screen. The client's words, no jargon ("token", "slug", ".json"). Icons with text (familiar exceptions: show password, the bell, the menu). AA contrast | Manual; contrast and axe are automatic |
-| 20 | Goal gradient (Efeito gradiente de meta) | Motivation grows near the goal | Show progress and what is left: "Passo N de 7", the stem, the dashboard's milestones, "falta só aprovar" | Automatic (progress on the form) |
+| 20 | Goal gradient (Efeito gradiente de meta) | Motivation grows near the goal | Show progress and what is left: "Passo N de 5", the stem, the dashboard's milestones, "falta só aprovar" | Automatic (progress on the form) |
 
 The automatic checks live in `apps/platform/e2e/ux-laws.spec.ts` (with `targets.spec.ts` and `contrast.spec.ts`).
 

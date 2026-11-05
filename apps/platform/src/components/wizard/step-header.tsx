@@ -6,7 +6,7 @@ import {
 } from "@brotasites/schema/v1.2";
 import { useEffect, useRef } from "react";
 
-/** Each step is one of the seven questions (copy lives in formSteps12, docs/form-flow.md). */
+/** Each of the 5 steps (copy lives in formSteps12, docs/form-flow.md). */
 export function StepHeader({ step }: { step: FormStepSlug }) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const index = formSteps.findIndex((s) => s.slug === step);

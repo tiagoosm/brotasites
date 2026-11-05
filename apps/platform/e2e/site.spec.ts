@@ -6,15 +6,25 @@ import { expect, type Page, test } from "@playwright/test";
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;
 const pages = ["/", "/ajuda", "/termos", "/privacidade"];
 
-test("the home page presents the seven questions in the form's order", async ({ page }) => {
+test("the home page presents the 5 steps in the form's order, then the 2 closings", async ({
+  page,
+}) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Sete perguntas e seu site pronto.",
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("5 passos e seu site pronto.");
+  await expect(
+    page.getByText("Responda, escolha entre 3 visuais e publique.", { exact: true }),
+  ).toBeVisible();
+  const stem = page.getByRole("list", { name: "Os 5 passos e o que vem depois" });
+  await expect(stem.getByRole("heading", { level: 3 })).toHaveText([
+    ...formSteps.map((step) => step.question),
+    "Escolha entre 3 visuais",
+  ]);
+  // A point per step, then the 2 closings without a number.
+  await expect(stem.locator(":scope > li")).toHaveCount(7);
+  await expect(stem.getByText(/^Passo \d de 5 · /)).toHaveText(
+    formSteps.map((step, index) => `Passo ${index + 1} de 5 · ${step.title}`),
   );
-  const questions = page
-    .getByRole("list", { name: "As sete perguntas" })
-    .getByRole("heading", { level: 3 });
-  await expect(questions).toHaveText(formSteps.map((step) => step.question));
+  await expect(stem.getByText("Pronto. Seu site no ar.")).toBeVisible();
 
   await page.getByRole("main").getByRole("link", { name: "Criar meu site" }).first().click();
   // The account comes before the first question.

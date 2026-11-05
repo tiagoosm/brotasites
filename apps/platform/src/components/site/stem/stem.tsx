@@ -1,15 +1,16 @@
 import { formSteps12 as formSteps } from "@brotasites/schema/v1.2";
-import { stemNotes } from "@/content/stem";
+import { stemChoice, stemNotes } from "@/content/stem";
 import { defaultStem, mirrorPath } from "@/lib/motion/stem";
-import { excerpts } from "./excerpts";
+import { ChoiceExcerpt, excerpts } from "./excerpts";
 import { StemGeometry } from "./stem-geometry";
 
-// The home page's signature (E18): the seven questions hang off one curved stem that is drawn
+// The home page's signature (E18): the 5 steps hang off one curved stem that is drawn
 // as the visitor scrolls (a CSS scroll-driven animation of the ink in globals.css). It snakes
 // gently between the questions, thick and dark at the base, thin and lighter at the young tip.
 // When the tip of the ink reaches a question, its leaf (and the small leaflets on the way)
 // buds, grows and opens with a little sway, and the question enters (motion-reveal.tsx); the
-// last one blooms. The server draws an even stem; stem-geometry.tsx redraws it through the
+// two closings without a number follow (E25): choosing one of the 3 looks, then the bloom of
+// the site live. The server draws an even stem; stem-geometry.tsx redraws it through the
 // real positions of the questions. Fully grown and open without support, without JavaScript
 // or with reduced motion. All decoration is aria-hidden: the list stays a plain <ol>.
 
@@ -136,13 +137,14 @@ const PLAN: { side: 1 | -1; shape: number; size: number; angle: number; tendril?
   { side: 1, shape: 3, size: 0.78, angle: -26 },
 ];
 
-const FIRST_DRAWING = defaultStem(formSteps.length + 1, 56, 1000, 22, 11);
+/** The 5 steps, the choice of a look and the bloom. */
+const FIRST_DRAWING = defaultStem(formSteps.length + 2, 56, 1000, 22, 11);
 
 export function Stem() {
   return (
     <ol
       className="stem relative grid gap-20 pl-14 sm:gap-24 sm:pl-20"
-      aria-label="As sete perguntas"
+      aria-label="Os 5 passos e o que vem depois"
     >
       <svg
         aria-hidden="true"
@@ -206,7 +208,7 @@ export function Stem() {
             </span>
             <div className="grid gap-3">
               <p className="tag text-stem">
-                Pergunta {index + 1} de {formSteps.length} · {step.title}
+                Passo {index + 1} de {formSteps.length} · {step.title}
               </p>
               <h3 className="font-display text-[1.875rem] leading-[1.1] sm:text-[2.25rem]">
                 {step.question}
@@ -217,6 +219,7 @@ export function Stem() {
           </li>
         );
       })}
+      <ChoiceNode />
       <li data-reveal="stem" className="stem-node relative grid gap-2">
         <span className="stem-anchor" aria-hidden="true">
           <svg viewBox="-16 -16 32 32" aria-hidden="true" className="stem-bloom">
@@ -239,5 +242,54 @@ export function Stem() {
       </li>
       <StemGeometry />
     </ol>
+  );
+}
+
+/** The first closing: not a step, so no number (E25). */
+function ChoiceNode() {
+  const index = formSteps.length;
+  const plan = PLAN[index % PLAN.length] as (typeof PLAN)[number];
+  const mid = FIRST_DRAWING.midpoints[index];
+  const outer: 1 | -1 = (mid?.dx ?? 0) >= 0 ? 1 : -1;
+  return (
+    <li
+      data-reveal="stem"
+      className="stem-node relative grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:gap-14"
+      style={{ "--mid-dx": `${mid?.dx ?? 0}px` } as React.CSSProperties}
+    >
+      <span className="stem-anchor" aria-hidden="true">
+        <Leaf
+          kind="leaflet"
+          shape={(plan.shape + 2) % LEAVES.length}
+          side={outer}
+          size={0.42}
+          angle={-40}
+          y="calc(var(--stem-gap) / -2)"
+          x="var(--mid-dx)"
+        />
+        {plan.tendril && (
+          <Tendril
+            side={(outer * -1) as 1 | -1}
+            y="calc(var(--stem-gap) / -2.6)"
+            x="var(--mid-dx)"
+          />
+        )}
+        <Leaf
+          kind="leaf"
+          shape={plan.shape}
+          side={plan.side}
+          size={plan.size}
+          angle={plan.angle}
+          y="0px"
+        />
+      </span>
+      <div className="grid gap-3">
+        <h3 className="font-display text-[1.875rem] leading-[1.1] sm:text-[2.25rem]">
+          {stemChoice.title}
+        </h3>
+        <p className="max-w-[44ch] text-[1.0625rem] text-ink-soft">{stemChoice.note}</p>
+      </div>
+      <ChoiceExcerpt />
+    </li>
   );
 }

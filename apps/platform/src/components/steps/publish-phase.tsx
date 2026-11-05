@@ -1,19 +1,11 @@
 "use client";
 
-import { formatPhone, suggestSubdomain } from "@brotasites/schema";
-import {
-  categoryInfo,
-  type FormStepSlug12,
-  formSteps12,
-  sectionsOf,
-} from "@brotasites/schema/v1.2";
+import { suggestSubdomain } from "@brotasites/schema";
 import { ArrowRight, Check, ExternalLink, LoaderCircle, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { StepFooter } from "@/components/wizard/step-footer";
-import { StepHeader } from "@/components/wizard/step-header";
 import { useForm12 } from "@/lib/form-store";
 import {
   AddressError,
@@ -29,17 +21,20 @@ import { SITES_DOMAIN } from "@/lib/site-url";
 import { approveSite, previewUrl, SiteActionError } from "@/lib/sites";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { AnswersSummary } from "./answers-summary";
 import { SectionCard } from "./fields";
 
-// Step 7: the address, a last look at the answers, the finished site and the approval.
-// Approving leads to the one-time payment; the site goes live once it is paid.
+// "Publicar" (E25): after the 5 steps and the choice of a direction, not a numbered step. The
+// address, a last look at the answers, the finished site and the approval, on the site's own
+// page (/meus-sites/<site>/publicar). Approving leads to the one-time payment; the site goes
+// live once it is paid.
 
 const CHECK_DELAY_MS = 400;
 const LOCKED_ADDRESS = ["publishing", "live", "grace", "suspended"];
 
-export function AddressStep() {
+export function PublishPhase() {
   const router = useRouter();
-  const { draft, site, siteId, updateDraft, reloadSite, completeStep } = useForm12();
+  const { draft, site, siteId, updateDraft, reloadSite } = useForm12();
   const typed = draft.site?.subdomain ?? site?.subdomain ?? "";
   const saved = site?.subdomain ?? null;
   const status = site?.status ?? "draft";
@@ -81,7 +76,6 @@ export function AddressStep() {
     setError(null);
     try {
       const result = await approveSite(siteId);
-      completeStep("endereco");
       router.push(
         result.paymentId
           ? `/meus-sites/${siteId}/pagamento?p=${result.paymentId}`
@@ -120,7 +114,7 @@ export function AddressStep() {
       </Button>
     ) : (
       <Button asChild size="lg" className="ml-auto flex-1 sm:flex-none">
-        <Link href={`/meus-sites/${siteId}`}>Ir para o painel</Link>
+        <Link href={`/meus-sites/${siteId}`}>Acompanhar o site</Link>
       </Button>
     );
 
@@ -133,7 +127,15 @@ export function AddressStep() {
         void approve();
       }}
     >
-      <StepHeader step="endereco" />
+      <header className="mb-9 grid gap-3">
+        <p className="tag text-stem">Publicar</p>
+        <h1 className="font-display text-[2.375rem] leading-[1.06] sm:text-[2.75rem]">
+          Onde o seu site vai morar?
+        </h1>
+        <p className="max-w-[40ch] text-[1.0625rem] text-ink-soft">
+          Escolha o endereço, confira o site pronto e aprove.
+        </p>
+      </header>
       <div className="grid gap-10">
         <SectionCard name="Endereço do site" note="Depois de publicado, o endereço não muda.">
           <SubdomainField
@@ -195,7 +197,7 @@ export function AddressStep() {
         </SectionCard>
 
         <SectionCard name="Revisão" note="Confira as respostas. Toque em uma parte para mudar.">
-          <Summary />
+          <AnswersSummary />
         </SectionCard>
 
         {error && (
@@ -204,7 +206,14 @@ export function AddressStep() {
           </p>
         )}
       </div>
-      <StepFooter step="endereco" action={action} />
+      <div className="sticky bottom-0 z-10 mt-10 -mx-5 flex items-center gap-3 border-t border-border bg-card/95 px-5 py-4 backdrop-blur sm:-mx-10 sm:px-10 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none">
+        {status === "awaiting_approval" && (
+          <Button asChild variant="ghost" className="h-12 px-4 text-ink-soft">
+            <Link href={`/meus-sites/${siteId}`}>Voltar</Link>
+          </Button>
+        )}
+        {action}
+      </div>
     </form>
   );
 }
@@ -355,80 +364,4 @@ function AvailabilityNote({
         </p>
       );
   }
-}
-
-const sectionNames: Record<string, string> = {
-  sobre: "Sobre",
-  servicos: "Serviços",
-  "como-funciona": "Como funciona",
-  diferenciais: "Diferenciais",
-  galeria: "Galeria",
-  depoimentos: "Depoimentos",
-  faq: "Perguntas frequentes",
-  "cta-final": "Chamada final",
-  contato: "Contato",
-};
-
-function Summary() {
-  const { draft, siteId } = useForm12();
-  const business = draft.business ?? {};
-  const contact = draft.contact ?? {};
-  const content = draft.content ?? {};
-  const channels = [
-    contact.whatsapp && `WhatsApp ${formatPhone(contact.whatsapp)}`,
-    contact.phone && `Telefone ${formatPhone(contact.phone)}`,
-    contact.email,
-  ].filter(Boolean);
-  const services = (content.services ?? []).filter((s) => s.name?.trim()).length;
-  const photos = (content.photos ?? []).length;
-  const rows: [FormStepSlug12, string][] = [
-    [
-      "negocio",
-      [
-        business.name,
-        business.category && categoryInfo(business.category)?.label,
-        [business.city, business.state].filter(Boolean).join(" - "),
-      ]
-        .filter(Boolean)
-        .join(" · ") || "Ainda sem respostas",
-    ],
-    [
-      "marca",
-      [
-        draft.brand?.logoAsset ? "Com logo" : "Sem logo (monograma)",
-        draft.brand?.feelings?.length ? draft.brand.feelings.join(" e ") : null,
-      ]
-        .filter(Boolean)
-        .join(" · "),
-    ],
-    [
-      "secoes",
-      sectionsOf(draft)
-        .map((id) => sectionNames[id] ?? id)
-        .join(", "),
-    ],
-    [
-      "conteudo",
-      `${services} ${services === 1 ? "serviço" : "serviços"} · ${photos} ${photos === 1 ? "foto" : "fotos"}`,
-    ],
-    ["contato", channels.join(" · ") || "Nenhum canal ainda"],
-  ];
-  return (
-    <dl className="grid gap-3">
-      {rows.map(([slug, text]) => (
-        <div key={slug} className="grid gap-1 border-b border-border pb-3 last:border-0">
-          <dt className="flex items-baseline justify-between gap-3">
-            <span className="tag text-stem">{formSteps12.find((s) => s.slug === slug)?.title}</span>
-            <Link
-              href={`/criar/${siteId}/${slug}`}
-              className="touch-target text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
-            >
-              Mudar
-            </Link>
-          </dt>
-          <dd className="text-[0.9375rem]">{text}</dd>
-        </div>
-      ))}
-    </dl>
-  );
 }

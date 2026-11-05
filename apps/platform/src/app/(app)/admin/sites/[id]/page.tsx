@@ -398,8 +398,8 @@ function Decision({
           className="rounded-lg border border-input bg-card p-3 text-base outline-none focus-visible:border-leaf focus-visible:ring-4 focus-visible:ring-leaf/15"
         />
         <p className="text-sm text-ink-soft">
-          Obrigatória para pedir ajustes (vai para a etapa de textos) e para suspender (o cliente vê
-          o motivo).
+          Obrigatória para pedir ajustes (vai para o passo de conteúdo) e para suspender (o cliente
+          vê o motivo).
         </p>
       </div>
       <div className="flex flex-wrap gap-2">

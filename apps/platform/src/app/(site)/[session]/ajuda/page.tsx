@@ -8,7 +8,8 @@ import { faqGroups } from "@/content/faq";
 
 export const metadata: Metadata = {
   title: "Ajuda",
-  description: "Como criar o seu site no BrotaSites: perguntas, fotos, dados, preço e publicação.",
+  description:
+    "Como criar o seu site no BrotaSites: os 5 passos, fotos, dados, preço e publicação.",
   alternates: { canonical: "/ajuda" },
 };
 

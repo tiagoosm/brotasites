@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import {
   allBefore,
+  allSteps,
   PAYMENT,
   padaria,
   SITE,
@@ -13,7 +14,6 @@ import {
 // the address, approval and the test payment. Generation is asynchronous: no loading screen.
 
 const dashboard = `/meus-sites/${SITE}`;
-const allSteps = allBefore("endereco");
 
 test("the site pages need an account, and the old page leads to the dashboard", async ({
   page,
@@ -26,10 +26,18 @@ test("sending the answers starts the directions and opens the dashboard", async 
   page,
   context,
 }) => {
-  const state = await withSite(context, { draft: padaria, completed: allBefore("direcao") });
-  await page.goto(`/criar/${SITE}/direcao`);
-  await expect(page.getByText(/Fiel à marca/)).toBeVisible();
-  await page.getByRole("button", { name: "Ver as 3 direções" }).click();
+  const state = await withSite(context, { draft: padaria, completed: allBefore("contato") });
+  // The 5th step ends with a short look at the answers and the send button (E25).
+  await page.goto(`/criar/${SITE}/contato`);
+  const review = page.locator("#conferir");
+  await expect(review.getByRole("group", { name: "Confira antes de enviar" })).toBeVisible();
+  await expect(review.getByText(/Padaria do Zé/)).toBeVisible();
+  await expect(review.getByRole("link", { name: "Mudar" }).first()).toHaveAttribute(
+    "href",
+    `/criar/${SITE}/negocio`,
+  );
+  await expect(review.getByText(/Fiel à marca/)).toBeVisible();
+  await page.getByRole("button", { name: "Enviar e ver as direções" }).click();
   await expect(page).toHaveURL(new RegExp(`${dashboard}$`));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Padaria do Zé");
   await expect(page.getByRole("status").first()).toContainText("Criando as 3 direções");
@@ -37,18 +45,21 @@ test("sending the answers starts the directions and opens the dashboard", async 
   expect(state.rpc.map((call) => call.name)).toContain("request_directions");
   // The server asks the database (with the limits) and starts the job itself.
   expect(state.api).toContain(`/api/sites/${SITE}/directions`);
-  expect(state.saved.at(-1)?.completed).toContain("direcao");
+  expect(state.saved.at(-1)?.completed).toEqual(allSteps);
 });
 
 test("what is missing to generate is listed, with links back", async ({ page, context }) => {
   await withSite(context, {
     draft: { business: { name: "Padaria do Zé" } },
-    completed: allBefore("direcao"),
+    completed: allBefore("contato"),
   });
-  await page.goto(`/criar/${SITE}/direcao`);
+  await page.goto(`/criar/${SITE}/contato`);
   await expect(page.getByText("o tipo de negócio")).toBeVisible();
   await expect(page.getByText("um contato (WhatsApp, telefone ou e-mail)")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Ver as 3 direções" })).toBeDisabled();
+  await expect(page.locator("#conferir").getByRole("link", { name: "negócio" })).toHaveAttribute(
+    "href",
+    `/criar/${SITE}/negocio`,
+  );
 });
 
 test("choosing one of the 3 directions, after a confirmation", async ({ page, context }) => {
@@ -143,7 +154,9 @@ test("the address: suggestion, availability and keeping it before approving", as
     site: { ...finished.site, subdomain: null },
     taken: ["padaria-do-ze"],
   });
-  await page.goto(`/criar/${SITE}/endereco`);
+  // "Publicar" is the site's own page now (it was step 7 of the form).
+  await page.goto(`${dashboard}/publicar`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Onde o seu site vai morar?");
   await expect(page.getByLabel("Endereço", { exact: true })).toHaveValue("padaria-do-ze");
   await expect(page.getByText("Esse endereço já está em uso.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Aprovar e publicar" })).toBeDisabled();
@@ -165,4 +178,32 @@ test("a published site can be downloaded as a .zip", async ({ page, context }) =
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Baixar o site (.zip)" }).click();
   expect((await download).suggestedFilename()).toBe("site.zip");
+});
+
+test("old addresses of steps 6 and 7 lead to the site's pages", async ({ page, context }) => {
+  await withSite(context, finished);
+  await page.goto(`/criar/${SITE}/direcao`);
+  await expect(page).toHaveURL(new RegExp(`${dashboard}$`));
+  await page.goto(`/criar/${SITE}/endereco`);
+  await expect(page).toHaveURL(new RegExp(`${dashboard}/publicar$`));
+  await expect(page.getByRole("button", { name: "Aprovar e publicar" })).toBeVisible();
+  await page.goto(`/criar/${SITE}/etapa/marca`);
+  await expect(page).toHaveURL(new RegExp(`/criar/${SITE}/marca$`));
+});
+
+test("before a direction is chosen, Publicar says what comes first", async ({ page, context }) => {
+  await withSite(context, { site: siteRow("awaiting_direction_choice"), draft: padaria });
+  await page.goto(`${dashboard}/publicar`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Ainda não é hora de publicar");
+  await expect(page.getByRole("link", { name: "Ir para a página do site" })).toHaveAttribute(
+    "href",
+    dashboard,
+  );
+});
+
+test("the site page leads to Publicar when the site is ready", async ({ page, context }) => {
+  await withSite(context, { ...finished, site: { ...finished.site, subdomain: null } });
+  await page.goto(dashboard);
+  await page.getByRole("link", { name: "Publicar: endereço e aprovação" }).click();
+  await expect(page).toHaveURL(new RegExp(`${dashboard}/publicar$`));
 });

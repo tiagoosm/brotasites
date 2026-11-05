@@ -204,9 +204,10 @@ test("without JavaScript the content and the whole stem are there", async ({ bro
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   const questions = page
-    .getByRole("list", { name: "As sete perguntas" })
+    .getByRole("list", { name: "Os 5 passos e o que vem depois" })
     .getByRole("heading", { level: 3 });
-  await expect(questions).toHaveCount(7);
+  // The 5 steps and the choice of a look.
+  await expect(questions).toHaveCount(6);
   expect((await page.locator(".stem-body").getAttribute("d"))?.length ?? 0).toBeGreaterThan(100);
   for (const leaf of await page.locator(".stem-leaf").all())
     await expect(leaf).toHaveCSS("opacity", "1");

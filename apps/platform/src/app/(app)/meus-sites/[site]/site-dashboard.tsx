@@ -272,7 +272,9 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
                 </Button>
               ) : (
                 <Button asChild size="lg">
-                  <Link href={`/criar/${site.id}/endereco`}>Escolher o endereço e aprovar</Link>
+                  <Link href={`/meus-sites/${site.id}/publicar`}>
+                    Publicar: endereço e aprovação
+                  </Link>
                 </Button>
               )}
             </div>
@@ -365,7 +367,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
 
       {site.status === "needs_attention" && !locked && (
         <Button asChild size="lg" className="justify-self-start">
-          <Link href={`/criar/${site.id}/direcao`}>Revisar as respostas e tentar de novo</Link>
+          <Link href={`/criar/${site.id}/contato`}>Revisar as respostas e tentar de novo</Link>
         </Button>
       )}
 

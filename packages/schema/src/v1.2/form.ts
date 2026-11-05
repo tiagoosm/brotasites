@@ -24,8 +24,10 @@ import {
   sectionIds,
 } from "./taxonomy.js";
 
-// The 7-step form of docs/form-flow.md and how its answers become a 1.2 config. The draft is
-// saved at every step, so every field is optional here; each step checks its own answers with
+// The 5-step form of docs/form-flow.md and how its answers become a 1.2 config. After the 5
+// steps come two phases that are not steps: choosing one of the 3 directions and publishing
+// (the address, the approval, the payment), on the site's own pages. The draft is saved at
+// every step, so every field is optional here; each step checks its own answers with
 // the step schemas, and `missingToGenerate` checks the minimum before the client sends them.
 // Messages are user-facing (pt-BR).
 
@@ -60,21 +62,21 @@ export const formSteps12 = [
     question: "Como os clientes falam com você?",
     description: "Pelo menos um canal: WhatsApp, telefone ou e-mail.",
   },
-  {
-    slug: "direcao",
-    title: "Direção",
-    question: "Pronto para ver as 3 direções?",
-    description: "Envie e pode fechar a página. Avisamos no painel.",
-  },
-  {
-    slug: "endereco",
-    title: "Endereço e revisão",
-    question: "Onde o seu site vai morar?",
-    description: "Escolha o endereço, confira o site pronto e aprove.",
-  },
 ] as const;
 
 export type FormStepSlug12 = (typeof formSteps12)[number]["slug"];
+
+/**
+ * The steps a saved draft lists as done, as the 5-step form knows them. Drafts saved before
+ * 2026-11-05 may also list "direcao" and "endereco" (the old steps 6 and 7): they are dropped,
+ * never an error, and the answers stay as they were.
+ */
+export function knownSteps(completed: readonly unknown[] | null | undefined): FormStepSlug12[] {
+  const known = new Set<string>(formSteps12.map((step) => step.slug));
+  return (completed ?? []).filter(
+    (slug): slug is FormStepSlug12 => typeof slug === "string" && known.has(slug),
+  );
+}
 
 /** The questions that make a site specific (docs/form-flow.md, step 1). */
 export const storyQuestions = [

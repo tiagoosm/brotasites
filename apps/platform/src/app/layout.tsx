@@ -29,9 +29,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(PLATFORM_URL),
   applicationName: "BrotaSites",
   openGraph: { type: "website", locale: "pt_BR", siteName: "BrotaSites" },
-  title: { default: "BrotaSites · Sete perguntas e seu site pronto", template: "%s · BrotaSites" },
+  title: { default: "BrotaSites · 5 passos e seu site pronto", template: "%s · BrotaSites" },
   description:
-    "Responda sete perguntas, escolha o visual e receba o site do seu negócio pronto. Sem código.",
+    "5 passos e seu site pronto. Responda, escolha entre 3 visuais e publique. Sem código.",
 };
 
 export const viewport: Viewport = {

@@ -17,8 +17,8 @@ const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 </style></head><body>
 <div class="sheet">
   <div class="brand"><svg viewBox="0 0 24 24" width="40" height="40" fill="#2f7a4a"><path d="M12 22V11" stroke="#2f7a4a" stroke-width="2" stroke-linecap="round"/><path d="M12 13C12 8 8.5 5 3 5c0 5.5 3.5 8 9 8Z"/><path d="M12 11c0-4.5 3-7.5 9-7.5 0 5-3 7.5-9 7.5Z" opacity=".65"/></svg>BrotaSites</div>
-  <h1>Sete perguntas<span>e seu site pronto.</span></h1>
-  <p class="tag">Criar é grátis · Sem código</p>
+  <h1>5 passos<span>e seu site pronto.</span></h1>
+  <p class="tag">Responda, escolha entre 3 visuais e publique.</p>
   <svg class="stem" width="180" height="470" viewBox="0 0 180 470" fill="none">
     <path d="M90 470 C 70 400, 110 330, 90 260 S 70 120, 90 40" stroke="#2f5d45" stroke-width="4" stroke-linecap="round"/>
     <g fill="#e2efe4" stroke="#2f5d45" stroke-width="3" stroke-linejoin="round">
@@ -32,7 +32,9 @@ const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 </div>
 </body></html>`;
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(
+  process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {},
+);
 const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 await page.setContent(html, { waitUntil: "networkidle" });
 await page.evaluate(() => document.fonts.ready);

@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "BrotaSites",
     short_name: "BrotaSites",
-    description: "Sete perguntas e seu site pronto.",
+    description: "5 passos e seu site pronto. Responda, escolha entre 3 visuais e publique.",
     lang: "pt-BR",
     start_url: "/",
     display: "browser",

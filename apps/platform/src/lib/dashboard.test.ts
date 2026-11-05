@@ -9,6 +9,7 @@ import {
   noticeHref,
   noticeText,
   pendingActions,
+  resumeLabel,
   resumeStep,
   siteAction,
 } from "./dashboard";
@@ -95,7 +96,7 @@ describe("pending actions", () => {
     ]);
     expect(actions[1]?.text).toBe("Falta uma foto da fachada.");
     expect(actions[2]?.text).toBe(statusInfo.awaiting_direction_choice.text);
-    expect(actions[4]?.text).toBe("Continue de onde parou: Marca e sensação.");
+    expect(actions[4]?.text).toBe("Continue de onde parou: passo 2 de 5 (Marca e sensação).");
     expect(actions[4]?.href).toBe(`/criar/a/marca`);
   });
 
@@ -112,12 +113,22 @@ describe("site cards", () => {
     expect(siteAction(site({ status: "awaiting_direction_choice" })).label).toBe(
       "Escolher direção",
     );
-    expect(siteAction(site({ status: "awaiting_approval" })).label).toBe("Revisar");
+    expect(siteAction(site({ status: "awaiting_approval" }))).toEqual({
+      label: "Publicar",
+      href: "/meus-sites/7d1c1a52-2f0e-4c39-9a35-6b1f4a8e2c10/publicar",
+    });
     expect(siteAction(site({ status: "live" })).label).toBe("Baixar o site");
     expect(siteAction(site({ status: "building" })).label).toBe("Ver detalhes");
+    // A draft saved by the former 7-step form: the old slugs are ignored, nothing breaks.
     expect(
-      resumeStep(["negocio", "marca", "secoes", "conteudo", "contato", "direcao", "endereco"]).slug,
-    ).toBe("negocio");
+      resumeStep(["negocio", "marca", "secoes", "conteudo", "contato", "direcao", "endereco"]),
+    ).toEqual({ slug: "contato", title: "Contato", number: 5 });
+    expect(resumeStep(["negocio", "direcao"])).toEqual({
+      slug: "marca",
+      title: "Marca e sensação",
+      number: 2,
+    });
+    expect(resumeLabel(["negocio"])).toBe("passo 2 de 5 (Marca e sensação)");
   });
 
   it("lists only the milestones that happened", () => {
