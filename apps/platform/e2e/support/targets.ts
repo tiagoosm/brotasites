@@ -34,8 +34,9 @@ export function findSmallTargets(page: Page): Promise<SmallTarget[]> {
       const cy = box.top + box.height / 2;
       // Its square runs past the screen edge: nothing can be hit there, so it is checked at
       // the next scroll position (steps are half a screen). The last row of pixels is
-      // innerHeight - 1: elementFromPoint finds nothing at innerHeight itself.
-      if (cy - HALF < 0 || cy + HALF >= window.innerHeight) continue;
+      // innerHeight - 1, and elementFromPoint rounds its point (811.6 is 812): past that
+      // row it finds nothing.
+      if (cy - HALF < 0 || Math.round(cy + HALF) > window.innerHeight - 1) continue;
       // Covered right now (e.g. under a sticky header or footer): checked at another scroll.
       const center = document.elementFromPoint(cx, cy);
       if (!center || !(center === element || element.contains(center))) continue;
