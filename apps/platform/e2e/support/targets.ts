@@ -53,7 +53,8 @@ export function findSmallTargets(page: Page): Promise<SmallTarget[]> {
               .slice(0, 40),
             hitBy: hit
               ? `${hit.tagName.toLowerCase()} "${(hit.textContent ?? "").trim().slice(0, 24)}" at ${dx},${dy} (box ${Math.round(box.width)}x${Math.round(box.height)})`
-              : "nothing",
+              : // Outside what the page can hit: say where, to tell an edge from a scrollbar.
+                `nothing at ${Math.round(cx + dx)},${Math.round(cy + dy)} (box ${Math.round(box.left)},${Math.round(box.top)} ${Math.round(box.width)}x${Math.round(box.height)}, viewport ${window.innerWidth}x${window.innerHeight}, client ${document.documentElement.clientWidth}x${document.documentElement.clientHeight}, scroll ${Math.round(window.scrollX)},${Math.round(window.scrollY)})`,
           });
           break;
         }
