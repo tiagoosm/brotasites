@@ -20,8 +20,7 @@ export async function POST(request: Request) {
   if (!(await withinLimits(rulesFor("account", ip, email, limitKey)))) {
     return refuse(429, guardErrors.rateLimited);
   }
-  const name = (user.user_metadata as { full_name?: string } | undefined)?.full_name;
-  const checked = newPassword({ email, name }).safeParse(body.data.password);
+  const checked = newPassword().safeParse(body.data.password);
   if (!checked.success) {
     const message = checked.error.issues[0]?.message ?? guardErrors.invalid;
     return refuse(400, message, { password: message });

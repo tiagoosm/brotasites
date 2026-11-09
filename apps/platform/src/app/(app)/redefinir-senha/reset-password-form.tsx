@@ -34,7 +34,7 @@ export function ResetPasswordForm() {
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (sending) return;
-    const problem = passwordProblem(password, { email });
+    const problem = passwordProblem(password);
     if (problem || password !== repeat) {
       setFields({
         ...(problem ? { password: problem } : {}),
@@ -65,7 +65,7 @@ export function ResetPasswordForm() {
     <AuthShell>
       {email === null ? (
         <section className="grid gap-4">
-          <h1 className="font-display text-[2.5rem] leading-[1.05]">Link expirado</h1>
+          <h1 className="font-display text-[2rem] leading-[1.1]">Link expirado</h1>
           <p className="text-[1.0625rem] text-ink-soft">
             Este link de redefinição já foi usado ou expirou. Peça um novo.
           </p>
@@ -77,9 +77,9 @@ export function ResetPasswordForm() {
           </Link>
         </section>
       ) : (
-        <form onSubmit={submit} noValidate className="grid gap-6">
-          <header className="grid gap-3">
-            <h1 className="font-display text-[2.5rem] leading-[1.05]">Crie uma nova senha</h1>
+        <form onSubmit={submit} noValidate className="grid gap-7">
+          <header className="grid gap-2">
+            <h1 className="font-display text-[2rem] leading-[1.1]">Crie uma nova senha</h1>
             <p className="text-[1.0625rem] text-ink-soft">
               Para a conta <strong className="font-semibold text-ink">{email}</strong>. Os outros
               aparelhos vão precisar entrar de novo.
@@ -95,6 +95,7 @@ export function ResetPasswordForm() {
             value={password}
             onChange={setPassword}
             describedBy={checklistId}
+            meter={{ email }}
             error={fields.password}
           />
           <PasswordField
@@ -105,7 +106,7 @@ export function ResetPasswordForm() {
             onChange={setRepeat}
             error={fields.confirmPassword}
           />
-          <PasswordChecklist id={checklistId} value={password} owner={{ email }} />
+          <PasswordChecklist id={checklistId} value={password} />
           <Button aria-busy={sending || undefined} type="submit" size="lg">
             {sending ? "Salvando…" : "Salvar nova senha"}
           </Button>

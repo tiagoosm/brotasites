@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PASSWORD_MAX, type PasswordOwner, passwordProblem } from "./passwords";
+import { PASSWORD_MAX, passwordProblem } from "./passwords";
 
 // What the account routes accept (checked again on the server for every request). Messages
 // are pt-BR, shown next to the field.
@@ -42,10 +42,10 @@ export const passwordSchema = z
   .string("Escolha uma senha.")
   .max(PASSWORD_MAX, `Use até ${PASSWORD_MAX} caracteres.`);
 
-/** Checks a new password against the rules (passwords.ts) and who it belongs to. */
-export function newPassword(owner: PasswordOwner = {}) {
+/** A new password: 8 characters or more is the only requirement (passwords.ts, E27). */
+export function newPassword() {
   return passwordSchema.superRefine((value, ctx) => {
-    const problem = passwordProblem(value, owner);
+    const problem = passwordProblem(value);
     if (problem) ctx.addIssue({ code: "custom", message: problem });
   });
 }
@@ -61,7 +61,6 @@ export const signUpSchema = z
   .object({
     fullName: fullNameSchema,
     email: emailSchema,
-    // The rules and common passwords here, so every field's error shows at once...
     password: newPassword(),
     confirmPassword,
     acceptTerms: z.literal(
@@ -71,11 +70,8 @@ export const signUpSchema = z
     captchaToken,
     next,
   })
-  // ...then the email and the name inside the password, and the repeated password, once the
-  // fields are valid.
+  // The repeated password, checked on the server too.
   .superRefine((value, ctx) => {
-    const problem = passwordProblem(value.password, { email: value.email, name: value.fullName });
-    if (problem) ctx.addIssue({ code: "custom", path: ["password"], message: problem });
     if (value.confirmPassword !== value.password) {
       ctx.addIssue({ code: "custom", path: ["confirmPassword"], message: PASSWORDS_DIFFER });
     }

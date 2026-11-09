@@ -39,7 +39,7 @@ export function ForgotPasswordForm() {
       {sent ? (
         <section aria-live="polite" className="grid gap-4">
           <MailCheck aria-hidden="true" className="size-9 text-leaf" strokeWidth={1.6} />
-          <h1 className="font-display text-[2.5rem] leading-[1.05]">Confira o seu e-mail</h1>
+          <h1 className="font-display text-[2rem] leading-[1.1]">Confira o seu e-mail</h1>
           <p className="text-[1.0625rem] text-ink-soft">
             Se houver uma conta com{" "}
             <strong className="font-semibold text-ink">{email.trim()}</strong>, enviamos um link
@@ -53,9 +53,9 @@ export function ForgotPasswordForm() {
           </Link>
         </section>
       ) : (
-        <form onSubmit={submit} noValidate className="grid gap-6">
-          <header className="grid gap-3">
-            <h1 className="font-display text-[2.5rem] leading-[1.05]">Esqueceu a senha?</h1>
+        <form onSubmit={submit} noValidate className="grid gap-7">
+          <header className="grid gap-2">
+            <h1 className="font-display text-[2rem] leading-[1.1]">Esqueceu a senha?</h1>
             <p className="text-[1.0625rem] text-ink-soft">
               Informe seu e-mail. Mandamos um link para criar uma nova senha.
             </p>

@@ -69,7 +69,7 @@ test("the sign-in and sign-up pages share one frame, only the card changes", asy
       const card = document.querySelector("[data-auth-card]") as HTMLElement;
       const style = getComputedStyle(card);
       return {
-        main: document.querySelector("main")?.className,
+        page: getComputedStyle(document.querySelector("main") as HTMLElement).backgroundColor,
         width: Math.round(card.getBoundingClientRect().width),
         radius: style.borderRadius,
         background: style.backgroundColor,

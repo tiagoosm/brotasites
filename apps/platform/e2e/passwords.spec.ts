@@ -10,9 +10,10 @@ import {
   uniqueEmail,
 } from "./support/accounts";
 
-// Strong passwords (E26): the five rules with a live checklist and the meter, the repeated
-// password, focus on the first error, pasting, Caps Lock, the email typo suggestion, and the
-// same rules when resetting and changing. An older, weaker password still signs in.
+// Passwords (E26, owner's change in E27): 8 characters is the only requirement; lowercase,
+// uppercase, a number and a symbol only raise the strength meter. A live checklist and the
+// meter, the repeated password, focus on the first error, pasting, Caps Lock, the email typo
+// suggestion, and the same rule when resetting and changing. An older password still signs in.
 
 test.beforeEach(async ({ context }) => {
   await ownIp(context);
@@ -20,8 +21,10 @@ test.beforeEach(async ({ context }) => {
 
 const password = (page: Page) => page.getByLabel("Senha", { exact: true });
 const repeat = (page: Page) => page.getByLabel("Repita a senha");
-const rule = (page: Page, text: string) =>
-  page.getByRole("list", { name: "A senha precisa ter" }).getByRole("listitem").filter({
+const requirement = (page: Page) =>
+  page.getByRole("list", { name: "A senha precisa ter" }).getByRole("listitem");
+const hint = (page: Page, text: string) =>
+  page.getByRole("list", { name: "Deixa a senha mais forte" }).getByRole("listitem").filter({
     hasText: text,
   });
 
@@ -29,12 +32,17 @@ test("the checklist and the meter follow the typing, in text", async ({ page }) 
   await page.goto("/cadastro");
   await expect(page.getByText("Força: —", { exact: true })).toBeVisible();
   await password(page).pressSequentially("cafe");
-  await expect(rule(page, "Uma letra minúscula")).toContainText("Atendido");
-  await expect(rule(page, "Uma letra maiúscula")).toContainText("Falta");
+  await expect(requirement(page)).toHaveCount(1);
+  await expect(requirement(page)).toContainText("Ainda não: 8 caracteres");
+  await expect(hint(page, "minúscula")).toContainText("Feito");
+  await expect(hint(page, "maiúscula")).toContainText("Ainda não");
   await expect(page.getByText("Força: Fraca", { exact: true })).toBeVisible();
+  // Eight lowercase letters are enough to sign up: weak, never blocked.
+  await password(page).fill("cafezinho");
+  await expect(requirement(page)).toContainText("Feito: 8 caracteres");
   await password(page).fill("Cafe-forte9");
-  for (const text of ["10 caracteres", "minúscula", "maiúscula", "Um número", "Um símbolo"]) {
-    await expect(rule(page, text)).toContainText("Atendido");
+  for (const text of ["minúscula", "maiúscula", "número", "símbolo"]) {
+    await expect(hint(page, text)).toContainText("Feito");
   }
   await expect(page.getByText("Força: Boa", { exact: true })).toBeVisible();
   await password(page).fill("Cafe-forte-2026");
@@ -45,8 +53,8 @@ test("sending with errors lists them at the top and focuses the first field", as
   await page.goto("/cadastro");
   await page.getByLabel("Seu nome").fill("Zé");
   await page.getByLabel("E-mail").fill(uniqueEmail("erros"));
-  await password(page).fill("cafeforte");
-  await repeat(page).fill("cafeforte");
+  await password(page).fill("cafe12");
+  await repeat(page).fill("cafe12");
   // The button is never disabled: it shows what to fix.
   const send = page.getByRole("button", { name: "Criar conta" });
   await expect(send).toBeEnabled();
@@ -55,7 +63,7 @@ test("sending with errors lists them at the top and focuses the first field", as
   await expect(summary).toContainText("Confira 2 campos:");
   await expect(summary.getByRole("link", { name: "Senha" })).toBeVisible();
   await expect(password(page)).toBeFocused();
-  await expect(page.getByText(/^Use pelo menos 10 caracteres e inclua/)).toBeVisible();
+  await expect(page.getByText("Use pelo menos 8 caracteres.").last()).toBeVisible();
   await summary.getByRole("link", { name: "Termos" }).click();
   await expect(page.getByRole("checkbox")).toBeFocused();
 });
@@ -144,19 +152,29 @@ test("a typo in a common email provider gets a suggestion to accept", async ({ p
   await expect(page.getByText("Escreva um e-mail válido, como voce@exemplo.com.")).toBeVisible();
 });
 
-test("resetting the password follows the same rules", async ({ page, request }) => {
+test("a password of 8 plain letters is accepted, shown as weak", async ({ page }) => {
+  await page.goto("/cadastro");
+  await page.getByLabel("Seu nome").fill("Zé");
+  await page.getByLabel("E-mail").fill(uniqueEmail("simples"));
+  await password(page).fill("cafezinho");
+  await repeat(page).fill("cafezinho");
+  await expect(page.getByText("Força: Fraca", { exact: true })).toBeVisible();
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Criar conta" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Confira o seu e-mail");
+});
+
+test("resetting the password follows the same rule", async ({ page, request }) => {
   const email = uniqueEmail("regras-redefinir");
   await createUser(request, { email });
   await page.goto("/esqueci-senha");
   await page.getByLabel("E-mail").fill(email);
   await page.getByRole("button", { name: "Enviar link" }).click();
   await page.goto(linkOf(await lastMail(request, email, "recovery")));
-  await page.getByLabel("Nova senha", { exact: true }).fill("cafecomleite99");
-  await page.getByLabel("Repita a nova senha").fill("cafecomleite99");
+  await page.getByLabel("Nova senha", { exact: true }).fill("cafe99");
+  await page.getByLabel("Repita a nova senha").fill("cafe99");
   await page.getByRole("button", { name: "Salvar nova senha" }).click();
-  await expect(
-    page.getByText("Inclua uma letra maiúscula e um símbolo, como ! @ # ?."),
-  ).toBeVisible();
+  await expect(page.getByText("Use pelo menos 8 caracteres.").last()).toBeVisible();
   await expect(page.getByLabel("Nova senha", { exact: true })).toBeFocused();
   await page.getByLabel("Nova senha", { exact: true }).fill("Cafe-com-leite-99");
   await page.getByLabel("Repita a nova senha").fill("Cafe-com-leite-99");
@@ -164,17 +182,19 @@ test("resetting the password follows the same rules", async ({ page, request }) 
   await expect(page).not.toHaveURL(/redefinir-senha/);
 });
 
-test("changing the password in the account follows the same rules", async ({ page, request }) => {
+test("changing the password in the account follows the same rule", async ({ page, request }) => {
   const email = uniqueEmail("regras-trocar");
   await createUser(request, { email });
   await signInWithPassword(page, email, PASSWORD, "/conta");
   await expect(page).toHaveURL(/\/conta$/);
   await page.getByLabel("Senha atual").fill(PASSWORD);
-  await page.getByLabel("Nova senha", { exact: true }).fill("Padaria-do-Ze-1");
-  await page.getByLabel("Repita a nova senha").fill("Padaria-do-Ze-1");
+  await page.getByLabel("Nova senha", { exact: true }).fill("bolo");
+  await page.getByLabel("Repita a nova senha").fill("bolo");
   await page.getByRole("button", { name: "Trocar senha" }).click();
-  // The account's name is "Zé da Padaria".
-  await expect(page.getByText("Não use o seu nome na senha.")).toBeVisible();
+  await expect(page.getByText("Use pelo menos 8 caracteres.").last()).toBeVisible();
+  // The account's name is "Zé da Padaria": the name only makes the password weak.
+  await page.getByLabel("Nova senha", { exact: true }).fill("Padaria-do-Ze-1");
+  await expect(page.getByText("Força: Fraca", { exact: true })).toBeVisible();
   await page.getByLabel("Nova senha", { exact: true }).fill("Bolo-de-fuba-2026");
   await page.getByLabel("Repita a nova senha").fill("Bolo-de-fuba-2025");
   await page.getByRole("button", { name: "Trocar senha" }).click();
