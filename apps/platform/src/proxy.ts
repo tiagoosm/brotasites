@@ -1,7 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { readHosts } from "@/lib/domains/hosts";
 import { routeByHost } from "@/lib/domains/routing";
+import { isSecureRequest } from "@/lib/supabase/cookies";
 import { updateSession } from "@/lib/supabase/proxy";
+
+/**
+ * HSTS (E28, docs/security.md): HTTPS responses in production only, with the platform's
+ * subdomains (the admin host), never in development. No preload: the owner decides that later.
+ */
+const HSTS = "max-age=31536000; includeSubDomains";
+
+function secure(request: NextRequest, response: NextResponse): NextResponse {
+  if (process.env.NODE_ENV === "production" && isSecureRequest(request.headers, request.url)) {
+    response.headers.set("strict-transport-security", HSTS);
+  }
+  return response;
+}
 
 export async function proxy(request: NextRequest) {
   // Which host serves what (E28, lib/domains/routing.ts): the old Vercel address and "www." go
@@ -18,10 +32,13 @@ export async function proxy(request: NextRequest) {
     process.env.VERCEL_ENV === "production",
   );
   if (route.kind === "redirect") {
-    return NextResponse.redirect(route.location, {
-      status: route.status,
-      headers: { "cache-control": route.status === 308 ? "public, max-age=3600" : "no-store" },
-    });
+    return secure(
+      request,
+      NextResponse.redirect(route.location, {
+        status: route.status,
+        headers: { "cache-control": route.status === 308 ? "public, max-age=3600" : "no-store" },
+      }),
+    );
   }
   if (route.kind === "not-found") {
     return new NextResponse("Not found", { status: 404, headers: { "cache-control": "no-store" } });
@@ -37,7 +54,7 @@ export async function proxy(request: NextRequest) {
   }
   const response = await updateSession(request, hosts);
   if (route.admin) response.headers.set("x-robots-tag", "noindex, nofollow");
-  return response;
+  return secure(request, response);
 }
 
 export const config = {

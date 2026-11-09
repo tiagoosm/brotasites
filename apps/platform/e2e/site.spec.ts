@@ -130,6 +130,37 @@ test("search engines get the sitemap and the public pages only", async ({ reques
   for (const path of ["/ajuda", "/termos", "/privacidade"]) expect(sitemap).toContain(path);
   const robots = await (await request.get("/robots.txt")).text();
   expect(robots).toContain("Disallow: /criar");
+  // One address for everything (E28): the sitemap, robots and the share image all use the
+  // platform's address, and never the team's host or the previews'.
+  const origins = new Set(
+    [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
+      (match) => new URL(match[1] as string).origin,
+    ),
+  );
+  expect(origins.size).toBe(1);
+  const [origin] = [...origins];
+  expect(robots).toContain(`Sitemap: ${origin}/sitemap.xml`);
+  for (const text of [sitemap, robots]) {
+    expect(text).not.toMatch(/admin\.|previa\./);
+  }
+});
+
+test("the share image uses the platform's address", async ({ page, request }) => {
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  const origin = new URL(/<loc>([^<]+)<\/loc>/.exec(sitemap)?.[1] as string).origin;
+  await page.goto("/");
+  const image = await page.locator('meta[property="og:image"]').getAttribute("content");
+  expect(new URL(image as string).origin).toBe(origin);
+});
+
+test("HSTS goes only with HTTPS in production, never over plain HTTP (E28)", async ({
+  request,
+}) => {
+  // The test server is a production build behind no proxy: HTTPS is what Vercel reports.
+  const plain = await request.get("/");
+  expect(plain.headers()["strict-transport-security"]).toBeUndefined();
+  const https = await request.get("/", { headers: { "x-forwarded-proto": "https" } });
+  expect(https.headers()["strict-transport-security"]).toBe("max-age=31536000; includeSubDomains");
 });
 
 test("the site has a favicon, app icons and a manifest", async ({ page, request }) => {

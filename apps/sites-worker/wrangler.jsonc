@@ -17,7 +17,8 @@
   // Site pointers and states, custom domains and preview tokens.
   "kv_namespaces": [{ "binding": "HOSTING", "id": "00000000000000000000000000000000" }],
   // The client sites' own domain, separate from the platform's (still to be chosen).
-  "vars": { "BASE_DOMAIN": "sites.localhost" },
+  // The platform's address: the bare sites domain and its www redirect there (E28).
+  "vars": { "BASE_DOMAIN": "sites.localhost", "PLATFORM_URL": "http://localhost:3000" },
   // One route for every subdomain, so the zone's route limits never grow with clients:
   // "routes": [{ "pattern": "*.<BASE_DOMAIN>/*", "zone_name": "<BASE_DOMAIN>" }],
   "observability": { "enabled": true }

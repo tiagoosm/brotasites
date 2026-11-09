@@ -75,7 +75,8 @@ describe("sites Worker in Miniflare", () => {
     expect(response.status).toBe(200);
     expect(await response.text()).toBe("<h1>Versão 2</h1>");
     expect(response.headers.get("content-security-policy")).toContain("default-src 'none'");
-    expect(response.headers.get("strict-transport-security")).toContain("max-age=");
+    // Plain HTTP here: HSTS is only for HTTPS responses (E28, test/index.test.ts).
+    expect(response.headers.get("strict-transport-security")).toBeNull();
   });
 
   it("serves a custom domain and keeps a suspended site off", async () => {

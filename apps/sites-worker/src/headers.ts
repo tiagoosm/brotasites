@@ -67,7 +67,6 @@ export function securityHeaders(policy: CspPolicy): Record<string, string> {
     "x-frame-options": "DENY",
     "cross-origin-opener-policy": "same-origin",
     "cross-origin-resource-policy": "same-origin",
-    "strict-transport-security": "max-age=31536000; includeSubDomains",
   };
 }
 
