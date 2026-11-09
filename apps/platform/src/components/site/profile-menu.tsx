@@ -2,6 +2,7 @@
 
 import { User } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { initialsOf } from "@/lib/initials";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export function ProfileMenu({ session }: { session: Signed }) {
   const [who, setWho] = useState<Who | null>(
     session.known ? { name: session.name, email: session.email, team: session.team } : null,
   );
+  const router = useRouter();
   const button = useRef<HTMLButtonElement>(null);
   const popup = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -123,6 +125,12 @@ export function ProfileMenu({ session }: { session: Signed }) {
 
   const initials = initialsOf(who?.name);
   const links = accountItems(who?.team ?? false);
+
+  // Opening the menu is the intent (E26): its pages start loading before the choice.
+  useEffect(() => {
+    if (!open) return;
+    for (const link of accountItems(who?.team ?? false)) router.prefetch(link.href);
+  }, [open, who?.team, router]);
 
   return (
     <div className="relative">

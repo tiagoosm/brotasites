@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
+import { LinkPending } from "./link-pending";
 import { footerLinks, memberLinks, signInLink } from "./nav";
 
 /**
@@ -10,12 +11,12 @@ export function SiteFooter({
   signedIn,
   compact = false,
 }: {
-  signedIn: boolean;
+  /** null while the account is still being read (E26): its link waits, its room is kept. */
+  signedIn: boolean | null;
   compact?: boolean;
 }) {
-  const links = [...footerLinks, signedIn ? memberLinks[0] : signInLink].filter(
-    (link) => link !== undefined,
-  );
+  const account = signedIn === null ? null : signedIn ? memberLinks[0] : signInLink;
+  const links = [...footerLinks, account].filter((link) => link != null);
   const list = (
     <ul className="flex flex-wrap gap-x-7 gap-y-6 text-[0.9375rem]">
       {links.map((link) => (
@@ -26,9 +27,15 @@ export function SiteFooter({
             className="touch-target text-ink-soft transition-colors duration-150 hover:text-ink"
           >
             {link.label}
+            <LinkPending />
           </Link>
         </li>
       ))}
+      {signedIn === null && (
+        <li aria-hidden="true" className="invisible">
+          {signInLink.label}
+        </li>
+      )}
     </ul>
   );
   if (compact) {

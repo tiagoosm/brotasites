@@ -30,6 +30,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E23 Design references from Refero Styles (docs only)
 - [x] E24 Cost control (limits and cleanup) and the team panel
 - [x] E25 "5 passos" everywhere, the client's own domain included in the price, and the flow to connect it
+- [x] E26 Loading without freezing, account pages that fit the screen, strong passwords, a cleaner header, "Meus sites" and the right cursors
 
 ## Steps in detail
 
@@ -107,6 +108,17 @@ The same header and footer on every page (public pages, sign-in and password scr
 ### E18 Home page motion and navigation
 
 Every create-site button shares the specular finish, now a composited light eased once per frame (smooth where it stuttered). The header's sign-in link reads "Entrar ou cadastre-se". Section entrances repeat each time an element returns, with a cap on simultaneous entrances and an instant final state on jumps. The links to Como funciona, Preço and Dúvidas scroll smoothly there (also from other pages). The price card's glow turns slowly by itself and hands over to the mouse without jumps. The stem in "Como funciona" is one curved, tapering stroke with leaves that bud, grow and sway, ending in a bloom. The mouse vine roams the free space of the whole public page, kept off the content. All with reduced motion, no JavaScript and touch screens covered.
+
+### E26 Usability fixes (owner's requests of 2026-11-09)
+
+Six parts, six commits, one PR (`step-26-ajustes-de-uso`):
+
+- **Header:** a visitor sees only "Entrar ou cadastre-se" in the header and the phone menu, on every page; "Criar meu site" stays for signed-in people and in the home page's own buttons.
+- **Cursors:** one set of rules in `globals.css` (hand, text bar, not-allowed, progress); disabled controls keep their pointer events; blocked controls say why in text; `e2e/cursors.spec.ts`.
+- **Account pages fit:** header, card and compact footer fit 1366×650 and 1280×600 with no scroll; never cut on smaller screens; sign-up in two columns from 768px; a stronger morning light from tokens, with a static CSS glow without WebGL or with reduced motion.
+- **Strong passwords:** 10+ characters with lowercase, uppercase, a number and a symbol, not common, not the email or the name; a live checklist, a three-level meter, the repeated password checked by the server too, Caps Lock warning, email typo suggestion; the same rules on reset and change; older passwords still sign in.
+- **Meus sites:** "Painel" renamed everywhere, the list back at `/meus-sites` (`/painel` redirects), one card per site with its status badge, sentence and one action, sorted by urgency; account notices in a band only when needed.
+- **Loading:** a top progress bar on every click, busy links, prefetch by intent, `loading.tsx` skeletons for every account segment (shown after ~120ms), a layout whose shell never waits for the session, and "Entrando…" until the next page is on screen.
 
 ### E25 5 steps and the client's own domain
 

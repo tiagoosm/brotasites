@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { limits } from "@/config/limits";
 import { useForm12 } from "@/lib/form-store";
+import { announceNavigation } from "@/lib/navigation";
 import { infoFor } from "@/lib/site-status";
 import { requestDirections, SiteActionError, saveDraft } from "@/lib/sites";
 import { getBrowserSupabase } from "@/lib/supabase/client";
@@ -42,6 +43,7 @@ export function useSendAnswers() {
       // Already sent (or the identity is approved): save the answers and go back to the site.
       setSending(true);
       await saveDraft(supabase, siteId, draft, steps).catch(() => {});
+      announceNavigation();
       router.push(`/meus-sites/${siteId}`);
       return;
     }
@@ -55,6 +57,7 @@ export function useSendAnswers() {
       // The saved draft is what the job reads: save it now instead of waiting for the autosave.
       await saveDraft(supabase, siteId, draft, steps);
       await requestDirections(siteId);
+      announceNavigation();
       router.push(`/meus-sites/${siteId}`);
     } catch (caught) {
       setError(

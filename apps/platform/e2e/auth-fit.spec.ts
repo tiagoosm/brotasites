@@ -26,6 +26,8 @@ for (const path of pages) {
     for (const [width, height] of laptops) {
       await page.setViewportSize({ width, height });
       await page.goto(path);
+      // A first load streams the page's skeleton first (loading.tsx); measure the page.
+      await expect(page.locator(".skeleton-screen")).toHaveCount(0);
       await expect(page.locator("[data-auth-card]")).toBeVisible();
       const { scroll, screen } = await page.evaluate(() => ({
         scroll: document.scrollingElement?.scrollHeight ?? 0,
@@ -39,6 +41,7 @@ for (const path of pages) {
     for (const [width, height] of others) {
       await page.setViewportSize({ width, height });
       await page.goto(path);
+      await expect(page.locator(".skeleton-screen")).toHaveCount(0);
       const card = page.locator("[data-auth-card]");
       await expect(card).toBeVisible();
       // Nothing of the page hides overflow: only the light's own layer does.

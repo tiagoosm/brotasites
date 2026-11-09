@@ -8,6 +8,7 @@ import { DiscardSite } from "@/components/dashboard/discard-site";
 import { NoticesBell } from "@/components/dashboard/notices";
 import { Notice } from "@/components/shared/page-state";
 import { CreateSiteButton } from "@/components/site/create-site-button";
+import { LinkPending } from "@/components/site/link-pending";
 import { Button } from "@/components/ui/button";
 import {
   accountNotices,
@@ -267,6 +268,7 @@ function SiteItem({ site }: { site: DashboardSite }) {
             {card.action.label}
             <span className="sr-only">: {site.name}</span>
             <ArrowRight aria-hidden="true" />
+            <LinkPending dot={false} />
           </Link>
         </Button>
         {card.action.href !== detailsHref && (
@@ -275,6 +277,7 @@ function SiteItem({ site }: { site: DashboardSite }) {
             className="touch-target text-[0.9375rem] font-semibold text-leaf-deep underline underline-offset-4"
           >
             Detalhes<span className="sr-only"> de {site.name}</span>
+            <LinkPending />
           </Link>
         )}
         {site.status === "live" && address && (

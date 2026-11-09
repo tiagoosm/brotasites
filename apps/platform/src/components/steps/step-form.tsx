@@ -6,6 +6,7 @@ import { useTransition } from "react";
 import { StepFooter } from "@/components/wizard/step-footer";
 import { StepHeader } from "@/components/wizard/step-header";
 import { useForm12 } from "@/lib/form-store";
+import { announceNavigation } from "@/lib/navigation";
 
 /**
  * A question whose answers save as the client goes. "Próximo" runs `validate` (when given):
@@ -49,7 +50,10 @@ export function StepForm({
         if (status) status.textContent = "";
         completeStep(step);
         if (onDone) onDone();
-        else if (next) startOpening(() => router.push(`/criar/${siteId}/${next.slug}`));
+        else if (next) {
+          announceNavigation();
+          startOpening(() => router.push(`/criar/${siteId}/${next.slug}`));
+        }
       }}
     >
       <StepHeader step={step} />

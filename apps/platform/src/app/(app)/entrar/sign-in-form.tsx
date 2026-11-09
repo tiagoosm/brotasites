@@ -3,13 +3,14 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState, useTransition } from "react";
 import { postJson } from "@/components/account/api";
 import { Captcha } from "@/components/account/captcha";
 import { Field, FormError } from "@/components/account/field";
 import { PasswordField } from "@/components/account/password-field";
 import { ResendConfirmation } from "@/components/account/resend-confirmation";
 import { Button } from "@/components/ui/button";
+import { announceNavigation } from "@/lib/navigation";
 import { safeNextPath } from "@/lib/supabase/env";
 
 export function SignInForm() {
@@ -30,9 +31,20 @@ export function SignInForm() {
       : null,
   );
   const [unconfirmed, setUnconfirmed] = useState(false);
+  // E26: after a successful sign-in the button keeps saying "Entrando…" until the next page is
+  // on screen (no blank moment), and that page starts loading as soon as the password is typed.
+  const [entering, startEntering] = useTransition();
+  const warmed = useRef(false);
+  const warmUp = () => {
+    if (warmed.current) return;
+    warmed.current = true;
+    router.prefetch(next);
+  };
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (sending || entering) return;
+    warmUp();
     setSending(true);
     setError(null);
     setFields({});
@@ -46,8 +58,11 @@ export function SignInForm() {
     setSending(false);
     setAttempt((count) => count + 1);
     if (result.ok) {
-      router.replace(safeNextPath((result.data as { next?: string }).next, next));
-      router.refresh();
+      announceNavigation();
+      startEntering(() => {
+        router.replace(safeNextPath((result.data as { next?: string }).next, next));
+        router.refresh();
+      });
       return;
     }
     setFields(result.data.fields ?? {});
@@ -81,20 +96,22 @@ export function SignInForm() {
         label="Senha"
         autoComplete="current-password"
         value={password}
-        onChange={setPassword}
+        onChange={(value) => {
+          setPassword(value);
+          if (value) warmUp();
+        }}
         error={fields.password}
       />
       <Captcha onToken={setCaptcha} resetKey={attempt} />
       {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
 
       <Button
-        aria-busy={sending || undefined}
+        aria-busy={sending || entering || undefined}
         type="submit"
         size="lg"
-        disabled={sending}
         className="group"
       >
-        {sending ? "Entrando…" : "Entrar"}
+        {sending || entering ? "Entrando…" : "Entrar"}
         <ArrowRight
           aria-hidden="true"
           className="transition-transform duration-200 group-hover:translate-x-0.5"

@@ -947,3 +947,115 @@ html:has([data-wizard]) {
     --auth-footer: 3rem;
   }
 }
+
+/* Loading without freezing (E26, Doherty). */
+
+/* The top bar of a navigation (navigation-progress.tsx): it shows after 80ms, so a quick
+   navigation does not flash it, creeps toward 85% while the next page loads, then fills and
+   fades. With reduced motion it is a still, softer bar. */
+.navigation-progress {
+  transform-origin: left;
+  transform: scaleX(0);
+  background: var(--leaf);
+  opacity: 0;
+}
+
+.navigation-progress[data-navigation-progress="loading"] {
+  opacity: 1;
+  transform: scaleX(0.85);
+  transition:
+    opacity 120ms linear 80ms,
+    transform 8s cubic-bezier(0.1, 0.7, 0.2, 1) 80ms;
+}
+
+.navigation-progress[data-navigation-progress="done"] {
+  opacity: 0;
+  transform: scaleX(1);
+  transition:
+    transform 160ms var(--ease-out),
+    opacity 240ms linear 160ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navigation-progress[data-navigation-progress="loading"] {
+    transform: scaleX(1);
+    opacity: 0.6;
+    transition: opacity 0ms linear 80ms;
+  }
+
+  .navigation-progress[data-navigation-progress="done"] {
+    transition: none;
+  }
+}
+
+/* A link whose page is loading (link-pending.tsx): a small pulsing dot beside it, and the
+   arrow of a button nudges. */
+.link-pending[data-pending] {
+  opacity: 0.7;
+  animation: link-pending 900ms ease-in-out infinite alternate;
+}
+
+a[aria-busy="true"] > svg:last-of-type {
+  animation: link-busy-arrow 700ms ease-in-out infinite alternate;
+}
+
+@keyframes link-pending {
+  to {
+    opacity: 0.2;
+  }
+}
+
+@keyframes link-busy-arrow {
+  to {
+    translate: 3px 0;
+  }
+}
+
+/* Skeletons (components/ui/skeleton.tsx): only when a wait passes about 120ms, so fast pages
+   never flicker; a very soft sheen, still with reduced motion. */
+.skeleton-screen {
+  animation: skeleton-in 160ms var(--ease-out) 120ms both;
+}
+
+@keyframes skeleton-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.skeleton-block {
+  background: linear-gradient(
+      100deg,
+      transparent 30%,
+      color-mix(in oklab, var(--surface) 70%, transparent) 50%,
+      transparent 70%
+    )
+    var(--table);
+  background-size: 200% 100%;
+  animation: skeleton-sheen 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-sheen {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Still waits 120ms, then shows at once: no fade. */
+  .skeleton-screen {
+    animation: skeleton-in 1ms steps(1, end) 120ms both;
+  }
+
+  .skeleton-block,
+  .link-pending[data-pending],
+  a[aria-busy="true"] > svg:last-of-type {
+    animation: none;
+  }
+}

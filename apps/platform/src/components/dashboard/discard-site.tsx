@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { announceNavigation } from "@/lib/navigation";
 import { discardSite, SiteActionError } from "@/lib/sites";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,7 @@ export function DiscardSite({
       await discardSite(siteId);
       if (onDone) onDone();
       else {
+        announceNavigation();
         router.push("/meus-sites");
         router.refresh();
       }
