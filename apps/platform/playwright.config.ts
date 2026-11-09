@@ -1,8 +1,25 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3100;
+/** The same build again, with the team's area on its own host (E28, e2e/admin-host.spec.ts). */
+const ADMIN_PORT = 3101;
 const FAKE_SUPABASE_PORT = 54390;
 const FAKE_SUPABASE = `http://localhost:${FAKE_SUPABASE_PORT}`;
+
+/** The platform server's environment in tests: fakes only, nothing real is called. */
+const serverEnv = {
+  NEXT_TELEMETRY_DISABLED: "1",
+  // The fake project: the browser's calls are answered inside each test, the server's by
+  // the fake above, so nothing reaches real Supabase or Trigger.dev.
+  NEXT_PUBLIC_SUPABASE_URL: FAKE_SUPABASE,
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_e2e_test",
+  SUPABASE_SECRET_KEY: "sb_secret_e2e_test",
+  // The daily keep-alive's bearer token (Vercel Cron), a test value.
+  CRON_SECRET: "e2e-cron-secret",
+  NEXT_PUBLIC_CAPTCHA_MODE: "simulated",
+  NEXT_PUBLIC_PREVIEW_ORIGIN: "https://previa.sites.localhost",
+  NEXT_PUBLIC_BASE_DOMAIN: "sites.localhost",
+};
 
 // Runs against a production build of the platform.
 export default defineConfig({
@@ -48,21 +65,22 @@ export default defineConfig({
     {
       command: `pnpm run build && pnpm exec next start --port ${PORT}`,
       url: `http://localhost:${PORT}/`,
-      env: {
-        NEXT_TELEMETRY_DISABLED: "1",
-        // The fake project: the browser's calls are answered inside each test, the server's by
-        // the fake above, so nothing reaches real Supabase or Trigger.dev.
-        NEXT_PUBLIC_SUPABASE_URL: FAKE_SUPABASE,
-        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_e2e_test",
-        SUPABASE_SECRET_KEY: "sb_secret_e2e_test",
-        // The daily keep-alive's bearer token (Vercel Cron), a test value.
-        CRON_SECRET: "e2e-cron-secret",
-        NEXT_PUBLIC_CAPTCHA_MODE: "simulated",
-        NEXT_PUBLIC_PREVIEW_ORIGIN: "https://previa.sites.localhost",
-        NEXT_PUBLIC_BASE_DOMAIN: "sites.localhost",
-      },
+      env: serverEnv,
       reuseExistingServer: !process.env.CI,
       timeout: 240_000,
+    },
+    {
+      // Started after the build above: the host routing is read per request, so the same build
+      // runs with an admin host. Chromium sends *.localhost to this machine.
+      command: `pnpm exec next start --port ${ADMIN_PORT}`,
+      url: `http://localhost:${ADMIN_PORT}/robots.txt`,
+      env: {
+        ...serverEnv,
+        NEXT_PUBLIC_PLATFORM_URL: `http://platform.localhost:${ADMIN_PORT}`,
+        NEXT_PUBLIC_ADMIN_HOST: `admin.localhost:${ADMIN_PORT}`,
+      },
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
     },
   ],
 });

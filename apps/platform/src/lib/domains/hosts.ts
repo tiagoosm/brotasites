@@ -24,7 +24,10 @@ export interface Hosts {
   platformUrl: string;
   /** Its host ("brotasites.com.br"). */
   platformHost: string;
-  /** The team's own host ("admin.brotasites.com.br"), or null: then /admin stays on the platform. */
+  /**
+   * The team's own host ("admin.brotasites.com.br"), or null: then /admin stays on the platform.
+   * A port is kept for local tests only ("admin.localhost:3101").
+   */
   adminHost: string | null;
   /** The client sites' base domain (BASE_DOMAIN, "brotasites.com"). */
   sitesDomain: string;

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { captchaMode, captchaTokenFor } from "./captcha";
 import { contentSecurityPolicy, isPrivatePath, isProtectedPath } from "./csp";
 import { limitKey, maskEmail, sameOrigin } from "./guard";
@@ -15,6 +15,21 @@ describe("origin check (CSRF)", () => {
     expect(sameOrigin(post("https://brotasites.vercel.app.evil.com"))).toBe(false);
     expect(sameOrigin(post("null"))).toBe(false);
     expect(sameOrigin(post(null))).toBe(false);
+  });
+
+  it("accepts the platform's address and the team's host, and nothing else (E28)", () => {
+    vi.stubEnv("NEXT_PUBLIC_PLATFORM_URL", "https://brotasites.com.br");
+    vi.stubEnv("NEXT_PUBLIC_ADMIN_HOST", "admin.brotasites.com.br");
+    try {
+      const at = "https://brotasites.com.br/api/admin/queue";
+      expect(sameOrigin(post("https://brotasites.com.br", at))).toBe(true);
+      expect(sameOrigin(post("https://admin.brotasites.com.br", at))).toBe(true);
+      expect(sameOrigin(post("https://www.brotasites.com.br", at))).toBe(false);
+      expect(sameOrigin(post("https://seunegocio.brotasites.com", at))).toBe(false);
+      expect(sameOrigin(post("https://admin.brotasites.com.br.evil.com", at))).toBe(false);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });
 
