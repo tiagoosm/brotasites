@@ -62,7 +62,9 @@ export function PriceSection() {
               <Price />
               <p className="text-ink-soft">
                 No endereço{" "}
-                <span className="font-mono text-[0.9375rem]">seunegocio.{EXAMPLE_SITES_DOMAIN}</span>
+                <span className="font-mono text-[0.9375rem]">
+                  seunegocio.{EXAMPLE_SITES_DOMAIN}
+                </span>
               </p>
             </div>
             <div className="grid gap-3 border-t border-line pt-5">
