@@ -20,9 +20,13 @@
   --leaf-wash: #e2efe4;
   --stem: #2f5d45;
   --pollen: #e2b23c;
-  /* The morning light behind the account cards (E26): pollen and a firm leaf green. */
-  --morning-pollen: var(--pollen);
-  --morning-leaf: #7fb98c;
+  /* The morning light behind the account cards (E26, softened in E27): more light than
+     pigment, a pale cream gold and a pale leaf, so it never reads olive on the paper. */
+  --morning-pollen: #f3dfa0;
+  --morning-leaf: #cfe3c4;
+  /* The moving beams' hue (the shader keeps only the hue and sets the strength itself). */
+  --morning-ray: #ebc566;
+  --morning-ray-leaf: #a9d1a8;
   /* The compact footer of the account pages: the card's page leaves room for it (E26). */
   --auth-footer: 4.5rem;
   --danger: #b42318;
@@ -914,32 +918,50 @@ html:has([data-wizard]) {
   }
 }
 
-/* The morning light's static layer (morning-light.tsx, E26): a glow from the top right corner
-   with soft beams, from the colour tokens. Alone (no WebGL, reduced motion, before the script)
-   it carries the light; once the moving beams draw, it steps back under them. */
+/* The morning light's static layers (morning-light.tsx, E26, E27): light through a window,
+   not stripes. A wide halo behind the card (so it rests in the light), a glow from the top
+   right corner, and a few broad, blurred beams, all from the colour tokens. The whole layer
+   starts behind the header and dissolves at every edge, so there is no hard line anywhere.
+   Alone (no WebGL, reduced motion, before the script) it carries the light; the moving beams
+   only add a slow shimmer on top (the static beams ease back a little), with no jump. */
+[data-morning-light] {
+  mask-image:
+    linear-gradient(to bottom, transparent 0, #000 7rem, #000 calc(100% - 4rem), transparent),
+    linear-gradient(to right, transparent 0, #000 3rem, #000 calc(100% - 1rem), transparent);
+  mask-composite: intersect;
+}
+
 .morning-glow {
   background:
     radial-gradient(
-      ellipse 75% 70% at 100% 0%,
-      color-mix(in oklab, var(--morning-pollen) 42%, transparent),
-      transparent 70%
+      ellipse 38rem 30rem at 50% 52%,
+      color-mix(in oklab, var(--morning-pollen) 95%, transparent),
+      color-mix(in oklab, var(--morning-pollen) 40%, transparent) 55%,
+      transparent 80%
     ),
+    radial-gradient(ellipse 75% 80% at 100% 0%, var(--morning-pollen), transparent 72%),
     radial-gradient(
-      ellipse 55% 60% at 88% 8%,
-      color-mix(in oklab, var(--morning-leaf) 30%, transparent),
+      ellipse 55% 60% at 82% 14%,
+      color-mix(in oklab, var(--morning-leaf) 85%, transparent),
       transparent 72%
-    ),
-    repeating-conic-gradient(
-      from 192deg at 100% 0%,
-      color-mix(in oklab, var(--morning-pollen) 16%, transparent) 0deg 3.5deg,
-      transparent 3.5deg 10deg
     );
-  mask-image: radial-gradient(ellipse 95% 90% at 100% 0%, #000 25%, transparent 85%);
-  transition: opacity 600ms var(--ease-out);
+  transition: opacity 700ms var(--ease-out);
 }
 
-[data-morning-light]:has([data-lit]) .morning-glow {
-  opacity: 0.45;
+/* The beams: a few broad, soft shafts from the corner, toward and behind the card. */
+.morning-beams {
+  background: repeating-conic-gradient(
+    from 200deg at 100% 0%,
+    color-mix(in oklab, var(--morning-pollen) 80%, transparent) 0deg 5deg,
+    transparent 9deg 17deg
+  );
+  filter: blur(22px);
+  mask-image: radial-gradient(ellipse 110% 100% at 100% 0%, #000 20%, transparent 80%);
+  transition: opacity 700ms var(--ease-out);
+}
+
+[data-morning-light]:has([data-lit]) .morning-beams {
+  opacity: 0.6;
 }
 
 @media (max-height: 700px) {

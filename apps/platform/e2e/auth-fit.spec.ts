@@ -71,6 +71,26 @@ test("without WebGL or with reduced motion, a static light shows around the card
       "gradient",
     );
     await expect(glow).toHaveCSS("opacity", "1");
+    // The same look as with WebGL (E27): a halo behind the card, the corner's glow and broad,
+    // blurred beams, all static.
+    expect(await glow.evaluate((element) => getComputedStyle(element).backgroundImage)).toMatch(
+      /radial-gradient.*radial-gradient.*radial-gradient/,
+    );
+    const beams = page.locator("[data-morning-light] .morning-beams");
+    expect(await beams.evaluate((element) => getComputedStyle(element).filter)).toContain("blur");
+    // No hard line under the header: the layer starts behind it and fades in.
+    const layer = page.locator("[data-morning-light]");
+    const [layerTop, headerBottom] = await Promise.all([
+      layer.evaluate((element) => element.getBoundingClientRect().top),
+      page
+        .locator("header")
+        .first()
+        .evaluate((element) => element.getBoundingClientRect().bottom),
+    ]);
+    expect(layerTop).toBeLessThan(headerBottom);
+    expect(await layer.evaluate((element) => getComputedStyle(element).maskImage)).toContain(
+      "linear-gradient",
+    );
     // Nothing moves: no beams canvas at all.
     await expect(page.locator("[data-morning-light] canvas")).toHaveCount(0);
   }

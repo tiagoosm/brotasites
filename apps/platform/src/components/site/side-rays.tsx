@@ -132,7 +132,9 @@ void main() {
   float peak = max(light.r, max(light.g, light.b));
   float grain = (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5) / 255.0;
   if (uLight > 0.5) {
-    vec3 ink = pow(light / max(peak, 1e-4), vec3(2.0)) * 0.75;
+    // Light on paper (E27): the hue itself, lifted toward white, never squared or darkened
+    // (squaring turned a pollen gold into a muddy olive).
+    vec3 ink = mix(light / max(peak, 1e-4), vec3(1.0), 0.08);
     float alpha = clamp(pow(1.0 - exp(-peak * 2.6), 2.5) * 0.9 * uOpacity + grain, 0.0, 1.0);
     fragColor = vec4(pow(ink, vec3(1.0 / 2.2)) * alpha, alpha);
     return;
