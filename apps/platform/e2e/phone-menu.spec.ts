@@ -4,15 +4,10 @@ import { expect, type Page, test } from "@playwright/test";
 // page behind it that does not scroll, and links that close it.
 
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;
-// Signed out (E18): one way in (sign in or sign up), then the main button creates the site.
-const items = [
-  "Como funciona",
-  "Preço",
-  "Dúvidas",
-  "Ajuda",
-  "Entrar ou cadastre-se",
-  "Criar meu site",
-];
+// Signed out (E26): the four links, then the main button, the one way in (sign in or sign up).
+// Never "Criar meu site" for visitors: it only led to signing in.
+const items = ["Como funciona", "Preço", "Dúvidas", "Ajuda", "Entrar ou cadastre-se"];
+const MAIN = "Entrar ou cadastre-se";
 
 async function openMenu(page: Page) {
   const button = page.getByRole("button", { name: "Abrir menu" });
@@ -47,7 +42,7 @@ test("the open menu covers the whole screen, down to its last button", async ({ 
   const viewport = page.viewportSize();
   expect(box?.y).toBe(0);
   expect(box?.height).toBe(viewport?.height);
-  await expect(menu.getByRole("link", { name: "Criar meu site" })).toBeInViewport({ ratio: 1 });
+  await expect(menu.getByRole("link", { name: MAIN })).toBeInViewport({ ratio: 1 });
 });
 
 test("it lists every part, then the main button, each easy to tap", async ({ page }) => {
@@ -55,6 +50,8 @@ test("it lists every part, then the main button, each easy to tap", async ({ pag
   await page.goto("/");
   const { menu } = await openMenu(page);
   await expect(menu.getByRole("link")).toHaveText(items);
+  await expect(menu.getByRole("link", { name: "Criar meu site" })).toHaveCount(0);
+  await expect(menu.getByRole("link", { name: MAIN })).toHaveAttribute("href", "/entrar");
   for (const link of await menu.getByRole("link").all()) {
     const box = await link.boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
@@ -74,7 +71,7 @@ test("focus stays inside, Escape closes it and focus goes back to the button", a
   // Shift+Tab from the first control goes round to the last.
   await menu.getByRole("button", { name: "Fechar menu" }).focus();
   await page.keyboard.press("Shift+Tab");
-  await expect(menu.getByRole("link", { name: "Criar meu site" })).toBeFocused();
+  await expect(menu.getByRole("link", { name: MAIN })).toBeFocused();
 
   await page.keyboard.press("Escape");
   await expect(menu).toBeHidden();

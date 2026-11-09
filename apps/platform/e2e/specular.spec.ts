@@ -148,17 +148,14 @@ test("every create-site button has the same finish, 44px tall", async ({ page })
       ).length,
   );
   expect(plain).toBe(0);
-  // The header's (other pages) and the phone menu's.
+  // A visitor's header has none (E26; the signed-in header's is in header.spec.ts); the phone
+  // menu's main button, "Entrar ou cadastre-se", has the same finish.
   await page.goto("/ajuda");
-  if ((page.viewportSize()?.width ?? 0) >= 768) {
-    const nav = page.getByRole("banner").locator("a[data-create-site]");
-    await expect(nav).toHaveText("Criar meu site");
-    await expect(nav).toHaveClass(/specular-nav/);
-    expect((await nav.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
-  } else {
+  await expect(page.getByRole("banner").locator("a[data-create-site]")).toHaveCount(0);
+  if ((page.viewportSize()?.width ?? 0) < 768) {
     await page.getByRole("button", { name: "Abrir menu" }).click();
     const sheet = page.getByRole("dialog", { name: "Menu" }).locator("a[data-create-site]");
-    await expect(sheet).toHaveText(/Criar meu site/);
+    await expect(sheet).toHaveText(/Entrar ou cadastre-se/);
     await expect(sheet).toHaveClass(/specular/);
   }
 });

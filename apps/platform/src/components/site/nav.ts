@@ -60,10 +60,13 @@ export function accountItems(team: boolean): readonly NavLink[] {
   return team ? [...memberLinks, teamLink] : memberLinks;
 }
 
-/** The main button on the right, if any: not on the home page for visitors (its hero has it). */
-export function mainButton(session: HeaderSession, isHome: boolean): NavLink | null {
-  if (session.signedIn) return { href: CREATE_HREF, label: "Criar meu site", account: true };
-  return isHome ? null : { href: CREATE_HREF, label: "Criar meu site", account: true };
+/**
+ * The main button on the right, signed in only. A visitor never sees "Criar meu site" in the
+ * header (it only led to the sign-in page, E26): "Entrar ou cadastre-se" is their one way in,
+ * and the home page keeps its own "Criar meu site" buttons in the hero and the sections.
+ */
+export function mainButton(session: HeaderSession): NavLink | null {
+  return session.signedIn ? { href: CREATE_HREF, label: "Criar meu site", account: true } : null;
 }
 
 /** The current page among the middle links: only "Ajuda" is a page of its own. */

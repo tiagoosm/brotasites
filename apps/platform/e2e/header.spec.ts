@@ -9,8 +9,9 @@ import {
 } from "@playwright/test";
 import { SITE, SUPABASE, signIn } from "./support/supabase";
 
-// The one header of every page (E17): the same four links, "Entrar ou cadastre-se" and "Criar meu site"
-// signed out, the profile menu signed in, decided on the server (no flicker).
+// The one header of every page (E17): the same four links, only "Entrar ou cadastre-se" signed out
+// (E26: never "Criar meu site" for visitors), "Criar meu site" and the profile menu signed in,
+// decided on the server (no flicker).
 
 const middle = ["Como funciona", "Preço", "Dúvidas", "Ajuda"];
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) <= 768;
@@ -45,15 +46,21 @@ test.describe("the same header everywhere", () => {
       const nav = banner(page).getByRole("navigation", { name: "Principal" });
       await expect(nav.getByRole("link")).toHaveText(middle);
       await expect(nav.getByRole("link", { name: "Preço" })).toHaveAttribute("href", "/#preco");
-      // One way in (E18), to /entrar, where signing up is one tap away.
-      await expect(
-        banner(page).getByRole("link", { name: "Entrar ou cadastre-se" }),
-      ).toHaveAttribute("href", "/entrar");
+      // One way in (E18), to /entrar, where signing up is one tap away, with its 44px area.
+      const way = banner(page).getByRole("link", { name: "Entrar ou cadastre-se" });
+      await expect(way).toHaveAttribute("href", "/entrar");
+      // Its tap area (the touch-target utility) reaches 22px above and below its middle.
+      expect(
+        await way.evaluate((link) => {
+          const box = link.getBoundingClientRect();
+          const x = box.left + box.width / 2;
+          const y = box.top + box.height / 2;
+          return [y - 21, y + 21].every((at) => link.contains(document.elementFromPoint(x, at)));
+        }),
+      ).toBe(true);
       await expect(banner(page).getByRole("link", { name: "Criar conta" })).toHaveCount(0);
-      // The home page's hero has the main button; every other page has it in the header.
-      await expect(banner(page).getByRole("link", { name: "Criar meu site" })).toHaveCount(
-        path === "/" ? 0 : 1,
-      );
+      // A visitor never sees "Criar meu site" in the header (E26): it only led to signing in.
+      await expect(banner(page).getByRole("link", { name: "Criar meu site" })).toHaveCount(0);
       await expect(profileButton(page)).toHaveCount(0);
       if (path === "/ajuda") {
         await expect(nav.getByRole("link", { name: "Ajuda" })).toHaveAttribute(
@@ -82,9 +89,9 @@ test.describe("the same header everywhere", () => {
       const nav = banner(page).getByRole("navigation", { name: "Principal" });
       await expect(nav.getByRole("link")).toHaveText(middle);
       await expect(profileButton(page)).toBeVisible();
-      await expect(
-        banner(page).getByRole("link", { name: "Criar meu site", exact: true }),
-      ).toBeVisible();
+      const create = banner(page).getByRole("link", { name: "Criar meu site", exact: true });
+      await expect(create).toBeVisible();
+      await expect(create).toHaveClass(/specular-nav/);
       // No account links loose in the bar: they are in the profile menu.
       for (const name of [
         "Painel",

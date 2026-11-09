@@ -23,17 +23,17 @@ import { SignOutButton } from "./sign-out";
 
 /**
  * The one header of every page (E17): the brand, the same four links (Como funciona, Preço,
- * Dúvidas, Ajuda), and the account on the right: "Entrar" and "Criar meu site" signed out, or
- * "Criar meu site" and the profile menu signed in. Who is signed in comes from the server (the
+ * Dúvidas, Ajuda), and the account on the right: only "Entrar ou cadastre-se" signed out (E26:
+ * no "Criar meu site" for visitors, on any page), or "Criar meu site" and the profile menu
+ * signed in. Who is signed in comes from the server (the
  * public page variant the proxy picked, or the session the signed-in pages read), never from
  * the browser, so nothing flickers. Up to 768px: the brand, the profile button and the menu.
  */
 export function SiteHeader({ session }: { session: HeaderSession }) {
   const [open, setOpen] = useState(false);
   const pathname = visiblePath(usePathname());
-  const isHome = pathname === "/";
   const current = currentLink(pathname);
-  const main = mainButton(session, isHome);
+  const main = mainButton(session);
 
   // Navigating closes the phone menu.
   useEffect(() => {
@@ -105,11 +105,11 @@ export function SiteHeader({ session }: { session: HeaderSession }) {
  * back to the button. The items come in one after the other (".phone-menu" in globals.css).
  */
 function PhoneMenu({ session, onClose }: { session: HeaderSession; onClose: () => void }) {
-  // The middle links, then the account: its menu signed in ("Criar meu site" is the main button at
-  // the bottom), or "Entrar ou cadastre-se" signed out; the main button creates the site.
+  // The middle links, then the account signed in ("Criar meu site" is the main button at the
+  // bottom). Signed out, the main button at the bottom is "Entrar ou cadastre-se" (E26), once.
   const account = session.signedIn
     ? accountItems(session.known ? session.team : false).filter((link) => link.href !== CREATE_HREF)
-    : [signInLink];
+    : [];
   const links = [...headerLinks, ...account];
   const ref = useRef<HTMLDivElement>(null);
 
@@ -221,7 +221,13 @@ function PhoneMenu({ session, onClose }: { session: HeaderSession; onClose: () =
         className="phone-menu-item mt-auto grid shrink-0 pt-8"
         style={{ "--item": links.length + 1 } as React.CSSProperties}
       >
-        <CreateSiteButton onClick={onClose}>Criar meu site</CreateSiteButton>
+        {session.signedIn ? (
+          <CreateSiteButton onClick={onClose}>Criar meu site</CreateSiteButton>
+        ) : (
+          <CreateSiteButton href={signInLink.href} onClick={onClose}>
+            {signInLink.label}
+          </CreateSiteButton>
+        )}
       </div>
     </div>,
     document.body,

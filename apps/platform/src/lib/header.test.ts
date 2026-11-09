@@ -61,10 +61,10 @@ describe("what the header shows", () => {
   });
 
   it("offers the main button by state", () => {
-    expect(mainButton(visitor, false)?.label).toBe("Criar meu site");
-    expect(mainButton(visitor, true)).toBeNull();
-    expect(mainButton(member, true)?.label).toBe("Criar meu site");
-    expect(mainButton(unknown, false)?.href).toBe("/criar");
+    // A visitor never sees "Criar meu site" in the header (E26), on any page.
+    expect(mainButton(visitor)).toBeNull();
+    expect(mainButton(member)?.label).toBe("Criar meu site");
+    expect(mainButton(unknown)?.href).toBe("/criar");
   });
 
   it("puts the account in the profile menu, and the team link only for the team", () => {
