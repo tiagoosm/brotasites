@@ -97,7 +97,13 @@ export function SignInForm() {
       <Captcha onToken={setCaptcha} resetKey={attempt} />
       {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
 
-      <Button type="submit" size="lg" disabled={sending} className="group">
+      <Button
+        aria-busy={sending || undefined}
+        type="submit"
+        size="lg"
+        disabled={sending}
+        className="group"
+      >
         {sending ? "Entrando…" : "Entrar"}
         <ArrowRight
           aria-hidden="true"

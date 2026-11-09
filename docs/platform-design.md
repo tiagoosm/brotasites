@@ -36,6 +36,7 @@ Loaded with `next/font`.
 
 - Buttons: full pill. Primary is leaf with a subtle inner highlight and a tinted shadow; press scales to 0.97.
 - Inputs: 12px radius, white, 52px tall, leaf border and a 4px leaf/15 ring on focus.
+- Cursors (E26, one set of rules in `globals.css`, `@layer base`): the hand on whatever acts on a click (links, buttons, menu items, tabs, switches, checkboxes, radios, `summary`, `label[for]`, selects, file pickers, whole clickable cards via `data-clickable`); the text bar on text fields; `not-allowed` on anything blocked (`:disabled`, `aria-disabled`, `data-disabled`, labels of disabled inputs), always with the reason in text next to it (never only a tooltip); `progress` on what is working (`aria-busy`, e.g. "Entrando…", "Criando…"). Disabled controls keep their pointer events (no `pointer-events-none`), so the blocked cursor shows; only icons and decorative layers (the light, the vine, canvases) ignore the pointer. `e2e/cursors.spec.ts` fails on any interactive element left with the default arrow.
 - Choice lists (e.g. business type): pill tags backed by native radio inputs.
 
 ## Signature

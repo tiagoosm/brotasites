@@ -486,6 +486,7 @@ function DeleteSection({ account }: { account: Signed }) {
           error={fields.email}
         />
         <Button
+          aria-busy={deleting || undefined}
           type="submit"
           variant="destructive"
           size="lg"

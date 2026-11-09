@@ -78,7 +78,13 @@ function Payment() {
           {error}
         </p>
       )}
-      <Button size="lg" disabled={paying} onClick={() => void pay()} className="justify-self-start">
+      <Button
+        aria-busy={paying || undefined}
+        size="lg"
+        disabled={paying}
+        onClick={() => void pay()}
+        className="justify-self-start"
+      >
         {paying ? "Confirmando…" : "Simular pagamento aprovado"}
       </Button>
     </section>

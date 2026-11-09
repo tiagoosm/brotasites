@@ -127,6 +127,67 @@
     outline: 2px solid var(--leaf);
     outline-offset: 2px;
   }
+
+  /* The right cursor on everything (E26), in one place. Tailwind 4 leaves buttons with the
+     default arrow. The hand goes on whatever acts on a click, the text bar on text fields, "not
+     allowed" on what is blocked (always with a reason in text) and "progress" on what is
+     working. :where() keeps the hand at no specificity, so blocked and working win. */
+  :where(
+    a[href],
+    button,
+    summary,
+    label[for],
+    select,
+    [role="button"],
+    [role="link"],
+    [role="menuitem"],
+    [role="menuitemradio"],
+    [role="tab"],
+    [role="switch"],
+    [role="checkbox"],
+    [role="radio"],
+    [role="option"],
+    input[type="checkbox"],
+    input[type="radio"],
+    input[type="file"],
+    input[type="color"],
+    input[type="range"],
+    input[type="submit"],
+    input[type="button"],
+    label:has(> input[type="checkbox"], > input[type="radio"], > input[type="file"]),
+    [data-clickable]
+  ) {
+    cursor: pointer;
+  }
+
+  :where(
+    textarea,
+    [contenteditable="true"],
+    input:not(
+      [type="checkbox"],
+      [type="radio"],
+      [type="file"],
+      [type="color"],
+      [type="range"],
+      [type="submit"],
+      [type="button"],
+      [type="hidden"]
+    )
+  ) {
+    cursor: text;
+  }
+
+  :disabled,
+  [aria-disabled="true"],
+  [data-disabled],
+  label:has(:disabled) {
+    cursor: not-allowed;
+  }
+
+  [aria-busy="true"],
+  [aria-busy="true"] * {
+    cursor: progress;
+  }
 }
 
 /* Form pages: the site's header and the form's progress under it (phones and tablets) must

@@ -77,7 +77,7 @@ export function PickFiles({
     <label
       className={cn(
         "inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-line-strong px-4 text-[0.9375rem] font-semibold text-leaf-deep transition-colors duration-150 hover:border-leaf hover:bg-leaf-wash/50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-leaf",
-        disabled && "pointer-events-none opacity-50",
+        disabled && "cursor-not-allowed opacity-50",
       )}
     >
       <input

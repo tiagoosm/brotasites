@@ -92,6 +92,7 @@ export function PublishPhase() {
   const action =
     status === "awaiting_approval" ? (
       <Button
+        aria-busy={approving || undefined}
         type="submit"
         size="lg"
         disabled={!saved || approving}
@@ -154,6 +155,7 @@ export function PublishPhase() {
               </p>
             ) : (
               <Button
+                aria-busy={saving || undefined}
                 type="button"
                 variant="outline"
                 size="lg"

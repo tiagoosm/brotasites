@@ -208,6 +208,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           <div className="grid gap-3">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               <Button
+                aria-busy={acting === "redo" || undefined}
                 variant="outline"
                 size="lg"
                 disabled={acting !== null || waitUntil !== null}
@@ -259,6 +260,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
             <div className="flex flex-wrap items-center gap-3 pt-2">
               {site.subdomain ? (
                 <Button
+                  aria-busy={acting === "approve" || undefined}
                   size="lg"
                   disabled={acting !== null}
                   onClick={() =>
@@ -350,6 +352,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
             ))}
           </div>
           <Button
+            aria-busy={acting === "rebuild" || undefined}
             variant="outline"
             size="lg"
             // Wraps on phones: on one line it was wider than a 360px screen.
@@ -470,7 +473,7 @@ function DirectionCard({
         <div className="mt-auto grid gap-2">
           <p className="text-sm">Escolher “{label}”? A identidade fica fixa depois disso.</p>
           <div className="flex gap-2">
-            <Button size="lg" disabled={busy} onClick={onChoose}>
+            <Button aria-busy={choosing || undefined} size="lg" disabled={busy} onClick={onChoose}>
               {choosing ? "Escolhendo…" : "Sim, escolher"}
             </Button>
             <Button size="lg" variant="ghost" disabled={busy} onClick={() => setConfirming(false)}>

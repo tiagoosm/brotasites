@@ -65,7 +65,13 @@ export function DiscardSite({
     <div className="grid gap-3">
       {question}
       <div className="flex flex-wrap gap-3">
-        <Button variant="destructive" size="lg" disabled={busy || pending} onClick={discard}>
+        <Button
+          aria-busy={pending || undefined}
+          variant="destructive"
+          size="lg"
+          disabled={busy || pending}
+          onClick={discard}
+        >
           {pending ? "Descartando…" : "Sim, descartar"}
         </Button>
         <Button

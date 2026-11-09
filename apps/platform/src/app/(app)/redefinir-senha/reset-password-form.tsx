@@ -95,7 +95,7 @@ export function ResetPasswordForm() {
             onChange={setRepeat}
             error={fields.repeat}
           />
-          <Button type="submit" size="lg" disabled={sending}>
+          <Button aria-busy={sending || undefined} type="submit" size="lg" disabled={sending}>
             {sending ? "Salvando…" : "Salvar nova senha"}
           </Button>
         </form>
