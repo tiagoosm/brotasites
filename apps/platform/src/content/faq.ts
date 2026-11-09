@@ -1,5 +1,6 @@
 import { limits } from "@/config/limits";
 import { formatBRL, LEGAL_REVIEW_PENDING, pricing } from "@/config/pricing";
+import { EXAMPLE_SITES_DOMAIN } from "@/lib/site-url";
 
 // Questions and answers for /ajuda; the ones marked `main` also appear on the home page.
 // Answers state only what the product does today (see docs/platform-copy.md).
@@ -108,7 +109,7 @@ export const faqGroups: FaqGroup[] = [
       {
         slug: "endereco-do-site",
         question: "Qual vai ser o endereço do meu site?",
-        answer: `seu-negocio.brotasites.com, escolhido na hora de publicar. Domínio próprio (seunegocio.com.br): incluído, se você quiser. O registro e a renovação do domínio são por sua conta, no registrador.`,
+        answer: `seu-negocio.${EXAMPLE_SITES_DOMAIN}, escolhido na hora de publicar. Domínio próprio (seunegocio.com.br): incluído, se você quiser. O registro e a renovação do domínio são por sua conta, no registrador.`,
       },
       {
         slug: "mudar-depois",

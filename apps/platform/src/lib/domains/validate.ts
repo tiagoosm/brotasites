@@ -1,4 +1,5 @@
 import { imitationWords } from "@brotasites/schema/v1.2";
+import { ownHosts, readHosts } from "./hosts";
 import { PUBLIC_SUFFIX_RULES } from "./public-suffixes";
 
 // The check of a client's own domain (E25, docs/security.md), on the server: the format, the
@@ -190,15 +191,10 @@ export function checkDomain(raw: string, context: DomainContext): DomainCheck {
   return { ok: true, host, alias: null, registrable };
 }
 
-/** The platform's own hosts, from its environment (never connectable as a client domain). */
+/**
+ * The platform's own hosts, from its environment (lib/domains/hosts.ts: the platform, the
+ * admin host and the previews), never connectable as a client domain.
+ */
 export function platformHosts(env: Record<string, string | undefined> = process.env): string[] {
-  const hosts: string[] = [];
-  for (const value of [env.NEXT_PUBLIC_PLATFORM_URL, env.NEXT_PUBLIC_PREVIEW_ORIGIN]) {
-    try {
-      if (value) hosts.push(new URL(value).hostname);
-    } catch {
-      // Not a URL: nothing to add.
-    }
-  }
-  return hosts;
+  return ownHosts(readHosts(env));
 }

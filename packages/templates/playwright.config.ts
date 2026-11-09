@@ -77,7 +77,13 @@ export default defineConfig({
     {
       command: `pnpm exec astro build --outDir dist-e2e && BROTASITES_CONFIG=${fixtureV12} pnpm exec astro build --outDir dist-e2e-v12 && node e2e/ready.mjs mark dist-e2e-v12 && node e2e/build-matrix.mjs && node e2e/ready.mjs mark dist-e2e-matrix && node e2e/serve.mjs dist-e2e ${PORT}`,
       url: `http://localhost:${PORT}`,
-      env: { BROTASITES_CONFIG: fixtureConfig, ASTRO_TELEMETRY_DISABLED: "1", E2E_RUN },
+      // The sites' domain the canonical address is checked against (E28: never written by hand).
+      env: {
+        BROTASITES_CONFIG: fixtureConfig,
+        ASTRO_TELEMETRY_DISABLED: "1",
+        E2E_RUN,
+        BASE_DOMAIN: "brotasites.com",
+      },
       reuseExistingServer: !process.env.CI,
       timeout: 360_000,
     },

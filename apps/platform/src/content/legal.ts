@@ -1,5 +1,6 @@
 import { limits } from "@/config/limits";
 import { formatBRL, LEGAL_REVIEW_PENDING, pricing } from "@/config/pricing";
+import { EXAMPLE_SITES_DOMAIN } from "@/lib/site-url";
 import { PENDING } from "./contact";
 
 // Prices and conditions come from src/config/pricing.ts; the limits from src/config/limits.ts.
@@ -180,10 +181,10 @@ export const termsSections: LegalSection[] = [
       `Texto ${LEGAL_REVIEW_PENDING}.`,
       {
         list: [
-          `O pagamento para publicar inclui ${pricing.hostingMonths} meses de hospedagem no endereço seunegocio.brotasites.com e ajustes em Meus sites nos primeiros ${pricing.adjustmentsDays} dias. Depois desse prazo, ajustes podem ser pedidos à parte, com o valor informado antes.`,
+          `O pagamento para publicar inclui ${pricing.hostingMonths} meses de hospedagem no endereço seunegocio.${EXAMPLE_SITES_DOMAIN} e ajustes em Meus sites nos primeiros ${pricing.adjustmentsDays} dias. Depois desse prazo, ajustes podem ser pedidos à parte, com o valor informado antes.`,
           `O site é seu: você pode baixar o site pronto a qualquer momento e hospedá-lo onde quiser.`,
           `Depois dos ${pricing.hostingMonths} meses, manter o site no ar custa ${formatBRL(pricing.renewalPerYear)} por ano, de forma opcional. Se não houver renovação, o site sai do ar, e você pode baixá-lo antes.`,
-          "Conectar um domínio próprio está incluído e é opcional. O registro e a renovação do domínio são feitos e pagos por você, direto ao registrador. A BrotaSites não vende nem registra domínios e não responde por domínio vencido nem por falha do registrador; o site continua no endereço seunegocio.brotasites.com.",
+          `Conectar um domínio próprio está incluído e é opcional. O registro e a renovação do domínio são feitos e pagos por você, direto ao registrador. A BrotaSites não vende nem registra domínios e não responde por domínio vencido nem por falha do registrador; o site continua no endereço seunegocio.${EXAMPLE_SITES_DOMAIN}.`,
           `Garantia de ${pricing.guaranteeDays} dias: se não gostar, devolvemos o valor pago.`,
         ],
       },

@@ -74,7 +74,7 @@ export function siteUrl12(config: SiteConfig12): string {
   return `https://${config.site.customDomain ?? `${config.site.subdomain}.${baseDomain()}`}`;
 }
 
+/** Address of a 1.1 site: the same rule, never a domain written by hand (E28). */
 export function siteUrl(config: SiteConfig): string {
-  const host = config.site.customDomain ?? `${config.site.subdomain}.brotasites.com`;
-  return `https://${host}`;
+  return `https://${config.site.customDomain ?? `${config.site.subdomain}.${baseDomain()}`}`;
 }

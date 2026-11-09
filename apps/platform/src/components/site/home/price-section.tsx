@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { GlowCard } from "@/components/site/home/glow-card";
 import { SplitWords } from "@/components/site/split-words";
 import { customDomainNote, formatBRL, LEGAL_REVIEW_PENDING, pricing } from "@/config/pricing";
+import { EXAMPLE_SITES_DOMAIN } from "@/lib/site-url";
 
 // "Quanto custa": creating is free, publishing is a one-time payment. Every value comes from
 // src/config/pricing.ts.
@@ -61,7 +62,7 @@ export function PriceSection() {
               <Price />
               <p className="text-ink-soft">
                 No endereço{" "}
-                <span className="font-mono text-[0.9375rem]">seunegocio.brotasites.com</span>
+                <span className="font-mono text-[0.9375rem]">seunegocio.{EXAMPLE_SITES_DOMAIN}</span>
               </p>
             </div>
             <div className="grid gap-3 border-t border-line pt-5">
