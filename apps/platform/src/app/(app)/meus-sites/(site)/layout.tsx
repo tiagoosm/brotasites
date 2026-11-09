@@ -4,7 +4,8 @@ import { EmailConfirmBanner } from "@/components/account/email-banner";
 import { Loading, Notice, unavailable } from "@/components/shared/page-state";
 import { useRequiredAccount } from "@/lib/account";
 
-// Each site's page (/meus-sites/<site>): the list of sites is the dashboard (/painel, E16).
+// Each site's page (/meus-sites/<site>): the list of sites is /meus-sites itself (E26; a
+// route group, so this layout does not wrap the list).
 // Signing in is required.
 export default function MySitesLayout({ children }: { children: React.ReactNode }) {
   const account = useRequiredAccount();

@@ -26,7 +26,8 @@ test("signing up, confirming the email and landing on the form", async ({ page, 
   // The rules show next to each field.
   await page.getByLabel("Seu nome").fill("Zé da Padaria");
   await page.getByLabel("E-mail").fill(email);
-  await page.getByLabel("Senha", { exact: true }).fill("1234567890");
+  await page.getByLabel("Senha", { exact: true }).fill("Senha@12345");
+  await page.getByLabel("Repita a senha").fill("Senha@12345");
   await page.getByRole("button", { name: "Criar conta" }).click();
   await expect(page.getByText("Essa senha é muito comum. Escolha outra.").last()).toBeVisible();
   await expect(
@@ -35,7 +36,8 @@ test("signing up, confirming the email and landing on the form", async ({ page, 
   await expect(page.getByLabel("Senha", { exact: true })).toHaveAttribute("aria-invalid", "true");
 
   await page.getByLabel("Senha", { exact: true }).fill(PASSWORD);
-  await expect(page.getByText("Forte", { exact: true })).toBeVisible();
+  await page.getByLabel("Repita a senha").fill(PASSWORD);
+  await expect(page.getByText("Força: Forte", { exact: true })).toBeVisible();
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Criar conta" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Confira o seu e-mail");
@@ -66,7 +68,13 @@ test("the same answer for an email with and without an account", async ({ page, 
     const started = Date.now();
     const response = await request.post("/api/auth/sign-up", {
       headers: { origin: BASE, "x-forwarded-for": `203.0.113.${email.length}` },
-      data: { fullName: "Zé", email, password: PASSWORD, acceptTerms: true },
+      data: {
+        fullName: "Zé",
+        email,
+        password: PASSWORD,
+        confirmPassword: PASSWORD,
+        acceptTerms: true,
+      },
     });
     return { status: response.status(), body: await response.json(), ms: Date.now() - started };
   };
@@ -113,7 +121,7 @@ test("signing in is with the password only: no sign-in link by email", async ({
   expect((await mails(request, email)).map((mail) => mail.type)).not.toContain("magiclink");
 });
 
-test("without a page to go back to, signing in and confirming lead to the dashboard", async ({
+test("without a page to go back to, signing in and confirming lead to Meus sites", async ({
   page,
   request,
 }) => {
@@ -121,17 +129,17 @@ test("without a page to go back to, signing in and confirming lead to the dashbo
   const email = uniqueEmail("painel");
   await createUser(request, { email });
   await signInWithPassword(page, email);
-  await expect(page).toHaveURL(/\/painel$/);
-  await expect(page.getByRole("heading", { level: 2, name: "Seus sites" })).toBeVisible();
+  await expect(page).toHaveURL(/\/meus-sites$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Meus sites" })).toBeVisible();
   // Signed in, the sign-in and sign-up pages lead to the dashboard, on the server.
   await page.goto("/entrar");
-  await expect(page).toHaveURL(/\/painel$/);
+  await expect(page).toHaveURL(/\/meus-sites$/);
   await page.goto("/cadastro");
-  await expect(page).toHaveURL(/\/painel$/);
+  await expect(page).toHaveURL(/\/meus-sites$/);
   // The public pages show the account's menu, already in the server's HTML (no flicker).
   const home = await page.context().request.get("/");
   const html = await home.text();
-  expect(html).toContain(">Painel<");
+  expect(html).toContain(">Meus sites<");
   expect(html).toContain(">Perfil e segurança<");
   expect(html).not.toContain(">Entrar ou cadastre-se<");
   // Two pages under one address: never stored once for everyone by a shared cache.
@@ -144,17 +152,18 @@ test("without a page to go back to, signing in and confirming lead to the dashbo
   await page.getByLabel("Seu nome").fill("Zé");
   await page.getByLabel("E-mail").fill(fresh);
   await page.getByLabel("Senha", { exact: true }).fill(PASSWORD);
+  await page.getByLabel("Repita a senha").fill(PASSWORD);
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Criar conta" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Confira o seu e-mail");
   await page.goto(linkOf(await lastMail(request, fresh, "signup")));
-  await expect(page).toHaveURL(/\/painel$/);
+  await expect(page).toHaveURL(/\/meus-sites$/);
 
   // Signed out, the public pages offer to sign in, and the internal addresses do not exist.
   await page.context().clearCookies();
   const visitor = await (await page.context().request.get("/")).text();
   expect(visitor).toContain(">Entrar ou cadastre-se<");
-  expect(visitor).not.toContain(">Painel<");
+  expect(visitor).not.toContain(">Meus sites<");
   expect((await page.context().request.get("/logado")).status()).toBe(404);
   expect((await page.context().request.get("/visitante/ajuda")).status()).toBe(404);
 });
@@ -176,6 +185,7 @@ test("resending the confirmation waits a minute between emails", async ({ page, 
   await page.getByLabel("Seu nome").fill("Zé");
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Senha", { exact: true }).fill(PASSWORD);
+  await page.getByLabel("Repita a senha").fill(PASSWORD);
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Criar conta" }).click();
   const resend = page.getByRole("button", { name: /Reenviar e-mail de confirmação/ });
@@ -199,7 +209,13 @@ test("too many sign-ups for one email are refused", async ({ request }) => {
   for (let i = 0; i < 4; i++) {
     const response = await request.post("/api/auth/sign-up", {
       headers: { origin: BASE, "x-forwarded-for": `192.0.2.${i}` },
-      data: { fullName: "Zé", email, password: PASSWORD, acceptTerms: true },
+      data: {
+        fullName: "Zé",
+        email,
+        password: PASSWORD,
+        confirmPassword: PASSWORD,
+        acceptTerms: true,
+      },
     });
     statuses.push(response.status());
   }
@@ -219,10 +235,10 @@ test("forgot and reset the password", async ({ page, request }) => {
   await page.getByLabel("Nova senha", { exact: true }).fill("Cafe-com-leite-99");
   await page.getByLabel("Repita a nova senha").fill("Cafe-com-leite-98");
   await page.getByRole("button", { name: "Salvar nova senha" }).click();
-  await expect(page.getByText("As duas senhas não são iguais.")).toBeVisible();
+  await expect(page.getByText("As senhas não são iguais.")).toBeVisible();
   await page.getByLabel("Repita a nova senha").fill("Cafe-com-leite-99");
   await page.getByRole("button", { name: "Salvar nova senha" }).click();
-  await expect(page).toHaveURL(/\/painel\?senha=alterada$/);
+  await expect(page).toHaveURL(/\/meus-sites\?senha=alterada$/);
 
   await page.context().clearCookies();
   await signInWithPassword(page, email, "Cafe-com-leite-99", "/conta");

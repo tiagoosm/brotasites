@@ -61,20 +61,20 @@ describe("what the header shows", () => {
   });
 
   it("offers the main button by state", () => {
-    expect(mainButton(visitor, false)?.label).toBe("Criar meu site");
-    expect(mainButton(visitor, true)).toBeNull();
-    expect(mainButton(member, true)?.label).toBe("Criar meu site");
-    expect(mainButton(unknown, false)?.href).toBe("/criar");
+    // A visitor never sees "Criar meu site" in the header (E26), on any page.
+    expect(mainButton(visitor)).toBeNull();
+    expect(mainButton(member)?.label).toBe("Criar meu site");
+    expect(mainButton(unknown)?.href).toBe("/criar");
   });
 
   it("puts the account in the profile menu, and the team link only for the team", () => {
     expect(accountItems(false).map((link) => link.label)).toEqual([
-      "Painel",
+      "Meus sites",
       "Criar meu site",
       "Perfil e segurança",
     ]);
     expect(accountItems(true).map((link) => link.label)).toEqual([
-      "Painel",
+      "Meus sites",
       "Criar meu site",
       "Perfil e segurança",
       "Área da equipe",
@@ -84,7 +84,7 @@ describe("what the header shows", () => {
   it("reads the visible address of a prerendered public page", () => {
     expect(visiblePath("/visitante")).toBe("/");
     expect(visiblePath("/logado/ajuda")).toBe("/ajuda");
-    expect(visiblePath("/painel")).toBe("/painel");
+    expect(visiblePath("/meus-sites")).toBe("/meus-sites");
     expect(visiblePath("/logadox")).toBe("/logadox");
     expect(visiblePath(null)).toBe("/");
   });

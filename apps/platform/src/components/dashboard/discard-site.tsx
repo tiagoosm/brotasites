@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { announceNavigation } from "@/lib/navigation";
 import { discardSite, SiteActionError } from "@/lib/sites";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +42,8 @@ export function DiscardSite({
       await discardSite(siteId);
       if (onDone) onDone();
       else {
-        router.push("/painel");
+        announceNavigation();
+        router.push("/meus-sites");
         router.refresh();
       }
     } catch (caught) {
@@ -65,7 +67,13 @@ export function DiscardSite({
     <div className="grid gap-3">
       {question}
       <div className="flex flex-wrap gap-3">
-        <Button variant="destructive" size="lg" disabled={busy || pending} onClick={discard}>
+        <Button
+          aria-busy={pending || undefined}
+          variant="destructive"
+          size="lg"
+          disabled={busy || pending}
+          onClick={discard}
+        >
           {pending ? "Descartando…" : "Sim, descartar"}
         </Button>
         <Button

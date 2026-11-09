@@ -19,7 +19,7 @@ test("the site pages need an account, and the old page leads to the dashboard", 
   page,
 }) => {
   await page.goto("/meu-site");
-  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fpainel$/);
+  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fmeus-sites$/);
 });
 
 test("sending the answers starts the directions and opens the dashboard", async ({

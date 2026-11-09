@@ -65,8 +65,16 @@ export function TeamAction({
             onChange={(event) => setNote(event.target.value)}
             className="rounded-lg border border-input bg-card p-3 text-base"
           />
+          <p id={`${noteId}-why`} className="text-sm text-ink-soft">
+            Escreva o motivo, com 3 letras ou mais, para confirmar.
+          </p>
           <div className="flex flex-wrap gap-3">
-            <Button size="lg" disabled={busy || note.trim().length < 3} onClick={confirm}>
+            <Button
+              size="lg"
+              disabled={busy || note.trim().length < 3}
+              aria-describedby={`${noteId}-why`}
+              onClick={confirm}
+            >
               {confirmLabel}
             </Button>
             <Button variant="ghost" size="lg" onClick={() => setOpen(false)}>

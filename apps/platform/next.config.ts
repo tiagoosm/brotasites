@@ -5,8 +5,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   async redirects() {
     return [
-      // The list of sites became the dashboard (E16); each site's pages keep their addresses.
-      { source: "/meus-sites", destination: "/painel", permanent: true },
+      // "Painel" became "Meus sites" (E26): the list lives at /meus-sites again, with each
+      // site's pages under it; the old address (bookmarks, emails) keeps working, its query too.
+      { source: "/painel", destination: "/meus-sites", permanent: true },
       // Addresses of the 1.1 form (sign-in emails, bookmarks) start over at "/criar".
       {
         source: "/criar/:step(negocio|modelo|cores|secoes|conteudo|contato|endereco)",

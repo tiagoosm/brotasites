@@ -2,13 +2,14 @@
 
 import { User } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { initialsOf } from "@/lib/initials";
 import { cn } from "@/lib/utils";
 import { accountItems, type HeaderSession } from "./nav";
 
 // The profile button and its menu (E17): the person's initials (or a person icon), and a menu
-// with who is signed in, Painel, Criar meu site, Perfil e segurança, Área da equipe (team only) and
+// with who is signed in, Meus sites, Criar meu site, Perfil e segurança, Área da equipe (team only) and
 // Sair. Menu-button pattern of the ARIA practices: Enter, Space or arrows open it on the first
 // (or last) item, arrows move, Home/End jump, Escape closes back on the button, Tab and a click
 // outside close it.
@@ -30,6 +31,7 @@ export function ProfileMenu({ session }: { session: Signed }) {
   const [who, setWho] = useState<Who | null>(
     session.known ? { name: session.name, email: session.email, team: session.team } : null,
   );
+  const router = useRouter();
   const button = useRef<HTMLButtonElement>(null);
   const popup = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -123,6 +125,12 @@ export function ProfileMenu({ session }: { session: Signed }) {
 
   const initials = initialsOf(who?.name);
   const links = accountItems(who?.team ?? false);
+
+  // Opening the menu is the intent (E26): its pages start loading before the choice.
+  useEffect(() => {
+    if (!open) return;
+    for (const link of accountItems(who?.team ?? false)) router.prefetch(link.href);
+  }, [open, who?.team, router]);
 
   return (
     <div className="relative">

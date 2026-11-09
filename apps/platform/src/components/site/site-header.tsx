@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { CreateSiteButton } from "./create-site-button";
+import { LinkPending, useIntentPrefetch } from "./link-pending";
 import {
   accountItems,
   CREATE_HREF,
@@ -23,17 +24,24 @@ import { SignOutButton } from "./sign-out";
 
 /**
  * The one header of every page (E17): the brand, the same four links (Como funciona, Preço,
- * Dúvidas, Ajuda), and the account on the right: "Entrar" and "Criar meu site" signed out, or
- * "Criar meu site" and the profile menu signed in. Who is signed in comes from the server (the
+ * Dúvidas, Ajuda), and the account on the right: only "Entrar ou cadastre-se" signed out (E26:
+ * no "Criar meu site" for visitors, on any page), or "Criar meu site" and the profile menu
+ * signed in. Who is signed in comes from the server (the
  * public page variant the proxy picked, or the session the signed-in pages read), never from
  * the browser, so nothing flickers. Up to 768px: the brand, the profile button and the menu.
  */
-export function SiteHeader({ session }: { session: HeaderSession }) {
+export function SiteHeader({
+  session,
+  pending = false,
+}: {
+  session: HeaderSession;
+  /** The account side is still being read (E26): the shell shows, the right side waits. */
+  pending?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = visiblePath(usePathname());
-  const isHome = pathname === "/";
   const current = currentLink(pathname);
-  const main = mainButton(session, isHome);
+  const main = mainButton(session);
 
   // Navigating closes the phone menu.
   useEffect(() => {
@@ -56,20 +64,21 @@ export function SiteHeader({ session }: { session: HeaderSession }) {
               className="touch-target text-ink-soft transition-colors duration-150 hover:text-ink aria-[current=page]:font-semibold aria-[current=page]:text-ink"
             >
               {link.label}
+              <LinkPending />
             </Link>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-3 md:ml-0 lg:gap-4">
-          {!session.signedIn && (
-            <Link
-              href={signInLink.href}
-              prefetch={false}
-              className="touch-target hidden text-[0.875rem] font-semibold whitespace-nowrap text-leaf-deep underline-offset-4 hover:underline md:inline-flex lg:text-[0.9375rem]"
-            >
-              {signInLink.label}
-            </Link>
+        {/* A fixed width from 768px, signed in, out or still reading: the middle links never
+            move (E26). */}
+        <div className="ml-auto flex items-center justify-end gap-3 md:ml-0 md:w-48 lg:w-56 lg:gap-4">
+          {pending && (
+            <span
+              aria-hidden="true"
+              className="skeleton-block hidden h-11 w-full rounded-full md:block"
+            />
           )}
-          {main && (
+          {!pending && !session.signedIn && <SignInLink />}
+          {!pending && main && (
             <CreateSiteButton
               href={main.href}
               size="nav"
@@ -79,7 +88,7 @@ export function SiteHeader({ session }: { session: HeaderSession }) {
               {main.label}
             </CreateSiteButton>
           )}
-          {session.signedIn && <ProfileMenu session={session} />}
+          {!pending && session.signedIn && <ProfileMenu session={session} />}
           <Button
             type="button"
             variant="ghost"
@@ -105,11 +114,11 @@ export function SiteHeader({ session }: { session: HeaderSession }) {
  * back to the button. The items come in one after the other (".phone-menu" in globals.css).
  */
 function PhoneMenu({ session, onClose }: { session: HeaderSession; onClose: () => void }) {
-  // The middle links, then the account: its menu signed in ("Criar meu site" is the main button at
-  // the bottom), or "Entrar ou cadastre-se" signed out; the main button creates the site.
+  // The middle links, then the account signed in ("Criar meu site" is the main button at the
+  // bottom). Signed out, the main button at the bottom is "Entrar ou cadastre-se" (E26), once.
   const account = session.signedIn
     ? accountItems(session.known ? session.team : false).filter((link) => link.href !== CREATE_HREF)
-    : [signInLink];
+    : [];
   const links = [...headerLinks, ...account];
   const ref = useRef<HTMLDivElement>(null);
 
@@ -207,6 +216,7 @@ function PhoneMenu({ session, onClose }: { session: HeaderSession; onClose: () =
                 aria-hidden="true"
                 className="size-5 text-leaf opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
               />
+              <LinkPending dot={false} />
             </Link>
           </Fragment>
         ))}
@@ -221,9 +231,31 @@ function PhoneMenu({ session, onClose }: { session: HeaderSession; onClose: () =
         className="phone-menu-item mt-auto grid shrink-0 pt-8"
         style={{ "--item": links.length + 1 } as React.CSSProperties}
       >
-        <CreateSiteButton onClick={onClose}>Criar meu site</CreateSiteButton>
+        {session.signedIn ? (
+          <CreateSiteButton onClick={onClose}>Criar meu site</CreateSiteButton>
+        ) : (
+          <CreateSiteButton href={signInLink.href} onClick={onClose}>
+            {signInLink.label}
+          </CreateSiteButton>
+        )}
       </div>
     </div>,
     document.body,
+  );
+}
+
+/** "Entrar ou cadastre-se": not prefetched from the public pages, but warmed up by intent. */
+function SignInLink() {
+  const intent = useIntentPrefetch(signInLink.href);
+  return (
+    <Link
+      href={signInLink.href}
+      prefetch={false}
+      {...intent}
+      className="touch-target hidden text-[0.875rem] font-semibold whitespace-nowrap text-leaf-deep underline-offset-4 hover:underline md:inline-flex lg:text-[0.9375rem]"
+    >
+      {signInLink.label}
+      <LinkPending />
+    </Link>
   );
 }

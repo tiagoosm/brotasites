@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PASSWORD_MAX, passwordProblem } from "./passwords";
+import { PASSWORD_MAX, type PasswordOwner, passwordProblem } from "./passwords";
 
 // What the account routes accept (checked again on the server for every request). Messages
 // are pt-BR, shown next to the field.
@@ -42,13 +42,17 @@ export const passwordSchema = z
   .string("Escolha uma senha.")
   .max(PASSWORD_MAX, `Use até ${PASSWORD_MAX} caracteres.`);
 
-/** Checks a new password against the rules and the email it belongs to. */
-export function newPassword(email: string | undefined) {
+/** Checks a new password against the rules (passwords.ts) and who it belongs to. */
+export function newPassword(owner: PasswordOwner = {}) {
   return passwordSchema.superRefine((value, ctx) => {
-    const problem = passwordProblem(value, email);
+    const problem = passwordProblem(value, owner);
     if (problem) ctx.addIssue({ code: "custom", message: problem });
   });
 }
+
+/** The repeated password: checked on the server too, never only in the browser. */
+export const PASSWORDS_DIFFER = "As senhas não são iguais.";
+const confirmPassword = z.string("Repita a senha.").max(PASSWORD_MAX).min(1, "Repita a senha.");
 
 const captchaToken = z.string().max(4096).optional();
 const next = z.string().max(300).optional();
@@ -57,8 +61,9 @@ export const signUpSchema = z
   .object({
     fullName: fullNameSchema,
     email: emailSchema,
-    // Length and common passwords here, so every field's error shows at once...
-    password: newPassword(undefined),
+    // The rules and common passwords here, so every field's error shows at once...
+    password: newPassword(),
+    confirmPassword,
     acceptTerms: z.literal(
       true,
       "Para criar a conta, aceite os Termos e a Política de Privacidade.",
@@ -66,10 +71,14 @@ export const signUpSchema = z
     captchaToken,
     next,
   })
-  // ...and the email inside the password once the fields are valid.
+  // ...then the email and the name inside the password, and the repeated password, once the
+  // fields are valid.
   .superRefine((value, ctx) => {
-    const problem = passwordProblem(value.password, value.email);
+    const problem = passwordProblem(value.password, { email: value.email, name: value.fullName });
     if (problem) ctx.addIssue({ code: "custom", path: ["password"], message: problem });
+    if (value.confirmPassword !== value.password) {
+      ctx.addIssue({ code: "custom", path: ["confirmPassword"], message: PASSWORDS_DIFFER });
+    }
   });
 
 export const signInSchema = z.object({
@@ -89,11 +98,18 @@ export const profileSchema = z.object({
 
 export const changeEmailSchema = z.object({ email: emailSchema });
 
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().max(PASSWORD_MAX).optional(),
-  password: passwordSchema,
-  captchaToken,
-});
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().max(PASSWORD_MAX).optional(),
+    password: passwordSchema,
+    confirmPassword,
+    captchaToken,
+  })
+  .superRefine((value, ctx) => {
+    if (value.confirmPassword !== value.password) {
+      ctx.addIssue({ code: "custom", path: ["confirmPassword"], message: PASSWORDS_DIFFER });
+    }
+  });
 
 export const deleteAccountSchema = z.object({ email: emailSchema });
 

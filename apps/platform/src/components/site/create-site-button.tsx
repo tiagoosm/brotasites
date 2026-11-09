@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { LinkPending, useIntentPrefetch } from "./link-pending";
 import { CREATE_HREF } from "./nav";
 
 // Every button that leads to creating a site ("Criar meu site") has the same
@@ -38,6 +39,7 @@ export function CreateSiteButton({
   onClick?: () => void;
 }) {
   const link = useRef<HTMLAnchorElement>(null);
+  const intent = useIntentPrefetch(href);
 
   useEffect(() => {
     const element = link.current;
@@ -121,6 +123,7 @@ export function CreateSiteButton({
       ref={link}
       href={href}
       prefetch={false}
+      {...intent}
       onClick={onClick}
       data-create-site=""
       className={cn(
@@ -144,6 +147,7 @@ export function CreateSiteButton({
           className="transition-transform duration-200 group-hover:translate-x-0.5"
         />
       )}
+      <LinkPending dot={false} />
     </Link>
   );
 }

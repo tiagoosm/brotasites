@@ -6,40 +6,107 @@ import { useSearchParams } from "next/navigation";
 import { useId, useState } from "react";
 import { postJson } from "@/components/account/api";
 import { Captcha } from "@/components/account/captcha";
-import { Field, FormError } from "@/components/account/field";
-import { PasswordField } from "@/components/account/password-field";
+import { ErrorSummary, Field, FormError } from "@/components/account/field";
+import { PasswordChecklist, PasswordField } from "@/components/account/password-field";
 import { ResendConfirmation } from "@/components/account/resend-confirmation";
 import { TermsLinks } from "@/components/account/terms-links";
 import { Button } from "@/components/ui/button";
+import { suggestEmail } from "@/lib/auth/email-typos";
+import { missingRules } from "@/lib/auth/passwords";
+import { emailSchema, fieldErrors, fullNameSchema, signUpSchema } from "@/lib/auth/schemas";
 import { safeNextPath } from "@/lib/supabase/env";
+
+// Signing up (E15, E26): name and email, then the password and its confirmation, side by side
+// from 768px, with the checklist of the five rules under both. Name and email are checked when
+// the person leaves the field, not on every key; the button is never disabled: sending with
+// something wrong lists what to fix at the top and moves focus to the first field.
+
+const ids = {
+  fullName: "cadastro-nome",
+  email: "cadastro-email",
+  password: "cadastro-senha",
+  confirmPassword: "cadastro-repita",
+  acceptTerms: "cadastro-termos",
+} as const;
+
+const order: [string, string, string][] = [
+  ["fullName", ids.fullName, "Seu nome"],
+  ["email", ids.email, "E-mail"],
+  ["password", ids.password, "Senha"],
+  ["confirmPassword", ids.confirmPassword, "Repita a senha"],
+  ["acceptTerms", ids.acceptTerms, "Termos"],
+];
 
 export function SignUpForm() {
   const params = useSearchParams();
   const next = safeNextPath(params.get("voltar"));
   const back = params.get("voltar") ? `?voltar=${encodeURIComponent(next)}` : "";
-  const termsId = useId();
   const termsErrorId = useId();
+  const checklistId = useId();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [confirmTouched, setConfirmTouched] = useState(false);
+  const [suggestion, setSuggestion] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [captcha, setCaptcha] = useState<string>();
   const [attempt, setAttempt] = useState(0);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
+  const [summary, setSummary] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+
+  const setField = (key: string, message: string | undefined) =>
+    setFields((current) => {
+      const { [key]: _, ...rest } = current;
+      return message ? { ...rest, [key]: message } : rest;
+    });
+
+  // The confirmation speaks once the person left it or typed as much as the password, and the
+  // password itself meets the rules: never while they are still typing.
+  const confirmReady = confirm.length > 0 && (confirmTouched || confirm.length >= password.length);
+  const matches = confirm === password;
+  const confirmFeedback =
+    confirmReady && missingRules(password).length === 0
+      ? matches
+        ? { text: "As senhas são iguais.", ok: true }
+        : { text: "As senhas não são iguais.", ok: false }
+      : null;
+
+  function showErrors(found: Record<string, string>) {
+    setFields(found);
+    setSummary(found);
+    const first = order.find(([key]) => found[key]);
+    if (first) document.getElementById(first[1])?.focus();
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    setSending(true);
+    if (sending) return;
     setError(null);
+    // Checked here first, so every field's problem shows at once; the server checks it all again.
+    const checked = signUpSchema.safeParse({
+      fullName,
+      email,
+      password,
+      confirmPassword: confirm,
+      acceptTerms: accepted,
+    });
+    if (!checked.success) {
+      showErrors(fieldErrors(checked.error));
+      return;
+    }
+    setSending(true);
     setFields({});
+    setSummary({});
     const result = await postJson("/api/auth/sign-up", {
       fullName,
       email,
       password,
+      confirmPassword: confirm,
       acceptTerms: accepted,
       captchaToken: captcha,
       next,
@@ -50,7 +117,9 @@ export function SignUpForm() {
       setSent(true);
       return;
     }
-    setFields(result.data.fields ?? {});
+    if (result.data.fields && Object.keys(result.data.fields).length) {
+      showErrors(result.data.fields);
+    }
     setError(
       result.data.error ?? "Não foi possível criar a conta agora. Tente de novo em instantes.",
     );
@@ -86,52 +155,112 @@ export function SignUpForm() {
     <form onSubmit={submit} noValidate className="grid gap-6">
       <header className="grid gap-3">
         <h1 className="font-display text-[2.5rem] leading-[1.05]">Crie a sua conta</h1>
-        <p className="text-[1.0625rem] text-ink-soft">
-          É grátis. Suas respostas e sites ficam guardados nela.
-        </p>
+        <p className="text-[1.0625rem] text-ink-soft">É grátis. Seus sites ficam guardados nela.</p>
       </header>
 
+      <ErrorSummary errors={summary} labels={order} />
       <FormError message={error} />
 
-      <Field
-        label="Seu nome"
-        autoComplete="name"
-        value={fullName}
-        onChange={(event) => setFullName(event.target.value)}
-        error={fields.fullName}
-      />
-      <Field
-        label="E-mail"
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        placeholder="voce@exemplo.com"
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-        error={fields.email}
-      />
-      <PasswordField
-        label="Senha"
-        autoComplete="new-password"
-        value={password}
-        onChange={setPassword}
-        email={email}
-        meter
-        error={fields.password}
-      />
+      {/* Two columns from 768px (E26), so the whole card fits a laptop screen. */}
+      <div className="grid gap-6 md:grid-cols-2 md:gap-x-5 [@media(max-height:700px)]:gap-3">
+        <Field
+          id={ids.fullName}
+          label="Seu nome"
+          autoComplete="name"
+          autoCapitalize="words"
+          value={fullName}
+          onChange={(event) => setFullName(event.target.value)}
+          onBlur={() => {
+            if (!fullName) return;
+            const parsed = fullNameSchema.safeParse(fullName);
+            setField("fullName", parsed.success ? undefined : parsed.error.issues[0]?.message);
+          }}
+          error={fields.fullName}
+        />
+        <div className="grid content-start gap-2">
+          <Field
+            id={ids.email}
+            label="E-mail"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="voce@exemplo.com"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setSuggestion(null);
+            }}
+            onBlur={() => {
+              if (!email) return;
+              const parsed = emailSchema.safeParse(email);
+              setField("email", parsed.success ? undefined : parsed.error.issues[0]?.message);
+              setSuggestion(parsed.success ? suggestEmail(email) : null);
+            }}
+            error={fields.email}
+          />
+          {suggestion && (
+            <p className="text-sm text-ink-soft" role="status">
+              Você quis dizer{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail(suggestion);
+                  setSuggestion(null);
+                  setField("email", undefined);
+                }}
+                className="touch-target font-semibold text-leaf-deep underline underline-offset-4"
+              >
+                {suggestion}
+              </button>
+              ?
+            </p>
+          )}
+        </div>
+        <PasswordField
+          id={ids.password}
+          label="Senha"
+          autoComplete="new-password"
+          value={password}
+          onChange={setPassword}
+          describedBy={checklistId}
+          error={fields.password}
+        />
+        <PasswordField
+          id={ids.confirmPassword}
+          label="Repita a senha"
+          autoComplete="new-password"
+          value={confirm}
+          onChange={(value) => {
+            setConfirm(value);
+            if (fields.confirmPassword) setField("confirmPassword", undefined);
+          }}
+          onBlur={() => setConfirmTouched(true)}
+          feedback={confirmFeedback}
+          error={fields.confirmPassword}
+        />
+        <div className="md:col-span-2">
+          <PasswordChecklist id={checklistId} value={password} owner={{ email, name: fullName }} />
+        </div>
+      </div>
 
       <div className="grid gap-1.5">
         <div className="flex items-start gap-3">
           <input
-            id={termsId}
+            id={ids.acceptTerms}
             type="checkbox"
             checked={accepted}
-            onChange={(event) => setAccepted(event.target.checked)}
+            onChange={(event) => {
+              setAccepted(event.target.checked);
+              if (event.target.checked) setField("acceptTerms", undefined);
+            }}
             aria-invalid={fields.acceptTerms ? true : undefined}
             aria-describedby={fields.acceptTerms ? termsErrorId : undefined}
             className="mt-0.5 size-6 shrink-0 accent-leaf"
           />
-          <label htmlFor={termsId} className="text-[0.9375rem]">
+          <label htmlFor={ids.acceptTerms} className="text-[0.9375rem]">
             Li e aceito os Termos de uso e a Política de Privacidade.
           </label>
         </div>
@@ -146,23 +275,24 @@ export function SignUpForm() {
       <Captcha onToken={setCaptcha} resetKey={attempt} />
       {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
 
-      <Button type="submit" size="lg" disabled={sending} className="group">
-        {sending ? "Criando…" : "Criar conta"}
-        <ArrowRight
-          aria-hidden="true"
-          className="transition-transform duration-200 group-hover:translate-x-0.5"
-        />
-      </Button>
-
-      <p className="text-[0.9375rem] text-ink-soft">
-        Já tem conta?{" "}
-        <Link
-          href={`/entrar${back}`}
-          className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
-        >
-          Entrar
-        </Link>
-      </p>
+      <div className="grid gap-6 md:flex md:flex-row-reverse md:items-center md:justify-between">
+        <Button aria-busy={sending || undefined} type="submit" size="lg" className="group">
+          {sending ? "Criando…" : "Criar conta"}
+          <ArrowRight
+            aria-hidden="true"
+            className="transition-transform duration-200 group-hover:translate-x-0.5"
+          />
+        </Button>
+        <p className="text-[0.9375rem] text-ink-soft">
+          Já tem conta?{" "}
+          <Link
+            href={`/entrar${back}`}
+            className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
+          >
+            Entrar
+          </Link>
+        </p>
+      </div>
     </form>
   );
 }

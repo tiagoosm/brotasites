@@ -8,12 +8,13 @@ import { Captcha } from "@/components/account/captcha";
 import { EmailConfirmBanner } from "@/components/account/email-banner";
 import { Field, FormError } from "@/components/account/field";
 import { MfaEnroll } from "@/components/account/mfa";
-import { PasswordField } from "@/components/account/password-field";
+import { PasswordChecklist, PasswordField } from "@/components/account/password-field";
 import { TermsLinks } from "@/components/account/terms-links";
 import { Loading, Notice, unavailable } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
 import { type AccountState, useRequiredAccount } from "@/lib/account";
-import { TERMS_VERSION } from "@/lib/auth/schemas";
+import { passwordProblem } from "@/lib/auth/passwords";
+import { PASSWORDS_DIFFER, TERMS_VERSION } from "@/lib/auth/schemas";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 
 // "Conta" (E15): name and WhatsApp, email, password, two-step verification for the team, the
@@ -80,7 +81,12 @@ export function AccountPage() {
             <ProfileSection profile={profile} onSaved={load} />
             {profile.terms_version !== TERMS_VERSION && <TermsSection onSaved={load} />}
             <EmailSection account={account} />
-            <PasswordSection account={account} hasPassword={profile.has_password} onSaved={load} />
+            <PasswordSection
+              account={account}
+              name={profile.full_name}
+              hasPassword={profile.has_password}
+              onSaved={load}
+            />
             {member && <TwoStepSection />}
             <SessionsSection />
             <DataSection />
@@ -289,15 +295,19 @@ function EmailSection({ account }: { account: Signed }) {
 
 function PasswordSection({
   account,
+  name,
   hasPassword,
   onSaved,
 }: {
   account: Signed;
+  name: string | null;
   hasPassword: boolean;
   onSaved: () => void;
 }) {
   const [current, setCurrent] = useState("");
   const [password, setPassword] = useState("");
+  const [repeat, setRepeat] = useState("");
+  const checklistId = useId();
   const [captcha, setCaptcha] = useState<string>();
   const [attempt, setAttempt] = useState(0);
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -309,9 +319,19 @@ function PasswordSection({
     setSaved(null);
     setError(null);
     setReauth(false);
+    const problem = passwordProblem(password, { email: account.email, name: name });
+    if (problem || password !== repeat) {
+      setFields({
+        ...(problem ? { password: problem } : {}),
+        ...(password !== repeat ? { confirmPassword: PASSWORDS_DIFFER } : {}),
+      });
+      document.getElementById(problem ? "conta-nova-senha" : "conta-repita-senha")?.focus();
+      return;
+    }
     const result = await postJson("/api/account/password", {
       currentPassword: hasPassword ? current : undefined,
       password,
+      confirmPassword: repeat,
       captchaToken: captcha,
     });
     setAttempt((count) => count + 1);
@@ -320,6 +340,7 @@ function PasswordSection({
     if (!result.ok) return setError(result.data.error ?? "Não foi possível salvar a senha agora.");
     setCurrent("");
     setPassword("");
+    setRepeat("");
     setSaved(
       hasPassword
         ? "Senha trocada. Os outros aparelhos vão precisar entrar de novo."
@@ -355,13 +376,26 @@ function PasswordSection({
           />
         )}
         <PasswordField
+          id="conta-nova-senha"
           label={hasPassword ? "Nova senha" : "Senha"}
           autoComplete="new-password"
           value={password}
           onChange={setPassword}
-          email={account.email}
-          meter
+          describedBy={checklistId}
           error={fields.password}
+        />
+        <PasswordField
+          id="conta-repita-senha"
+          label={hasPassword ? "Repita a nova senha" : "Repita a senha"}
+          autoComplete="new-password"
+          value={repeat}
+          onChange={setRepeat}
+          error={fields.confirmPassword}
+        />
+        <PasswordChecklist
+          id={checklistId}
+          value={password}
+          owner={{ email: account.email, name: name }}
         />
         {hasPassword && <Captcha onToken={setCaptcha} resetKey={attempt} />}
         {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
@@ -486,6 +520,7 @@ function DeleteSection({ account }: { account: Signed }) {
           error={fields.email}
         />
         <Button
+          aria-busy={deleting || undefined}
           type="submit"
           variant="destructive"
           size="lg"

@@ -21,7 +21,7 @@ const APP_PREFIXES = [
 ];
 
 /** Pages that need a session; the proxy sends people without one to /entrar. */
-export const PROTECTED_PREFIXES = ["/painel", "/criar", "/meus-sites", "/conta", "/admin"];
+export const PROTECTED_PREFIXES = ["/meus-sites", "/painel", "/criar", "/conta", "/admin"];
 
 /** Pages and routes that are never cached nor indexed. */
 const PRIVATE_PREFIXES = [...APP_PREFIXES, "/auth", "/api"];

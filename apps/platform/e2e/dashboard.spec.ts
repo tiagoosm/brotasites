@@ -6,8 +6,9 @@ import { BASE } from "./support/accounts";
 import { SUPABASE, signIn } from "./support/supabase";
 import { findSmallTargetsWhileScrolling } from "./support/targets";
 
-// The dashboard (E16): rendered on the server from the fake Supabase (support/fake-supabase.mjs),
-// with each test's own account so parallel tests never share a dashboard.
+// "Meus sites" (E16 as "Painel", reshaped in E26: one card per site with its status, what it
+// needs and its one action): rendered on the server from the fake Supabase
+// (support/fake-supabase.mjs), with each test's own account so parallel tests never share one.
 
 const person = () => {
   const id = randomUUID();
@@ -47,29 +48,33 @@ async function board(
 }
 
 test("without a session the server sends people to sign in", async ({ request }) => {
-  const response = await request.get("/painel", { maxRedirects: 0 });
+  const response = await request.get("/meus-sites", { maxRedirects: 0 });
   expect(response.status()).toBe(307);
-  expect(response.headers().location).toBe("/entrar?voltar=%2Fpainel");
+  expect(response.headers().location).toBe("/entrar?voltar=%2Fmeus-sites");
 });
 
-test("the dashboard is never cached nor indexed", async ({ context, request }) => {
+test("Meus sites is never cached nor indexed", async ({ context, request }) => {
   const who = person();
   await board(request, who.id, {});
   await signIn(context, { user: who });
-  const response = await context.request.get("/painel");
+  const response = await context.request.get("/meus-sites");
   // Private and never stored: no shared cache keeps it (Next.js sets the page's own Vary).
   expect(response.headers()["cache-control"]).toBe("private, no-store");
   expect(response.headers()["x-robots-tag"]).toBe("noindex");
 });
 
-test("with no sites: an invitation, and nothing pending", async ({ page, context, request }) => {
+test("with no sites: an invitation, and no notice band", async ({ page, context, request }) => {
   const who = person();
   await board(request, who.id, {});
   await signIn(context, { user: who });
-  await page.goto("/painel");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Olá, Zé");
+  await page.goto("/meus-sites");
+  await expect(page).toHaveTitle(/^Meus sites/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Meus sites");
+  await expect(page.getByRole("main").getByText("Olá, Zé")).toBeVisible();
   await expect(page.getByRole("main").getByText(who.email)).toBeVisible();
-  await expect(page.getByText("Tudo em dia.")).toBeVisible();
+  // Nothing to say about the account: nothing shows (no "Tudo em dia", no section).
+  await expect(page.getByText("Tudo em dia.")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Precisa de você" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Crie seu primeiro site" })).toBeVisible();
   await expect(
     page.getByRole("main").getByRole("link", { name: "Criar meu site" }),
@@ -77,7 +82,7 @@ test("with no sites: an invitation, and nothing pending", async ({ page, context
   // The account lives in the profile menu of the one header (E17), read on the server.
   await page.getByRole("button", { name: "Menu da conta de Zé da Padaria" }).click();
   await expect(page.getByRole("menuitem")).toHaveText([
-    "Painel",
+    "Meus sites",
     "Criar meu site",
     "Perfil e segurança",
     "Sair",
@@ -103,41 +108,51 @@ test("each status shows its label, what is pending and the right button", async 
   ];
   await board(request, who.id, { sites, fullName: "" });
   await signIn(context, { user: who, confirmed: false });
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
 
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Olá");
-  const pending = page.getByRole("region", { name: "Precisa de você" });
-  await expect(pending.getByRole("complementary", { name: "Confirmação do e-mail" })).toBeVisible();
-  await expect(pending.getByRole("heading", { level: 3 })).toHaveText([
-    "Café da Lu: Precisa de atenção",
-    "Bolos da Ana: Escolha uma das 3",
-    "Oficina do Beto: Site pronto para conferir",
-    "Rascunho do Zé: Rascunho",
-    "Complete o seu perfil",
+  await expect(page.getByRole("main").getByText("Olá", { exact: true })).toBeVisible();
+  // The account's own notices: a quiet band above the list.
+  await expect(page.getByRole("complementary", { name: "Confirmação do e-mail" })).toBeVisible();
+  await expect(page.getByText("Complete o seu perfil.")).toBeVisible();
+
+  // One card per site, the ones waiting on the person first, most urgent first.
+  const list = page.getByRole("list", { name: "Seus sites" });
+  await expect(list.getByRole("heading", { level: 2 })).toHaveText([
+    "Café da Lu",
+    "Bolos da Ana",
+    "Oficina do Beto",
+    "Rascunho do Zé",
+    "Barbearia",
+    "Loja Suspensa",
   ]);
-  await expect(pending.getByText("Falta uma foto da fachada.")).toBeVisible();
-  await expect(
-    pending.getByText("Continue de onde parou: passo 2 de 5 (Marca e sensação)."),
-  ).toBeVisible();
-
-  const card = (name: string) =>
-    page.getByRole("region", { name: "Seus sites" }).getByRole("listitem", { name });
+  const card = (name: string) => list.getByRole("listitem", { name });
+  // A screen reader hears the name, then the status.
+  await expect(card("Bolos da Ana")).toHaveAccessibleDescription("Sua vez");
+  await expect(card("Café da Lu")).toContainText("Precisa de atenção");
+  await expect(card("Café da Lu")).toContainText("Falta uma foto da fachada.");
+  await expect(card("Café da Lu").getByRole("link", { name: /^Ver o que falta/ })).toBeVisible();
+  await expect(card("Rascunho do Zé")).toContainText(
+    "Continue de onde parou: passo 2 de 5 (Marca e sensação).",
+  );
   await expect(card("Rascunho do Zé").getByRole("link", { name: /^Continuar/ })).toHaveAttribute(
     "href",
     `/criar/${sites[0]?.id}/marca`,
   );
-  await expect(card("Bolos da Ana")).toContainText("Sua vez");
+  await expect(card("Bolos da Ana")).toContainText("Escolha uma das 3 direções.");
   await expect(
     card("Bolos da Ana").getByRole("link", { name: /^Escolher direção/ }),
   ).toHaveAttribute("href", `/meus-sites/${sites[1]?.id}`);
   await expect(card("Oficina do Beto").getByRole("link", { name: /^Publicar/ })).toBeVisible();
-  await expect(card("Barbearia")).toContainText("Montando seu site");
+  await expect(card("Barbearia")).toContainText("Gerando");
   await expect(card("Barbearia").getByRole("list", { name: "Linha do tempo" })).toContainText(
     "Direções prontas",
   );
   await expect(card("Loja Suspensa")).toContainText(
     "Seu site foi suspenso. Veja os motivos na página do site.",
   );
+  // Each action shows once: never a second button for the same thing elsewhere (Von Restorff).
+  await expect(page.getByRole("link", { name: /^Escolher direção/ })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: /^Continuar/ })).toHaveCount(1);
   // No admin data reaches the page.
   await expect(page.getByText(/Nota interna/)).toHaveCount(0);
 });
@@ -159,7 +174,7 @@ test("a published site shows its address, hosting and days of changes left", asy
     ],
   });
   await signIn(context, { user: who });
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   const card = page.getByRole("listitem", { name: "Padaria do Zé" });
   await expect(card.getByRole("link", { name: /padaria-do-ze\.sites\.localhost/ })).toHaveAttribute(
     "href",
@@ -177,7 +192,7 @@ test("a published site shows its address, hosting and days of changes left", asy
     [/^Criado/, /^Aprovado/, /^Publicado/],
   );
   await expect(card.getByRole("link", { name: /^Baixar o site/ })).toBeVisible();
-  await expect(page.getByText("Tudo em dia.")).toBeVisible();
+  await expect(card).toHaveAccessibleDescription("No ar");
 });
 
 test("a notice shows, leads to the right page and is read when opened", async ({
@@ -196,7 +211,7 @@ test("a notice shows, leads to the right page and is read when opened", async ({
   };
   await board(request, who.id, { sites: [site], notices: [notice] });
   await signIn(context, { user: who });
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   const bell = page.getByRole("button", { name: "Avisos, 1 não lido" });
   await expect(bell).toBeVisible();
   await bell.click();
@@ -275,18 +290,18 @@ test("one person never sees another's sites", async ({ page, context, request })
   await board(request, a.id, { sites: [row("live", { name: "Site da Ana" })] });
   await board(request, b.id, { sites: [row("draft", { name: "Site do Beto" })] });
   await signIn(context, { user: b });
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   await expect(page.getByText("Site do Beto").first()).toBeVisible();
   await expect(page.getByText("Site da Ana")).toHaveCount(0);
 });
 
-test("the old list address leads to the dashboard; site pages keep theirs", async ({
+test('the old "Painel" address leads to Meus sites, with its query; site pages keep theirs', async ({
   context,
   request,
 }) => {
-  const answer = await request.get("/meus-sites", { maxRedirects: 0 });
+  const answer = await request.get("/painel?senha=alterada", { maxRedirects: 0 });
   expect(answer.status()).toBe(308);
-  expect(answer.headers().location).toBe("/painel");
+  expect(answer.headers().location).toBe("/meus-sites?senha=alterada");
   const who = person();
   await board(request, who.id, {});
   await signIn(context, { user: who });
@@ -294,7 +309,7 @@ test("the old list address leads to the dashboard; site pages keep theirs", asyn
   expect(site.status()).toBe(200);
 });
 
-test("the dashboard passes axe, with 44px targets and no sideways scroll", async ({
+test("Meus sites passes axe, with 44px targets and no sideways scroll", async ({
   page,
   context,
   request,
@@ -318,7 +333,7 @@ test("the dashboard passes axe, with 44px targets and no sideways scroll", async
   await signIn(context, { user: who });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 360, height: 800 });
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   await page.getByRole("button", { name: /^Avisos/ }).click();
   const result = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
@@ -343,7 +358,7 @@ test("the pulsing dot of a busy site stays the size of the dot", async ({
   const who = person();
   await board(request, who.id, { sites: [row("generating_directions", { name: "Real Dente" })] });
   await signIn(context, { user: who });
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   const dot = page.locator(".live-dot");
   await expect(dot).toHaveCount(1);
   const sizes = await dot.evaluate((element) => {

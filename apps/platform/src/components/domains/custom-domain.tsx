@@ -176,7 +176,13 @@ export function CustomDomain({
                 {error}
               </p>
             )}
-            <Button type="submit" size="lg" className="justify-self-start" disabled={busy !== null}>
+            <Button
+              aria-busy={busy === "connect" || undefined}
+              type="submit"
+              size="lg"
+              className="justify-self-start"
+              disabled={busy !== null}
+            >
               {busy === "connect" ? "Conectando…" : "Conectar domínio"}
             </Button>
           </form>
@@ -243,6 +249,7 @@ export function CustomDomain({
           <div className="flex flex-wrap items-center gap-3">
             {domain.status !== "active" && (
               <Button
+                aria-busy={busy === "check" || undefined}
                 size="lg"
                 disabled={busy !== null}
                 onClick={() =>
@@ -264,6 +271,7 @@ export function CustomDomain({
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Button
+                    aria-busy={busy === "remove" || undefined}
                     variant="destructive"
                     size="lg"
                     disabled={busy !== null}

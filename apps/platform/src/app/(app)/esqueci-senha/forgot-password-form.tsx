@@ -73,7 +73,7 @@ export function ForgotPasswordForm() {
           />
           <Captcha onToken={setCaptcha} resetKey={attempt} />
           {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
-          <Button type="submit" size="lg" disabled={sending}>
+          <Button aria-busy={sending || undefined} type="submit" size="lg" disabled={sending}>
             {sending ? "Enviando…" : "Enviar link"}
           </Button>
           <Link

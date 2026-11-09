@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { postJson } from "@/components/account/api";
 import { AuthShell } from "@/components/account/auth-shell";
 import { FormError } from "@/components/account/field";
-import { PasswordField } from "@/components/account/password-field";
+import { PasswordChecklist, PasswordField } from "@/components/account/password-field";
 import { Loading } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
+import { passwordProblem } from "@/lib/auth/passwords";
+import { PASSWORDS_DIFFER } from "@/lib/auth/schemas";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 
 // After the "Esqueci a senha" link (/auth/confirm signed the person in): a new password. The
@@ -21,6 +23,7 @@ export function ResetPasswordForm() {
   const [sending, setSending] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  const checklistId = useId();
 
   useEffect(() => {
     getBrowserSupabase()
@@ -30,17 +33,23 @@ export function ResetPasswordForm() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (password !== repeat) {
-      setFields({ repeat: "As duas senhas não são iguais." });
+    if (sending) return;
+    const problem = passwordProblem(password, { email });
+    if (problem || password !== repeat) {
+      setFields({
+        ...(problem ? { password: problem } : {}),
+        ...(password !== repeat ? { confirmPassword: PASSWORDS_DIFFER } : {}),
+      });
+      document.getElementById(problem ? "nova-senha" : "repita-nova-senha")?.focus();
       return;
     }
     setSending(true);
     setError(null);
     setFields({});
-    const result = await postJson("/api/account/password", { password });
+    const result = await postJson("/api/account/password", { password, confirmPassword: repeat });
     setSending(false);
     if (result.ok) {
-      router.replace("/painel?senha=alterada");
+      router.replace("/meus-sites?senha=alterada");
       return;
     }
     setFields(result.data.fields ?? {});
@@ -80,22 +89,24 @@ export function ResetPasswordForm() {
           {/* For password managers: the account this password belongs to. */}
           <input type="email" name="email" autoComplete="username" value={email} readOnly hidden />
           <PasswordField
+            id="nova-senha"
             label="Nova senha"
             autoComplete="new-password"
             value={password}
             onChange={setPassword}
-            email={email}
-            meter
+            describedBy={checklistId}
             error={fields.password}
           />
           <PasswordField
+            id="repita-nova-senha"
             label="Repita a nova senha"
             autoComplete="new-password"
             value={repeat}
             onChange={setRepeat}
-            error={fields.repeat}
+            error={fields.confirmPassword}
           />
-          <Button type="submit" size="lg" disabled={sending}>
+          <PasswordChecklist id={checklistId} value={password} owner={{ email }} />
+          <Button aria-busy={sending || undefined} type="submit" size="lg">
             {sending ? "Salvando…" : "Salvar nova senha"}
           </Button>
         </form>

@@ -62,6 +62,7 @@ for (const path of ["/entrar", "/cadastro"]) {
 }
 
 test("the sign-in and sign-up pages share one frame, only the card changes", async ({ page }) => {
+  // The sign-up card is wider from 768px (two columns, E26); everything else is the same.
   const frame = async (path: string) => {
     await page.goto(path);
     return page.evaluate(() => {
@@ -76,9 +77,13 @@ test("the sign-in and sign-up pages share one frame, only the card changes", asy
       };
     });
   };
-  const signIn = await frame("/entrar");
+  const { width: signInWidth, ...signIn } = await frame("/entrar");
   expect(signIn.light).toBe(true);
-  expect(await frame("/cadastro")).toEqual(signIn);
+  const { width: signUpWidth, ...signUp } = await frame("/cadastro");
+  expect(signUp).toEqual(signIn);
+  const wide = (page.viewportSize()?.width ?? 0) >= 768;
+  if (wide) expect(signUpWidth).toBeGreaterThan(signInWidth);
+  else expect(signUpWidth).toBe(signInWidth);
 });
 
 test("the home page has no light rays", async ({ page }) => {

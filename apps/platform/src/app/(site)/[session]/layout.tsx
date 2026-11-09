@@ -1,5 +1,6 @@
 import { AnchorScroll } from "@/components/site/anchor-scroll";
 import { MotionReveal } from "@/components/site/motion-reveal";
+import { NavigationProgress } from "@/components/site/navigation-progress";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteVine } from "@/components/site/site-vine";
@@ -26,6 +27,8 @@ export default async function SiteLayout({
   const signedIn = ((await params).session as PublicVariant) === "logado";
   return (
     <>
+      {/* A click toward the account pages answers at once (E26). */}
+      <NavigationProgress />
       <SkipLink />
       <SiteHeader session={signedIn ? { signedIn: true, known: false } : { signedIn: false }} />
       <main id="conteudo" className="bg-paper">

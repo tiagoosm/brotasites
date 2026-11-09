@@ -149,7 +149,7 @@ export function BrandStep() {
                 className={cn(
                   chipClass({ checked }),
                   "h-auto min-h-12 cursor-pointer justify-start rounded-lg py-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-leaf",
-                  (full || identityLocked) && "opacity-60",
+                  (full || identityLocked) && "cursor-not-allowed opacity-60",
                 )}
               >
                 <input

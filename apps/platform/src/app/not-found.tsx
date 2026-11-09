@@ -26,11 +26,11 @@ export default function NotFound() {
             <Link href="/">Ir para o início</Link>
           </Button>
           <Link
-            href="/painel"
+            href="/meus-sites"
             prefetch={false}
             className="touch-target text-[0.9375rem] font-semibold text-leaf-deep underline underline-offset-4"
           >
-            Ir para o painel
+            Ir para Meus sites
           </Link>
         </div>
       </main>

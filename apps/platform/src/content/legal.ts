@@ -116,7 +116,7 @@ export const privacySections: LegalSection[] = [
     title: "Por quanto tempo guardamos",
     blocks: [
       "Guardamos os dados da sua conta, os rascunhos e as fotos enquanto a conta existir. Você pode excluir a conta a qualquer momento, na página Conta: apagamos a conta, os sites, os rascunhos e as fotos, e tiramos do ar os sites publicados. Os registros de pagamentos feitos ficam guardados pelo prazo que a lei fiscal exige.",
-      `Um site não pago, sem nenhuma ação sua por ${idleDays} dias, é apagado com as respostas e as fotos dele. Avisamos no seu painel ${warnDays}. Depois de apagado, fica só um registro sem dados pessoais (até onde o site chegou e o custo dele), para as nossas contas.`,
+      `Um site não pago, sem nenhuma ação sua por ${idleDays} dias, é apagado com as respostas e as fotos dele. Avisamos em Meus sites ${warnDays}. Depois de apagado, fica só um registro sem dados pessoais (até onde o site chegou e o custo dele), para as nossas contas.`,
     ],
   },
   {
@@ -169,7 +169,7 @@ export const termsSections: LegalSection[] = [
       `Criar, editar, ver as direções e o site pronto é grátis. Publicar o site custa ${publishPriceText}, em pagamento único, e você só paga se decidir publicar.`,
       `Cada site tem ${limits.freeDirectionRounds} rodadas de direções grátis: a primeira e mais ${freeRedos} refazeres. Depois, você pode pedir mais 1 rodada a cada ${limits.extraRoundWaitMinutes} minutos.`,
       `Cada conta tem ${limits.openSitesPerAccount} site não pago em andamento por vez. Para criar outro, publique o que está em andamento ou descarte-o.`,
-      `Um site não pago, sem nenhuma ação sua por ${idleDays} dias, é apagado. Avisamos no seu painel ${warnDays}.`,
+      `Um site não pago, sem nenhuma ação sua por ${idleDays} dias, é apagado. Avisamos em Meus sites ${warnDays}.`,
       "O serviço está em desenvolvimento: funções podem mudar, ser incluídas ou retiradas.",
     ],
   },
@@ -180,7 +180,7 @@ export const termsSections: LegalSection[] = [
       `Texto ${LEGAL_REVIEW_PENDING}.`,
       {
         list: [
-          `O pagamento para publicar inclui ${pricing.hostingMonths} meses de hospedagem no endereço seunegocio.brotasites.com e ajustes pelo painel nos primeiros ${pricing.adjustmentsDays} dias. Depois desse prazo, ajustes podem ser pedidos à parte, com o valor informado antes.`,
+          `O pagamento para publicar inclui ${pricing.hostingMonths} meses de hospedagem no endereço seunegocio.brotasites.com e ajustes em Meus sites nos primeiros ${pricing.adjustmentsDays} dias. Depois desse prazo, ajustes podem ser pedidos à parte, com o valor informado antes.`,
           `O site é seu: você pode baixar o site pronto a qualquer momento e hospedá-lo onde quiser.`,
           `Depois dos ${pricing.hostingMonths} meses, manter o site no ar custa ${formatBRL(pricing.renewalPerYear)} por ano, de forma opcional. Se não houver renovação, o site sai do ar, e você pode baixá-lo antes.`,
           "Conectar um domínio próprio está incluído e é opcional. O registro e a renovação do domínio são feitos e pagos por você, direto ao registrador. A BrotaSites não vende nem registra domínios e não responde por domínio vencido nem por falha do registrador; o site continua no endereço seunegocio.brotasites.com.",

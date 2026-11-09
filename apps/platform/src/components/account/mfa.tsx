@@ -64,7 +64,7 @@ export function MfaChallenge({ onDone }: { onDone: () => void }) {
         onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
         hint="Abra o aplicativo (como Google Authenticator ou Authy) e digite os 6 números de BrotaSites."
       />
-      <Button type="submit" size="lg" disabled={sending}>
+      <Button aria-busy={sending || undefined} type="submit" size="lg" disabled={sending}>
         {sending ? "Conferindo…" : "Confirmar"}
       </Button>
     </form>
@@ -161,7 +161,7 @@ export function MfaEnroll({ onDone }: { onDone: () => void }) {
         value={code}
         onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
       />
-      <Button type="submit" size="lg" disabled={sending}>
+      <Button aria-busy={sending || undefined} type="submit" size="lg" disabled={sending}>
         {sending ? "Conferindo…" : "Ativar"}
       </Button>
     </form>

@@ -127,7 +127,7 @@ test.describe("one unpaid site in progress", () => {
       slots: { open: 1, allowed: 1, openSiteId: open.id },
     });
     await signIn(context, { user: who });
-    await page.goto("/painel");
+    await page.goto("/meus-sites");
     const create = page.getByRole("button", { name: "Criar outro site" });
     await expect(create).toBeDisabled();
     await expect(create).toHaveAttribute("aria-describedby", "vaga-de-site");
@@ -147,7 +147,7 @@ test.describe("one unpaid site in progress", () => {
       slots: { open: 0, allowed: 1, openSiteId: null },
     });
     await signIn(context, { user: who });
-    await page.goto("/painel");
+    await page.goto("/meus-sites");
     await expect(page.getByRole("link", { name: "Criar outro site" })).toHaveAttribute(
       "href",
       "/criar?novo=1",
@@ -187,7 +187,7 @@ test.describe("one unpaid site in progress", () => {
     expect(state.discarded).toBeUndefined();
     await page.getByRole("button", { name: "Descartar este site" }).click();
     await page.getByRole("button", { name: "Sim, descartar" }).click();
-    await expect(page).toHaveURL(/\/painel$/);
+    await expect(page).toHaveURL(/\/meus-sites$/);
     expect(state.discarded).toBe(true);
   });
 
@@ -211,8 +211,8 @@ test.describe("one unpaid site in progress", () => {
       discarded.push(new URL(route.request().url()).pathname);
       await route.fulfill({ json: { discarded: true } });
     });
-    await page.goto("/painel");
-    const sites = page.getByRole("region", { name: "Seus sites" });
+    await page.goto("/meus-sites");
+    const sites = page.getByRole("list", { name: "Seus sites" });
     // A published site has no discard button.
     await expect(
       sites
@@ -240,7 +240,7 @@ test.describe("one unpaid site in progress", () => {
     await page.getByRole("button", { name: "Descartar este site" }).click();
     await expect(page.getByText(/O que estamos preparando para ele para na hora\./)).toBeVisible();
     await page.getByRole("button", { name: "Sim, descartar" }).click();
-    await expect(page).toHaveURL(/\/painel$/);
+    await expect(page).toHaveURL(/\/meus-sites$/);
     expect(state.discarded).toBe(true);
   });
 
@@ -275,9 +275,9 @@ test.describe("idle sites", () => {
       ],
     });
     await signIn(context, { user: who });
-    await page.goto("/painel");
+    await page.goto("/meus-sites");
     const card = page
-      .getByRole("region", { name: "Seus sites" })
+      .getByRole("list", { name: "Seus sites" })
       .getByRole("listitem", { name: "Padaria do Zé" });
     await expect(card).toContainText(
       /Guardado até \d{2}\/\d{2}\/\d{4}\. Sem novidades, ele será apagado\./,
@@ -307,8 +307,8 @@ test.describe("idle sites", () => {
       slots: { open: 1, allowed: 1, openSiteId: null },
     });
     await signIn(context, { user: who });
-    await page.goto("/painel");
-    const sites = page.getByRole("region", { name: "Seus sites" });
+    await page.goto("/meus-sites");
+    const sites = page.getByRole("list", { name: "Seus sites" });
     await expect(sites.getByRole("listitem", { name: "Padaria do Zé" })).toContainText(
       "Qualquer mudança renova o prazo.",
     );

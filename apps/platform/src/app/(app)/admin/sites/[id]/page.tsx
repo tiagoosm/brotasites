@@ -402,10 +402,20 @@ function Decision({
           vê o motivo).
         </p>
       </div>
+      {reviewable && !hasPreview && (
+        <p id="sem-previa" className="text-sm text-ink-soft">
+          Aprovar fica disponível quando o site pronto tiver uma prévia para conferir.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {reviewable && (
           <>
-            <Button size="lg" disabled={busy || !hasPreview} onClick={() => void decide("approve")}>
+            <Button
+              size="lg"
+              disabled={busy || !hasPreview}
+              aria-describedby={hasPreview ? undefined : "sem-previa"}
+              onClick={() => void decide("approve")}
+            >
               Aprovar para o cliente
             </Button>
             <Button

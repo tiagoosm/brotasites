@@ -234,6 +234,13 @@ function RuleEditor({
             );
           })}
         </div>
+        {/* A day another group already has cannot be picked here: said in text, not only by a
+            dimmed chip or a tooltip (E26). */}
+        {weekDays.some((day) => !rule.days.includes(day) && taken.has(day)) && (
+          <p className="text-sm text-ink-soft">
+            Dias apagados já estão em outro grupo. Tire de lá para marcar aqui.
+          </p>
+        )}
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {shortcuts.map(([label, days]) => {
             const usable = days.filter((day) => !taken.has(day));
