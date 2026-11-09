@@ -36,9 +36,9 @@ export function AuthShell({
           "shadow-[0_1px_0_rgb(255_255_255/0.9)_inset,0_30px_60px_-40px_rgb(20_36_27/0.45)]",
           wide ? "max-w-[28rem] md:max-w-[40rem]" : "max-w-[28rem]",
           // Short screens: a tighter card, closer fields and a smaller title.
-          "[@media(max-height:700px)]:sm:px-7 [@media(max-height:700px)]:py-5",
+          "[@media(max-height:700px)]:sm:px-7 [@media(max-height:700px)]:py-4",
           "[@media(max-height:700px)]:[&_form]:gap-3 [@media(max-height:700px)]:[&_h1]:text-[2rem]",
-          "[@media(max-height:700px)]:[&_header]:gap-1.5",
+          "[@media(max-height:700px)]:[&_header]:gap-1.5 [@media(max-height:700px)]:[&_label]:-mb-0.5",
           "[@media(max-height:700px)]:[&_input:not([type=checkbox])]:h-11",
         )}
       >

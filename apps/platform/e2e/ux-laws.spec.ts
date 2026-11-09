@@ -157,8 +157,13 @@ test("Jakob and proximity: every field has a visible label, and errors sit under
   await expect(page.locator("main [aria-invalid='true']").first()).toBeVisible();
   const far = await page.evaluate(() =>
     [...document.querySelectorAll<HTMLElement>("main [aria-invalid='true']")].flatMap((field) => {
+      // The error is the field's first description; later ones (a password's checklist, E26)
+      // may sit further down.
       const ids = (field.getAttribute("aria-describedby") ?? "").split(" ").filter(Boolean);
-      const errors = ids.map((id) => document.getElementById(id)).filter((el) => el?.textContent);
+      const errors = ids
+        .slice(0, 1)
+        .map((id) => document.getElementById(id))
+        .filter((el) => el?.textContent);
       if (errors.length === 0) return [`${field.id}: no error tied to it`];
       const box = field.getBoundingClientRect();
       return errors

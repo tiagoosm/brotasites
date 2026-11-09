@@ -16,6 +16,7 @@ const others: [number, number][] = [
   [360, 640],
 ];
 
+// biome-ignore lint/correctness/noEmptyPattern: Playwright reads the fixtures from this pattern
 test.beforeEach(({}, info) => {
   test.skip(info.project.name !== "desktop", "each test sets its own screen sizes");
 });

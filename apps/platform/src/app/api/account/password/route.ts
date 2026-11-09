@@ -5,7 +5,8 @@ import { clientIp, guardErrors, json, limitKey, readBody, refuse } from "@/lib/s
 import { rulesFor, withinLimits } from "@/lib/server/rate-limit";
 import { accountErrors, currentUser, sessionClaims, signedInRecently } from "@/lib/server/session";
 
-// Changing the password asks for the current one; creating one (accounts of the sign-in link)
+// Changing the password asks for the current one; creating one (accounts made with the old
+// sign-in link)
 // or resetting it after "Esqueci a senha" needs a recent sign-in instead. Either way the other
 // devices are signed out.
 export async function POST(request: Request) {
@@ -19,7 +20,8 @@ export async function POST(request: Request) {
   if (!(await withinLimits(rulesFor("account", ip, email, limitKey)))) {
     return refuse(429, guardErrors.rateLimited);
   }
-  const checked = newPassword(email).safeParse(body.data.password);
+  const name = (user.user_metadata as { full_name?: string } | undefined)?.full_name;
+  const checked = newPassword({ email, name }).safeParse(body.data.password);
   if (!checked.success) {
     const message = checked.error.issues[0]?.message ?? guardErrors.invalid;
     return refuse(400, message, { password: message });

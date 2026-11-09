@@ -146,6 +146,7 @@ test("answers carry no secrets", async ({ request }) => {
         fullName: "Zé",
         email: "y@padariadoze.com.br",
         password: "1234567890",
+        confirmPassword: "1234567890",
         acceptTerms: true,
       },
     }),
