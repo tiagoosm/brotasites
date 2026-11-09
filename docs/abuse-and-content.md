@@ -5,7 +5,7 @@ One scam site on the sites' domain can make Google flag the whole domain. The po
 ## Layers
 
 1. **Prevention:** blocked categories (`categories.md`), automatic checks of text and subdomain, human review of every site at first, payment before publishing.
-2. **Detection:** a "Denunciar este site" page and email in the footer of every site (a simple link), periodic checks of the subdomains and the domain against Google Safe Browsing (check the API's terms before relying on it), alerts on spikes (many new sites, AI cost).
+2. **Detection:** reports by email to `abuso@brotasites.com.br` (`NEXT_PUBLIC_ABUSE_EMAIL`, E28), listed in the Terms of Use ("O que não é permitido") with what to send (the site's address and the reason); later a "Denunciar este site" link in the footer of every site (a simple `mailto:` link, not built yet: it changes the templates), periodic checks of the subdomains and the domain against Google Safe Browsing (check the API's terms before relying on it), alerts on spikes (many new sites, AI cost).
 3. **Response:** a per-site "suspended" switch in the Worker, with a neutral page. Scams and brand imitation: immediate suspension. Unclear cases: 48 hours for the client to explain. Suspension for breaking the Terms gives no refund (legal text). A record of who ordered the site, the published content and the decisions, to answer authorities.
 
 ## Grace period

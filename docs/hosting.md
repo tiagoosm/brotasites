@@ -18,6 +18,13 @@ A single Cloudflare Worker serves every site (`apps/sites-worker`). Do not use "
 - **Batch rebuild:** when the template is fixed, regenerate every site from its JSON and locked identity, with a visual comparison, a gradual rollout and a quick rollback (not built yet).
 - **Locally:** `pnpm --filter @brotasites/sites-worker dev` runs the Worker in Miniflare with local R2 and KV; `test/local/miniflare.test.ts` does the same in CI.
 
+## Domains (E28)
+
+- **The rule:** the platform (`brotasites.com.br`, Vercel) and the client sites (`brotasites.com`, `BASE_DOMAIN`, this Worker) always on different registrable domains (`docs/security.md`, section 1). The team's area is `admin.brotasites.com.br` (`NEXT_PUBLIC_ADMIN_HOST`), on the platform's side.
+- **Hosts of the sites domain:** `<subdomain>.brotasites.com` (a client's site), `previa.brotasites.com` (previews and the .zip export), `clientes.brotasites.com` (the CNAME target of client domains). `www`, `admin`, `previa`, `clientes` and the other reserved names can never be a client's subdomain (`packages/schema/src/v1.2/reserved.ts`).
+- **The bare domain:** `brotasites.com` and `www.brotasites.com` redirect (301, path and query kept) to the platform's address, from the Worker's `PLATFORM_URL` variable. They need their own route besides `*.brotasites.com/*`: `brotasites.com/*` (and a proxied DNS record for the root).
+- **HSTS:** per address, set by the Worker (`withHsts` in `apps/sites-worker/src/index.ts`): with `includeSubDomains` on the sites domain, without it on a client's domain, never over HTTP or on workers.dev.
+
 ## Generation jobs and previews (built in E10)
 
 - **Queue:** Trigger.dev (decision in `docs/owner-steps.md`). The database is the source of truth: the platform's database functions (`request_directions`, `choose_direction`, `request_rebuild`, `server_approve`, `server_confirm_payment`) write a `jobs` row, then the platform triggers the `site-job` task of `apps/jobs` with the job id (`/api/jobs/start`, with `TRIGGER_SECRET_KEY`). The task claims the row (`claim_job`), so a job that is never triggered stays queued for the local runner (`pnpm --filter @brotasites/jobs dev:local`) or a later trigger. Each job is retried once, then the site goes to "needs attention".
