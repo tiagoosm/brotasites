@@ -93,23 +93,26 @@ export function SignUpForm() {
 
       <FormError message={error} />
 
-      <Field
-        label="Seu nome"
-        autoComplete="name"
-        value={fullName}
-        onChange={(event) => setFullName(event.target.value)}
-        error={fields.fullName}
-      />
-      <Field
-        label="E-mail"
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        placeholder="voce@exemplo.com"
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-        error={fields.email}
-      />
+      {/* Two columns from 768px (E26), so the whole card fits a laptop screen. */}
+      <div className="grid gap-6 md:grid-cols-2 md:gap-x-5 [@media(max-height:700px)]:gap-3">
+        <Field
+          label="Seu nome"
+          autoComplete="name"
+          value={fullName}
+          onChange={(event) => setFullName(event.target.value)}
+          error={fields.fullName}
+        />
+        <Field
+          label="E-mail"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder="voce@exemplo.com"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          error={fields.email}
+        />
+      </div>
       <PasswordField
         label="Senha"
         autoComplete="new-password"
@@ -146,29 +149,30 @@ export function SignUpForm() {
       <Captcha onToken={setCaptcha} resetKey={attempt} />
       {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
 
-      <Button
-        aria-busy={sending || undefined}
-        type="submit"
-        size="lg"
-        disabled={sending}
-        className="group"
-      >
-        {sending ? "Criando…" : "Criar conta"}
-        <ArrowRight
-          aria-hidden="true"
-          className="transition-transform duration-200 group-hover:translate-x-0.5"
-        />
-      </Button>
-
-      <p className="text-[0.9375rem] text-ink-soft">
-        Já tem conta?{" "}
-        <Link
-          href={`/entrar${back}`}
-          className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
+      <div className="grid gap-6 md:flex md:flex-row-reverse md:items-center md:justify-between">
+        <Button
+          aria-busy={sending || undefined}
+          type="submit"
+          size="lg"
+          disabled={sending}
+          className="group"
         >
-          Entrar
-        </Link>
-      </p>
+          {sending ? "Criando…" : "Criar conta"}
+          <ArrowRight
+            aria-hidden="true"
+            className="transition-transform duration-200 group-hover:translate-x-0.5"
+          />
+        </Button>
+        <p className="text-[0.9375rem] text-ink-soft">
+          Já tem conta?{" "}
+          <Link
+            href={`/entrar${back}`}
+            className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
+          >
+            Entrar
+          </Link>
+        </p>
+      </div>
     </form>
   );
 }

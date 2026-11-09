@@ -62,16 +62,6 @@ export function SignInForm() {
         <p className="text-[1.0625rem] text-ink-soft">
           Suas respostas e sites ficam guardados aqui.
         </p>
-        {/* The header's "Entrar ou cadastre-se" leads here: signing up is one tap away. */}
-        <p className="rounded-lg border border-leaf/30 bg-leaf/5 px-4 py-3 text-[0.9375rem]">
-          Ainda não tem conta?{" "}
-          <Link
-            href={`/cadastro${back}`}
-            className="touch-target font-semibold text-leaf-deep underline underline-offset-4"
-          >
-            Cadastre-se
-          </Link>
-        </p>
       </header>
 
       <FormError message={error} />
@@ -111,12 +101,25 @@ export function SignInForm() {
         />
       </Button>
 
-      <Link
-        href={`/esqueci-senha${back}`}
-        className="touch-target justify-self-start text-[0.9375rem] text-ink-soft underline-offset-4 hover:text-ink hover:underline"
-      >
-        Esqueci a senha
-      </Link>
+      {/* After the button (E26): the header's "Entrar ou cadastre-se" already leads here, and
+          signing up is one tap away. 24px apart, each keeps its own 44px area (Fitts). */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-6 text-[0.9375rem]">
+        <p className="text-ink-soft">
+          Ainda não tem conta?{" "}
+          <Link
+            href={`/cadastro${back}`}
+            className="touch-target font-semibold text-leaf-deep underline underline-offset-4"
+          >
+            Cadastre-se
+          </Link>
+        </p>
+        <Link
+          href={`/esqueci-senha${back}`}
+          className="touch-target text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+        >
+          Esqueci a senha
+        </Link>
+      </div>
     </form>
   );
 }

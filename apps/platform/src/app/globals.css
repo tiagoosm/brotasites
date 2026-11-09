@@ -20,6 +20,11 @@
   --leaf-wash: #e2efe4;
   --stem: #2f5d45;
   --pollen: #e2b23c;
+  /* The morning light behind the account cards (E26): pollen and a firm leaf green. */
+  --morning-pollen: var(--pollen);
+  --morning-leaf: #7fb98c;
+  /* The compact footer of the account pages: the card's page leaves room for it (E26). */
+  --auth-footer: 4.5rem;
   --danger: #b42318;
 
   /* Motion language, shared by every animation on the platform. Two curves: a soft ease-out
@@ -906,5 +911,39 @@ html:has([data-wizard]) {
   45% {
     opacity: 0.5;
     scale: 1.35;
+  }
+}
+
+/* The morning light's static layer (morning-light.tsx, E26): a glow from the top right corner
+   with soft beams, from the colour tokens. Alone (no WebGL, reduced motion, before the script)
+   it carries the light; once the moving beams draw, it steps back under them. */
+.morning-glow {
+  background:
+    radial-gradient(
+      ellipse 75% 70% at 100% 0%,
+      color-mix(in oklab, var(--morning-pollen) 42%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 55% 60% at 88% 8%,
+      color-mix(in oklab, var(--morning-leaf) 30%, transparent),
+      transparent 72%
+    ),
+    repeating-conic-gradient(
+      from 192deg at 100% 0%,
+      color-mix(in oklab, var(--morning-pollen) 16%, transparent) 0deg 3.5deg,
+      transparent 3.5deg 10deg
+    );
+  mask-image: radial-gradient(ellipse 95% 90% at 100% 0%, #000 25%, transparent 85%);
+  transition: opacity 600ms var(--ease-out);
+}
+
+[data-morning-light]:has([data-lit]) .morning-glow {
+  opacity: 0.45;
+}
+
+@media (max-height: 700px) {
+  :root {
+    --auth-footer: 3rem;
   }
 }

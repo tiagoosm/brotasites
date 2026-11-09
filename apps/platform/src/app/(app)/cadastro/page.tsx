@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function SignUpPage() {
   return (
-    <AuthShell light>
+    <AuthShell light wide>
       <Suspense>
         <SignUpForm />
       </Suspense>

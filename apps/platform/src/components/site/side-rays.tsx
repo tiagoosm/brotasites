@@ -323,6 +323,8 @@ export default function SideRays({
       return;
     }
 
+    // Lit: the page's static stand-in glow (morning-light.tsx) steps back.
+    container.dataset.lit = "";
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const vao = gl.createVertexArray();
     const size = { width: 1, height: 1 };
@@ -498,6 +500,7 @@ export default function SideRays({
     return () => {
       cancelAnimationFrame(raf);
       wakeRef.current = null;
+      delete container.dataset.lit;
       resizeObserver.disconnect();
       intersection.disconnect();
       window.removeEventListener("pointermove", onPointerMove);

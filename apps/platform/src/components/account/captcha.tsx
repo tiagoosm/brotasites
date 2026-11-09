@@ -68,6 +68,9 @@ export function Captcha({
           language: "pt-br",
           theme: "light",
           size: "flexible",
+          // Shown only when Cloudflare needs a click: most people never see it, and the account
+          // cards keep fitting the screen (E26).
+          appearance: "interaction-only",
           callback: (token: string) => onTokenRef.current(token),
           "expired-callback": () => onTokenRef.current(undefined),
           "error-callback": () => onTokenRef.current(undefined),

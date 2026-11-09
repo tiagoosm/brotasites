@@ -33,10 +33,11 @@ export function SiteFooter({
   );
   if (compact) {
     return (
-      <footer className="border-t border-line bg-paper">
+      // Exactly --auth-footer tall, so the account card's page can leave room for it (E26).
+      <footer className="flex min-h-(--auth-footer) items-center border-t border-line bg-paper">
         <nav
           aria-label="Rodapé"
-          className="mx-auto flex max-w-6xl justify-center px-5 py-6 sm:px-8"
+          className="mx-auto flex w-full max-w-6xl justify-center px-5 sm:px-8"
         >
           {list}
         </nav>
