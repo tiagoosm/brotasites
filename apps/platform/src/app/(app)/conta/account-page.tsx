@@ -319,7 +319,7 @@ function PasswordSection({
     setSaved(null);
     setError(null);
     setReauth(false);
-    const problem = passwordProblem(password, { email: account.email, name: name });
+    const problem = passwordProblem(password);
     if (problem || password !== repeat) {
       setFields({
         ...(problem ? { password: problem } : {}),
@@ -382,6 +382,7 @@ function PasswordSection({
           value={password}
           onChange={setPassword}
           describedBy={checklistId}
+          meter={{ email: account.email, name }}
           error={fields.password}
         />
         <PasswordField
@@ -392,11 +393,7 @@ function PasswordSection({
           onChange={setRepeat}
           error={fields.confirmPassword}
         />
-        <PasswordChecklist
-          id={checklistId}
-          value={password}
-          owner={{ email: account.email, name: name }}
-        />
+        <PasswordChecklist id={checklistId} value={password} />
         {hasPassword && <Captcha onToken={setCaptcha} resetKey={attempt} />}
         {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
         <Button type="submit" size="lg" className="justify-self-start">

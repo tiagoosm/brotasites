@@ -165,7 +165,12 @@ test("Jakob and proximity: every field has a visible label, and errors sit under
         .map((id) => document.getElementById(id))
         .filter((el) => el?.textContent);
       if (errors.length === 0) return [`${field.id}: no error tied to it`];
-      const box = field.getBoundingClientRect();
+      // A checkbox's field is its row with the label beside it.
+      const anchor =
+        field instanceof HTMLInputElement && field.type === "checkbox"
+          ? (field.parentElement ?? field)
+          : field;
+      const box = anchor.getBoundingClientRect();
       return errors
         .map((error) => (error as HTMLElement).getBoundingClientRect())
         .filter((e) => e.top - box.bottom > 48 || e.bottom < box.top - 48)

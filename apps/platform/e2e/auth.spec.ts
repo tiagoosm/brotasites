@@ -26,10 +26,10 @@ test("signing up, confirming the email and landing on the form", async ({ page, 
   // The rules show next to each field.
   await page.getByLabel("Seu nome").fill("Zé da Padaria");
   await page.getByLabel("E-mail").fill(email);
-  await page.getByLabel("Senha", { exact: true }).fill("Senha@12345");
-  await page.getByLabel("Repita a senha").fill("Senha@12345");
+  await page.getByLabel("Senha", { exact: true }).fill("Senha@1");
+  await page.getByLabel("Repita a senha").fill("Senha@1");
   await page.getByRole("button", { name: "Criar conta" }).click();
-  await expect(page.getByText("Essa senha é muito comum. Escolha outra.").last()).toBeVisible();
+  await expect(page.getByText("Use pelo menos 8 caracteres.").last()).toBeVisible();
   await expect(
     page.getByText("Para criar a conta, aceite os Termos e a Política de Privacidade."),
   ).toBeVisible();

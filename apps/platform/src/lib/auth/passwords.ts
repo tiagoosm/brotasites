@@ -1,19 +1,20 @@
-// Password rules (docs/security.md, accounts; E26), the one place for the browser and the API.
-// To create or change a password, all five are required: 10 characters or more (128 at most), a
-// lowercase letter, an uppercase letter, a number and a symbol. And always: not one of the
-// passwords people use most (with the usual capital and number at the end), not a run or a
-// repetition, and not the person's email or name. The list is small and local on purpose: it
-// catches the obvious ones without a download; Supabase's leaked-password check (owner step)
-// catches the rest. Signing in with an older, weaker password still works (signInSchema).
+// Passwords (docs/security.md, accounts; E26, changed by the owner in E27), one place for the
+// browser and the API. The only requirement to create or change a password is its length: 8
+// characters or more (128 at most). Everything else only measures how strong it is: lowercase,
+// uppercase, numbers and symbols, its length, and whether it is a common password or holds the
+// person's email or name, which make it "Fraca". Signing in with any older password still works.
+// Supabase's leaked-password check (owner step) can still refuse a leaked one.
 
-export const PASSWORD_MIN = 10;
+export const PASSWORD_MIN = 8;
 export const PASSWORD_MAX = 128;
-/** From this length a password that meets every rule is "Forte". */
-export const PASSWORD_STRONG = 14;
+/** From this length a varied password is "Forte". */
+export const PASSWORD_STRONG = 12;
+/** From this length a password is "Forte" with only two kinds of character (a passphrase). */
+export const PASSPHRASE = 16;
 
-export type PasswordRule = "length" | "lower" | "upper" | "digit" | "symbol";
+export type PasswordHint = "lower" | "upper" | "digit" | "symbol";
 
-/** Who the password belongs to: neither may appear in it. */
+/** Who the password belongs to: either inside it makes it weak. */
 export interface PasswordOwner {
   email?: string | null;
   name?: string | null;
@@ -22,50 +23,32 @@ export interface PasswordOwner {
 /** Characters as people count them (an emoji is one), not UTF-16 units. */
 const count = (value: string) => [...value].length;
 
-/** The five rules, in the order of the checklist, with the text shown for each. */
-export const passwordRules: readonly {
-  id: PasswordRule;
+/** The one requirement, as the checklist shows it. */
+export const lengthRequirement = {
+  label: `${PASSWORD_MIN} caracteres`,
+  test: (value: string) => count(value) >= PASSWORD_MIN,
+};
+
+/** What makes a password stronger (never required), in the order of the checklist. */
+export const passwordHints: readonly {
+  id: PasswordHint;
   label: string;
-  /** What is missing, inside a sentence ("Inclua … e …"). */
-  missing: string;
   test: (value: string) => boolean;
 }[] = [
-  {
-    id: "length",
-    label: `${PASSWORD_MIN} caracteres ou mais`,
-    missing: `pelo menos ${PASSWORD_MIN} caracteres`,
-    test: (value) => count(value) >= PASSWORD_MIN,
-  },
-  {
-    id: "lower",
-    label: "Uma letra minúscula",
-    missing: "uma letra minúscula",
-    test: (value) => /\p{Ll}/u.test(value),
-  },
-  {
-    id: "upper",
-    label: "Uma letra maiúscula",
-    missing: "uma letra maiúscula",
-    test: (value) => /\p{Lu}/u.test(value),
-  },
-  {
-    id: "digit",
-    label: "Um número",
-    missing: "um número",
-    test: (value) => /\p{Nd}/u.test(value),
-  },
+  { id: "lower", label: "minúscula", test: (value) => /\p{Ll}/u.test(value) },
+  { id: "upper", label: "maiúscula", test: (value) => /\p{Lu}/u.test(value) },
+  { id: "digit", label: "número", test: (value) => /\p{Nd}/u.test(value) },
   {
     // Any symbol or punctuation, from any script: not a letter, a number or a space.
     id: "symbol",
-    label: "Um símbolo, como ! @ # ?",
-    missing: "um símbolo, como ! @ # ?",
+    label: "símbolo (! @ # ?)",
     test: (value) => /[^\p{L}\p{M}\p{N}\s]/u.test(value),
   },
 ];
 
-/** The rules a password does not meet yet, in checklist order. */
-export function missingRules(password: string): PasswordRule[] {
-  return passwordRules.filter((rule) => !rule.test(password)).map((rule) => rule.id);
+/** How many kinds of character the password has (0 to 4). */
+export function variety(password: string): number {
+  return passwordHints.filter((hint) => hint.test(password)).length;
 }
 
 // Whole passwords people use most, and the words behind them ("Senha@123", "Brasil2026!").
@@ -226,43 +209,38 @@ function nameParts(name: string | null | undefined): string[] {
     .filter((part) => part.length >= 4);
 }
 
-/** "a", "a e b", "a, b e c". */
-function joined(items: string[]): string {
-  if (items.length <= 1) return items.join("");
-  return `${items.slice(0, -1).join(", ")} e ${items.at(-1)}`;
+/** Why a password is refused (pt-BR, shown under the field), or null when it is fine. */
+export function passwordProblem(password: string): string | null {
+  if (count(password) > PASSWORD_MAX) return `Use até ${PASSWORD_MAX} caracteres.`;
+  if (count(password) < PASSWORD_MIN) return `Use pelo menos ${PASSWORD_MIN} caracteres.`;
+  return null;
 }
 
-/** Why a password is refused (pt-BR, shown under the field), or null when it is fine. */
-export function passwordProblem(password: string, owner: PasswordOwner = {}): string | null {
-  if (count(password) > PASSWORD_MAX) return `Use até ${PASSWORD_MAX} caracteres.`;
-  const missing = passwordRules.filter((rule) => !rule.test(password));
-  if (missing[0]?.id === "length") {
-    const others = missing.slice(1).map((rule) => rule.missing);
-    return others.length
-      ? `Use pelo menos ${PASSWORD_MIN} caracteres e inclua ${joined(others)}.`
-      : `Use pelo menos ${PASSWORD_MIN} caracteres.`;
-  }
-  if (missing.length) return `Inclua ${joined(missing.map((rule) => rule.missing))}.`;
-  if (isCommonPassword(password)) return "Essa senha é muito comum. Escolha outra.";
+/** A common password, or one that holds the person's email or name: never better than weak. */
+export function isGuessable(password: string, owner: PasswordOwner = {}): boolean {
+  if (isCommonPassword(password)) return true;
   const value = plain(password);
   const local = plain(owner.email?.split("@")[0] ?? "");
-  if (local.length >= 4 && value.includes(local)) return "Não use o seu e-mail na senha.";
-  if (nameParts(owner.name).some((part) => value.includes(part))) {
-    return "Não use o seu nome na senha.";
-  }
-  return null;
+  if (local.length >= 4 && value.includes(local)) return true;
+  return nameParts(owner.name).some((part) => value.includes(part));
 }
 
 export type Strength = "weak" | "good" | "strong";
 
 /**
- * Three levels, said in text: "Fraca" (a rule missing, or a common password), "Boa" (every rule,
- * 10 to 13 characters), "Forte" (every rule and 14 or more). A password that meets every rule
- * and is not common (nor the person's email or name) is never "Fraca".
+ * Three levels, said in text: "Fraca" (under 8 characters, common, with the email or the name,
+ * or short and plain), "Boa", "Forte" (12 or more with three kinds of character, or 16 or more
+ * with two). The four kinds only raise the level; none is required.
  */
 export function passwordStrength(password: string, owner: PasswordOwner = {}): Strength {
-  if (passwordProblem(password, owner)) return "weak";
-  return count(password) >= PASSWORD_STRONG ? "strong" : "good";
+  if (passwordProblem(password) || isGuessable(password, owner)) return "weak";
+  const length = count(password);
+  const kinds = variety(password);
+  if ((length >= PASSWORD_STRONG && kinds >= 3) || (length >= PASSPHRASE && kinds >= 2)) {
+    return "strong";
+  }
+  if (kinds >= 2 || length >= PASSWORD_STRONG) return "good";
+  return "weak";
 }
 
 export const strengthLabels: Record<Strength, string> = {

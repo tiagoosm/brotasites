@@ -9,12 +9,12 @@ import { Captcha } from "@/components/account/captcha";
 import { ErrorSummary, Field, FormError } from "@/components/account/field";
 import { PasswordChecklist, PasswordField } from "@/components/account/password-field";
 import { ResendConfirmation } from "@/components/account/resend-confirmation";
-import { TermsLinks } from "@/components/account/terms-links";
 import { Button } from "@/components/ui/button";
 import { suggestEmail } from "@/lib/auth/email-typos";
-import { missingRules } from "@/lib/auth/passwords";
+import { passwordProblem } from "@/lib/auth/passwords";
 import { emailSchema, fieldErrors, fullNameSchema, signUpSchema } from "@/lib/auth/schemas";
 import { safeNextPath } from "@/lib/supabase/env";
+import { cn } from "@/lib/utils";
 
 // Signing up (E15, E26): name and email, then the password and its confirmation, side by side
 // from 768px, with the checklist of the five rules under both. Name and email are checked when
@@ -28,6 +28,10 @@ const ids = {
   confirmPassword: "cadastro-repita",
   acceptTerms: "cadastro-termos",
 } as const;
+
+/** The terms' links inside the sentence: a fine underline, never heavy (E27). */
+const inlineLink =
+  "touch-target font-medium text-leaf-deep underline decoration-1 underline-offset-[3px] hover:decoration-2";
 
 const order: [string, string, string][] = [
   ["fullName", ids.fullName, "Seu nome"],
@@ -70,7 +74,7 @@ export function SignUpForm() {
   const confirmReady = confirm.length > 0 && (confirmTouched || confirm.length >= password.length);
   const matches = confirm === password;
   const confirmFeedback =
-    confirmReady && missingRules(password).length === 0
+    confirmReady && !passwordProblem(password)
       ? matches
         ? { text: "As senhas são iguais.", ok: true }
         : { text: "As senhas não são iguais.", ok: false }
@@ -129,7 +133,7 @@ export function SignUpForm() {
     return (
       <section aria-live="polite" className="grid gap-4">
         <MailCheck aria-hidden="true" className="size-9 text-leaf" strokeWidth={1.6} />
-        <h1 className="font-display text-[2.5rem] leading-[1.05]">Confira o seu e-mail</h1>
+        <h1 className="font-display text-[2rem] leading-[1.1]">Confira o seu e-mail</h1>
         <p className="text-[1.0625rem] text-ink-soft">
           Enviamos um link de confirmação para{" "}
           <strong className="font-semibold text-ink">{email.trim()}</strong>. Toque nele para
@@ -152,17 +156,18 @@ export function SignUpForm() {
   }
 
   return (
-    <form onSubmit={submit} noValidate className="grid gap-6">
-      <header className="grid gap-3">
-        <h1 className="font-display text-[2.5rem] leading-[1.05]">Crie a sua conta</h1>
+    <form onSubmit={submit} noValidate className="grid gap-7">
+      <header className="grid gap-2">
+        <h1 className="font-display text-[2rem] leading-[1.1]">Crie a sua conta</h1>
         <p className="text-[1.0625rem] text-ink-soft">É grátis. Seus sites ficam guardados nela.</p>
       </header>
 
       <ErrorSummary errors={summary} labels={order} />
       <FormError message={error} />
 
-      {/* Two columns from 768px (E26), so the whole card fits a laptop screen. */}
-      <div className="grid gap-6 md:grid-cols-2 md:gap-x-5 [@media(max-height:700px)]:gap-3">
+      {/* Two columns from 768px: name and email, then the password and its repetition, and
+          what makes the password stronger across both (E27). */}
+      <div className="grid gap-5 md:grid-cols-2 md:gap-x-6">
         <Field
           id={ids.fullName}
           label="Seu nome"
@@ -226,6 +231,7 @@ export function SignUpForm() {
           value={password}
           onChange={setPassword}
           describedBy={checklistId}
+          meter={{ email, name: fullName }}
           error={fields.password}
         />
         <PasswordField
@@ -239,59 +245,79 @@ export function SignUpForm() {
           }}
           onBlur={() => setConfirmTouched(true)}
           feedback={confirmFeedback}
+          note
           error={fields.confirmPassword}
         />
         <div className="md:col-span-2">
-          <PasswordChecklist id={checklistId} value={password} owner={{ email, name: fullName }} />
+          <PasswordChecklist id={checklistId} value={password} />
         </div>
-      </div>
-
-      <div className="grid gap-1.5">
-        <div className="flex items-start gap-3">
-          <input
-            id={ids.acceptTerms}
-            type="checkbox"
-            checked={accepted}
-            onChange={(event) => {
-              setAccepted(event.target.checked);
-              if (event.target.checked) setField("acceptTerms", undefined);
-            }}
-            aria-invalid={fields.acceptTerms ? true : undefined}
-            aria-describedby={fields.acceptTerms ? termsErrorId : undefined}
-            className="mt-0.5 size-6 shrink-0 accent-leaf"
-          />
-          <label htmlFor={ids.acceptTerms} className="text-[0.9375rem]">
-            Li e aceito os Termos de uso e a Política de Privacidade.
-          </label>
-        </div>
-        {fields.acceptTerms && (
-          <p id={termsErrorId} className="text-sm text-destructive">
-            {fields.acceptTerms}
-          </p>
-        )}
-        <TermsLinks />
       </div>
 
       <Captcha onToken={setCaptcha} resetKey={attempt} />
       {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
 
-      <div className="grid gap-6 md:flex md:flex-row-reverse md:items-center md:justify-between">
-        <Button aria-busy={sending || undefined} type="submit" size="lg" className="group">
+      {/* The card's footer (E27): the terms, in one sentence with its two links, and the button
+          beside them; "Já tem conta? Entrar" under the terms. One column on phones. */}
+      <div className="grid gap-5 border-t border-line pt-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-x-8">
+        <div className="grid gap-3">
+          <div className="flex items-start gap-3">
+            <input
+              id={ids.acceptTerms}
+              type="checkbox"
+              checked={accepted}
+              onChange={(event) => {
+                setAccepted(event.target.checked);
+                if (event.target.checked) setField("acceptTerms", undefined);
+              }}
+              aria-invalid={fields.acceptTerms ? true : undefined}
+              aria-describedby={fields.acceptTerms ? termsErrorId : undefined}
+              className="mt-2.5 size-6 shrink-0 accent-leaf"
+            />
+            {/* Lines 44px apart, so each link keeps its own 44px tap area wherever the
+                sentence wraps (Fitts, docs/ux-laws.md). */}
+            <label htmlFor={ids.acceptTerms} className="text-[0.9375rem] leading-[2.75rem]">
+              Li e aceito os{" "}
+              <Link href="/termos" target="_blank" className={inlineLink}>
+                Termos de uso
+              </Link>{" "}
+              e a{" "}
+              <Link
+                href="/privacidade"
+                target="_blank"
+                className={cn(inlineLink, "whitespace-nowrap")}
+              >
+                Política de Privacidade
+              </Link>
+              .
+            </label>
+          </div>
+          {fields.acceptTerms && (
+            <p id={termsErrorId} className="text-sm text-destructive">
+              {fields.acceptTerms}
+            </p>
+          )}
+          <p className="text-sm text-ink-soft md:order-last">
+            Já tem conta?{" "}
+            <Link
+              href={`/entrar${back}`}
+              className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
+            >
+              Entrar
+            </Link>
+          </p>
+        </div>
+        <Button
+          aria-busy={sending || undefined}
+          type="submit"
+          size="lg"
+          className="group w-full md:w-auto"
+        >
           {sending ? "Criando…" : "Criar conta"}
           <ArrowRight
             aria-hidden="true"
             className="transition-transform duration-200 group-hover:translate-x-0.5"
           />
         </Button>
-        <p className="text-[0.9375rem] text-ink-soft">
-          Já tem conta?{" "}
-          <Link
-            href={`/entrar${back}`}
-            className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
-          >
-            Entrar
-          </Link>
-        </p>
       </div>
     </form>
   );
