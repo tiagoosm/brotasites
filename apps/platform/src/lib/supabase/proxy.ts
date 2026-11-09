@@ -1,6 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
-import { type Hosts, readHosts } from "@/lib/domains/hosts";
 import { isVariantPath, publicVariantPath } from "@/lib/public-variant";
 import { contentSecurityPolicy, isAppPath, isPrivatePath, isProtectedPath } from "@/lib/server/csp";
 import { guardErrors, sameOrigin } from "@/lib/server/guard";
@@ -13,7 +12,7 @@ import { DEFAULT_NEXT, safeNextPath, supabaseEnv } from "./env";
  * own check is only for the interface), serves the public pages' visitor or signed-in variant,
  * and sets the CSP and the no-cache headers.
  */
-export async function updateSession(request: NextRequest, hosts: Hosts = readHosts(process.env)) {
+export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
   // The public pages' variants are reached only through their own addresses.
   if (isVariantPath(path)) {

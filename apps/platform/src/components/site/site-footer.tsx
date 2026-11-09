@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
+import { CONTACT_EMAIL } from "@/content/contact";
 import { LinkPending } from "./link-pending";
 import { footerLinks, memberLinks, signInLink } from "./nav";
 
@@ -59,6 +60,18 @@ export function SiteFooter({
           <p className="max-w-[28ch] text-[0.9375rem] text-ink-soft">
             5 passos e seu site pronto. Responda, escolha entre 3 visuais e publique.
           </p>
+          {/* One quiet line with the only contact channel (E28): an email, no form. */}
+          {CONTACT_EMAIL && (
+            <p className="text-[0.9375rem] text-ink-soft">
+              Fale com a gente:{" "}
+              <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="touch-target text-leaf-deep underline-offset-4 hover:underline"
+              >
+                {CONTACT_EMAIL}
+              </a>
+            </p>
+          )}
         </div>
         <nav aria-label="Rodapé">{list}</nav>
       </div>

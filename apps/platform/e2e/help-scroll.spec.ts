@@ -22,7 +22,7 @@ test("a topic of the help page is reached with the smooth scroll", async ({ page
         () => {},
       );
   }, 40);
-  await toc.getByRole("link", { name: "Não achou a resposta?" }).locator("visible=true").click();
+  await toc.getByRole("link", { name: "Fale com a gente" }).locator("visible=true").click();
   await expect(page.locator("#contato-titulo")).toBeFocused({ timeout: 5000 });
   clearInterval(sample);
   await expect(page).toHaveURL(/\/ajuda#contato$/);

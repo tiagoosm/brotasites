@@ -19,6 +19,10 @@ const serverEnv = {
   NEXT_PUBLIC_CAPTCHA_MODE: "simulated",
   NEXT_PUBLIC_PREVIEW_ORIGIN: "https://previa.sites.localhost",
   NEXT_PUBLIC_BASE_DOMAIN: "sites.localhost",
+  // Contact addresses as production would have them (E28), so the pages show them.
+  NEXT_PUBLIC_CONTACT_EMAIL: "contato@brotasites.com.br",
+  NEXT_PUBLIC_PRIVACY_EMAIL: "privacidade@brotasites.com.br",
+  NEXT_PUBLIC_ABUSE_EMAIL: "abuso@brotasites.com.br",
 };
 
 // Runs against a production build of the platform.

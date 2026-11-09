@@ -209,3 +209,32 @@ test("the vine decoration is there only with a mouse, never in the way", async (
   // Below the header, which stays on top of it.
   await expect(vine).toHaveCSS("z-index", "20");
 });
+
+test("the contact addresses: footer, Ajuda, Termos and Privacidade, email only (E28)", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const footer = page.getByRole("contentinfo");
+  await expect(footer.getByRole("link", { name: "contato@brotasites.com.br" })).toHaveAttribute(
+    "href",
+    "mailto:contato@brotasites.com.br",
+  );
+  await page.goto("/ajuda");
+  const help = page.locator("#contato");
+  await expect(help.getByRole("heading")).toHaveText("Fale com a gente");
+  await expect(help.getByRole("link", { name: "contato@brotasites.com.br" })).toBeVisible();
+  await page.goto("/privacidade");
+  await expect(
+    page.getByText("Contato para assuntos de privacidade: privacidade@brotasites.com.br."),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/acesso, correção ou exclusão.*privacidade@brotasites\.com\.br/),
+  ).toBeVisible();
+  await page.goto("/termos");
+  await expect(page.getByText(/Denuncie por e-mail para abuso@brotasites\.com\.br/)).toBeVisible();
+  await expect(
+    page.getByText("Contato: contato@brotasites.com.br.", { exact: false }),
+  ).toBeVisible();
+  // No contact form anywhere.
+  expect(await page.locator("form textarea").count()).toBe(0);
+});

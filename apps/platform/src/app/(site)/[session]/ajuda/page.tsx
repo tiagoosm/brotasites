@@ -46,7 +46,7 @@ export default function HelpPage() {
       }
       toc={[
         ...faqGroups.map((group) => ({ id: group.slug, label: group.title })),
-        { id: "contato", label: "Não achou a resposta?" },
+        { id: "contato", label: "Fale com a gente" },
       ]}
     >
       <script
@@ -60,21 +60,21 @@ export default function HelpPage() {
           <FaqAccordion items={group.items} />
         </ReadingSection>
       ))}
-      <ReadingSection id="contato" title="Não achou a resposta?">
+      <ReadingSection id="contato" title="Fale com a gente">
         <p className="text-ink-soft">
           {CONTACT_EMAIL ? (
             <>
-              Escreva para{" "}
+              Não achou a resposta? Escreva para{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
+                className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
               >
                 {CONTACT_EMAIL}
               </a>
               .
             </>
           ) : (
-            <>Canal de contato {PENDING}.</>
+            <>Não achou a resposta? Canal de contato {PENDING}.</>
           )}
         </p>
       </ReadingSection>

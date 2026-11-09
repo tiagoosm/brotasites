@@ -36,7 +36,7 @@ export function LegalPage({
           {section.blocks.map((block) =>
             typeof block === "string" ? (
               <p key={block} className="text-[1.0625rem] leading-relaxed text-ink-soft">
-                {block}
+                <WithEmailLinks text={block} />
               </p>
             ) : (
               <ul
@@ -44,7 +44,9 @@ export function LegalPage({
                 className="grid list-disc gap-2 pl-5 text-[1.0625rem] leading-relaxed text-ink-soft marker:text-stem"
               >
                 {block.list.map((item) => (
-                  <li key={item}>{item}</li>
+                  <li key={item}>
+                    <WithEmailLinks text={item} />
+                  </li>
                 ))}
               </ul>
             ),
@@ -52,5 +54,27 @@ export function LegalPage({
         </ReadingSection>
       ))}
     </ReadingPage>
+  );
+}
+
+const EMAIL = /([a-z0-9._+-]+@[a-z0-9.-]+\.[a-z]{2,})/gi;
+
+/** The contact addresses in the legal text, as mailto links (E28). */
+function WithEmailLinks({ text }: { text: string }) {
+  const parts = text.split(EMAIL);
+  if (parts.length === 1) return text;
+  return parts.map((part, index) =>
+    index % 2 === 1 ? (
+      <a
+        // biome-ignore lint/suspicious/noArrayIndexKey: the parts of one fixed sentence
+        key={index}
+        href={`mailto:${part}`}
+        className="touch-target font-medium text-leaf-deep underline decoration-1 underline-offset-[3px] hover:decoration-2"
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    ),
   );
 }

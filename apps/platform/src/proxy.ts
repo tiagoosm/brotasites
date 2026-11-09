@@ -52,7 +52,7 @@ export async function proxy(request: NextRequest) {
       },
     });
   }
-  const response = await updateSession(request, hosts);
+  const response = await updateSession(request);
   if (route.admin) response.headers.set("x-robots-tag", "noindex, nofollow");
   return secure(request, response);
 }
