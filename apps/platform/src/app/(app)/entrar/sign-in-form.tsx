@@ -71,11 +71,22 @@ export function SignInForm() {
   }
 
   return (
-    <form onSubmit={submit} noValidate className="grid gap-6">
-      <header className="grid gap-3">
-        <h1 className="font-display text-[2.5rem] leading-[1.05]">Entre na sua conta</h1>
+    <form onSubmit={submit} noValidate className="grid gap-7">
+      <header className="grid gap-2">
+        <h1 className="font-display text-[2rem] leading-[1.1]">Entre na sua conta</h1>
         <p className="text-[1.0625rem] text-ink-soft">
           Suas respostas e sites ficam guardados aqui.
+        </p>
+        {/* Owner's request (E27): back to the note on top. The header's "Entrar ou
+            cadastre-se" leads here, so signing up is one tap away, before the fields. */}
+        <p className="mt-2 rounded-lg border border-leaf/30 bg-leaf/5 px-4 py-3 text-[0.9375rem]">
+          Ainda não tem conta?{" "}
+          <Link
+            href={`/cadastro${back}`}
+            className="touch-target font-semibold text-leaf-deep underline underline-offset-4"
+          >
+            Cadastre-se
+          </Link>
         </p>
       </header>
 
@@ -118,25 +129,12 @@ export function SignInForm() {
         />
       </Button>
 
-      {/* After the button (E26): the header's "Entrar ou cadastre-se" already leads here, and
-          signing up is one tap away. 24px apart, each keeps its own 44px area (Fitts). */}
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-6 text-[0.9375rem]">
-        <p className="text-ink-soft">
-          Ainda não tem conta?{" "}
-          <Link
-            href={`/cadastro${back}`}
-            className="touch-target font-semibold text-leaf-deep underline underline-offset-4"
-          >
-            Cadastre-se
-          </Link>
-        </p>
-        <Link
-          href={`/esqueci-senha${back}`}
-          className="touch-target text-ink-soft underline-offset-4 hover:text-ink hover:underline"
-        >
-          Esqueci a senha
-        </Link>
-      </div>
+      <Link
+        href={`/esqueci-senha${back}`}
+        className="touch-target justify-self-start text-[0.9375rem] text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+      >
+        Esqueci a senha
+      </Link>
     </form>
   );
 }

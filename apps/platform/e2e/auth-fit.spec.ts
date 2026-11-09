@@ -2,9 +2,13 @@ import { expect, test } from "@playwright/test";
 
 // The account pages fit (E26): on laptops and larger the header, the card and the compact footer
 // fit with no scroll; on short screens and phones the card is never cut and the page scrolls to
-// its end. The morning light stays visible around the card, behind it.
+// its end. The sign-up card keeps its full breathing room instead (owner, E27): at 1366×650 its
+// button is in view and the page scrolls a little to the card's end; at 1280×600 the button is
+// a short scroll away. The morning
+// light stays visible around the card, behind it.
 
 const pages = ["/entrar", "/cadastro", "/esqueci-senha", "/redefinir-senha"];
+const compact = pages.filter((path) => path !== "/cadastro");
 const laptops: [number, number][] = [
   [1366, 650],
   [1280, 600],
@@ -21,22 +25,53 @@ test.beforeEach(({}, info) => {
   test.skip(info.project.name !== "desktop", "each test sets its own screen sizes");
 });
 
-for (const path of pages) {
-  test(`${path} fits a laptop screen with no scroll`, async ({ page }) => {
+test("/cadastro keeps its room to breathe on a short laptop", async ({ page }) => {
+  for (const [width, height] of laptops) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/cadastro");
+    await expect(page.locator(".skeleton-screen")).toHaveCount(0);
+    const card = page.locator("[data-auth-card]");
+    await expect(card).toBeVisible();
+    const button = await page
+      .getByRole("button", { name: "Criar conta" })
+      .evaluate((element) => element.getBoundingClientRect().bottom);
+    if (height >= 650) expect(button, `${width}×${height}`).toBeLessThanOrEqual(height);
+    // Never squeezed: 52px fields and at least 32px between the header and the card.
+    const field = await page.getByLabel("Seu nome").evaluate((input) => input.clientHeight);
+    expect(field).toBeGreaterThanOrEqual(50);
+    const top = await card.evaluate((element) => element.getBoundingClientRect().top);
+    expect(top - 65, `${width}×${height}`).toBeGreaterThanOrEqual(32);
+    // Never cut: the page scrolls to the card's end.
+    await page.evaluate(() => window.scrollTo(0, document.scrollingElement?.scrollHeight ?? 0));
+    const bottom = await card.evaluate((element) => element.getBoundingClientRect().bottom);
+    expect(bottom, `${width}×${height}`).toBeLessThanOrEqual(height);
+  }
+});
+
+for (const path of compact) {
+  test(`${path} fits a laptop screen`, async ({ page }) => {
     for (const [width, height] of laptops) {
       await page.setViewportSize({ width, height });
       await page.goto(path);
       // A first load streams the page's skeleton first (loading.tsx); measure the page.
       await expect(page.locator(".skeleton-screen")).toHaveCount(0);
       await expect(page.locator("[data-auth-card]")).toBeVisible();
-      const { scroll, screen } = await page.evaluate(() => ({
+      const { scroll, screen, card } = await page.evaluate(() => ({
         scroll: document.scrollingElement?.scrollHeight ?? 0,
         screen: window.innerHeight,
+        card: document.querySelector("[data-auth-card]")?.getBoundingClientRect().bottom ?? 0,
       }));
-      expect(scroll, `${width}×${height}`).toBeLessThanOrEqual(screen);
+      // The whole card is always in view. Sign-in carries the "Cadastre-se" note on top again
+      // (owner, E27): at 1280×600 only the compact footer is a short scroll away.
+      expect(card, `${width}×${height}`).toBeLessThanOrEqual(screen);
+      if (path !== "/entrar" || height >= 650) {
+        expect(scroll, `${width}×${height}`).toBeLessThanOrEqual(screen);
+      }
     }
   });
+}
 
+for (const path of pages) {
   test(`${path} is never cut on smaller screens`, async ({ page }) => {
     for (const [width, height] of others) {
       await page.setViewportSize({ width, height });
