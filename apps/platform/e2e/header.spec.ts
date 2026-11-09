@@ -75,7 +75,7 @@ test.describe("the same header everywhere", () => {
   const memberPages = [
     "/",
     "/ajuda",
-    "/painel",
+    "/meus-sites",
     "/conta",
     `/meus-sites/${SITE}`,
     `/criar/${SITE}/negocio`,
@@ -94,7 +94,7 @@ test.describe("the same header everywhere", () => {
       await expect(create).toHaveClass(/specular-nav/);
       // No account links loose in the bar: they are in the profile menu.
       for (const name of [
-        "Painel",
+        "Meus sites",
         "Perfil e segurança",
         "Conta",
         "Entrar ou cadastre-se",
@@ -117,14 +117,14 @@ test("the first answer already has the right header (no flicker)", async ({ cont
   // Public pages: the signed-in variant, prerendered with the profile button.
   expect(await (await context.request.get("/ajuda")).text()).toContain('aria-haspopup="menu"');
   // Signed-in pages: the initials, read on the server.
-  const panel = await (await context.request.get("/painel")).text();
+  const panel = await (await context.request.get("/meus-sites")).text();
   expect(panel).toContain('aria-haspopup="menu"');
   expect(panel).toContain(">ÁÉ<");
 });
 
 test("the profile menu works with the keyboard", async ({ page, context, request }) => {
   await signedIn(context, request, person());
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   const button = profileButton(page);
   await expect(button).toHaveText("ZP");
   await expect(button).toHaveAttribute("aria-haspopup", "menu");
@@ -136,7 +136,7 @@ test("the profile menu works with the keyboard", async ({ page, context, request
   await expect(button).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByRole("menu")).toBeVisible();
   await expect(page.getByText("Zé da Padaria", { exact: true })).toBeVisible();
-  await expect(items).toHaveText(["Painel", "Criar meu site", "Perfil e segurança", "Sair"]);
+  await expect(items).toHaveText(["Meus sites", "Criar meu site", "Perfil e segurança", "Sair"]);
   await expect(items.first()).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(items.nth(1)).toBeFocused();
@@ -172,7 +172,7 @@ test("the profile menu works with the keyboard", async ({ page, context, request
 
 test("the team sees Área da equipe, others do not", async ({ page, context, request }) => {
   await signedIn(context, request, person(), { team: true });
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   await profileButton(page).click();
   await expect(page.getByRole("menuitem", { name: "Área da equipe" })).toHaveAttribute(
     "href",
@@ -187,10 +187,10 @@ test("the team sees Área da equipe, others do not", async ({ page, context, req
   await context.clearCookies();
   const other = person("Beto");
   await signedIn(context, request, other);
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   await profileButton(page).click();
   await expect(page.getByRole("menuitem")).toHaveText([
-    "Painel",
+    "Meus sites",
     "Criar meu site",
     "Perfil e segurança",
     "Sair",
@@ -203,7 +203,7 @@ test("signing out from the menu goes back to the visitor's header", async ({
   request,
 }) => {
   await signedIn(context, request, person());
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   await profileButton(page).click();
   await page.getByRole("menuitem", { name: "Sair" }).click();
   await expect(page).toHaveURL(/\/$/);
@@ -215,14 +215,14 @@ test("signing out from the menu goes back to the visitor's header", async ({
 test("on phones the sheet lists the links and the account", async ({ page, context, request }) => {
   test.skip(!isPhone(page), "The sheet exists only on phones");
   await signedIn(context, request, person(), { team: true });
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   await expect(profileButton(page)).toBeVisible();
   await banner(page).getByRole("button", { name: "Abrir menu" }).click();
   const sheet = page.getByRole("dialog", { name: "Menu" });
   // The account block, then "Criar meu site" as the sheet's main button (E18).
   await expect(sheet.getByRole("link")).toHaveText([
     ...middle,
-    "Painel",
+    "Meus sites",
     "Perfil e segurança",
     "Área da equipe",
     "Criar meu site",
@@ -265,7 +265,7 @@ test("the header passes axe with the profile menu open, without sideways scroll"
   await signedIn(context, request, person());
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 360, height: 760 });
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   await profileButton(page).click();
   await expect(page.getByRole("menu")).toBeVisible();
   const result = await new AxeBuilder({ page })

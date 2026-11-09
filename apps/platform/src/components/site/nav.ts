@@ -4,7 +4,7 @@
 // Links to the form, sign-in and account pages use prefetch={false}: those pages carry the
 // account and schema code, which the public pages should not download in advance.
 export const CREATE_HREF = "/criar";
-export const DASHBOARD_HREF = "/painel";
+export const DASHBOARD_HREF = "/meus-sites";
 export const ACCOUNT_HREF = "/conta";
 export const TEAM_HREF = "/admin";
 
@@ -32,7 +32,7 @@ export const signInLink: NavLink = {
 
 /** The profile menu ("Sair" is a form, after these). */
 export const memberLinks: readonly NavLink[] = [
-  { href: DASHBOARD_HREF, label: "Painel", account: true },
+  { href: DASHBOARD_HREF, label: "Meus sites", account: true },
   { href: CREATE_HREF, label: "Criar meu site", account: true },
   { href: ACCOUNT_HREF, label: "Perfil e segurança", account: true },
 ];

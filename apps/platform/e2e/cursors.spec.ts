@@ -17,7 +17,7 @@ import {
 
 const publicPages = ["/", "/ajuda", "/entrar", "/cadastro"];
 const signedInPages = [
-  "/painel",
+  "/meus-sites",
   `/meus-sites/${SITE}`,
   `/criar/${SITE}/negocio`,
   `/criar/${SITE}/marca`,
@@ -131,7 +131,7 @@ test("a working button shows progress, and a blocked one says why and shows it",
     },
   });
   await signIn(context, { user: { id, email: `cursor-${id.slice(0, 8)}@padariadoze.com.br` } });
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   // One unpaid site at a time (E24): "Criar outro site" is blocked, with the reason in text.
   const blocked = page.getByRole("button", { name: "Criar outro site" });
   await expect(blocked).toBeDisabled();

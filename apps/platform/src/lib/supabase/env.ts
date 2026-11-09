@@ -6,7 +6,7 @@ export function supabaseEnv(): { url: string; key: string } | null {
 }
 
 /** Where people land after signing in, signing up or confirming the email (E16). */
-export const DEFAULT_NEXT = "/painel";
+export const DEFAULT_NEXT = "/meus-sites";
 
 /**
  * Keeps redirects inside the platform ("/criar/123/marca"), never to another site: a path that

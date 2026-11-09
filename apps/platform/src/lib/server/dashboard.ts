@@ -1,7 +1,7 @@
 import type { DashboardSite, Notice, NoticeKind } from "@/lib/dashboard";
 import { getServerSupabase } from "@/lib/supabase/server";
 
-// Everything /painel shows, read on the server with the person's own session (RLS: only their
+// Everything /meus-sites shows, read on the server with the person's own session (RLS: only their
 // rows; never the secret key). One request per kind of data, all at once: no query per site.
 // Nothing admin-only is read (review notes, decision log, reviewer reports, catalog weights).
 

@@ -65,7 +65,7 @@ const screens: [string, string, Setup?][] = [
   ["cadastro", "/cadastro"],
   ["esqueci a senha", "/esqueci-senha"],
   ["página não encontrada", "/nao-existe"],
-  ["painel", "/painel", board],
+  ["meus sites", "/meus-sites", board],
   ["conta", "/conta", board],
   ["passo 1", `/criar/${SITE}/negocio`, site("draft", "negocio")],
   ["passo 3", `/criar/${SITE}/secoes`, site("draft", "secoes")],
@@ -127,7 +127,7 @@ test("Hick: the header has at most 5 links and the profile menu at most 5 items"
 }, info) => {
   test.skip(info.project.name !== "desktop", "the bar's links live in the phone menu");
   await board(page);
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   const nav = page.getByRole("banner").getByRole("navigation", { name: "Principal" });
   expect(await nav.getByRole("link").count()).toBeLessThanOrEqual(5);
   await page.getByRole("button", { name: /^Menu da conta/ }).click();
@@ -229,12 +229,12 @@ test("Gradient de meta: the form always shows how far along it is", async ({ pag
   ).toBeVisible();
 });
 
-test("Zeigarnik: an unfinished site waits on the dashboard, with where it stopped", async ({
+test("Zeigarnik: an unfinished site waits on Meus sites, with where it stopped", async ({
   page,
 }) => {
   await board(page);
-  await page.goto("/painel");
-  const pending = page.getByRole("region", { name: "Precisa de você" });
+  await page.goto("/meus-sites");
+  const pending = page.getByRole("list", { name: "Seus sites" });
   await expect(pending.getByText(/Continue de onde parou/)).toBeVisible();
   await expect(pending.getByRole("link", { name: /Continuar/ })).toHaveAttribute(
     "href",
@@ -247,8 +247,8 @@ test("Murphy: an unknown address answers 404 in Portuguese, with a way back", as
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Página não encontrada");
   await expect(page.getByRole("link", { name: "Ir para o início" })).toHaveAttribute("href", "/");
-  await expect(page.getByRole("link", { name: "Ir para o painel" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Ir para Meus sites" })).toHaveAttribute(
     "href",
-    "/painel",
+    "/meus-sites",
   );
 });

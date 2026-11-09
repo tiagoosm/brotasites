@@ -121,7 +121,7 @@ test("signing in is with the password only: no sign-in link by email", async ({
   expect((await mails(request, email)).map((mail) => mail.type)).not.toContain("magiclink");
 });
 
-test("without a page to go back to, signing in and confirming lead to the dashboard", async ({
+test("without a page to go back to, signing in and confirming lead to Meus sites", async ({
   page,
   request,
 }) => {
@@ -129,17 +129,17 @@ test("without a page to go back to, signing in and confirming lead to the dashbo
   const email = uniqueEmail("painel");
   await createUser(request, { email });
   await signInWithPassword(page, email);
-  await expect(page).toHaveURL(/\/painel$/);
-  await expect(page.getByRole("heading", { level: 2, name: "Seus sites" })).toBeVisible();
+  await expect(page).toHaveURL(/\/meus-sites$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Meus sites" })).toBeVisible();
   // Signed in, the sign-in and sign-up pages lead to the dashboard, on the server.
   await page.goto("/entrar");
-  await expect(page).toHaveURL(/\/painel$/);
+  await expect(page).toHaveURL(/\/meus-sites$/);
   await page.goto("/cadastro");
-  await expect(page).toHaveURL(/\/painel$/);
+  await expect(page).toHaveURL(/\/meus-sites$/);
   // The public pages show the account's menu, already in the server's HTML (no flicker).
   const home = await page.context().request.get("/");
   const html = await home.text();
-  expect(html).toContain(">Painel<");
+  expect(html).toContain(">Meus sites<");
   expect(html).toContain(">Perfil e segurança<");
   expect(html).not.toContain(">Entrar ou cadastre-se<");
   // Two pages under one address: never stored once for everyone by a shared cache.
@@ -157,13 +157,13 @@ test("without a page to go back to, signing in and confirming lead to the dashbo
   await page.getByRole("button", { name: "Criar conta" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Confira o seu e-mail");
   await page.goto(linkOf(await lastMail(request, fresh, "signup")));
-  await expect(page).toHaveURL(/\/painel$/);
+  await expect(page).toHaveURL(/\/meus-sites$/);
 
   // Signed out, the public pages offer to sign in, and the internal addresses do not exist.
   await page.context().clearCookies();
   const visitor = await (await page.context().request.get("/")).text();
   expect(visitor).toContain(">Entrar ou cadastre-se<");
-  expect(visitor).not.toContain(">Painel<");
+  expect(visitor).not.toContain(">Meus sites<");
   expect((await page.context().request.get("/logado")).status()).toBe(404);
   expect((await page.context().request.get("/visitante/ajuda")).status()).toBe(404);
 });
@@ -238,7 +238,7 @@ test("forgot and reset the password", async ({ page, request }) => {
   await expect(page.getByText("As senhas não são iguais.")).toBeVisible();
   await page.getByLabel("Repita a nova senha").fill("Cafe-com-leite-99");
   await page.getByRole("button", { name: "Salvar nova senha" }).click();
-  await expect(page).toHaveURL(/\/painel\?senha=alterada$/);
+  await expect(page).toHaveURL(/\/meus-sites\?senha=alterada$/);
 
   await page.context().clearCookies();
   await signInWithPassword(page, email, "Cafe-com-leite-99", "/conta");

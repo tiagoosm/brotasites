@@ -61,7 +61,7 @@ function Payment() {
         <p className="font-display text-[2.25rem] leading-none">{formatBRL(publishPrice())}</p>
         <ul className="grid list-disc gap-1.5 pl-5 text-[0.9375rem]">
           <li>{pricing.hostingMonths} meses de hospedagem</li>
-          <li>Ajustes pelo painel por {pricing.adjustmentsDays} dias depois de publicar</li>
+          <li>Ajustes em Meus sites por {pricing.adjustmentsDays} dias depois de publicar</li>
           <li>Uma cópia do site para baixar: o site é seu</li>
         </ul>
         <p className="text-sm text-ink-soft">

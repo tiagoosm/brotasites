@@ -86,7 +86,7 @@ export default function LimitsPage() {
           <Stat
             label="Apaga sites não pagos parados há"
             value={`${config.idleDaysBeforeDeletion} dias`}
-            note={`Avisos no painel ${config.deletionWarningDays.join(" e ")} ${config.deletionWarningDays.length > 1 ? "dias" : "dia"} antes.`}
+            note={`Avisos em Meus sites ${config.deletionWarningDays.join(" e ")} ${config.deletionWarningDays.length > 1 ? "dias" : "dia"} antes.`}
           />
           <Stat
             label="Orçamento diário de IA"

@@ -41,7 +41,7 @@ export function DiscardSite({
       await discardSite(siteId);
       if (onDone) onDone();
       else {
-        router.push("/painel");
+        router.push("/meus-sites");
         router.refresh();
       }
     } catch (caught) {

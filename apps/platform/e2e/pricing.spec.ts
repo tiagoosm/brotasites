@@ -9,7 +9,7 @@ test("the home page shows the one-time price and what it includes", async ({ pag
   await expect(section).toContainText(/R\$\s297/);
   await expect(section).toContainText("pagamento único");
   await expect(section).toContainText("12 meses de hospedagem");
-  await expect(section).toContainText("Ajustes pelo painel nos primeiros 30 dias");
+  await expect(section).toContainText("Ajustes em Meus sites nos primeiros 30 dias");
   await expect(section).toContainText(/R\$\s99 por ano/);
   // The client's own domain is included (2026-11-04): no price of its own anywhere.
   await expect(section).toContainText(

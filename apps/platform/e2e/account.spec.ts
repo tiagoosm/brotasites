@@ -123,8 +123,8 @@ test("deleting the account removes the sites and signs out", async ({ page, requ
   expect(calls.indexOf("POST /rest/v1/rpc/server_delete_account")).toBeLessThan(
     calls.indexOf(`DELETE /auth/v1/admin/users/${user.id}`),
   );
-  await page.goto("/painel");
-  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fpainel$/);
+  await page.goto("/meus-sites");
+  await expect(page).toHaveURL(/\/entrar\?voltar=%2Fmeus-sites$/);
   await signInWithPassword(page, email);
   await expect(page.getByRole("main").getByRole("alert")).toHaveText("E-mail ou senha incorretos.");
 });
@@ -135,7 +135,7 @@ test("without a confirmed email: the warning, and no payment on the server", asy
   request,
 }) => {
   await fakeSupabase(context, await signIn(context, { confirmed: false }));
-  await page.goto("/painel");
+  await page.goto("/meus-sites");
   await expect(page.getByRole("complementary", { name: "Confirmação do e-mail" })).toContainText(
     "Confirme o seu e-mail para ver as 3 direções e pagar.",
   );

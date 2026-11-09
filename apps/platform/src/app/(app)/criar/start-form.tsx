@@ -53,7 +53,7 @@ export function StartForm() {
         title="Você já tem um site em andamento"
         text={siteSlotCopy.blocked}
         action={{
-          href: blocked.siteId ? `/meus-sites/${blocked.siteId}` : "/painel",
+          href: blocked.siteId ? `/meus-sites/${blocked.siteId}` : "/meus-sites",
           label: siteSlotCopy.openSite,
         }}
       />
@@ -64,7 +64,7 @@ export function StartForm() {
       <Notice
         title="Não foi possível começar"
         text="Algo falhou ao abrir o seu site. Atualize a página para tentar de novo."
-        action={{ href: "/painel", label: "Ir para o painel" }}
+        action={{ href: "/meus-sites", label: "Ir para Meus sites" }}
       />
     );
   }

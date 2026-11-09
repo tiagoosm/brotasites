@@ -30,7 +30,7 @@ function Price() {
 export function PriceSection() {
   const included = [
     `${pricing.hostingMonths} meses de hospedagem`,
-    `Ajustes pelo painel nos primeiros ${pricing.adjustmentsDays} dias`,
+    `Ajustes em Meus sites nos primeiros ${pricing.adjustmentsDays} dias`,
     "O site é seu: baixe quando quiser",
     ...(pricing.customDomainIncluded ? [customDomainNote] : []),
   ];

@@ -25,7 +25,7 @@ test("the signed-in pages turn people away on the server", async ({ request }) =
     "/criar": "/cadastro?voltar=%2Fcriar",
     "/criar/7d1c1a52-2f0e-4c39-9a35-6b1f4a8e2c10/negocio":
       "/entrar?voltar=%2Fcriar%2F7d1c1a52-2f0e-4c39-9a35-6b1f4a8e2c10%2Fnegocio",
-    "/painel": "/entrar?voltar=%2Fpainel",
+    "/meus-sites": "/entrar?voltar=%2Fmeus-sites",
     "/meus-sites/x": "/entrar?voltar=%2Fmeus-sites%2Fx",
     "/conta": "/entrar?voltar=%2Fconta",
     "/admin": "/entrar?voltar=%2Fadmin",

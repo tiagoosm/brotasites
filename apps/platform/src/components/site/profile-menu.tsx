@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { accountItems, type HeaderSession } from "./nav";
 
 // The profile button and its menu (E17): the person's initials (or a person icon), and a menu
-// with who is signed in, Painel, Criar meu site, Perfil e segurança, Área da equipe (team only) and
+// with who is signed in, Meus sites, Criar meu site, Perfil e segurança, Área da equipe (team only) and
 // Sair. Menu-button pattern of the ARIA practices: Enter, Space or arrows open it on the first
 // (or last) item, arrows move, Home/End jump, Escape closes back on the button, Tab and a click
 // outside close it.

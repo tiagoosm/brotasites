@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { pricing } from "@/config/pricing";
 import {
+  accountNotices,
   addMonths,
   brazilDay,
   type DashboardSite,
@@ -8,10 +9,11 @@ import {
   milestones,
   noticeHref,
   noticeText,
-  pendingActions,
   resumeLabel,
   resumeStep,
   siteAction,
+  siteCard,
+  sortSites,
 } from "./dashboard";
 import { isVariantPath, publicVariantPath } from "./public-variant";
 import { statusInfo } from "./site-status";
@@ -72,38 +74,52 @@ describe("what publishing includes", () => {
   });
 });
 
-describe("pending actions", () => {
-  it("puts the most urgent first and says where a draft stopped", () => {
-    const actions = pendingActions({
-      emailConfirmed: false,
-      fullName: "",
-      sites: [
-        site({ id: "a", status: "draft", completed: ["negocio"] }),
-        site({ id: "b", status: "awaiting_approval" }),
-        site({ id: "c", status: "needs_attention", statusMessage: "Falta uma foto da fachada." }),
-        site({ id: "d", status: "awaiting_direction_choice" }),
-        site({ id: "e", status: "building" }),
-        site({ id: "f", status: "live" }),
-      ],
-    });
-    expect(actions.map((action) => action.key)).toEqual([
-      "email",
-      "site-c",
-      "site-d",
-      "site-b",
-      "site-a",
-      "profile",
+describe("each site's card (E26: what needs the person, inside its own card)", () => {
+  it("puts the sites waiting on the person first, most urgent first", () => {
+    const sorted = sortSites([
+      site({ id: "a", status: "draft", completed: ["negocio"] }),
+      site({ id: "b", status: "awaiting_approval" }),
+      site({ id: "c", status: "needs_attention", statusMessage: "Falta uma foto da fachada." }),
+      site({ id: "d", status: "awaiting_direction_choice" }),
+      site({ id: "e", status: "building", updatedAt: "2026-10-05T12:00:00Z" }),
+      site({ id: "f", status: "live" }),
     ]);
-    expect(actions[1]?.text).toBe("Falta uma foto da fachada.");
-    expect(actions[2]?.text).toBe(statusInfo.awaiting_direction_choice.text);
-    expect(actions[4]?.text).toBe("Continue de onde parou: passo 2 de 5 (Marca e sensação).");
-    expect(actions[4]?.href).toBe(`/criar/a/marca`);
+    expect(sorted.map((item) => item.id)).toEqual(["c", "d", "b", "a", "e", "f"]);
   });
 
-  it("is empty when everything is done", () => {
-    expect(
-      pendingActions({ emailConfirmed: true, fullName: "Zé", sites: [site({ status: "live" })] }),
-    ).toEqual([]);
+  it("gives each card a badge, a sentence and one action", () => {
+    const draft = siteCard(site({ id: "a", status: "draft", completed: ["negocio"] }));
+    expect(draft).toEqual({
+      badge: { label: "Sua vez", tone: "your-turn" },
+      sentence: "Continue de onde parou: passo 2 de 5 (Marca e sensação).",
+      action: { label: "Continuar", href: "/criar/a/marca" },
+      yourTurn: true,
+    });
+    expect(siteCard(site({ status: "awaiting_direction_choice" })).sentence).toBe(
+      "Escolha uma das 3 direções.",
+    );
+    const problem = siteCard(
+      site({ status: "needs_attention", statusMessage: "Falta uma foto da fachada." }),
+    );
+    expect(problem.badge).toEqual({ label: "Precisa de atenção", tone: "problem" });
+    expect(problem.sentence).toBe("Falta uma foto da fachada.");
+    expect(problem.action.label).toBe("Ver o que falta");
+    expect(siteCard(site({ status: "building" })).badge).toEqual({
+      label: "Gerando",
+      tone: "working",
+    });
+    expect(siteCard(site({ status: "building" })).yourTurn).toBe(false);
+    const live = siteCard(site({ status: "live" }));
+    expect(live.badge).toEqual({ label: "No ar", tone: "live" });
+    expect(live.sentence).toBe(statusInfo.live.text);
+  });
+
+  it("shows the account's notices only when there are some", () => {
+    expect(accountNotices({ emailConfirmed: false, fullName: "" }).map((n) => n.key)).toEqual([
+      "email",
+      "profile",
+    ]);
+    expect(accountNotices({ emailConfirmed: true, fullName: "Zé" })).toEqual([]);
   });
 });
 
@@ -158,7 +174,7 @@ describe("notices", () => {
 
   it("leads to the right page", () => {
     expect(noticeHref({ kind: "site_published", siteId: "abc" })).toBe("/meus-sites/abc");
-    expect(noticeHref({ kind: "email_confirmed", siteId: null })).toBe("/painel");
+    expect(noticeHref({ kind: "email_confirmed", siteId: null })).toBe("/meus-sites");
   });
 });
 
@@ -168,7 +184,7 @@ describe("public pages per session", () => {
     expect(publicVariantPath("/", true)).toBe("/logado");
     expect(publicVariantPath("/ajuda", true)).toBe("/logado/ajuda");
     expect(publicVariantPath("/ajuda/", false)).toBe("/visitante/ajuda");
-    expect(publicVariantPath("/painel", true)).toBeNull();
+    expect(publicVariantPath("/meus-sites", true)).toBeNull();
     expect(publicVariantPath("/conta", true)).toBeNull();
   });
 

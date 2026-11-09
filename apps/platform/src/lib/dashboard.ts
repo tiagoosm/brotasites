@@ -4,8 +4,10 @@ import { pricing } from "@/config/pricing";
 import { infoFor } from "./site-status";
 import { SITES_DOMAIN } from "./site-url";
 
-// The dashboard (/painel, E16): what needs the person, their sites and the notices. Pure
-// functions over what the server reads with the person's session; the page only renders them.
+// "Meus sites" (/meus-sites; the dashboard of E16, renamed in E26): the person's sites, each
+// card with its status, what it needs and its one action, the account's own notices, and the
+// in-site notices. Pure functions over what the server reads with the person's session; the
+// page only renders them.
 
 export interface DashboardSite {
   id: string;
@@ -196,68 +198,99 @@ export function formatDate(at: string): string {
   return formatDay(brazilDay(new Date(at)));
 }
 
-// What needs the person ------------------------------------------------------------------------
+// Each site's card (E26: what needs the person lives in its site's card) ----------------------
 
-export interface PendingAction {
-  key: string;
-  title: string;
-  text: string;
-  href?: string;
-  cta?: string;
-  /** The email's own banner (with the resend button) is shown instead of a link. */
-  email?: boolean;
-}
-
-/** Lower comes first. */
+/** Lower comes first: sites waiting on the person go up, most urgent first. */
 const urgency: Record<string, number> = {
   needs_attention: 1,
+  failed: 1,
   grace: 2,
   awaiting_direction_choice: 3,
   awaiting_approval: 4,
   draft: 5,
 };
 
-/** The pending actions, most urgent first. Texts come from statusInfo (lib/site-status.ts). */
-export function pendingActions(input: {
+export type BadgeTone = "your-turn" | "working" | "live" | "problem" | "quiet";
+
+export interface SiteCard {
+  /** The status as a badge: a coloured dot and a short label (the colour is never alone). */
+  badge: { label: string; tone: BadgeTone };
+  /** What is missing or what is happening, in one sentence. */
+  sentence: string;
+  /** The card's one main action. */
+  action: { label: string; href: string };
+  /** Waiting on the person: the card is highlighted (a side border and the badge). */
+  yourTurn: boolean;
+}
+
+function badgeFor(status: string): SiteCard["badge"] {
+  const info = infoFor(status);
+  if (status === "needs_attention" || status === "failed") {
+    return { label: "Precisa de atenção", tone: "problem" };
+  }
+  if (info.yourTurn) return { label: "Sua vez", tone: "your-turn" };
+  if (status === "in_review") return { label: "Em revisão", tone: "working" };
+  if (status === "publishing") return { label: "Publicando", tone: "working" };
+  if (info.busy) return { label: "Gerando", tone: "working" };
+  if (status === "live") return { label: "No ar", tone: "live" };
+  if (status === "suspended") return { label: "Suspenso", tone: "problem" };
+  return { label: info.label, tone: "quiet" };
+}
+
+/** Everything a site's card shows above its details. Texts come from lib/site-status.ts. */
+export function siteCard(site: DashboardSite): SiteCard {
+  const info = infoFor(site.status);
+  const badge = badgeFor(site.status);
+  const sentence =
+    site.status === "draft"
+      ? `Continue de onde parou: ${resumeLabel(site.completed)}.`
+      : site.status === "awaiting_direction_choice"
+        ? "Escolha uma das 3 direções."
+        : (site.status === "needs_attention" || site.status === "failed") && site.statusMessage
+          ? site.statusMessage
+          : info.text;
+  const action =
+    site.status === "needs_attention" || site.status === "failed"
+      ? { label: "Ver o que falta", href: siteHref(site.id) }
+      : siteAction(site);
+  return { badge, sentence, action, yourTurn: info.yourTurn || badge.tone === "problem" };
+}
+
+/** The sites, waiting on the person first (most urgent first), then the newest changes. */
+export function sortSites(sites: readonly DashboardSite[]): DashboardSite[] {
+  return [...sites].sort(
+    (a, b) =>
+      (urgency[a.status] ?? 99) - (urgency[b.status] ?? 99) ||
+      b.updatedAt.localeCompare(a.updatedAt),
+  );
+}
+
+export interface AccountNotice {
+  key: "email" | "profile";
+  title: string;
+  text: string;
+  href?: string;
+  cta?: string;
+}
+
+/**
+ * The account's own notices, shown as a quiet band above the list only when there is one
+ * (no "Tudo em dia"): confirming the email and completing the profile.
+ */
+export function accountNotices(input: {
   emailConfirmed: boolean;
   fullName: string;
-  sites: DashboardSite[];
-}): PendingAction[] {
-  const actions: PendingAction[] = [];
+}): AccountNotice[] {
+  const notices: AccountNotice[] = [];
   if (!input.emailConfirmed) {
-    actions.push({
+    notices.push({
       key: "email",
       title: "Confirme o seu e-mail",
       text: "Para ver as 3 direções e para pagar, toque no link que enviamos.",
-      email: true,
-    });
-  }
-  const sites = input.sites
-    .filter((site) => site.status in urgency)
-    .sort(
-      (a, b) =>
-        (urgency[a.status] as number) - (urgency[b.status] as number) ||
-        b.updatedAt.localeCompare(a.updatedAt),
-    );
-  for (const site of sites) {
-    const info = infoFor(site.status);
-    const action = siteAction(site);
-    const text =
-      site.status === "draft"
-        ? `Continue de onde parou: ${resumeLabel(site.completed)}.`
-        : site.status === "needs_attention" && site.statusMessage
-          ? site.statusMessage
-          : info.text;
-    actions.push({
-      key: `site-${site.id}`,
-      title: `${site.name}: ${info.label}`,
-      text,
-      href: site.status === "needs_attention" ? siteHref(site.id) : action.href,
-      cta: site.status === "needs_attention" ? "Ver o que falta" : action.label,
     });
   }
   if (!input.fullName.trim()) {
-    actions.push({
+    notices.push({
       key: "profile",
       title: "Complete o seu perfil",
       text: "Diga como podemos chamar você. O WhatsApp é opcional.",
@@ -265,7 +298,7 @@ export function pendingActions(input: {
       cta: "Completar perfil",
     });
   }
-  return actions;
+  return notices;
 }
 
 // Notices ------------------------------------------------------------------------------------------
@@ -322,5 +355,5 @@ export function noticeHref(notice: Pick<Notice, "kind" | "siteId">): string {
   if (notice.siteId && (notice.kind === "domain_active" || notice.kind === "domain_failed")) {
     return `${siteHref(notice.siteId)}#dominio`;
   }
-  return notice.siteId ? siteHref(notice.siteId) : "/painel";
+  return notice.siteId ? siteHref(notice.siteId) : "/meus-sites";
 }

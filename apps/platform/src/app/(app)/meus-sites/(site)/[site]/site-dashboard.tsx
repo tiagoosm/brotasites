@@ -123,7 +123,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
       <Notice
         title="Site não encontrado"
         text="Este site não está na sua conta. Confira se entrou com o mesmo e-mail."
-        action={{ href: "/painel", label: "Ir para o painel" }}
+        action={{ href: "/meus-sites", label: "Ir para Meus sites" }}
       />
     );
   }
@@ -147,10 +147,10 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
     <div className="grid gap-12">
       <header className="grid gap-3">
         <Link
-          href="/painel"
+          href="/meus-sites"
           className="touch-target justify-self-start text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
         >
-          ← Painel
+          ← Meus sites
         </Link>
         <h1 className="font-display text-[2.5rem] leading-[1.05] sm:text-[2.875rem]">{name}</h1>
         <div role="status" className="grid gap-1">

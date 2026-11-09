@@ -69,12 +69,12 @@ describe("what the header shows", () => {
 
   it("puts the account in the profile menu, and the team link only for the team", () => {
     expect(accountItems(false).map((link) => link.label)).toEqual([
-      "Painel",
+      "Meus sites",
       "Criar meu site",
       "Perfil e segurança",
     ]);
     expect(accountItems(true).map((link) => link.label)).toEqual([
-      "Painel",
+      "Meus sites",
       "Criar meu site",
       "Perfil e segurança",
       "Área da equipe",
@@ -84,7 +84,7 @@ describe("what the header shows", () => {
   it("reads the visible address of a prerendered public page", () => {
     expect(visiblePath("/visitante")).toBe("/");
     expect(visiblePath("/logado/ajuda")).toBe("/ajuda");
-    expect(visiblePath("/painel")).toBe("/painel");
+    expect(visiblePath("/meus-sites")).toBe("/meus-sites");
     expect(visiblePath("/logadox")).toBe("/logadox");
     expect(visiblePath(null)).toBe("/");
   });
