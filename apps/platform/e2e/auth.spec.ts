@@ -239,9 +239,9 @@ test("forgot and reset the password", async ({ page, request }) => {
   await expect(page.getByText("As senhas não são iguais.")).toBeVisible();
   await page.getByLabel("Repita a nova senha").fill("Cafe-com-leite-99");
   await page.getByRole("button", { name: "Salvar nova senha" }).click();
-  await expect(page).toHaveURL(/\/meus-sites\?senha=alterada$/);
-
-  await page.context().clearCookies();
+  // Every session ended (E30): sign in again with the new password.
+  await expect(page).toHaveURL(/\/entrar\?senha=alterada$/);
+  await expect(page.getByText("Senha alterada. Entre com a nova senha.")).toBeVisible();
   await signInWithPassword(page, email, "Cafe-com-leite-99", "/conta");
   await expect(page).toHaveURL(/\/conta$/);
 

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { formErrorOf, postJson } from "@/components/account/api";
 import { AuthShell } from "@/components/account/auth-shell";
 import { FormError } from "@/components/account/field";
@@ -13,10 +12,10 @@ import { passwordProblem } from "@/lib/auth/passwords";
 import { PASSWORDS_DIFFER } from "@/lib/auth/schemas";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 
-// After the "Esqueci a senha" link (/auth/confirm signed the person in): a new password. The
-// server accepts it only within minutes of that sign-in, then signs out the other devices.
+// After the "Esqueci a senha" link: a new password, in a restricted recovery session (E30,
+// lib/auth/recovery.ts) that only reaches this page. Saving ends every session, this one too,
+// and leads to sign in with the new password.
 export function ResetPasswordForm() {
-  const router = useRouter();
   const [email, setEmail] = useState<string | null | undefined>(undefined);
   const [password, setPassword] = useState("");
   const [repeat, setRepeat] = useState("");
@@ -24,6 +23,20 @@ export function ResetPasswordForm() {
   const [fields, setFields] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const checklistId = useId();
+
+  // Leaving without a new password ends the recovery session (E30): a page load is caught by
+  // the proxy; a move inside the app (a header link) is caught here.
+  const saved = useRef(false);
+  useEffect(() => {
+    const mountedAt = Date.now();
+    return () => {
+      // React's development double mount unmounts at once; a person leaving takes longer.
+      if (saved.current || Date.now() - mountedAt < 300) return;
+      const form = new FormData();
+      form.set("escopo", "local");
+      void fetch("/auth/sair", { method: "POST", body: form, keepalive: true }).catch(() => {});
+    };
+  }, []);
 
   useEffect(() => {
     getBrowserSupabase()
@@ -49,7 +62,10 @@ export function ResetPasswordForm() {
     const result = await postJson("/api/account/password", { password, confirmPassword: repeat });
     setSending(false);
     if (result.ok) {
-      router.replace("/meus-sites?senha=alterada");
+      saved.current = true;
+      // Every session ended with the change (E30): sign in again with the new password. A full
+      // load, so nothing of the recovery session stays in this page's memory.
+      window.location.assign("/entrar?senha=alterada");
       return;
     }
     setFields(result.data.fields ?? {});

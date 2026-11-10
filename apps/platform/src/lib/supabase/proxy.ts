@@ -1,5 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import {
+  allowedDuringRecovery,
+  RECOVERY_COOKIE,
+  type RecoveryClaims,
+  recoveryErrors,
+  recoveryState,
+} from "@/lib/auth/recovery";
 import { isVariantPath, publicVariantPath } from "@/lib/public-variant";
 import { contentSecurityPolicy, isAppPath, isPrivatePath, isProtectedPath } from "@/lib/server/csp";
 import { guardErrors, sameOrigin } from "@/lib/server/guard";
@@ -34,12 +41,15 @@ export async function updateSession(request: NextRequest) {
   if (nonce) requestHeaders.set("x-nonce", nonce);
   // The signed-in area's layout picks the footer of focus screens (sign in, sign up) by path.
   requestHeaders.set("x-pathname", path);
+  // Set below only for a recovery session (E30); never taken from the browser.
+  requestHeaders.delete("x-recovery");
 
   let response = NextResponse.next({ request: { headers: requestHeaders } });
   const pending: { name: string; value: string; options: Record<string, unknown> }[] = [];
   const pendingHeaders: Record<string, string> = {};
   const env = supabaseEnv();
   let signedIn = false;
+  let clearRecovery = false;
 
   if (env) {
     const supabase = createServerClient(env.url, env.key, {
@@ -66,6 +76,46 @@ export async function updateSession(request: NextRequest) {
     // Nothing may run between creating the client and getClaims(), or sessions break at random.
     const { data } = await supabase.auth.getClaims();
     signedIn = Boolean(data?.claims?.sub);
+
+    // The "Esqueci a senha" session is good only for choosing a new password (E30,
+    // lib/auth/recovery.ts), checked here for every page and route.
+    const marker = request.cookies.get(RECOVERY_COOKIE)?.value;
+    const recovery = signedIn
+      ? recoveryState(data?.claims as RecoveryClaims | undefined, marker)
+      : "none";
+    if (recovery === "active" && allowedDuringRecovery(path)) {
+      // The reset page shows the visitor's header: no profile menu, no "Criar meu site".
+      requestHeaders.set("x-recovery", "1");
+      response = NextResponse.next({ request: { headers: requestHeaders } });
+      for (const cookie of pending) response.cookies.set(cookie.name, cookie.value, cookie.options);
+    } else if (recovery === "active" && path.startsWith("/api/")) {
+      const refused = NextResponse.json(
+        { error: recoveryErrors.api },
+        { status: 403, headers: { "cache-control": "no-store" } },
+      );
+      for (const cookie of pending) refused.cookies.set(cookie.name, cookie.value, cookie.options);
+      return refused;
+    } else if (recovery === "active" && isProtectedPath(path)) {
+      const back = NextResponse.redirect(new URL("/redefinir-senha", request.url), { status: 307 });
+      for (const cookie of pending) back.cookies.set(cookie.name, cookie.value, cookie.options);
+      back.headers.set("cache-control", "no-store");
+      return back;
+    } else if (recovery !== "none") {
+      // Left the reset page, or past its 15 minutes: the recovery session ends here, and this
+      // page is served to a visitor. Only a page load ends it: the router's fetches (prefetches
+      // of the header's links, client-side moves) carry no sign of being prefetches here, so
+      // they get the visitor's page and leave the session; the reset page itself ends it when
+      // the person moves away inside the app (reset-password-form.tsx).
+      signedIn = false;
+      if (isPageLoad(request)) {
+        await supabase.auth.signOut({ scope: "local" });
+        clearRecovery = true;
+      }
+    } else if (marker) {
+      clearRecovery = true;
+    }
+  } else if (request.cookies.get(RECOVERY_COOKIE)) {
+    clearRecovery = true;
   }
 
   const variant = publicVariantPath(path, signedIn);
@@ -94,6 +144,7 @@ export async function updateSession(request: NextRequest) {
     response = keep(NextResponse.redirect(target, { status: 307 }));
   }
 
+  if (clearRecovery) response.cookies.delete(RECOVERY_COOKIE);
   response.headers.set("content-security-policy", csp);
   response.headers.set("x-content-type-options", "nosniff");
   response.headers.set("referrer-policy", "strict-origin-when-cross-origin");
@@ -103,4 +154,10 @@ export async function updateSession(request: NextRequest) {
     response.headers.set("x-robots-tag", "noindex");
   }
   return response;
+}
+
+/** A document load (typing an address, a link that reloads, a refresh), not a router fetch. */
+function isPageLoad(request: NextRequest): boolean {
+  const destination = request.headers.get("sec-fetch-dest");
+  return destination === null || destination === "document" || destination === "iframe";
 }

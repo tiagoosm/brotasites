@@ -1,5 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { RECOVERY_COOKIE, RECOVERY_SECONDS } from "@/lib/auth/recovery";
+import { isSecureRequest } from "@/lib/supabase/cookies";
 import { safeNextPath } from "@/lib/supabase/env";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -47,7 +49,23 @@ export async function GET(request: NextRequest) {
       : { error: new Error("missing token") };
   if (error) return failed;
 
-  if (type === "recovery") return NextResponse.redirect(`${origin}/redefinir-senha`);
+  if (type === "recovery") {
+    // A restricted recovery session (E30, lib/auth/recovery.ts): marked for 15 minutes with
+    // this session's id, alongside its own "recovery" sign-in method.
+    const { data } = await supabase.auth.getClaims();
+    const reset = NextResponse.redirect(`${origin}/redefinir-senha`);
+    const sessionId = (data?.claims as { session_id?: string } | undefined)?.session_id;
+    if (sessionId) {
+      reset.cookies.set(RECOVERY_COOKIE, sessionId, {
+        httpOnly: true,
+        secure: isSecureRequest(request.headers, request.url),
+        sameSite: "lax",
+        path: "/",
+        maxAge: RECOVERY_SECONDS,
+      });
+    }
+    return reset;
+  }
   if (type === "email_change") {
     // The new email is confirmed: other devices sign in again with it.
     await supabase.auth.signOut({ scope: "others" });
