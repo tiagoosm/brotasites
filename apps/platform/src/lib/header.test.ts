@@ -7,7 +7,10 @@ import {
   headerLinks,
   isAccountScreen,
   mainButton,
+  signInLink,
+  signUpLink,
   visiblePath,
+  visitorButtons,
   withoutCurrent,
 } from "@/components/site/nav";
 import { initialsOf } from "./initials";
@@ -71,6 +74,17 @@ describe("what the header shows", () => {
       "Perfil e segurança",
       "Área da equipe",
     ]);
+  });
+
+  it("offers the visitor Entrar and Criar conta, never the current screen (E30)", () => {
+    expect(signInLink).toMatchObject({ href: "/entrar", label: "Entrar" });
+    expect(signUpLink).toMatchObject({ href: "/cadastro", label: "Criar conta" });
+    expect(visitorButtons("/")).toEqual({ signIn: true, signUp: true });
+    expect(visitorButtons("/ajuda")).toEqual({ signIn: true, signUp: true });
+    expect(visitorButtons("/entrar")).toEqual({ signIn: false, signUp: true });
+    expect(visitorButtons("/cadastro")).toEqual({ signIn: true, signUp: false });
+    expect(visitorButtons("/esqueci-senha")).toEqual({ signIn: false, signUp: false });
+    expect(visitorButtons("/redefinir-senha")).toEqual({ signIn: false, signUp: false });
   });
 
   it("keeps the footer to what the header lacks, and menus off the current page (E29)", () => {

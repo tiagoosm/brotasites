@@ -30,7 +30,7 @@ export const headerLinks: readonly NavLink[] = [
   { href: "/ajuda", label: "Ajuda" },
 ];
 
-/** The sign-in, sign-up and password screens: "Entrar ou cadastre-se" is not offered on them. */
+/** The sign-in, sign-up and password screens (no footer, E30; the header offers only the other one). */
 export const ACCOUNT_SCREENS = ["/entrar", "/cadastro", "/esqueci-senha", "/redefinir-senha"];
 
 export function isAccountScreen(pathname: string): boolean {
@@ -42,12 +42,22 @@ export function withoutCurrent(links: readonly NavLink[], pathname: string): Nav
   return links.filter((link) => link.href !== pathname);
 }
 
-/** Signed out: one way in, to sign in or sign up ("/entrar" links to "/cadastro"). */
-export const signInLink: NavLink = {
-  href: "/entrar",
-  label: "Entrar ou cadastre-se",
-  account: true,
-};
+/**
+ * Signed out (E30): two clear ways in, "Entrar" (quiet, for people with an account) and "Criar
+ * conta" (the header's one highlight, for new people).
+ */
+export const signInLink: NavLink = { href: "/entrar", label: "Entrar", account: true };
+export const signUpLink: NavLink = { href: "/cadastro", label: "Criar conta", account: true };
+
+/**
+ * The visitor's buttons on a page: never the page the person is on (E29), and none on the
+ * password screens, whose forms carry their own way back (E30).
+ */
+export function visitorButtons(pathname: string): { signIn: boolean; signUp: boolean } {
+  const on = (screen: string) => pathname === screen || pathname.startsWith(`${screen}/`);
+  if (on("/esqueci-senha") || on("/redefinir-senha")) return { signIn: false, signUp: false };
+  return { signIn: !on("/entrar"), signUp: !on("/cadastro") };
+}
 
 /** The profile menu ("Sair" is a form, after these). */
 export const memberLinks: readonly NavLink[] = [
@@ -84,8 +94,8 @@ export function accountItems(team: boolean): readonly NavLink[] {
 
 /**
  * The main button on the right, signed in only. A visitor never sees "Criar meu site" in the
- * header (it only led to the sign-in page, E26): "Entrar ou cadastre-se" is their one way in,
- * and the home page keeps its own "Criar meu site" buttons in the hero and the sections.
+ * header (it only led to the sign-in page, E26): "Entrar" and "Criar conta" are their ways in
+ * (E30), and the home page keeps its own "Criar meu site" buttons in the hero and the sections.
  */
 export function mainButton(session: HeaderSession): NavLink | null {
   return session.signedIn ? { href: CREATE_HREF, label: "Criar meu site", account: true } : null;

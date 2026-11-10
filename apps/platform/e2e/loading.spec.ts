@@ -96,18 +96,18 @@ test.describe("a slow page answers at once", () => {
     test.skip(info.project.name !== "desktop", "the header's links are on the desktop");
   });
 
-  test("Entrar ou cadastre-se: the bar at once, the shell stays, no jump", async ({ page }) => {
+  test("Entrar: the bar at once, the shell stays, no jump", async ({ page }) => {
     await page.goto("/ajuda");
     await page.waitForLoadState("networkidle");
     // The pointer reaches the link first, as a person's does: its page's frame loads (prefetch
     // by intent), so the click shows the page's skeleton while the rest arrives.
-    await page.getByRole("banner").getByRole("link", { name: "Entrar ou cadastre-se" }).hover();
+    await page.getByRole("banner").getByRole("link", { name: "Entrar", exact: true }).hover();
     await page.waitForTimeout(800);
     await slowDown(page, /\/entrar(\?|$)/);
     await slowCpu(page);
     const result = await clickAndWatch(
       page,
-      () => page.getByRole("banner").getByRole("link", { name: "Entrar ou cadastre-se" }).click(),
+      () => page.getByRole("banner").getByRole("link", { name: "Entrar", exact: true }).click(),
       async () => {
         await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entre na sua conta");
         await page.waitForTimeout(300);
@@ -191,10 +191,10 @@ test.describe("a slow page answers at once", () => {
   test("while it loads, the skeleton passes axe and is announced once", async ({ page }) => {
     await page.goto("/ajuda");
     await page.waitForLoadState("networkidle");
-    await page.getByRole("banner").getByRole("link", { name: "Entrar ou cadastre-se" }).hover();
+    await page.getByRole("banner").getByRole("link", { name: "Entrar", exact: true }).hover();
     await page.waitForTimeout(800);
     await slowDown(page, /\/entrar(\?|$)/, 4000);
-    await page.getByRole("banner").getByRole("link", { name: "Entrar ou cadastre-se" }).click();
+    await page.getByRole("banner").getByRole("link", { name: "Entrar", exact: true }).click();
     const skeleton = page.locator(".skeleton-screen");
     await expect(skeleton).toBeVisible();
     await expect(page.getByRole("status").filter({ hasText: "Carregando…" })).toHaveCount(1);
@@ -209,7 +209,7 @@ test("a fast page never flashes a skeleton", async ({ page }, info) => {
   await page.goto("/ajuda");
   await page.waitForLoadState("networkidle");
   // Warm: the pointer reaches the link first (prefetch by intent), then the click.
-  const link = page.getByRole("banner").getByRole("link", { name: "Entrar ou cadastre-se" });
+  const link = page.getByRole("banner").getByRole("link", { name: "Entrar", exact: true });
   await link.hover();
   await page.waitForTimeout(500);
   await page.evaluate(() => {
@@ -235,10 +235,10 @@ test("with reduced motion the bar and the skeleton do not move", async ({ browse
   const page = await context.newPage();
   await page.goto("/ajuda");
   await page.waitForLoadState("networkidle");
-  await page.getByRole("banner").getByRole("link", { name: "Entrar ou cadastre-se" }).hover();
+  await page.getByRole("banner").getByRole("link", { name: "Entrar", exact: true }).hover();
   await page.waitForTimeout(800);
   await slowDown(page, /\/entrar(\?|$)/, 4000);
-  await page.getByRole("banner").getByRole("link", { name: "Entrar ou cadastre-se" }).click();
+  await page.getByRole("banner").getByRole("link", { name: "Entrar", exact: true }).click();
   await expect(page.locator(".skeleton-screen")).toBeVisible();
   const moving = await page.evaluate(
     () =>

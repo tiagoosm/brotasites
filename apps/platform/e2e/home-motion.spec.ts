@@ -46,16 +46,16 @@ async function nothingHiddenOnScreen(page: Page) {
   );
 }
 
-test("the header offers one way in, to sign in or sign up", async ({ page }) => {
+test("the header offers two ways in: Entrar and Criar conta (E30)", async ({ page }) => {
   await page.goto("/ajuda");
   if (isPhone(page)) {
     await page.getByRole("button", { name: "Abrir menu" }).click();
     await page
       .getByRole("dialog", { name: "Menu" })
-      .getByRole("link", { name: "Entrar ou cadastre-se" })
+      .getByRole("link", { name: "Entrar", exact: true })
       .click();
   } else {
-    await page.getByRole("banner").getByRole("link", { name: "Entrar ou cadastre-se" }).click();
+    await page.getByRole("banner").getByRole("link", { name: "Entrar", exact: true }).click();
   }
   await expect(page).toHaveURL(/\/entrar$/);
   await expect(page.getByText("Ainda não tem conta?")).toBeVisible();

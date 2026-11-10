@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Brand } from "@/components/brand";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { CreateSiteButton } from "./create-site-button";
 import { LinkPending, useIntentPrefetch } from "./link-pending";
 import {
@@ -15,10 +15,11 @@ import {
   currentLink,
   type HeaderSession,
   headerLinks,
-  isAccountScreen,
   mainButton,
   signInLink,
+  signUpLink,
   visiblePath,
+  visitorButtons,
   withoutCurrent,
 } from "./nav";
 import { ProfileMenu } from "./profile-menu";
@@ -26,10 +27,9 @@ import { SignOutButton } from "./sign-out";
 
 /**
  * The one header of every page (E17): the brand, the same three links (Como funciona, Preço,
- * Ajuda), and the account on the right: only "Entrar ou cadastre-se" signed out (E26: no "Criar
- * meu site" for visitors, on any page; E29: not on the sign-in, sign-up and password screens,
- * where the person already is, and the brand leads back), or "Criar meu site" and the profile
- * menu signed in. Who is signed in comes from the server (the
+ * Ajuda), and the account on the right. Signed out (E30): "Entrar" (quiet) and "Criar conta"
+ * (the one highlight), never the page the person is on and none on the password screens; never
+ * "Criar meu site" for visitors (E26). Signed in: "Criar meu site" and the profile menu. Who is signed in comes from the server (the
  * public page variant the proxy picked, or the session the signed-in pages read), never from
  * the browser, so nothing flickers. Up to 768px: the brand, the profile button and the menu.
  */
@@ -45,7 +45,7 @@ export function SiteHeader({
   const pathname = visiblePath(usePathname());
   const current = currentLink(pathname);
   const main = mainButton(session);
-  const onAccountScreen = isAccountScreen(pathname);
+  const visitor = visitorButtons(pathname);
 
   // Navigating closes the phone menu.
   useEffect(() => {
@@ -73,15 +73,25 @@ export function SiteHeader({
           ))}
         </nav>
         {/* A fixed width from 768px, signed in, out or still reading: the middle links never
-            move (E26). */}
-        <div className="ml-auto flex items-center justify-end gap-3 md:ml-0 md:w-48 lg:w-56 lg:gap-4">
+            move (E26). Wide enough for "Entrar" and "Criar conta" side by side (E30). */}
+        <div className="ml-auto flex items-center justify-end gap-2.5 md:ml-0 md:w-56 lg:w-64 lg:gap-3">
           {pending && (
             <span
               aria-hidden="true"
               className="skeleton-block hidden h-11 w-full rounded-full md:block"
             />
           )}
-          {!pending && !session.signedIn && !onAccountScreen && <SignInLink />}
+          {!pending && !session.signedIn && visitor.signIn && <SignInLink />}
+          {!pending && !session.signedIn && visitor.signUp && (
+            <CreateSiteButton
+              href={signUpLink.href}
+              size="nav"
+              arrow={false}
+              className="hidden whitespace-nowrap md:inline-flex"
+            >
+              {signUpLink.label}
+            </CreateSiteButton>
+          )}
           {!pending && main && (
             <CreateSiteButton
               href={main.href}
@@ -127,8 +137,8 @@ function PhoneMenu({
   onClose: () => void;
 }) {
   // The middle links, then the account signed in ("Criar meu site" is the main button at the
-  // bottom). Signed out, the main button at the bottom is "Entrar ou cadastre-se" (E26), once,
-  // and not on the account screens themselves (E29). Never the page the person is on.
+  // bottom). Signed out, the bottom holds "Criar conta" and "Entrar" (E30), each only away from
+  // its own screen and neither on the password screens. Never the page the person is on.
   const middle = withoutCurrent(headerLinks, pathname);
   const account = session.signedIn
     ? withoutCurrent(
@@ -139,7 +149,7 @@ function PhoneMenu({
       )
     : [];
   const links = [...middle, ...account];
-  const showSignIn = !session.signedIn && !isAccountScreen(pathname);
+  const visitor = visitorButtons(pathname);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -247,17 +257,33 @@ function PhoneMenu({
           style={{ "--item": links.length } as React.CSSProperties}
         />
       )}
-      {(session.signedIn || showSignIn) && (
+      {(session.signedIn || visitor.signIn || visitor.signUp) && (
         <div
-          className="phone-menu-item mt-auto grid shrink-0 pt-8"
+          className="phone-menu-item mt-auto grid shrink-0 gap-3 pt-8"
           style={{ "--item": links.length + 1 } as React.CSSProperties}
         >
           {session.signedIn ? (
             <CreateSiteButton onClick={onClose}>Criar meu site</CreateSiteButton>
           ) : (
-            <CreateSiteButton href={signInLink.href} onClick={onClose}>
-              {signInLink.label}
-            </CreateSiteButton>
+            <>
+              {/* E30: the highlight on top, the quiet one under it, both full width. */}
+              {visitor.signUp && (
+                <CreateSiteButton href={signUpLink.href} arrow={false} onClick={onClose}>
+                  {signUpLink.label}
+                </CreateSiteButton>
+              )}
+              {visitor.signIn && (
+                <Link
+                  href={signInLink.href}
+                  prefetch={false}
+                  onClick={onClose}
+                  className={buttonVariants({ variant: "outline", size: "lg" })}
+                >
+                  {signInLink.label}
+                  <LinkPending dot={false} />
+                </Link>
+              )}
+            </>
           )}
         </div>
       )}
@@ -266,7 +292,11 @@ function PhoneMenu({
   );
 }
 
-/** "Entrar ou cadastre-se": not prefetched from the public pages, but warmed up by intent. */
+/**
+ * "Entrar" (E30): a quiet pill, ink on paper with a soft wash on hover, the same height, radius,
+ * focus ring and press as "Criar conta" beside it; only the colour differs. Not prefetched from
+ * the public pages, but warmed up by intent.
+ */
 function SignInLink() {
   const intent = useIntentPrefetch(signInLink.href);
   return (
@@ -274,7 +304,7 @@ function SignInLink() {
       href={signInLink.href}
       prefetch={false}
       {...intent}
-      className="touch-target hidden text-[0.875rem] font-semibold whitespace-nowrap text-leaf-deep underline-offset-4 hover:underline md:inline-flex lg:text-[0.9375rem]"
+      className="relative hidden h-11 shrink-0 items-center rounded-full px-4 text-sm font-semibold whitespace-nowrap text-ink transition-[transform,background-color] duration-150 ease-out outline-none hover:bg-leaf-wash focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-[0.97] md:inline-flex lg:text-[0.9375rem]"
     >
       {signInLink.label}
       <LinkPending />

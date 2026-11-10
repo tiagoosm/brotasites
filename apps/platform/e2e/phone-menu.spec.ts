@@ -6,8 +6,9 @@ import { expect, type Page, test } from "@playwright/test";
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;
 // Signed out (E26): the four links, then the main button, the one way in (sign in or sign up).
 // Never "Criar meu site" for visitors: it only led to signing in.
-const items = ["Como funciona", "Preço", "Ajuda", "Entrar ou cadastre-se"];
-const MAIN = "Entrar ou cadastre-se";
+// E30: "Criar conta" (the highlight) on top, "Entrar" (outlined) under it.
+const items = ["Como funciona", "Preço", "Ajuda", "Criar conta", "Entrar"];
+const MAIN = "Entrar";
 
 async function openMenu(page: Page) {
   const button = page.getByRole("button", { name: "Abrir menu" });
@@ -52,6 +53,10 @@ test("it lists every part, then the main button, each easy to tap", async ({ pag
   await expect(menu.getByRole("link")).toHaveText(items);
   await expect(menu.getByRole("link", { name: "Criar meu site" })).toHaveCount(0);
   await expect(menu.getByRole("link", { name: MAIN })).toHaveAttribute("href", "/entrar");
+  await expect(menu.getByRole("link", { name: "Criar conta" })).toHaveAttribute(
+    "href",
+    "/cadastro",
+  );
   for (const link of await menu.getByRole("link").all()) {
     const box = await link.boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);

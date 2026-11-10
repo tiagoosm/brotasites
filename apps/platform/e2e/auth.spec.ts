@@ -141,7 +141,7 @@ test("without a page to go back to, signing in and confirming lead to Meus sites
   const html = await home.text();
   expect(html).toContain(">Meus sites<");
   expect(html).toContain(">Perfil e segurança<");
-  expect(html).not.toContain(">Entrar ou cadastre-se<");
+  expect(html).not.toMatch(/>Criar conta</);
   // Two pages under one address: never stored once for everyone by a shared cache.
   expect(home.headers()["cache-control"]).toBe("private, no-cache");
 
@@ -162,7 +162,8 @@ test("without a page to go back to, signing in and confirming lead to Meus sites
   // Signed out, the public pages offer to sign in, and the internal addresses do not exist.
   await page.context().clearCookies();
   const visitor = await (await page.context().request.get("/")).text();
-  expect(visitor).toContain(">Entrar ou cadastre-se<");
+  expect(visitor).toMatch(/>Entrar</);
+  expect(visitor).toMatch(/>Criar conta</);
   expect(visitor).not.toContain(">Meus sites<");
   expect((await page.context().request.get("/logado")).status()).toBe(404);
   expect((await page.context().request.get("/visitante/ajuda")).status()).toBe(404);
