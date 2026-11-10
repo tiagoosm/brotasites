@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
-import { postJson } from "@/components/account/api";
+import { formErrorOf, postJson } from "@/components/account/api";
 import { Captcha } from "@/components/account/captcha";
 import { Field, FormError } from "@/components/account/field";
 import { PasswordField } from "@/components/account/password-field";
@@ -66,7 +66,9 @@ export function SignInForm() {
       return;
     }
     setFields(result.data.fields ?? {});
-    setError(result.data.error ?? "Não foi possível entrar agora. Tente de novo em instantes.");
+    setError(
+      formErrorOf(result.data, "Não foi possível entrar agora. Tente de novo em instantes."),
+    );
     setUnconfirmed(Boolean((result.data as { unconfirmed?: boolean }).unconfirmed));
   }
 

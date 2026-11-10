@@ -9,11 +9,12 @@ import {
 } from "@playwright/test";
 import { SITE, SUPABASE, signIn } from "./support/supabase";
 
-// The one header of every page (E17): the same four links, only "Entrar ou cadastre-se" signed out
+// The one header of every page (E17): the same three links (E29: "Dúvidas" left), only "Entrar ou
+// cadastre-se" signed out, except on the sign-in and sign-up screens themselves
 // (E26: never "Criar meu site" for visitors), "Criar meu site" and the profile menu signed in,
 // decided on the server (no flicker).
 
-const middle = ["Como funciona", "Preço", "Dúvidas", "Ajuda"];
+const middle = ["Como funciona", "Preço", "Ajuda"];
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) <= 768;
 
 const person = (name = "Zé da Padaria") => {
@@ -38,7 +39,7 @@ const banner = (page: Page) => page.getByRole("banner");
 const profileButton = (page: Page) => banner(page).getByRole("button", { name: /^Menu da conta/ });
 
 test.describe("the same header everywhere", () => {
-  const visitorPages = ["/", "/ajuda", "/termos", "/privacidade", "/entrar", "/cadastro"];
+  const visitorPages = ["/", "/ajuda", "/termos", "/privacidade"];
   for (const path of visitorPages) {
     test(`signed out on ${path}`, async ({ page }) => {
       test.skip(isPhone(page), "The middle links live in the phone menu");
@@ -69,6 +70,31 @@ test.describe("the same header everywhere", () => {
         );
       }
       await expect(page.getByRole("link", { name: "Pular para o conteúdo" })).toHaveCount(1);
+    });
+  }
+
+  for (const path of ["/entrar", "/cadastro", "/esqueci-senha"]) {
+    test(`no "Entrar ou cadastre-se" on ${path}, where the person already is (E29)`, async ({
+      page,
+    }) => {
+      await page.goto(path);
+      await expect(banner(page).getByRole("link", { name: "BrotaSites" }).first()).toBeVisible();
+      if (isPhone(page)) {
+        const button = banner(page).getByRole("button", { name: "Abrir menu" });
+        const sheet = page.getByRole("dialog", { name: "Menu" });
+        await expect(async () => {
+          await button.click();
+          await expect(sheet).toBeVisible({ timeout: 1000 });
+        }).toPass();
+        await expect(sheet.getByRole("link", { name: "Entrar ou cadastre-se" })).toHaveCount(0);
+        await expect(sheet.getByRole("link", { name: "Ajuda" })).toBeVisible();
+      } else {
+        await expect(banner(page).getByRole("link", { name: "Entrar ou cadastre-se" })).toHaveCount(
+          0,
+        );
+        const nav = banner(page).getByRole("navigation", { name: "Principal" });
+        await expect(nav.getByRole("link")).toHaveText(middle);
+      }
     });
   }
 
@@ -136,7 +162,8 @@ test("the profile menu works with the keyboard", async ({ page, context, request
   await expect(button).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByRole("menu")).toBeVisible();
   await expect(page.getByText("Zé da Padaria", { exact: true })).toBeVisible();
-  await expect(items).toHaveText(["Meus sites", "Criar meu site", "Perfil e segurança", "Sair"]);
+  // On Meus sites, the menu leaves out Meus sites (E29: never the current page).
+  await expect(items).toHaveText(["Criar meu site", "Perfil e segurança", "Sair"]);
   await expect(items.first()).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(items.nth(1)).toBeFocused();
@@ -190,7 +217,6 @@ test("the team sees Área da equipe, others do not", async ({ page, context, req
   await page.goto("/meus-sites");
   await profileButton(page).click();
   await expect(page.getByRole("menuitem")).toHaveText([
-    "Meus sites",
     "Criar meu site",
     "Perfil e segurança",
     "Sair",
@@ -220,9 +246,9 @@ test("on phones the sheet lists the links and the account", async ({ page, conte
   await banner(page).getByRole("button", { name: "Abrir menu" }).click();
   const sheet = page.getByRole("dialog", { name: "Menu" });
   // The account block, then "Criar meu site" as the sheet's main button (E18).
+  // Never the page the person is on (E29): no "Meus sites" on Meus sites.
   await expect(sheet.getByRole("link")).toHaveText([
     ...middle,
-    "Meus sites",
     "Perfil e segurança",
     "Área da equipe",
     "Criar meu site",

@@ -105,13 +105,13 @@ test("the section links scroll smoothly there, with the title focused", async ({
         () => {},
       );
   }, 40);
-  await goToSection(page, "Dúvidas");
-  const title = page.locator("#duvidas-titulo");
+  await goToSection(page, "Preço");
+  const title = page.locator("#preco-titulo");
   await expect(title).toBeFocused({ timeout: 5000 });
   clearInterval(sample);
-  await expect(page).toHaveURL(/\/#duvidas$/);
+  await expect(page).toHaveURL(/\/#preco$/);
   // It stops right under the sticky header (the section's top at 64px).
-  const top = await page.locator("#duvidas").evaluate((el) => el.getBoundingClientRect().top);
+  const top = await page.locator("#preco").evaluate((el) => el.getBoundingClientRect().top);
   expect(Math.abs(top - 64)).toBeLessThanOrEqual(2);
   // Smooth: the window passed through positions on the way, it did not jump.
   const end = await page.evaluate(() => window.scrollY);
@@ -133,7 +133,7 @@ test("a wheel turn stops the smooth scroll at once", async ({ page }) => {
   test.skip(isPhone(page), "the wheel is a mouse's");
   await page.goto("/");
   await page.waitForLoadState("networkidle");
-  await goToSection(page, "Dúvidas");
+  await goToSection(page, "Preço");
   // Once the scroll is under way.
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   await page.mouse.wheel(0, 10);
@@ -141,7 +141,7 @@ test("a wheel turn stops the smooth scroll at once", async ({ page }) => {
   await page.waitForTimeout(900);
   // It stayed about where the wheel caught it, far from the section.
   expect(Math.abs((await page.evaluate(() => window.scrollY)) - stopped)).toBeLessThan(60);
-  await expect(page.locator("#duvidas-titulo")).not.toBeFocused();
+  await expect(page.locator("#preco-titulo")).not.toBeFocused();
 });
 
 test("with reduced motion the links jump and nothing is ever hidden", async ({ browser }) => {

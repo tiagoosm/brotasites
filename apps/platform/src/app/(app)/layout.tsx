@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AnchorScroll } from "@/components/site/anchor-scroll";
-import type { HeaderSession } from "@/components/site/nav";
+import { type HeaderSession, isAccountScreen } from "@/components/site/nav";
 import { NavigationProgress } from "@/components/site/navigation-progress";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
@@ -15,16 +15,14 @@ import { headerSession } from "@/lib/server/header-session";
 // the server, so the header's right side is right from its first render.
 //
 // The shell never waits (E26, Doherty): the header's brand and middle links, the page's own
-// waiting screen (each segment's loading.tsx) and the footer stream at once; only the account
-// side (the sign-in link, or "Criar meu site" and the profile button) waits for the session,
-// behind a placeholder of a fixed width, so nothing moves when it arrives.
-
-const FOCUS_SCREENS = ["/entrar", "/cadastro", "/esqueci-senha", "/redefinir-senha"];
+// waiting screen (each segment's loading.tsx) and the footer (no account link since E29) stream
+// at once; only the account side (the sign-in link, or "Criar meu site" and the profile button)
+// waits for the session, behind a placeholder of a fixed width, so nothing moves when it arrives.
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   await connection();
   const path = (await headers()).get("x-pathname") ?? "";
-  const focus = FOCUS_SCREENS.some((screen) => path === screen || path.startsWith(`${screen}/`));
+  const focus = isAccountScreen(path);
   // Started now, read inside the boundaries below: the page renders meanwhile.
   const session = headerSession();
   return (
@@ -37,9 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div id="conteudo" tabIndex={-1} className="outline-none">
         {children}
       </div>
-      <Suspense fallback={<SiteFooter signedIn={null} compact={focus} />}>
-        <SessionFooter session={session} compact={focus} />
-      </Suspense>
+      <SiteFooter compact={focus} />
       <AnchorScroll />
     </>
   );
@@ -47,14 +43,4 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
 async function SessionHeader({ session }: { session: Promise<HeaderSession> }) {
   return <SiteHeader session={await session} />;
-}
-
-async function SessionFooter({
-  session,
-  compact,
-}: {
-  session: Promise<HeaderSession>;
-  compact: boolean;
-}) {
-  return <SiteFooter signedIn={(await session).signedIn} compact={compact} />;
 }

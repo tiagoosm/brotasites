@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useId, useState } from "react";
 import { postJson } from "@/components/account/api";
 import { Captcha } from "@/components/account/captcha";
-import { ErrorSummary, Field, FormError } from "@/components/account/field";
+import { Field, FormError } from "@/components/account/field";
 import { PasswordChecklist, PasswordField } from "@/components/account/password-field";
 import { ResendConfirmation } from "@/components/account/resend-confirmation";
 import { Button } from "@/components/ui/button";
@@ -33,12 +33,13 @@ const ids = {
 const inlineLink =
   "touch-target font-medium text-leaf-deep underline decoration-1 underline-offset-[3px] hover:decoration-2";
 
-const order: [string, string, string][] = [
-  ["fullName", ids.fullName, "Seu nome"],
-  ["email", ids.email, "E-mail"],
-  ["password", ids.password, "Senha"],
-  ["confirmPassword", ids.confirmPassword, "Repita a senha"],
-  ["acceptTerms", ids.acceptTerms, "Termos"],
+/** The fields in the form's order: the first one with an error gets the focus. */
+const order: [key: string, id: string][] = [
+  ["fullName", ids.fullName],
+  ["email", ids.email],
+  ["password", ids.password],
+  ["confirmPassword", ids.confirmPassword],
+  ["acceptTerms", ids.acceptTerms],
 ];
 
 export function SignUpForm() {
@@ -60,7 +61,6 @@ export function SignUpForm() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
-  const [summary, setSummary] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
   const setField = (key: string, message: string | undefined) =>
@@ -80,9 +80,10 @@ export function SignUpForm() {
         : { text: "As senhas não são iguais.", ok: false }
       : null;
 
+  // Each error once, under its own field (E29: no summary repeating them at the top). Focus goes
+  // to the first one, whose error is read with it; each error is also announced (role="alert").
   function showErrors(found: Record<string, string>) {
     setFields(found);
-    setSummary(found);
     const first = order.find(([key]) => found[key]);
     if (first) document.getElementById(first[1])?.focus();
   }
@@ -105,7 +106,6 @@ export function SignUpForm() {
     }
     setSending(true);
     setFields({});
-    setSummary({});
     const result = await postJson("/api/auth/sign-up", {
       fullName,
       email,
@@ -122,7 +122,9 @@ export function SignUpForm() {
       return;
     }
     if (result.data.fields && Object.keys(result.data.fields).length) {
+      // The fields say what to fix: no general message on top repeating it.
       showErrors(result.data.fields);
+      return;
     }
     setError(
       result.data.error ?? "Não foi possível criar a conta agora. Tente de novo em instantes.",
@@ -162,7 +164,6 @@ export function SignUpForm() {
         <p className="text-[1.0625rem] text-ink-soft">É grátis. Seus sites ficam guardados nela.</p>
       </header>
 
-      <ErrorSummary errors={summary} labels={order} />
       <FormError message={error} />
 
       {/* Two columns from 768px: name and email, then the password and its repetition, and
@@ -277,22 +278,21 @@ export function SignUpForm() {
                 sentence wraps (Fitts, docs/ux-laws.md). */}
             <label htmlFor={ids.acceptTerms} className="text-[0.9375rem] leading-[2.75rem]">
               Li e aceito os{" "}
-              <Link href="/termos" target="_blank" className={inlineLink}>
+              <Link href="/termos" target="_blank" className={cn(inlineLink, "whitespace-nowrap")}>
                 Termos de uso
               </Link>{" "}
-              e a{" "}
-              <Link
-                href="/privacidade"
-                target="_blank"
-                className={cn(inlineLink, "whitespace-nowrap")}
-              >
-                Política de Privacidade
-              </Link>
-              .
+              {/* "e a" travels with the second link: never alone at the end of a line (E29). */}
+              <span className="whitespace-nowrap">
+                e a{" "}
+                <Link href="/privacidade" target="_blank" className={inlineLink}>
+                  Política de Privacidade
+                </Link>
+                .
+              </span>
             </label>
           </div>
           {fields.acceptTerms && (
-            <p id={termsErrorId} className="text-sm text-destructive">
+            <p id={termsErrorId} role="alert" className="text-sm text-destructive">
               {fields.acceptTerms}
             </p>
           )}

@@ -244,8 +244,15 @@ function SiteItem({ site }: { site: DashboardSite }) {
     >
       <div className="grid gap-2">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          {/* The name is the way to the site's page (E29: no separate "Detalhes" link). */}
           <h2 id={headingId} className="text-[1.25rem] font-semibold break-words">
-            {site.name}
+            <Link
+              href={detailsHref}
+              className="touch-target underline-offset-4 decoration-1 hover:text-leaf-deep hover:underline"
+            >
+              {site.name}
+              <LinkPending />
+            </Link>
           </h2>
           <p
             id={statusId}
@@ -261,7 +268,7 @@ function SiteItem({ site }: { site: DashboardSite }) {
         <p className="text-[0.9375rem] text-ink-soft">{card.sentence}</p>
       </div>
 
-      {/* 16px between rows: each link keeps its own 44px area under the button (Fitts). */}
+      {/* One action per card (E29): the site's address is the "Endereço" below, once. */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
         <Button asChild size="lg" variant={card.yourTurn ? "default" : "outline"}>
           <Link href={card.action.href}>
@@ -271,34 +278,14 @@ function SiteItem({ site }: { site: DashboardSite }) {
             <LinkPending dot={false} />
           </Link>
         </Button>
-        {card.action.href !== detailsHref && (
-          <Link
-            href={detailsHref}
-            className="touch-target text-[0.9375rem] font-semibold text-leaf-deep underline underline-offset-4"
-          >
-            Detalhes<span className="sr-only"> de {site.name}</span>
-            <LinkPending />
-          </Link>
-        )}
-        {site.status === "live" && address && (
-          <a
-            href={`https://${address}`}
-            target="_blank"
-            rel="noopener"
-            className="touch-target inline-flex items-center gap-1 text-[0.9375rem] font-semibold text-leaf-deep underline underline-offset-4"
-          >
-            Ver o site
-            <span className="sr-only">{site.name}</span>
-            <ExternalLink aria-hidden="true" className="size-4" />
-            <span className="sr-only">(abre em outra aba)</span>
-          </a>
-        )}
       </div>
 
       {/* The details, quieter, under the action: dates, what publishing included, the
           deletion date of an idle unpaid site, and discarding. */}
       <div className="grid gap-3 border-t border-line pt-4 text-[0.8125rem] text-ink-soft">
-        <p>Última mudança em {formatDate(site.updatedAt)}</p>
+        {/* The timeline says more than "Última mudança" (E29: one of the two); a site without
+            milestones still shows when it last changed. */}
+        {steps.length === 0 && <p>Última mudança em {formatDate(site.updatedAt)}</p>}
         {steps.length > 0 && (
           <ol aria-label="Linha do tempo" className="flex flex-wrap gap-x-4 gap-y-1">
             {steps.map((step) => (

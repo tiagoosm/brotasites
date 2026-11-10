@@ -5,8 +5,10 @@ import {
   footerLinks,
   type HeaderSession,
   headerLinks,
+  isAccountScreen,
   mainButton,
   visiblePath,
+  withoutCurrent,
 } from "@/components/site/nav";
 import { initialsOf } from "./initials";
 import { publicPages } from "./site-url";
@@ -43,19 +45,9 @@ describe("what the header shows", () => {
   };
   const unknown: HeaderSession = { signedIn: true, known: false };
 
-  it("always has the same four links in the middle", () => {
-    expect(headerLinks.map((link) => link.label)).toEqual([
-      "Como funciona",
-      "Preço",
-      "Dúvidas",
-      "Ajuda",
-    ]);
-    expect(headerLinks.map((link) => link.href)).toEqual([
-      "/#como-funciona",
-      "/#preco",
-      "/#duvidas",
-      "/ajuda",
-    ]);
+  it("always has the same three links in the middle (E29: no Dúvidas, Ajuda covers it)", () => {
+    expect(headerLinks.map((link) => link.label)).toEqual(["Como funciona", "Preço", "Ajuda"]);
+    expect(headerLinks.map((link) => link.href)).toEqual(["/#como-funciona", "/#preco", "/ajuda"]);
     expect(currentLink("/ajuda")).toBe("/ajuda");
     expect(currentLink("/")).toBeNull();
   });
@@ -78,6 +70,23 @@ describe("what the header shows", () => {
       "Criar meu site",
       "Perfil e segurança",
       "Área da equipe",
+    ]);
+  });
+
+  it("keeps the footer to what the header lacks, and menus off the current page (E29)", () => {
+    expect(footerLinks.map((link) => link.label)).toEqual(["Termos de uso", "Privacidade"]);
+    for (const screen of ["/entrar", "/cadastro", "/esqueci-senha", "/redefinir-senha"]) {
+      expect(isAccountScreen(screen)).toBe(true);
+    }
+    expect(isAccountScreen("/")).toBe(false);
+    expect(isAccountScreen("/entrarx")).toBe(false);
+    expect(withoutCurrent(accountItems(false), "/meus-sites").map((link) => link.label)).toEqual([
+      "Criar meu site",
+      "Perfil e segurança",
+    ]);
+    expect(withoutCurrent(headerLinks, "/ajuda").map((link) => link.label)).toEqual([
+      "Como funciona",
+      "Preço",
     ]);
   });
 
