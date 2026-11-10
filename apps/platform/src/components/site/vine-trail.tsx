@@ -2,9 +2,9 @@
 
 // A short vine that follows the mouse (E18, quieter in E31): one thin stem, about 140 px of
 // tail at most, with a fine tip at the cursor and a slight sway; it shrinks and is gone about
-// 0.4 s after the mouse stops. No leaves. The idea of a trail that follows the cursor came from
-// Ribbons by React Bits (https://reactbits.dev, MIT + Commons Clause); since E31 it is our own
-// 2D canvas drawing, measured lighter than the WebGL ribbons it replaced (see PLAN.md, E31).
+// 0.4 s after the mouse stops. No leaves. It grew from Ribbons by React Bits
+// (https://reactbits.dev, MIT + Commons Clause, see THIRD_PARTY_LICENSES.md); since E31 it is a
+// 2D canvas rewrite, measured lighter than the WebGL ribbons it replaced (see PLAN.md, E31).
 //
 // It only draws while the tail is visible, clears only the box it drew last, never reads the
 // layout on a frame (the content's boxes come from vine-avoid.ts), and stops on its own.
