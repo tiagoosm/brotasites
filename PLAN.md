@@ -32,6 +32,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E25 "5 passos" everywhere, the client's own domain included in the price, and the flow to connect it
 - [x] E26 Loading without freezing, account pages that fit the screen, strong passwords, a cleaner header, "Meus sites" and the right cursors
 - [x] E27 Polished sign-in and sign-up: a soft morning light, a card that breathes, 8 characters as the only password rule
+- [x] E28 The domains in code: one place for every address, the team's area on its own host, redirects, HSTS and the contact addresses
 
 ## Steps in detail
 
@@ -109,6 +110,15 @@ The same header and footer on every page (public pages, sign-in and password scr
 ### E18 Home page motion and navigation
 
 Every create-site button shares the specular finish, now a composited light eased once per frame (smooth where it stuttered). The header's sign-in link reads "Entrar ou cadastre-se". Section entrances repeat each time an element returns, with a cap on simultaneous entrances and an instant final state on jumps. The links to Como funciona, Preço and Dúvidas scroll smoothly there (also from other pages). The price card's glow turns slowly by itself and hands over to the mouse without jumps. The stem in "Como funciona" is one curved, tapering stroke with leaves that bud, grow and sway, ending in a bloom. The mouse vine roams the free space of the whole public page, kept off the content. All with reduced motion, no JavaScript and touch screens covered.
+
+### E28 The domains in code (owner's request of 2026-11-09)
+
+The platform on `brotasites.com.br`, the client sites on `brotasites.com`. Four commits, one PR (`step-28-dominio-no-codigo`); nothing configured or deployed (owner steps in `docs/owner-steps.md`, "Domains"):
+
+- **One place for the addresses:** `lib/domains/hosts.ts` reads the platform's address, the admin host, the sites' domain, the previews' origin and the contact emails from the environment; no domain written by hand in copy or templates; the client-domain check refuses the configured hosts; a production build on Vercel refuses missing addresses or the two on one registrable domain.
+- **The team's host:** with `NEXT_PUBLIC_ADMIN_HOST`, `/admin` moves to `admin.brotasites.com.br` for good, that host serves only the team's area and signing in, its session is separate (host-only cookie, aal2 kept), and without the variable nothing changes. Tested with a second e2e server.
+- **Redirects and headers:** `www.` and the old `brotasites.vercel.app` to the platform (not the cron and jobs calls), the bare sites domain to the platform from the Worker, HSTS in production only (without `includeSubDomains` on client domains, no preload).
+- **Contact:** `contato@`, `privacidade@` and `abuso@` in the footer, Ajuda, Termos and Privacidade; email only, no form.
 
 ### E27 Polished sign-in and sign-up (owner's requests of 2026-11-09)
 

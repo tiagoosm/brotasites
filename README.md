@@ -18,7 +18,7 @@ The platform (`apps/platform`) runs on Vercel, project `brotasites`, linked to t
 2. A job draws 3 art directions with the deterministic identity engine and the AI art director; the client picks one on the site's page, reached from the dashboard (or asks for 3 more). Choosing locks the identity.
 3. Another job builds the site: the answers become one configuration JSON (Zod schema 1.2), the AI (Claude) rewrites the text without inventing facts, the reviewer checks it, and a private preview goes up.
 4. After a person's review, the client sees the finished site at a private address, asks for changes or approves, and pays once to publish.
-5. The site is uploaded to Cloudflare R2 and served on the client sites' own domain (`BASE_DOMAIN`) by a single Cloudflare Worker.
+5. The site is uploaded to Cloudflare R2 and served on the client sites' own domain (`BASE_DOMAIN`, `brotasites.com` in production; the platform is on `brotasites.com.br`) by a single Cloudflare Worker.
 
 The product UI and the generated sites are in Brazilian Portuguese (pt-BR).
 
@@ -110,7 +110,7 @@ pnpm --filter @brotasites/reviewer calibrate
 
 ## Admin panel
 
-`/admin` is for the BrotaSites team only (people in the `admins` table, added by the owner; see `docs/owner-steps.md`). The review queue shows the sites waiting for a person (in review, needing attention, suspended). A site's page shows the finished site, the reviewer's findings, the client's answers and the history, and records the decision: approve for the client, ask for changes (the note goes to the copy step), suspend with a reason, or lift a suspension. Every decision is logged and the log cannot be rewritten. `/admin/catalogo` shows the metrics per composition and per variant, marks compositions and variants as recommended or retired, and records requests to the variant factory (`docs/catalog-promotion.md`). Since E24: `/admin/visao-geral` (funnel, abandoned sites, AI cost and the daily budget), `/admin/custos` (per day, task, model, site and account), `/admin/contas` (search and detail, each opening logged) and `/admin/limites` (the limits in force, a dry run of the cleanup and logged exceptions). Since E25 a published site can connect the client's own domain (included in the price): the site's page shows the DNS records, checks them and switches the main address; the team panel counts the client domains against the 100 Cloudflare includes. The limits themselves (3 free rounds of directions, then 1 per hour; 1 unpaid site in progress; idle unpaid sites deleted after 30 days) live in `apps/platform/src/config/limits.ts` and are enforced in the database.
+`/admin` is for the BrotaSites team only (in production on its own host, `admin.brotasites.com.br`, with its own session: `NEXT_PUBLIC_ADMIN_HOST`, E28) (people in the `admins` table, added by the owner; see `docs/owner-steps.md`). The review queue shows the sites waiting for a person (in review, needing attention, suspended). A site's page shows the finished site, the reviewer's findings, the client's answers and the history, and records the decision: approve for the client, ask for changes (the note goes to the copy step), suspend with a reason, or lift a suspension. Every decision is logged and the log cannot be rewritten. `/admin/catalogo` shows the metrics per composition and per variant, marks compositions and variants as recommended or retired, and records requests to the variant factory (`docs/catalog-promotion.md`). Since E24: `/admin/visao-geral` (funnel, abandoned sites, AI cost and the daily budget), `/admin/custos` (per day, task, model, site and account), `/admin/contas` (search and detail, each opening logged) and `/admin/limites` (the limits in force, a dry run of the cleanup and logged exceptions). Since E25 a published site can connect the client's own domain (included in the price): the site's page shows the DNS records, checks them and switches the main address; the team panel counts the client domains against the 100 Cloudflare includes. The limits themselves (3 free rounds of directions, then 1 per hour; 1 unpaid site in progress; idle unpaid sites deleted after 30 days) live in `apps/platform/src/config/limits.ts` and are enforced in the database.
 
 ## Blind test kit
 
@@ -146,7 +146,7 @@ Copy `.env.example` to `apps/platform/.env.local` and fill in `NEXT_PUBLIC_SUPAB
 
 Dashboard settings (Authentication):
 
-- **URL Configuration:** add `http://localhost:3000/**` (and later the production domain) to Redirect URLs.
+- **URL Configuration:** add `http://localhost:3000/**` (and later `https://brotasites.com.br/**` and `https://admin.brotasites.com.br/**`) to Redirect URLs.
 - **Email templates:** the three pt-BR templates of `docs/email-templates/` (confirmation, password reset, email change), which link to `/auth/confirm` with a `token_hash`, so the link also works when opened on another device. The rest of the Authentication settings are in `docs/owner-steps.md`, Accounts.
 - **SMTP:** the built-in sender is rate limited and meant for testing; production needs a custom SMTP provider.
 

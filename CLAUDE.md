@@ -68,7 +68,7 @@ Checked in the official docs on 2026-10-25 (USD, before taxes):
 | Client custom domains (Cloudflare for SaaS, on the `BASE_DOMAIN` zone) | 100 custom hostnames included, up to 50,000 | $0.10 per extra hostname/month |
 | Workers KV (site pointers and status) | to verify when implementing (E12) | to verify |
 
-- Client sites live on `BASE_DOMAIN` (decision of 2026-10-27), not on the platform's domain, so an abusive site cannot hurt the platform's reputation and platform cookies never reach client sites. `BASE_DOMAIN` is still to be chosen by the owner; use `sites.localhost` in development.
+- Client sites live on `BASE_DOMAIN` (decision of 2026-10-27), not on the platform's domain, so an abusive site cannot hurt the platform's reputation and platform cookies never reach client sites. The rule: the platform and the sites always on different registrable domains. Domains (E28): the platform on `brotasites.com.br` (team's area on `admin.brotasites.com.br`), the client sites on `brotasites.com`. Every address is read from the environment in `apps/platform/src/lib/domains/hosts.ts`; never write a domain by hand. Use `localhost` and `sites.localhost` in development.
 - One `*.BASE_DOMAIN/*` route covers every subdomain, so the per-zone limits on routes and custom domains do not grow with clients.
 - Move to Workers Paid before the sites near 100,000 requests per day: on Free, requests past the limit fail.
 
@@ -132,9 +132,8 @@ brotasites/
 
 - Job queue and AI model (steps E10 and E8, with checked options).
 - SMTP provider for the account emails (suggestion to verify: Resend).
-- `BASE_DOMAIN` for client sites.
 - Legal texts (Terms, Privacy, guarantee and refund) and invoicing: with a lawyer and an accountant.
 - Launch price: 197 or 297 (`launchPrice` in `pricing.ts`).
 - Asaas fees for Pix and card.
 - Repository visibility: the master plan assumes a private repository; it is currently public.
-- Registering `brotasites.com` (if not done yet) and the INPI check.
+- Registering `brotasites.com` (the sites' domain; `brotasites.com.br` is registered) and the INPI check.

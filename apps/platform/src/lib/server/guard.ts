@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import type { z } from "zod";
 import { fieldErrors } from "@/lib/auth/schemas";
+import { adminUrl, readHosts } from "@/lib/domains/hosts";
 
 // What every route that changes something checks first (docs/security.md, accounts): the
 // request comes from a page of the platform itself, as JSON, with a body that passes its
@@ -24,15 +25,20 @@ export const guardErrors = {
   unavailable: "Isso não está disponível agora. Tente de novo mais tarde.",
 } as const;
 
-/** The platform's own origins: the request's and NEXT_PUBLIC_PLATFORM_URL. */
+/**
+ * The platform's own origins: the request's (the host Vercel routed to this deployment), the
+ * platform's address and, when set, the team's host (E28). Nothing else.
+ */
 function allowedOrigins(request: Request): Set<string> {
   const origins = new Set([new URL(request.url).origin]);
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   const proto =
     request.headers.get("x-forwarded-proto") ?? new URL(request.url).protocol.replace(":", "");
   if (host) origins.add(`${proto}://${host}`);
-  const platform = process.env.NEXT_PUBLIC_PLATFORM_URL?.replace(/\/+$/, "");
-  if (platform) origins.add(platform);
+  const hosts = readHosts(process.env);
+  if (process.env.NEXT_PUBLIC_PLATFORM_URL) origins.add(new URL(hosts.platformUrl).origin);
+  const admin = adminUrl("", hosts);
+  if (admin.startsWith("http")) origins.add(new URL(admin).origin);
   return origins;
 }
 

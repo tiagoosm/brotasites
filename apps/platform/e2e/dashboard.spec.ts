@@ -361,6 +361,10 @@ test("the pulsing dot of a busy site stays the size of the dot", async ({
   await page.goto("/meus-sites");
   const dot = page.locator(".live-dot");
   await expect(dot).toHaveCount(1);
+  // Measured once laid out: while the page streams in (skeleton first), the dot is still in a
+  // hidden boundary and measures 0 x 0.
+  await expect(page.locator(".skeleton-screen")).toHaveCount(0);
+  await expect(dot).toBeVisible();
   const sizes = await dot.evaluate((element) => {
     const ring = getComputedStyle(element, "::after");
     const box = element.getBoundingClientRect();

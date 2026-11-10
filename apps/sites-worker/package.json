@@ -2,7 +2,7 @@
   "name": "@brotasites/sites-worker",
   "version": "0.0.0",
   "private": true,
-  "description": "Cloudflare Worker that serves every client site (<subdomain>.brotasites.com) from R2.",
+  "description": "Cloudflare Worker that serves every client site (<subdomain>.<BASE_DOMAIN>) from R2.",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",

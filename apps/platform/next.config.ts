@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import { assertProductionHosts } from "./src/lib/domains/hosts";
+
+// The platform and the client sites on different registrable domains, both set (E28,
+// docs/security.md): a production build or start with wrong addresses stops here, loudly.
+assertProductionHosts(process.env);
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,

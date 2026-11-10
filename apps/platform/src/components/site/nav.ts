@@ -1,3 +1,5 @@
+import { adminUrl } from "@/lib/domains/hosts";
+
 // The one header of every page (E17): the same four links in the middle, and on the right the
 // account (sign in, or the profile menu). Shared by the header, the phone menu and the footer.
 
@@ -6,7 +8,8 @@
 export const CREATE_HREF = "/criar";
 export const DASHBOARD_HREF = "/meus-sites";
 export const ACCOUNT_HREF = "/conta";
-export const TEAM_HREF = "/admin";
+/** The team's area: its own host in production (E28), /admin otherwise. */
+export const TEAM_HREF = adminUrl("/admin");
 
 export interface NavLink {
   href: string;

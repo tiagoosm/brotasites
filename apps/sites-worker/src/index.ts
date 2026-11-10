@@ -32,6 +32,11 @@ export interface Env {
   BASE_DOMAIN: string;
   /** Shared with the platform, which signs the export links. Without it, exports are off. */
   EXPORT_SECRET?: string;
+  /**
+   * The platform's address (https://brotasites.com.br, E28). Whoever types only the sites'
+   * domain (brotasites.com, www.brotasites.com) is sent there. Without it, those hosts get 404.
+   */
+  PLATFORM_URL?: string;
 }
 
 export type SiteState = "active" | "grace" | "suspended" | "offline";
@@ -368,38 +373,81 @@ export async function serveExport(env: Env, url: URL, pathname: string): Promise
   });
 }
 
+/**
+ * HSTS on the production addresses only (E28, docs/security.md): HTTPS responses on the sites'
+ * domain, with its subdomains; on a client's own domain without includeSubDomains, since the
+ * client's other subdomains are not ours to decide. Never on the testing address. No preload.
+ */
+export function withHsts(response: Response, url: URL, env: Env): Response {
+  if (url.protocol !== "https:" || isTestHost(url.hostname)) return response;
+  const host = url.hostname.toLowerCase();
+  const ours = host === env.BASE_DOMAIN || host.endsWith(`.${env.BASE_DOMAIN}`);
+  const value = ours ? "max-age=31536000; includeSubDomains" : "max-age=31536000";
+  const copy = new Response(response.body, response);
+  copy.headers.set("strict-transport-security", value);
+  return copy;
+  // (Before E28 every response carried "max-age=31536000; includeSubDomains", a client's own
+  // domain and plain HTTP included; securityHeaders no longer sets it.)
+}
+
+/** The sites' domain itself and its www: to the platform, path and query kept (301). */
+function platformRedirect(url: URL, env: Env): Response | null {
+  const host = url.hostname.toLowerCase();
+  if (host !== env.BASE_DOMAIN && host !== `www.${env.BASE_DOMAIN}`) return null;
+  let platform: URL;
+  try {
+    platform = new URL(env.PLATFORM_URL ?? "");
+  } catch {
+    return notFound();
+  }
+  return new Response(null, {
+    status: 301,
+    headers: {
+      location: `${platform.origin}${url.pathname}${url.search}`,
+      "cache-control": "public, max-age=3600",
+    },
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const preview = (pathname: string) =>
-      servePreview(request, env, pathname).then((response) => response ?? notFound());
-    if (request.method !== "GET" && request.method !== "HEAD") {
-      return new Response("Método não permitido.", {
-        status: 405,
-        headers: { allow: "GET, HEAD" },
-      });
-    }
     const url = new URL(request.url);
-    const previewOrExport = (pathname: string) =>
-      pathname.startsWith("/_export/") ? serveExport(env, url, pathname) : preview(pathname);
-    if (isTestHost(url.hostname)) {
-      if (url.pathname.startsWith(`/${PREVIEW_HOST}/`)) {
-        return previewOrExport(url.pathname.slice(PREVIEW_HOST.length + 1));
-      }
-      return servePathMode(request, env, url);
-    }
-    if (url.hostname === `${PREVIEW_HOST}.${env.BASE_DOMAIN}`) {
-      return previewOrExport(url.pathname);
-    }
-
-    // A client's site on the base domain, or on their own domain (Cloudflare for SaaS).
-    const host = url.hostname.toLowerCase();
-    const subdomain = siteFromHost(host, env.BASE_DOMAIN);
-    if (subdomain) return (await serveHost(request, env, subdomain, url, "base")) ?? notFound();
-    // An unknown host gets the same 404 as a missing page: nothing says which domains exist.
-    if (host.endsWith(`.${env.BASE_DOMAIN}`) || !HOST.test(host)) return notFound();
-    const mapped = parseDomainRecord(await env.HOSTING.get(`domain:${host}`));
-    if (!mapped) return notFound();
-    if (mapped.redirectTo) return moved(url, mapped.redirectTo);
-    return (await serveHost(request, env, mapped.subdomain, url, "domain")) ?? notFound();
+    return withHsts(await route(request, env, url), url, env);
   },
 } satisfies ExportedHandler<Env>;
+
+/** Everything the Worker answers, before the HSTS header. */
+async function route(request: Request, env: Env, url: URL): Promise<Response> {
+  const preview = (pathname: string) =>
+    servePreview(request, env, pathname).then((response) => response ?? notFound());
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return new Response("Método não permitido.", {
+      status: 405,
+      headers: { allow: "GET, HEAD" },
+    });
+  }
+  const previewOrExport = (pathname: string) =>
+    pathname.startsWith("/_export/") ? serveExport(env, url, pathname) : preview(pathname);
+  if (isTestHost(url.hostname)) {
+    if (url.pathname.startsWith(`/${PREVIEW_HOST}/`)) {
+      return previewOrExport(url.pathname.slice(PREVIEW_HOST.length + 1));
+    }
+    return servePathMode(request, env, url);
+  }
+  if (url.hostname === `${PREVIEW_HOST}.${env.BASE_DOMAIN}`) {
+    return previewOrExport(url.pathname);
+  }
+  const toPlatform = platformRedirect(url, env);
+  if (toPlatform) return toPlatform;
+
+  // A client's site on the base domain, or on their own domain (Cloudflare for SaaS).
+  const host = url.hostname.toLowerCase();
+  const subdomain = siteFromHost(host, env.BASE_DOMAIN);
+  if (subdomain) return (await serveHost(request, env, subdomain, url, "base")) ?? notFound();
+  // An unknown host gets the same 404 as a missing page: nothing says which domains exist.
+  if (host.endsWith(`.${env.BASE_DOMAIN}`) || !HOST.test(host)) return notFound();
+  const mapped = parseDomainRecord(await env.HOSTING.get(`domain:${host}`));
+  if (!mapped) return notFound();
+  if (mapped.redirectTo) return moved(url, mapped.redirectTo);
+  return (await serveHost(request, env, mapped.subdomain, url, "domain")) ?? notFound();
+}

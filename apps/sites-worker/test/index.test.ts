@@ -54,6 +54,7 @@ const values: Record<string, string> = {
 
 const env: Env = {
   BASE_DOMAIN: "brotasites.com",
+  PLATFORM_URL: "https://brotasites.com.br",
   EXPORT_SECRET: "segredo-de-teste",
   HOSTING: kv(values),
   SITES: bucket({
@@ -370,5 +371,48 @@ describe("hosting records in KV (E12)", () => {
       noSecret,
     );
     expect(off.status).toBe(403);
+  });
+});
+
+describe("the sites domain itself and HSTS (E28)", () => {
+  it("sends the bare domain and its www to the platform, path and query kept", async () => {
+    for (const host of ["brotasites.com", "www.brotasites.com"]) {
+      const response = await get(`https://${host}/precos?origem=cartao`);
+      expect(response.status, host).toBe(301);
+      expect(response.headers.get("location")).toBe(
+        "https://brotasites.com.br/precos?origem=cartao",
+      );
+    }
+    // Without the platform's address, nothing is said about the domain.
+    const off = await worker.fetch(new Request("https://brotasites.com/"), {
+      ...env,
+      PLATFORM_URL: undefined,
+    });
+    expect(off.status).toBe(404);
+  });
+
+  it("sends HSTS on the sites domain with its subdomains, and without them on a client's domain", async () => {
+    const site = await get("https://padaria-do-ze.brotasites.com/");
+    expect(site.headers.get("strict-transport-security")).toBe(
+      "max-age=31536000; includeSubDomains",
+    );
+    const apex = await get("https://brotasites.com/");
+    expect(apex.headers.get("strict-transport-security")).toBe(
+      "max-age=31536000; includeSubDomains",
+    );
+    const own = await get("https://www.oficinanova.com.br/");
+    expect(own.headers.get("strict-transport-security")).toBe("max-age=31536000");
+    expect(site.headers.get("strict-transport-security")).not.toContain("preload");
+  });
+
+  it("never sends HSTS over plain HTTP or on the testing address", async () => {
+    expect(
+      (await get("http://padaria-do-ze.brotasites.com/")).headers.get("strict-transport-security"),
+    ).toBeNull();
+    expect(
+      (await get("https://brotasites-sites.conta.workers.dev/padaria-do-ze/")).headers.get(
+        "strict-transport-security",
+      ),
+    ).toBeNull();
   });
 });

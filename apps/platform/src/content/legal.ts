@@ -1,6 +1,9 @@
 import { limits } from "@/config/limits";
 import { formatBRL, LEGAL_REVIEW_PENDING, pricing } from "@/config/pricing";
-import { PENDING } from "./contact";
+import { EXAMPLE_SITES_DOMAIN } from "@/lib/site-url";
+import { ABUSE_EMAIL, CONTACT_EMAIL, PENDING, PRIVACY_EMAIL } from "./contact";
+
+const privacyContact = PRIVACY_EMAIL ?? PENDING;
 
 // Prices and conditions come from src/config/pricing.ts; the limits from src/config/limits.ts.
 const idleDays = limits.idleDaysBeforeDeletion;
@@ -38,7 +41,7 @@ export const privacySections: LegalSection[] = [
     title: "Quem cuida dos seus dados",
     blocks: [
       "O BrotaSites é uma plataforma, ainda em desenvolvimento, para criar o site de um negócio em 5 passos.",
-      `Responsável pelo tratamento dos dados (controlador): ${PENDING}. Contato para assuntos de privacidade: ${PENDING}.`,
+      `Responsável pelo tratamento dos dados (controlador): ${PENDING}. Contato para assuntos de privacidade: ${privacyContact}.`,
     ],
   },
   {
@@ -133,7 +136,7 @@ export const privacySections: LegalSection[] = [
           "a informação sobre com quem compartilhamos os dados.",
         ],
       },
-      `Na página Conta você corrige seu nome e WhatsApp, troca o e-mail, baixa uma cópia dos seus dados e exclui a conta. Os outros pedidos são feitos pelo contato de privacidade (${PENDING}). Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).`,
+      `Na página Conta você corrige seu nome e WhatsApp, troca o e-mail, baixa uma cópia dos seus dados e exclui a conta. Para pedir acesso, correção ou exclusão de qualquer outro dado, ou para tirar dúvidas, escreva para ${privacyContact}. Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).`,
     ],
   },
   {
@@ -158,7 +161,7 @@ export const termsSections: LegalSection[] = [
     title: "Sobre estes termos",
     blocks: [
       "Estes termos explicam as regras para usar o BrotaSites. Ao usar a plataforma, você concorda com eles.",
-      `Responsável pelo serviço: ${PENDING}. Contato: ${PENDING}.`,
+      `Responsável pelo serviço: ${PENDING}. Contato: ${CONTACT_EMAIL ?? PENDING}.`,
     ],
   },
   {
@@ -180,10 +183,10 @@ export const termsSections: LegalSection[] = [
       `Texto ${LEGAL_REVIEW_PENDING}.`,
       {
         list: [
-          `O pagamento para publicar inclui ${pricing.hostingMonths} meses de hospedagem no endereço seunegocio.brotasites.com e ajustes em Meus sites nos primeiros ${pricing.adjustmentsDays} dias. Depois desse prazo, ajustes podem ser pedidos à parte, com o valor informado antes.`,
+          `O pagamento para publicar inclui ${pricing.hostingMonths} meses de hospedagem no endereço seunegocio.${EXAMPLE_SITES_DOMAIN} e ajustes em Meus sites nos primeiros ${pricing.adjustmentsDays} dias. Depois desse prazo, ajustes podem ser pedidos à parte, com o valor informado antes.`,
           `O site é seu: você pode baixar o site pronto a qualquer momento e hospedá-lo onde quiser.`,
           `Depois dos ${pricing.hostingMonths} meses, manter o site no ar custa ${formatBRL(pricing.renewalPerYear)} por ano, de forma opcional. Se não houver renovação, o site sai do ar, e você pode baixá-lo antes.`,
-          "Conectar um domínio próprio está incluído e é opcional. O registro e a renovação do domínio são feitos e pagos por você, direto ao registrador. A BrotaSites não vende nem registra domínios e não responde por domínio vencido nem por falha do registrador; o site continua no endereço seunegocio.brotasites.com.",
+          `Conectar um domínio próprio está incluído e é opcional. O registro e a renovação do domínio são feitos e pagos por você, direto ao registrador. A BrotaSites não vende nem registra domínios e não responde por domínio vencido nem por falha do registrador; o site continua no endereço seunegocio.${EXAMPLE_SITES_DOMAIN}.`,
           `Garantia de ${pricing.guaranteeDays} dias: se não gostar, devolvemos o valor pago.`,
         ],
       },
@@ -219,6 +222,7 @@ export const termsSections: LegalSection[] = [
         ],
       },
       "Podemos remover conteúdo ou suspender contas que descumpram estas regras.",
+      `Viu um site feito no BrotaSites que descumpre estas regras? Denuncie por e-mail para ${ABUSE_EMAIL ?? PENDING}, com o endereço do site e o motivo.`,
     ],
   },
   {

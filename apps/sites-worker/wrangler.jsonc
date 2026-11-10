@@ -16,9 +16,14 @@
   "r2_buckets": [{ "binding": "SITES", "bucket_name": "brotasites-sites" }],
   // Site pointers and states, custom domains and preview tokens.
   "kv_namespaces": [{ "binding": "HOSTING", "id": "00000000000000000000000000000000" }],
-  // The client sites' own domain, separate from the platform's (still to be chosen).
-  "vars": { "BASE_DOMAIN": "sites.localhost" },
+  // The client sites' own domain, separate from the platform's: brotasites.com in production.
+  // The platform's address: the bare sites domain and its www redirect there (E28).
+  "vars": { "BASE_DOMAIN": "sites.localhost", "PLATFORM_URL": "http://localhost:3000" },
   // One route for every subdomain, so the zone's route limits never grow with clients:
-  // "routes": [{ "pattern": "*.<BASE_DOMAIN>/*", "zone_name": "<BASE_DOMAIN>" }],
+  // The bare domain needs its own route (it redirects to the platform, E28):
+  // "routes": [
+  //   { "pattern": "*.brotasites.com/*", "zone_name": "brotasites.com" },
+  //   { "pattern": "brotasites.com/*", "zone_name": "brotasites.com" }
+  // ],
   "observability": { "enabled": true }
 }

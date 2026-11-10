@@ -130,6 +130,37 @@ test("search engines get the sitemap and the public pages only", async ({ reques
   for (const path of ["/ajuda", "/termos", "/privacidade"]) expect(sitemap).toContain(path);
   const robots = await (await request.get("/robots.txt")).text();
   expect(robots).toContain("Disallow: /criar");
+  // One address for everything (E28): the sitemap, robots and the share image all use the
+  // platform's address, and never the team's host or the previews'.
+  const origins = new Set(
+    [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
+      (match) => new URL(match[1] as string).origin,
+    ),
+  );
+  expect(origins.size).toBe(1);
+  const [origin] = [...origins];
+  expect(robots).toContain(`Sitemap: ${origin}/sitemap.xml`);
+  for (const text of [sitemap, robots]) {
+    expect(text).not.toMatch(/admin\.|previa\./);
+  }
+});
+
+test("the share image uses the platform's address", async ({ page, request }) => {
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  const origin = new URL(/<loc>([^<]+)<\/loc>/.exec(sitemap)?.[1] as string).origin;
+  await page.goto("/");
+  const image = await page.locator('meta[property="og:image"]').getAttribute("content");
+  expect(new URL(image as string).origin).toBe(origin);
+});
+
+test("HSTS goes only with HTTPS in production, never over plain HTTP (E28)", async ({
+  request,
+}) => {
+  // The test server is a production build behind no proxy: HTTPS is what Vercel reports.
+  const plain = await request.get("/");
+  expect(plain.headers()["strict-transport-security"]).toBeUndefined();
+  const https = await request.get("/", { headers: { "x-forwarded-proto": "https" } });
+  expect(https.headers()["strict-transport-security"]).toBe("max-age=31536000; includeSubDomains");
 });
 
 test("the site has a favicon, app icons and a manifest", async ({ page, request }) => {
@@ -177,4 +208,33 @@ test("the vine decoration is there only with a mouse, never in the way", async (
   await expect(vine).toHaveCSS("position", "fixed");
   // Below the header, which stays on top of it.
   await expect(vine).toHaveCSS("z-index", "20");
+});
+
+test("the contact addresses: footer, Ajuda, Termos and Privacidade, email only (E28)", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const footer = page.getByRole("contentinfo");
+  await expect(footer.getByRole("link", { name: "contato@brotasites.com.br" })).toHaveAttribute(
+    "href",
+    "mailto:contato@brotasites.com.br",
+  );
+  await page.goto("/ajuda");
+  const help = page.locator("#contato");
+  await expect(help.getByRole("heading")).toHaveText("Fale com a gente");
+  await expect(help.getByRole("link", { name: "contato@brotasites.com.br" })).toBeVisible();
+  await page.goto("/privacidade");
+  await expect(
+    page.getByText("Contato para assuntos de privacidade: privacidade@brotasites.com.br."),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/acesso, correção ou exclusão.*privacidade@brotasites\.com\.br/),
+  ).toBeVisible();
+  await page.goto("/termos");
+  await expect(page.getByText(/Denuncie por e-mail para abuso@brotasites\.com\.br/)).toBeVisible();
+  await expect(
+    page.getByText("Contato: contato@brotasites.com.br.", { exact: false }),
+  ).toBeVisible();
+  // No contact form anywhere.
+  expect(await page.locator("form textarea").count()).toBe(0);
 });

@@ -37,6 +37,9 @@ export const reservedSubdomains: ReadonlySet<string> = new Set([
   "test",
   "teste",
   "preview",
+  // E28: the previews' host (previa.<BASE_DOMAIN>) and the CNAME target of client domains.
+  "previa",
+  "clientes",
   "docs",
   "denuncia",
   "abuse",

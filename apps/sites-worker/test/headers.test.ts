@@ -46,7 +46,8 @@ describe("other headers", () => {
     expect(headers["x-content-type-options"]).toBe("nosniff");
     expect(headers["x-frame-options"]).toBe("DENY");
     expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
-    expect(headers["strict-transport-security"]).toMatch(/max-age=31536000/);
+    // HSTS is set per address by withHsts (index.ts, E28), not here.
+    expect(headers["strict-transport-security"]).toBeUndefined();
     expect(headers["permissions-policy"]).toContain("geolocation=()");
     expect(headers["permissions-policy"]).toContain("camera=()");
     expect(headers["cross-origin-opener-policy"]).toBe("same-origin");

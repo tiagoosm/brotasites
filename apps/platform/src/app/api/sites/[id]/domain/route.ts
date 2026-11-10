@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hosts } from "@/lib/domains/hosts";
 import { domainContext, domainError, flowOff, json } from "@/lib/server/domain-route";
 import { currentDomain, requestDomain } from "@/lib/server/domains";
 import { readBody } from "@/lib/server/guard";
@@ -30,8 +31,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       siteId: id,
       userId: context.owned.user.id,
       raw: body.data.host,
-      baseDomain:
-        process.env.BASE_DOMAIN ?? process.env.NEXT_PUBLIC_BASE_DOMAIN ?? "sites.localhost",
+      baseDomain: hosts.sitesDomain,
     });
     return json({ domain }, 201);
   } catch (error) {

@@ -1,5 +1,6 @@
 import type { FormDraft } from "@brotasites/schema/v1.2";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { hosts } from "./domains/hosts";
 
 // The client's sites, read through Supabase with the person's session (RLS: only their own).
 // State changes go through the database functions (request_directions, choose_direction,
@@ -271,11 +272,7 @@ export async function renderUrls(siteId: string): Promise<Record<string, string>
 /** The private address of the finished site (previa.<domain>/<site>/<token>/). */
 export function previewUrl(site: Pick<SiteRow, "id" | "preview_token">): string | null {
   if (!site.preview_token) return null;
-  const origin = (process.env.NEXT_PUBLIC_PREVIEW_ORIGIN ?? "http://127.0.0.1:4500").replace(
-    /\/$/,
-    "",
-  );
-  return `${origin}/${site.id}/${site.preview_token}/`;
+  return `${hosts.previewOrigin}/${site.id}/${site.preview_token}/`;
 }
 
 /**

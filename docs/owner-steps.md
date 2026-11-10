@@ -2,14 +2,20 @@
 
 Keep this list up to date during the project. Claude Code does not create accounts and does not deploy.
 
-- [ ] Choose the `BASE_DOMAIN` for client sites and register it; turn on the transfer lock; request inclusion in the Public Suffix List.
+- [ ] Domains (E28; the step-by-step is in the owner's `GUIA-DOMINIO-PASSO-A-PASSO.md`, kept outside the repository). The code is ready; nothing was configured or deployed. Real values:
+  - Platform: `brotasites.com.br` (registered). Vercel: add `brotasites.com.br`, `www.brotasites.com.br` and `admin.brotasites.com.br` to the project; then set `NEXT_PUBLIC_PLATFORM_URL=https://brotasites.com.br` and `NEXT_PUBLIC_ADMIN_HOST=admin.brotasites.com.br`.
+  - Client sites: `brotasites.com` (`BASE_DOMAIN`, to register): `NEXT_PUBLIC_BASE_DOMAIN=brotasites.com` and `BASE_DOMAIN=brotasites.com` in Vercel and in the jobs, `NEXT_PUBLIC_PREVIEW_ORIGIN=https://previa.brotasites.com`, and in `apps/sites-worker/wrangler.jsonc` `BASE_DOMAIN=brotasites.com` and `PLATFORM_URL=https://brotasites.com.br`, with the routes `*.brotasites.com/*` and `brotasites.com/*`. Turn on the transfer lock; request inclusion in the Public Suffix List.
+  - **Set `NEXT_PUBLIC_PLATFORM_URL` and `NEXT_PUBLIC_BASE_DOMAIN` in Vercel's Production environment before the next production deploy:** without them (or with both on one registrable domain) the production build now stops with a clear message, and Vercel keeps the previous deployment online.
+  - Supabase (Authentication, URL Configuration): Site URL `https://brotasites.com.br`, and add `https://brotasites.com.br/**` and `https://admin.brotasites.com.br/**` to Redirect URLs.
+  - Email addresses, as forwards to your inbox (for example Cloudflare Email Routing on the `brotasites.com.br` zone; to verify its terms): `contato@`, `privacidade@` and `abuso@brotasites.com.br`. The site shows them by default once the platform's address is set; `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_PRIVACY_EMAIL` and `NEXT_PUBLIC_ABUSE_EMAIL` override them.
+  - Later, once everything is stable on HTTPS: decide on the HSTS preload list (`docs/security.md`).
 - [ ] Cloudflare, for the client sites (E12; nothing was deployed). In order:
   1. Create the account with 2FA.
   2. R2: create the bucket `brotasites-sites` and an R2 API token with Object Read & Write on it only (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` in the jobs' environment).
   3. Workers KV: create a namespace (for example `brotasites-hosting`), put its id in `apps/sites-worker/wrangler.jsonc` (`kv_namespaces`, replacing the zeros), and create an API token with "Workers KV Storage: Edit" only; put `CLOUDFLARE_KV_NAMESPACE_ID` and `CLOUDFLARE_KV_API_TOKEN` in the jobs' and in Vercel's environment.
-  4. Choose and register `BASE_DOMAIN` (see the item above), add it as a zone in Cloudflare, set `BASE_DOMAIN` in `wrangler.jsonc` and `NEXT_PUBLIC_BASE_DOMAIN` and `NEXT_PUBLIC_PREVIEW_ORIGIN=https://previa.<BASE_DOMAIN>` in Vercel.
+  4. Register `brotasites.com` (`BASE_DOMAIN`, see "Domains" above), add it as a zone in Cloudflare, set `BASE_DOMAIN` and `PLATFORM_URL` in `wrangler.jsonc` and `NEXT_PUBLIC_BASE_DOMAIN` and `NEXT_PUBLIC_PREVIEW_ORIGIN=https://previa.brotasites.com` in Vercel.
   5. Generate a long random `EXPORT_SECRET` (for example `openssl rand -hex 32`); put it in Vercel and in the Worker with `pnpm --filter @brotasites/sites-worker exec wrangler secret put EXPORT_SECRET`.
-  6. Deploy the Worker: `pnpm --filter @brotasites/sites-worker deploy`, then uncomment the route `*.<BASE_DOMAIN>/*` in `wrangler.jsonc` and deploy again. Add a proxied wildcard DNS record `*` (it also covers `previa.`). Check `https://previa.<BASE_DOMAIN>/` answers the Worker's 404.
+  6. Deploy the Worker: `pnpm --filter @brotasites/sites-worker deploy`, then uncomment the routes `*.brotasites.com/*` and `brotasites.com/*` in `wrangler.jsonc` and deploy again. Add a proxied wildcard DNS record `*` (it also covers `previa.` and `www.`) and a proxied record for the root. Check `https://previa.brotasites.com/` answers the Worker's 404 and `https://brotasites.com/` redirects to the platform.
   7. Move to Workers Paid ($5/month) before the sites near 100,000 requests a day: on Free, the Worker and its KV reads fail past that (`docs/hosting.md`, Costs).
   8. Later, with the custom-domain product: Cloudflare for SaaS on the `BASE_DOMAIN` zone (fallback origin and custom hostnames), and `domain:<host>` → subdomain in KV for each client domain.
 - [ ] Accounts: Supabase, Vercel (Pro plan before charging clients), Cloudflare, email/SMTP provider, Asaas, GitHub (2FA).
