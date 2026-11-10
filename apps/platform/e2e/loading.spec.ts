@@ -144,7 +144,7 @@ test.describe("a slow page answers at once", () => {
     await slowCpu(page);
     const toSite = await clickAndWatch(
       page,
-      () => page.getByRole("link", { name: /^Detalhes de Padaria do Zé/ }).click(),
+      () => page.getByRole("heading", { name: "Padaria do Zé" }).getByRole("link").click(),
       async () => {
         await expect(page).toHaveURL(new RegExp(`/meus-sites/${site.id}`));
         await page.waitForTimeout(300);

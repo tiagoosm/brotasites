@@ -103,7 +103,7 @@ describe("each site's card (E26: what needs the person, inside its own card)", (
     );
     expect(problem.badge).toEqual({ label: "Precisa de atenção", tone: "problem" });
     expect(problem.sentence).toBe("Falta uma foto da fachada.");
-    expect(problem.action.label).toBe("Ver o que falta");
+    expect(problem.action.label).toBe("Abrir");
     expect(siteCard(site({ status: "building" })).badge).toEqual({
       label: "Gerando",
       tone: "working",
@@ -134,7 +134,7 @@ describe("site cards", () => {
       href: "/meus-sites/7d1c1a52-2f0e-4c39-9a35-6b1f4a8e2c10/publicar",
     });
     expect(siteAction(site({ status: "live" })).label).toBe("Baixar o site");
-    expect(siteAction(site({ status: "building" })).label).toBe("Ver detalhes");
+    expect(siteAction(site({ status: "building" })).label).toBe("Abrir");
     // A draft saved by the former 7-step form: the old slugs are ignored, nothing breaks.
     expect(
       resumeStep(["negocio", "marca", "secoes", "conteudo", "contato", "direcao", "endereco"]),

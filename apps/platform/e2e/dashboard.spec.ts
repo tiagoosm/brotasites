@@ -81,8 +81,8 @@ test("with no sites: an invitation, and no notice band", async ({ page, context,
   ).toHaveAttribute("href", "/criar");
   // The account lives in the profile menu of the one header (E17), read on the server.
   await page.getByRole("button", { name: "Menu da conta de Zé da Padaria" }).click();
+  // Never the page the person is on (E29): no "Meus sites" here.
   await expect(page.getByRole("menuitem")).toHaveText([
-    "Meus sites",
     "Criar meu site",
     "Perfil e segurança",
     "Sair",
@@ -130,7 +130,7 @@ test("each status shows its label, what is pending and the right button", async 
   await expect(card("Bolos da Ana")).toHaveAccessibleDescription("Sua vez");
   await expect(card("Café da Lu")).toContainText("Precisa de atenção");
   await expect(card("Café da Lu")).toContainText("Falta uma foto da fachada.");
-  await expect(card("Café da Lu").getByRole("link", { name: /^Ver o que falta/ })).toBeVisible();
+  await expect(card("Café da Lu").getByRole("link", { name: /^Abrir/ })).toBeVisible();
   await expect(card("Rascunho do Zé")).toContainText(
     "Continue de onde parou: passo 2 de 5 (Marca e sensação).",
   );
@@ -376,4 +376,43 @@ test("the pulsing dot of a busy site stays the size of the dot", async ({
   });
   expect(sizes.name).toBe("live-ping");
   expect(sizes.ring).toEqual(sizes.dot.map((value) => `${value}px`));
+});
+
+test("one way to each place on a card: the name opens the site, one address link (E29)", async ({
+  page,
+  context,
+  request,
+}) => {
+  const who = person();
+  const live = row("live", {
+    name: "Padaria do Zé",
+    subdomain: "padaria-do-ze",
+    approved_at: days(20),
+    published_at: days(20),
+    created_at: days(40),
+  });
+  await board(request, who.id, { sites: [live] });
+  await signIn(context, { user: who });
+  await page.goto("/meus-sites");
+  const card = page.getByRole("listitem", { name: "Padaria do Zé" });
+  await expect(card.getByRole("link", { name: /^Detalhes/ })).toHaveCount(0);
+  await expect(card.getByRole("link", { name: /^Ver o site/ })).toHaveCount(0);
+  await expect(
+    card.getByRole("heading", { name: "Padaria do Zé" }).getByRole("link"),
+  ).toHaveAttribute("href", `/meus-sites/${live.id}`);
+  // The live address, once.
+  await expect(card.locator('a[href^="https://padaria-do-ze."]')).toHaveCount(1);
+  // The timeline instead of "Última mudança" (one of the two).
+  await expect(card.getByText(/^Última mudança/)).toHaveCount(0);
+  await expect(card.getByRole("list", { name: "Linha do tempo" })).toContainText("Publicado");
+  await expect(card.getByText("Hospedagem incluída até")).toBeVisible();
+});
+
+test("the footer offers only what the header lacks (E29)", async ({ page, context, request }) => {
+  const who = person();
+  await board(request, who.id, {});
+  await signIn(context, { user: who });
+  await page.goto("/meus-sites");
+  const footer = page.getByRole("contentinfo").getByRole("navigation", { name: "Rodapé" });
+  await expect(footer.getByRole("link")).toHaveText(["Termos de uso", "Privacidade"]);
 });

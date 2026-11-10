@@ -133,7 +133,8 @@ export function siteAction(site: DashboardSite): { label: string; href: string }
     case "grace":
       return { label: "Baixar o site", href: `${siteHref(site.id)}#baixar` };
     default:
-      return { label: "Ver detalhes", href: siteHref(site.id) };
+      // One label for "the site's page" (E29), when there is nothing more specific to do.
+      return { label: "Abrir", href: siteHref(site.id) };
   }
 }
 
@@ -251,7 +252,7 @@ export function siteCard(site: DashboardSite): SiteCard {
           : info.text;
   const action =
     site.status === "needs_attention" || site.status === "failed"
-      ? { label: "Ver o que falta", href: siteHref(site.id) }
+      ? { label: "Abrir", href: siteHref(site.id) }
       : siteAction(site);
   return { badge, sentence, action, yourTurn: info.yourTurn || badge.tone === "problem" };
 }
