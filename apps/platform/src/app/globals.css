@@ -960,8 +960,14 @@ html:has([data-wizard]) {
   transition: opacity 700ms var(--ease-out);
 }
 
+/* E30: once the moving beams draw, the still ones step back almost entirely, so what the eye
+   reads as light is the light that moves (in E27 the still beams carried the look and the moving
+   ones were too faint to notice: "a luz parou"). */
 [data-morning-light]:has([data-lit]) .morning-beams {
-  opacity: 0.6;
+  opacity: 0;
+}
+[data-morning-light]:has([data-lit]) .morning-glow {
+  opacity: 0.7;
 }
 
 @media (max-height: 700px) {
