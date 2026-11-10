@@ -251,20 +251,77 @@ test("the decorations never cover the page, with or without a GPU", async ({ pag
     return min;
   }, png);
   expect(darkest).toBeLessThan(80);
-  // Without a GPU the vine draws nothing and leaves no canvas over the page.
+  // The vine (a plain 2D canvas since E31, no GPU needed) is one canvas that never takes clicks.
   const vine = page.getByTestId("site-vine");
   if ((await vine.count()) > 0) {
-    const canvases = await vine.locator("canvas").count();
-    const gpu = await page.evaluate(() => {
-      const gl = document
-        .createElement("canvas")
-        .getContext("webgl2", { failIfMajorPerformanceCaveat: true });
-      const info = gl?.getExtension("WEBGL_debug_renderer_info");
-      const renderer = gl
-        ? String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER))
-        : "";
-      return Boolean(gl) && !/swiftshader|llvmpipe|softpipe|software/i.test(renderer);
-    });
-    if (!gpu) expect(canvases).toBe(0);
+    await expect(vine.locator("canvas")).toHaveCount(1);
+    await expect(vine).toHaveCSS("pointer-events", "none");
   }
+});
+
+/** The vine's drawn pixels: how many, and the box they fill, in CSS px. */
+function vineInk(page: Page) {
+  return page.evaluate(() => {
+    const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="site-vine"] canvas');
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return null;
+    const ratio = canvas.width / window.innerWidth;
+    const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let count = 0;
+    let top = Number.POSITIVE_INFINITY;
+    let bottom = Number.NEGATIVE_INFINITY;
+    let left = Number.POSITIVE_INFINITY;
+    let right = Number.NEGATIVE_INFINITY;
+    for (let i = 3; i < data.length; i += 4) {
+      if ((data[i] ?? 0) <= 8) continue;
+      const pixel = (i - 3) / 4;
+      const x = pixel % canvas.width;
+      const y = Math.floor(pixel / canvas.width);
+      count++;
+      top = Math.min(top, y);
+      bottom = Math.max(bottom, y);
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+    }
+    return {
+      count,
+      height: count ? (bottom - top) / ratio : 0,
+      width: count ? (right - left) / ratio : 0,
+    };
+  });
+}
+
+test("the mouse vine: no leaves, about 140 px of tail, gone soon after the mouse stops (E31)", async ({
+  page,
+}) => {
+  test.skip(isPhone(page), "No vine on touch screens.");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const vine = page.getByTestId("site-vine");
+  await expect(vine.locator("canvas")).toHaveCount(1);
+  await page.waitForTimeout(800);
+  // Down the free left margin, 500 px in one go.
+  for (let y = 250; y <= 750; y += 8) {
+    await page.mouse.move(40, y);
+    await page.waitForTimeout(8);
+  }
+  const moving = await vineInk(page);
+  expect(moving?.count).toBeGreaterThan(0);
+  // The tail is capped along the path (plus the round caps and the sway).
+  expect(moving?.height).toBeLessThanOrEqual(150);
+  expect(moving?.width).toBeLessThanOrEqual(12);
+  // Gone about 0.4 s after the mouse rests: nothing left on the canvas.
+  await page.waitForTimeout(500);
+  expect((await vineInk(page))?.count).toBe(0);
+});
+
+test("the mouse vine draws nothing with reduced motion (E31)", async ({ page }) => {
+  test.skip(isPhone(page), "No vine on touch screens.");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await expect(page.getByTestId("site-vine").locator("canvas")).toHaveCount(1);
+  await page.waitForTimeout(800);
+  for (let y = 250; y <= 600; y += 10) await page.mouse.move(40, y);
+  expect((await vineInk(page))?.count ?? 0).toBe(0);
 });

@@ -3,8 +3,8 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
-// A faint vine follows the mouse over the public pages, sprouting a few small leaves (E18: the
-// whole page, not only the side margins). It shows only in the free space: over text, buttons,
+// A faint, short vine follows the mouse over the public pages (E18; since E31 no leaves, at most
+// about 140 px of tail, gone 0.4 s after the mouse stops). It shows only in the free space: over text, buttons,
 // links, cards, fields, images, the questions' window, the header and the footer it fades out
 // within a few px (vine-avoid.ts, lib/motion/vine.ts). Any width with a mouse; never on touch
 // screens. Never in the way of clicks, hidden from assistive technology, off with reduced
@@ -31,15 +31,7 @@ export function SiteVine() {
       data-testid="site-vine"
       className="pointer-events-none fixed inset-0 z-20"
     >
-      <VineTrail
-        stems={["#2F5D45"]}
-        thickness={2.5}
-        opacity={0.4}
-        leafEvery={110}
-        leafSize={0.34}
-        leafLife={1.3}
-        wave={0.25}
-      />
+      <VineTrail color="#2F5D45" thickness={2} opacity={0.28} length={140} wave={0.15} />
     </div>
   );
 }
