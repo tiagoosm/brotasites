@@ -360,8 +360,8 @@ test("the middle links keep their place signed in, out and on every account scre
       ).toBe(true);
       const tall = await banner(page)
         .locator("a")
-        .evaluateAll((links) =>
-          links.filter((link) => link.getBoundingClientRect().height > 50).length,
+        .evaluateAll(
+          (links) => links.filter((link) => link.getBoundingClientRect().height > 50).length,
         );
       expect(tall, `${path} at ${width}px`).toBe(0);
     }

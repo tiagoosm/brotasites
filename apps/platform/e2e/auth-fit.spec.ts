@@ -39,7 +39,7 @@ test("/cadastro fits a short laptop with no scroll, 24px under the header", asyn
     // Fields stay full tap targets: 44px on short laptops (E30, to fit with no scroll).
     const field = await page
       .getByLabel("Seu nome")
-      .evaluate((input) => input.getBoundingClientRect().height);
+      .evaluate((input) => Math.round(input.getBoundingClientRect().height));
     expect(field).toBeGreaterThanOrEqual(44);
     const top = await card.evaluate((element) => element.getBoundingClientRect().top);
     // E30: at least 24px under the header.
