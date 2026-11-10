@@ -108,7 +108,7 @@ export function PasswordField({
       {meter && <StrengthBar value={value} owner={meter} />}
       {/* The error first, right under the field (proximity); then the quiet notes. */}
       {error && (
-        <p id={errorId} className="text-sm text-destructive">
+        <p id={errorId} role="alert" className="text-sm text-destructive">
           {error}
         </p>
       )}
@@ -178,7 +178,7 @@ function StrengthBar({ value, owner }: { value: string; owner: PasswordOwner }) 
   );
 }
 
-/** One small pill: a check once it counts, a quiet dash before; the text always says it. */
+/** The one requirement, as a small pill: a check once met, a quiet dash before. */
 function Pill({ met, label }: { met: boolean; label: string }) {
   return (
     <li
@@ -198,23 +198,44 @@ function Pill({ met, label }: { met: boolean; label: string }) {
   );
 }
 
+/** An optional hint: plain text, never shaped like a requirement; a check once it counts. */
+function Hint({ met, label }: { met: boolean; label: string }) {
+  return (
+    <li
+      className={cn(
+        "inline-flex items-center gap-1 text-[0.8125rem] transition-colors duration-200",
+        met ? "text-leaf-deep" : "text-ink-soft",
+      )}
+    >
+      {met && <Check aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.75} />}
+      {met && <span className="sr-only">Feito: </span>}
+      {label}
+    </li>
+  );
+}
+
 /**
  * What counts (E27, owner's decision): 8 characters is the one requirement; lowercase,
- * uppercase, a number and a symbol only make the password stronger. Small pills in one line
- * (two when the card is narrow), green with a check once met.
+ * uppercase, a number and a symbol only make the password stronger. E29: the two read apart,
+ * "Mínimo" with its pill, then "Para ficar mais forte" as plain, optional hints.
  */
 export function PasswordChecklist({ id, value }: { id: string; value: string }) {
   return (
-    <div id={id} className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-      <ul aria-label="A senha precisa ter" className="flex">
-        <Pill met={lengthRequirement.test(value)} label={lengthRequirement.label} />
-      </ul>
-      <span className="text-[0.8125rem] text-ink-soft">Mais forte com:</span>
-      <ul aria-label="Deixa a senha mais forte" className="flex flex-wrap gap-1.5">
-        {passwordHints.map((hint) => (
-          <Pill key={hint.id} met={hint.test(value)} label={hint.label} />
-        ))}
-      </ul>
+    <div id={id} className="grid gap-1.5 text-[0.8125rem]">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="font-semibold text-ink">Mínimo:</span>
+        <ul aria-label="A senha precisa ter" className="flex">
+          <Pill met={lengthRequirement.test(value)} label={lengthRequirement.label} />
+        </ul>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="text-ink-soft">Para ficar mais forte (opcional):</span>
+        <ul aria-label="Deixa a senha mais forte" className="flex flex-wrap gap-x-3 gap-y-1">
+          {passwordHints.map((hint) => (
+            <Hint key={hint.id} met={hint.test(value)} label={hint.label} />
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

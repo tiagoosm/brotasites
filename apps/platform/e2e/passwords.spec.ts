@@ -35,7 +35,10 @@ test("the checklist and the meter follow the typing, in text", async ({ page }) 
   await expect(requirement(page)).toHaveCount(1);
   await expect(requirement(page)).toContainText("Ainda não: 8 caracteres");
   await expect(hint(page, "minúscula")).toContainText("Feito");
-  await expect(hint(page, "maiúscula")).toContainText("Ainda não");
+  // The optional hints never read like a requirement (E29): no "Ainda não" on them.
+  await expect(hint(page, "maiúscula")).not.toContainText("Ainda não");
+  await expect(page.getByText("Mínimo:", { exact: true })).toBeVisible();
+  await expect(page.getByText("Para ficar mais forte (opcional):", { exact: true })).toBeVisible();
   await expect(page.getByText("Força: Fraca", { exact: true })).toBeVisible();
   // Eight lowercase letters are enough to sign up: weak, never blocked.
   await password(page).fill("cafezinho");
@@ -49,7 +52,9 @@ test("the checklist and the meter follow the typing, in text", async ({ page }) 
   await expect(page.getByText("Força: Forte", { exact: true })).toBeVisible();
 });
 
-test("sending with errors lists them at the top and focuses the first field", async ({ page }) => {
+test("sending with errors shows each one once, under its field, and focuses the first", async ({
+  page,
+}) => {
   await page.goto("/cadastro");
   await page.getByLabel("Seu nome").fill("Zé");
   await page.getByLabel("E-mail").fill(uniqueEmail("erros"));
@@ -59,13 +64,18 @@ test("sending with errors lists them at the top and focuses the first field", as
   const send = page.getByRole("button", { name: "Criar conta" });
   await expect(send).toBeEnabled();
   await send.click();
-  const summary = page.getByRole("alert").filter({ hasText: "Confira" });
-  await expect(summary).toContainText("Confira 2 campos:");
-  await expect(summary.getByRole("link", { name: "Senha" })).toBeVisible();
+  // E29: no summary at the top repeating the fields' errors.
+  await expect(page.getByText(/^Confira \d+ campos?:/)).toHaveCount(0);
   await expect(password(page)).toBeFocused();
-  await expect(page.getByText("Use pelo menos 8 caracteres.").last()).toBeVisible();
-  await summary.getByRole("link", { name: "Termos" }).click();
-  await expect(page.getByRole("checkbox")).toBeFocused();
+  // Each error once, tied to its field and announced.
+  const short = page.getByText("Use pelo menos 8 caracteres.");
+  await expect(short).toHaveCount(1);
+  await expect(short).toHaveAttribute("role", "alert");
+  const describedBy = (await password(page).getAttribute("aria-describedby")) ?? "";
+  expect(describedBy.split(" ")).toContain(await short.getAttribute("id"));
+  const terms = page.getByText("Para criar a conta, aceite os Termos e a Política de Privacidade.");
+  await expect(terms).toHaveCount(1);
+  await expect(page.getByRole("checkbox")).toHaveAttribute("aria-invalid", "true");
 });
 
 test("the repeated password: pasted, compared once finished, and checked by the server", async ({
