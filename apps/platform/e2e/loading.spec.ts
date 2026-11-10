@@ -54,7 +54,14 @@ async function clickAndWatch(page: Page, click: () => Promise<void>, settled: ()
       if (store.firstSign === null && (bar || skeleton)) {
         store.firstSign = performance.now() - store.clickedAt;
       }
-      if (!document.querySelector("header") || !document.querySelector("footer")) {
+      // The account screens have no footer (E30): there only the header is the shell.
+      const accountScreen = /^\/(entrar|cadastro|esqueci-senha|redefinir-senha)(\/|$)/.test(
+        location.pathname,
+      );
+      if (
+        !document.querySelector("header") ||
+        (!accountScreen && !document.querySelector("footer"))
+      ) {
         store.lostShell = true;
       }
       requestAnimationFrame(watch);
