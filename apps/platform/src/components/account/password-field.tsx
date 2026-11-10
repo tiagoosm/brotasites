@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import {
   lengthRequirement,
   type PasswordOwner,
-  passwordHints,
   passwordStrength,
   type Strength,
   strengthLabels,
@@ -16,8 +15,8 @@ import { cn } from "@/lib/utils";
 // A password with a show/hide button and a Caps Lock warning. autoComplete tells password
 // managers whether to fill ("current-password") or suggest a new one ("new-password"); pasting
 // is always allowed (password managers). A new password (`meter`) shows its strength in text on
-// the label's line and a thin three-part bar under the field (E27); the pills of what counts
-// (PasswordChecklist) go under the field or the pair of fields. A field with `note` keeps a
+// the label's line and a thin three-part bar under the field (E27), only once something is typed
+// (E30); the minimum (PasswordChecklist) goes under the field or the pair of fields. A field with `note` keeps a
 // line under it for its quiet note ("As senhas são iguais"), so nothing jumps when it shows.
 
 export function PasswordField({
@@ -141,17 +140,23 @@ const meterSteps: Record<Strength, number> = { weak: 1, good: 2, strong: 3 };
  */
 function StrengthLabel({ value, owner }: { value: string; owner: PasswordOwner }) {
   const strength = passwordStrength(value, owner);
+  // Only while there is something typed (E30); the live region itself stays, so the first level
+  // is announced too.
   return (
     <span aria-live="polite" className="text-sm text-ink-soft">
-      Força:{" "}
-      <span
-        className={cn(
-          "font-semibold",
-          !value ? "text-ink-soft" : strength === "weak" ? "text-amber-800" : "text-leaf-deep",
-        )}
-      >
-        {value ? strengthLabels[strength] : "—"}
-      </span>
+      {value && (
+        <>
+          Força:{" "}
+          <span
+            className={cn(
+              "font-semibold",
+              strength === "weak" ? "text-amber-800" : "text-leaf-deep",
+            )}
+          >
+            {strengthLabels[strength]}
+          </span>
+        </>
+      )}
     </span>
   );
 }
@@ -159,8 +164,12 @@ function StrengthLabel({ value, owner }: { value: string; owner: PasswordOwner }
 /** A thin bar of three parts under the field, filled by level (the label says it in text). */
 function StrengthBar({ value, owner }: { value: string; owner: PasswordOwner }) {
   const strength = passwordStrength(value, owner);
+  // Empty field (E30): the bar's thin line is kept, invisible, so nothing jumps when it shows.
   return (
-    <div className="flex gap-1" aria-hidden="true">
+    <div
+      className={cn("flex gap-1 transition-opacity duration-200", !value && "invisible opacity-0")}
+      aria-hidden="true"
+    >
       {[1, 2, 3].map((step) => (
         <span
           key={step}
@@ -198,44 +207,18 @@ function Pill({ met, label }: { met: boolean; label: string }) {
   );
 }
 
-/** An optional hint: plain text, never shaped like a requirement; a check once it counts. */
-function Hint({ met, label }: { met: boolean; label: string }) {
-  return (
-    <li
-      className={cn(
-        "inline-flex items-center gap-1 text-[0.8125rem] transition-colors duration-200",
-        met ? "text-leaf-deep" : "text-ink-soft",
-      )}
-    >
-      {met && <Check aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.75} />}
-      {met && <span className="sr-only">Feito: </span>}
-      {label}
-    </li>
-  );
-}
-
 /**
- * What counts (E27, owner's decision): 8 characters is the one requirement; lowercase,
- * uppercase, a number and a symbol only make the password stronger. E29: the two read apart,
- * "Mínimo" with its pill, then "Para ficar mais forte" as plain, optional hints.
+ * What counts (E27, owner's decision): 8 characters is the one requirement. E30: only that line
+ * shows. Lowercase, uppercase, a number and a symbol still raise the strength (passwordHints and
+ * variety in lib/auth/passwords.ts) but are no longer listed: the strength itself says enough.
  */
 export function PasswordChecklist({ id, value }: { id: string; value: string }) {
   return (
-    <div id={id} className="grid gap-1.5 text-[0.8125rem]">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="font-semibold text-ink">Mínimo:</span>
-        <ul aria-label="A senha precisa ter" className="flex">
-          <Pill met={lengthRequirement.test(value)} label={lengthRequirement.label} />
-        </ul>
-      </div>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="text-ink-soft">Para ficar mais forte (opcional):</span>
-        <ul aria-label="Deixa a senha mais forte" className="flex flex-wrap gap-x-3 gap-y-1">
-          {passwordHints.map((hint) => (
-            <Hint key={hint.id} met={hint.test(value)} label={hint.label} />
-          ))}
-        </ul>
-      </div>
+    <div id={id} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem]">
+      <span className="font-semibold text-ink">Mínimo:</span>
+      <ul aria-label="A senha precisa ter" className="flex">
+        <Pill met={lengthRequirement.test(value)} label={lengthRequirement.label} />
+      </ul>
     </div>
   );
 }

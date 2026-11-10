@@ -159,15 +159,15 @@ export function SignUpForm() {
 
   return (
     <form onSubmit={submit} noValidate className="grid gap-7">
-      <header className="grid gap-2">
+      <header className="grid gap-2 [@media(max-height:700px)]:gap-1">
         <h1 className="font-display text-[2rem] leading-[1.1]">Crie a sua conta</h1>
         <p className="text-[1.0625rem] text-ink-soft">É grátis. Seus sites ficam guardados nela.</p>
       </header>
 
       <FormError message={error} />
 
-      {/* Two columns from 768px: name and email, then the password and its repetition, and
-          what makes the password stronger across both (E27). */}
+      {/* Two columns from 768px: name and email, then the password (with its minimum) and its
+          repetition (E27, E30). */}
       <div className="grid gap-5 md:grid-cols-2 md:gap-x-6">
         <Field
           id={ids.fullName}
@@ -225,16 +225,20 @@ export function SignUpForm() {
             </p>
           )}
         </div>
-        <PasswordField
-          id={ids.password}
-          label="Senha"
-          autoComplete="new-password"
-          value={password}
-          onChange={setPassword}
-          describedBy={checklistId}
-          meter={{ email, name: fullName }}
-          error={fields.password}
-        />
+        {/* The minimum right under the password it is about (E30), not across both columns. */}
+        <div className="grid content-start gap-2">
+          <PasswordField
+            id={ids.password}
+            label="Senha"
+            autoComplete="new-password"
+            value={password}
+            onChange={setPassword}
+            describedBy={checklistId}
+            meter={{ email, name: fullName }}
+            error={fields.password}
+          />
+          <PasswordChecklist id={checklistId} value={password} />
+        </div>
         <PasswordField
           id={ids.confirmPassword}
           label="Repita a senha"
@@ -249,18 +253,15 @@ export function SignUpForm() {
           note
           error={fields.confirmPassword}
         />
-        <div className="md:col-span-2">
-          <PasswordChecklist id={checklistId} value={password} />
-        </div>
       </div>
 
       <Captcha onToken={setCaptcha} resetKey={attempt} />
       {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
 
-      {/* The card's footer (E27): the terms, in one sentence with its two links, and the button
-          beside them; "Já tem conta? Entrar" under the terms. One column on phones. */}
-      <div className="grid gap-5 border-t border-line pt-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-x-8">
-        <div className="grid gap-3">
+      {/* The card's footer (E30): the terms in one sentence (one line on the 40rem card), the
+          button across the card like "Entrar" on sign-in, then "Já tem conta? Entrar". */}
+      <div className="grid gap-5 border-t border-line pt-6 [@media(max-height:700px)]:gap-3 [@media(max-height:700px)]:pt-4">
+        <div className="grid gap-2">
           <div className="flex items-start gap-3">
             <input
               id={ids.acceptTerms}
@@ -272,11 +273,11 @@ export function SignUpForm() {
               }}
               aria-invalid={fields.acceptTerms ? true : undefined}
               aria-describedby={fields.acceptTerms ? termsErrorId : undefined}
-              className="mt-2.5 size-6 shrink-0 accent-leaf"
+              className="mt-px size-5 shrink-0 accent-leaf"
             />
-            {/* Lines 44px apart, so each link keeps its own 44px tap area wherever the
-                sentence wraps (Fitts, docs/ux-laws.md). */}
-            <label htmlFor={ids.acceptTerms} className="text-[0.9375rem] leading-[2.75rem]">
+            {/* A normal line height (E30); each link's 44px tap area comes from touch-target,
+                not from tall lines. Link names never break in the middle. */}
+            <label htmlFor={ids.acceptTerms} className="text-[0.9375rem] leading-[1.45]">
               Li e aceito os{" "}
               <Link href="/termos" target="_blank" className={cn(inlineLink, "whitespace-nowrap")}>
                 Termos de uso
@@ -296,28 +297,23 @@ export function SignUpForm() {
               {fields.acceptTerms}
             </p>
           )}
-          <p className="text-sm text-ink-soft md:order-last">
-            Já tem conta?{" "}
-            <Link
-              href={`/entrar${back}`}
-              className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
-            >
-              Entrar
-            </Link>
-          </p>
         </div>
-        <Button
-          aria-busy={sending || undefined}
-          type="submit"
-          size="lg"
-          className="group w-full md:w-auto"
-        >
+        <Button aria-busy={sending || undefined} type="submit" size="lg" className="group w-full">
           {sending ? "Criando…" : "Criar conta"}
           <ArrowRight
             aria-hidden="true"
             className="transition-transform duration-200 group-hover:translate-x-0.5"
           />
         </Button>
+        <p className="text-sm text-ink-soft">
+          Já tem conta?{" "}
+          <Link
+            href={`/entrar${back}`}
+            className="touch-target font-semibold text-leaf-deep underline-offset-4 hover:underline"
+          >
+            Entrar
+          </Link>
+        </p>
       </div>
     </form>
   );
