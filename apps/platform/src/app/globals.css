@@ -27,8 +27,6 @@
   /* The moving beams' hue (the shader keeps only the hue and sets the strength itself). */
   --morning-ray: #ebc566;
   --morning-ray-leaf: #a9d1a8;
-  /* The compact footer of the account pages: the card's page leaves room for it (E26). */
-  --auth-footer: 4.5rem;
   --danger: #b42318;
 
   /* Motion language, shared by every animation on the platform. Two curves: a soft ease-out
@@ -968,12 +966,6 @@ html:has([data-wizard]) {
 }
 [data-morning-light]:has([data-lit]) .morning-glow {
   opacity: 0.7;
-}
-
-@media (max-height: 700px) {
-  :root {
-    --auth-footer: 3rem;
-  }
 }
 
 /* Loading without freezing (E26, Doherty). */

@@ -35,7 +35,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div id="conteudo" tabIndex={-1} className="outline-none">
         {children}
       </div>
-      <SiteFooter compact={focus} />
+      {/* The account screens have no footer (E30): their own links (the terms in the sign-up
+          sentence) and every other page's footer carry the Terms and the Privacy Policy. */}
+      {!focus && <SiteFooter />}
       <AnchorScroll />
     </>
   );
