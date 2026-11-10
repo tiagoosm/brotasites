@@ -1,7 +1,7 @@
 "use client";
 
 // Click sparks (E31): a few short, rounded strokes burst from wherever a pointer presses on the
-// platform's pages, alternating leaf and pollen, and fade within about half a second. Designed
+// platform's pages, in the pollen yellow only, and fade within about half a second. Designed
 // after Click Spark by React Bits (https://reactbits.dev, MIT + Commons Clause); our own code.
 //
 // Never in the team's area (/admin, the admin host), never on a field people type in, never
@@ -31,7 +31,8 @@ export default function ClickSparks() {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
     let canvas: HTMLCanvasElement | null = null;
     let ctx: CanvasRenderingContext2D | null = null;
-    let colors = ["#2f7a4a", "#e2b23c"];
+    // Yellow only (owner's request): the pollen token.
+    let color = "#e2b23c";
     let ratio = 1;
     let raf = 0;
     let sparks: Spark[] = [];
@@ -51,10 +52,7 @@ export default function ClickSparks() {
       canvas.className = "pointer-events-none fixed inset-0 z-[15] h-full w-full";
       ctx = canvas.getContext("2d");
       const tokens = getComputedStyle(document.documentElement);
-      colors = [
-        tokens.getPropertyValue("--leaf").trim() || colors[0],
-        tokens.getPropertyValue("--pollen").trim() || colors[1],
-      ] as string[];
+      color = tokens.getPropertyValue("--pollen").trim() || color;
       size();
       document.body.append(canvas);
       window.addEventListener("resize", size);
@@ -115,7 +113,7 @@ export default function ClickSparks() {
           travel: between(burst.travel),
           duration: between(burst.duration),
           born: now,
-          color: colors[i % 2] as string,
+          color,
         });
       }
       // The oldest go first when presses come faster than they fade.
