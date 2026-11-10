@@ -1,11 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-// The account pages fit (E26): on laptops and larger the header, the card and the compact footer
-// fit with no scroll; on short screens and phones the card is never cut and the page scrolls to
-// its end. The sign-up card keeps its full breathing room instead (owner, E27): at 1366×650 its
-// button is in view and the page scrolls a little to the card's end; at 1280×600 the button is
-// a short scroll away. The morning
-// light stays visible around the card, behind it.
+// The account pages fit (E26; no footer since E30): on laptops and larger the header and the
+// card fit with no scroll; on short screens and phones the card is never cut and the page
+// scrolls to its end. The sign-up card keeps its full breathing room (owner, E27). The morning
+// light stays visible around the card, behind it. No account screen has a footer (E30).
 
 const pages = ["/entrar", "/cadastro", "/esqueci-senha", "/redefinir-senha"];
 const compact = pages.filter((path) => path !== "/cadastro");
@@ -25,7 +23,7 @@ test.beforeEach(({}, info) => {
   test.skip(info.project.name !== "desktop", "each test sets its own screen sizes");
 });
 
-test("/cadastro keeps its room to breathe on a short laptop", async ({ page }) => {
+test("/cadastro fits a short laptop with no scroll, 24px under the header", async ({ page }) => {
   for (const [width, height] of laptops) {
     await page.setViewportSize({ width, height });
     await page.goto("/cadastro");
@@ -35,12 +33,17 @@ test("/cadastro keeps its room to breathe on a short laptop", async ({ page }) =
     const button = await page
       .getByRole("button", { name: "Criar conta" })
       .evaluate((element) => element.getBoundingClientRect().bottom);
-    if (height >= 650) expect(button, `${width}×${height}`).toBeLessThanOrEqual(height);
-    // Never squeezed: 52px fields and at least 32px between the header and the card.
-    const field = await page.getByLabel("Seu nome").evaluate((input) => input.clientHeight);
-    expect(field).toBeGreaterThanOrEqual(50);
+    expect(button, `${width}×${height}`).toBeLessThanOrEqual(height);
+    const scroll = await page.evaluate(() => document.scrollingElement?.scrollHeight ?? 0);
+    expect(scroll, `${width}×${height}: no scroll`).toBeLessThanOrEqual(height);
+    // Fields stay full tap targets: 44px on short laptops (E30, to fit with no scroll).
+    const field = await page
+      .getByLabel("Seu nome")
+      .evaluate((input) => Math.round(input.getBoundingClientRect().height));
+    expect(field).toBeGreaterThanOrEqual(44);
     const top = await card.evaluate((element) => element.getBoundingClientRect().top);
-    expect(top - 65, `${width}×${height}`).toBeGreaterThanOrEqual(32);
+    // E30: at least 24px under the header.
+    expect(top - 65, `${width}×${height}`).toBeGreaterThanOrEqual(24);
     // Never cut: the page scrolls to the card's end.
     await page.evaluate(() => window.scrollTo(0, document.scrollingElement?.scrollHeight ?? 0));
     const bottom = await card.evaluate((element) => element.getBoundingClientRect().bottom);
@@ -61,17 +64,20 @@ for (const path of compact) {
         screen: window.innerHeight,
         card: document.querySelector("[data-auth-card]")?.getBoundingClientRect().bottom ?? 0,
       }));
-      // The whole card is always in view. Sign-in carries the "Cadastre-se" note on top again
-      // (owner, E27): at 1280×600 only the compact footer is a short scroll away.
+      // The whole card in view, and no scroll at all now that there is no footer (E30).
       expect(card, `${width}×${height}`).toBeLessThanOrEqual(screen);
-      if (path !== "/entrar" || height >= 650) {
-        expect(scroll, `${width}×${height}`).toBeLessThanOrEqual(screen);
-      }
+      expect(scroll, `${width}×${height}`).toBeLessThanOrEqual(screen);
     }
   });
 }
 
 for (const path of pages) {
+  test(`${path} has no footer (E30)`, async ({ page }) => {
+    await page.goto(path);
+    await expect(page.locator("[data-auth-card]")).toBeVisible();
+    await expect(page.getByRole("contentinfo")).toHaveCount(0);
+  });
+
   test(`${path} is never cut on smaller screens`, async ({ page }) => {
     for (const [width, height] of others) {
       await page.setViewportSize({ width, height });
@@ -130,4 +136,39 @@ test("without WebGL or with reduced motion, a static light shows around the card
     await expect(page.locator("[data-morning-light] canvas")).toHaveCount(0);
   }
   await context.close();
+});
+
+test("sign-up: the button spans the card and the terms keep to one line (E30)", async ({
+  page,
+}) => {
+  for (const [width, height] of [
+    [1366, 650],
+    [360, 640],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/cadastro");
+    await expect(page.locator(".skeleton-screen")).toHaveCount(0);
+    const form = await page.locator("[data-auth-card] form").boundingBox();
+    const button = await page.getByRole("button", { name: "Criar conta" }).boundingBox();
+    expect(Math.abs((button?.width ?? 0) - (form?.width ?? 0))).toBeLessThanOrEqual(1);
+    const lines = await page
+      .locator('label[for="cadastro-termos"]')
+      .evaluate((label) =>
+        Math.round(
+          label.getBoundingClientRect().height / parseFloat(getComputedStyle(label).lineHeight),
+        ),
+      );
+    // One line on the laptop; on a phone it wraps at a normal line height (no 44px lines).
+    if (width > 1000) expect(lines).toBe(1);
+    else expect(lines).toBeLessThanOrEqual(3);
+    const leading = await page
+      .locator('label[for="cadastro-termos"]')
+      .evaluate(
+        (label) =>
+          parseFloat(getComputedStyle(label).lineHeight) /
+          parseFloat(getComputedStyle(label).fontSize),
+      );
+    expect(leading).toBeGreaterThanOrEqual(1.4);
+    expect(leading).toBeLessThanOrEqual(1.5);
+  }
 });

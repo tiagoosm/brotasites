@@ -148,14 +148,91 @@ test("every create-site button has the same finish, 44px tall", async ({ page })
       ).length,
   );
   expect(plain).toBe(0);
-  // A visitor's header has none (E26; the signed-in header's is in header.spec.ts); the phone
-  // menu's main button, "Entrar ou cadastre-se", has the same finish.
+  // A visitor's header never offers "Criar meu site" (E26); its one highlight is "Criar conta"
+  // (E30), with the same finish, in the bar and in the phone menu.
   await page.goto("/ajuda");
-  await expect(page.getByRole("banner").locator("a[data-create-site]")).toHaveCount(0);
-  if ((page.viewportSize()?.width ?? 0) < 768) {
+  const isPhone = (page.viewportSize()?.width ?? 0) < 768;
+  if (isPhone) {
     await page.getByRole("button", { name: "Abrir menu" }).click();
     const sheet = page.getByRole("dialog", { name: "Menu" }).locator("a[data-create-site]");
-    await expect(sheet).toHaveText(/Entrar ou cadastre-se/);
+    await expect(sheet).toHaveText(/Criar conta/);
     await expect(sheet).toHaveClass(/specular/);
+  } else {
+    const bar = page.getByRole("banner").locator("a[data-create-site]");
+    await expect(bar).toHaveText(/Criar conta/);
+    await expect(bar).toHaveAttribute("href", "/cadastro");
   }
+});
+
+test("every main green button has the specular finish, and only those (E30)", async ({ page }) => {
+  const check = async () =>
+    page.evaluate(() => {
+      const visible = (element: Element) => {
+        const box = element.getBoundingClientRect();
+        return box.width > 0 && box.height > 0;
+      };
+      const layers = (element: Element) => element.querySelectorAll("[data-specular-layer]").length;
+      const main = [
+        ...document.querySelectorAll(
+          '[data-slot="button"][data-variant="default"], a[data-create-site]',
+        ),
+      ].filter(visible);
+      const others = [
+        ...document.querySelectorAll('[data-slot="button"]:not([data-variant="default"])'),
+      ].filter(visible);
+      return {
+        main: main.length,
+        mainWithout: main.filter((element) => layers(element) !== 2).map((e) => e.textContent),
+        othersWith: others.filter((element) => layers(element) > 0).map((e) => e.textContent),
+      };
+    });
+  for (const path of ["/entrar", "/cadastro", "/esqueci-senha", "/"]) {
+    await page.goto(path);
+    await page.waitForLoadState("networkidle");
+    const found = await check();
+    expect(found.main, path).toBeGreaterThan(0);
+    expect(found.mainWithout, path).toEqual([]);
+    expect(found.othersWith, path).toEqual([]);
+  }
+});
+
+test("a busy or disabled main button keeps its light at rest (E30)", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "a mouse is needed");
+  await page.goto("/esqueci-senha");
+  await page.waitForLoadState("networkidle");
+  const button = page.getByRole("button", { name: "Enviar link" });
+  await button.evaluate((element) => element.setAttribute("aria-busy", "true"));
+  const box = await button.boundingBox();
+  await page.mouse.move((box?.x ?? 0) + 4, (box?.y ?? 0) + 4);
+  await page.mouse.move(
+    (box?.x ?? 0) + (box?.width ?? 0) - 6,
+    (box?.y ?? 0) + (box?.height ?? 0) - 6,
+    {
+      steps: 6,
+    },
+  );
+  await page.waitForTimeout(300);
+  const moved = await button
+    .locator("[data-specular-light]")
+    .first()
+    .evaluate((light) => light.style.transform);
+  expect(moved === "" || moved === "translate3d(0px, 0px, 0px)").toBe(true);
+  // A free one follows the cursor.
+  await button.evaluate((element) => element.removeAttribute("aria-busy"));
+  await page.mouse.move((box?.x ?? 0) + 6, (box?.y ?? 0) + 6, { steps: 4 });
+  await page.mouse.move(
+    (box?.x ?? 0) + (box?.width ?? 0) - 6,
+    (box?.y ?? 0) + (box?.height ?? 0) / 2,
+    {
+      steps: 6,
+    },
+  );
+  await expect
+    .poll(() =>
+      button
+        .locator("[data-specular-light]")
+        .first()
+        .evaluate((light) => light.style.transform),
+    )
+    .not.toBe("translate3d(0px, 0px, 0px)");
 });

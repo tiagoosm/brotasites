@@ -9,8 +9,8 @@ import {
 } from "@playwright/test";
 import { SITE, SUPABASE, signIn } from "./support/supabase";
 
-// The one header of every page (E17): the same three links (E29: "Dúvidas" left), only "Entrar ou
-// cadastre-se" signed out, except on the sign-in and sign-up screens themselves
+// The one header of every page (E17): the same three links (E29: "Dúvidas" left); signed out
+// "Entrar" and "Criar conta" (E30), never the page the person is on
 // (E26: never "Criar meu site" for visitors), "Criar meu site" and the profile menu signed in,
 // decided on the server (no flicker).
 
@@ -47,19 +47,29 @@ test.describe("the same header everywhere", () => {
       const nav = banner(page).getByRole("navigation", { name: "Principal" });
       await expect(nav.getByRole("link")).toHaveText(middle);
       await expect(nav.getByRole("link", { name: "Preço" })).toHaveAttribute("href", "/#preco");
-      // One way in (E18), to /entrar, where signing up is one tap away, with its 44px area.
-      const way = banner(page).getByRole("link", { name: "Entrar ou cadastre-se" });
-      await expect(way).toHaveAttribute("href", "/entrar");
-      // Its tap area (the touch-target utility) reaches 22px above and below its middle.
-      expect(
-        await way.evaluate((link) => {
-          const box = link.getBoundingClientRect();
-          const x = box.left + box.width / 2;
-          const y = box.top + box.height / 2;
-          return [y - 21, y + 21].every((at) => link.contains(document.elementFromPoint(x, at)));
-        }),
-      ).toBe(true);
-      await expect(banner(page).getByRole("link", { name: "Criar conta" })).toHaveCount(0);
+      // Two ways in (E30): "Entrar" (quiet) and "Criar conta" (the highlight), each 44px tall.
+      const signIn = banner(page).getByRole("link", { name: "Entrar", exact: true });
+      const signUp = banner(page).getByRole("link", { name: "Criar conta" });
+      await expect(signIn).toHaveAttribute("href", "/entrar");
+      await expect(signUp).toHaveAttribute("href", "/cadastro");
+      await expect(signUp).toHaveClass(/specular/);
+      await expect(signIn).not.toHaveClass(/specular/);
+      for (const way of [signIn, signUp]) {
+        expect(
+          await way.evaluate((link) => {
+            const box = link.getBoundingClientRect();
+            const x = box.left + box.width / 2;
+            const y = box.top + box.height / 2;
+            return [y - 21, y + 21].every((at) => link.contains(document.elementFromPoint(x, at)));
+          }),
+        ).toBe(true);
+      }
+      const [a, b] = [await signIn.boundingBox(), await signUp.boundingBox()];
+      expect(a?.height).toBe(b?.height);
+      // "Entrar" first, then "Criar conta", 8 to 12px apart.
+      const gap = (b?.x ?? 0) - ((a?.x ?? 0) + (a?.width ?? 0));
+      expect(gap).toBeGreaterThanOrEqual(8);
+      expect(gap).toBeLessThanOrEqual(12);
       // A visitor never sees "Criar meu site" in the header (E26): it only led to signing in.
       await expect(banner(page).getByRole("link", { name: "Criar meu site" })).toHaveCount(0);
       await expect(profileButton(page)).toHaveCount(0);
@@ -73,12 +83,20 @@ test.describe("the same header everywhere", () => {
     });
   }
 
-  for (const path of ["/entrar", "/cadastro", "/esqueci-senha"]) {
-    test(`no "Entrar ou cadastre-se" on ${path}, where the person already is (E29)`, async ({
+  // E30: never the page the person is on, none on the password screens (E29's rule).
+  const onScreens: [string, string[]][] = [
+    ["/entrar", ["Criar conta"]],
+    ["/cadastro", ["Entrar"]],
+    ["/esqueci-senha", []],
+    ["/redefinir-senha", []],
+  ];
+  for (const [path, offered] of onScreens) {
+    test(`on ${path} the visitor is offered ${offered.join(" and ") || "neither button"}`, async ({
       page,
     }) => {
       await page.goto(path);
       await expect(banner(page).getByRole("link", { name: "BrotaSites" }).first()).toBeVisible();
+      let scope = banner(page);
       if (isPhone(page)) {
         const button = banner(page).getByRole("button", { name: "Abrir menu" });
         const sheet = page.getByRole("dialog", { name: "Menu" });
@@ -86,14 +104,16 @@ test.describe("the same header everywhere", () => {
           await button.click();
           await expect(sheet).toBeVisible({ timeout: 1000 });
         }).toPass();
-        await expect(sheet.getByRole("link", { name: "Entrar ou cadastre-se" })).toHaveCount(0);
         await expect(sheet.getByRole("link", { name: "Ajuda" })).toBeVisible();
+        scope = sheet;
       } else {
-        await expect(banner(page).getByRole("link", { name: "Entrar ou cadastre-se" })).toHaveCount(
-          0,
-        );
         const nav = banner(page).getByRole("navigation", { name: "Principal" });
         await expect(nav.getByRole("link")).toHaveText(middle);
+      }
+      for (const name of ["Entrar", "Criar conta"]) {
+        await expect(scope.getByRole("link", { name, exact: true })).toHaveCount(
+          offered.includes(name) ? 1 : 0,
+        );
       }
     });
   }
@@ -123,7 +143,8 @@ test.describe("the same header everywhere", () => {
         "Meus sites",
         "Perfil e segurança",
         "Conta",
-        "Entrar ou cadastre-se",
+        "Entrar",
+        "Criar conta",
         "Sair",
       ]) {
         await expect(
@@ -235,7 +256,7 @@ test("signing out from the menu goes back to the visitor's header", async ({
   await expect(page).toHaveURL(/\/$/);
   await expect(profileButton(page)).toHaveCount(0);
   if (!isPhone(page))
-    await expect(banner(page).getByRole("link", { name: "Entrar ou cadastre-se" })).toBeVisible();
+    await expect(banner(page).getByRole("link", { name: "Entrar", exact: true })).toBeVisible();
 });
 
 test("on phones the sheet lists the links and the account", async ({ page, context, request }) => {
@@ -308,4 +329,44 @@ test("the header passes axe with the profile menu open, without sideways scroll"
   const box = await profileButton(page).boundingBox();
   expect(box?.width).toBeGreaterThanOrEqual(44);
   expect(box?.height).toBeGreaterThanOrEqual(44);
+});
+
+test("the middle links keep their place signed in, out and on every account screen (E30)", async ({
+  page,
+  context,
+  request,
+}, info) => {
+  test.skip(info.project.name !== "desktop", "the sizes are set here");
+  test.setTimeout(120_000);
+  const widths = [768, 820, 1024, 1280, 1440];
+  const places = async () =>
+    banner(page)
+      .getByRole("navigation", { name: "Principal" })
+      .getByRole("link")
+      .evaluateAll((links) => links.map((link) => Math.round(link.getBoundingClientRect().left)));
+  const seen = new Map<number, number[]>();
+  const check = async (path: string) => {
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(path);
+      await expect(banner(page).getByRole("navigation", { name: "Principal" })).toBeVisible();
+      const now = await places();
+      const before = seen.get(width);
+      if (before) expect(now, `${path} at ${width}px`).toEqual(before);
+      else seen.set(width, now);
+      // Nothing wider than the screen, nothing squeezed: the brand and the buttons keep one line.
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
+      const tall = await banner(page)
+        .locator("a")
+        .evaluateAll(
+          (links) => links.filter((link) => link.getBoundingClientRect().height > 50).length,
+        );
+      expect(tall, `${path} at ${width}px`).toBe(0);
+    }
+  };
+  for (const path of ["/", "/entrar", "/cadastro", "/esqueci-senha"]) await check(path);
+  await signedIn(context, request, person());
+  await check("/");
 });

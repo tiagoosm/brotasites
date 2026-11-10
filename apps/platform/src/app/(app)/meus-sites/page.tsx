@@ -39,14 +39,9 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Meus sites", robots: { index: false, follow: false } };
 
-export default async function MySitesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ senha?: string }>;
-}) {
+export default async function MySitesPage() {
   const data = await loadDashboard().catch(() => undefined);
   if (data === null) redirect("/entrar?voltar=%2Fmeus-sites");
-  const { senha } = await searchParams;
   const names = new Map(data?.sites.map((site) => [site.id, site.name]));
   const notices =
     data?.notices.map((notice) => ({
@@ -72,14 +67,6 @@ export default async function MySitesPage({
         ) : (
           <>
             <Header data={data} notices={notices} />
-            {senha === "alterada" && (
-              <p
-                role="status"
-                className="rounded-lg border border-leaf/30 bg-leaf/5 p-3 text-[0.9375rem]"
-              >
-                Senha alterada. Os outros aparelhos vão precisar entrar de novo.
-              </p>
-            )}
             <AccountBand data={data} />
             <SiteList sites={data.sites} />
             {data.sites.some((site) => infoFor(site.status).busy) && <AutoRefresh />}

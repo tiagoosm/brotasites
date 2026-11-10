@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import type { HeaderSession } from "@/components/site/nav";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -29,6 +30,8 @@ export async function whoIsSignedIn(): Promise<Who | null> {
 }
 
 export async function headerSession(): Promise<HeaderSession> {
+  // A recovery session (E30) sees the visitor's header: it is not a sign-in.
+  if ((await headers()).get("x-recovery") === "1") return { signedIn: false };
   const who = await whoIsSignedIn().catch(() => null);
   return who ? { signedIn: true, known: true, ...who } : { signedIn: false };
 }

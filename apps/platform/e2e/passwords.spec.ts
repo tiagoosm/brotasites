@@ -23,31 +23,29 @@ const password = (page: Page) => page.getByLabel("Senha", { exact: true });
 const repeat = (page: Page) => page.getByLabel("Repita a senha");
 const requirement = (page: Page) =>
   page.getByRole("list", { name: "A senha precisa ter" }).getByRole("listitem");
-const hint = (page: Page, text: string) =>
-  page.getByRole("list", { name: "Deixa a senha mais forte" }).getByRole("listitem").filter({
-    hasText: text,
-  });
 
-test("the checklist and the meter follow the typing, in text", async ({ page }) => {
+test("the minimum always, the strength only while typing, no optional hints (E30)", async ({
+  page,
+}) => {
   await page.goto("/cadastro");
-  await expect(page.getByText("Força: —", { exact: true })).toBeVisible();
+  // Empty: no strength, no bar, only the one requirement.
+  await expect(page.getByText(/^Força:/)).toHaveCount(0);
+  await expect(page.getByText("Mínimo:", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Mais forte com|Para ficar mais forte/)).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Deixa a senha mais forte" })).toHaveCount(0);
   await password(page).pressSequentially("cafe");
   await expect(requirement(page)).toHaveCount(1);
   await expect(requirement(page)).toContainText("Ainda não: 8 caracteres");
-  await expect(hint(page, "minúscula")).toContainText("Feito");
-  // The optional hints never read like a requirement (E29): no "Ainda não" on them.
-  await expect(hint(page, "maiúscula")).not.toContainText("Ainda não");
-  await expect(page.getByText("Mínimo:", { exact: true })).toBeVisible();
-  await expect(page.getByText("Para ficar mais forte (opcional):", { exact: true })).toBeVisible();
   await expect(page.getByText("Força: Fraca", { exact: true })).toBeVisible();
   // Eight lowercase letters are enough to sign up: weak, never blocked.
   await password(page).fill("cafezinho");
   await expect(requirement(page)).toContainText("Feito: 8 caracteres");
+  // The kinds of character still count for the strength, unseen.
   await password(page).fill("Cafe-forte9");
-  for (const text of ["minúscula", "maiúscula", "número", "símbolo"]) {
-    await expect(hint(page, text)).toContainText("Feito");
-  }
   await expect(page.getByText("Força: Boa", { exact: true })).toBeVisible();
+  await password(page).fill("");
+  await expect(page.getByText(/^Força:/)).toHaveCount(0);
+  await password(page).fill("Cafe-forte9");
   await password(page).fill("Cafe-forte-2026");
   await expect(page.getByText("Força: Forte", { exact: true })).toBeVisible();
 });

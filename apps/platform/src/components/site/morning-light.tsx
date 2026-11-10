@@ -47,19 +47,19 @@ export function MorningLight() {
       <div className="morning-beams absolute inset-0" />
       {!reduced && (
         // A few broad, blurred shafts (E27): soft edges, little repetition, calmer than before.
-        <div className="morning-rays absolute inset-0 opacity-55 sm:opacity-65 lg:opacity-75">
+        <div className="morning-rays absolute inset-0 opacity-80 sm:opacity-90 lg:opacity-100">
           <SideRays
             lightMode
             origin="top-right"
             rayColor1={token("--morning-ray", "#EBC566")}
             rayColor2={token("--morning-ray-leaf", "#A9D1A8")}
             blend={0.35}
-            speed={0.6}
-            intensity={2.6}
-            spread={4.6}
-            density={1.6}
-            sharpness={0.02}
-            falloff={0.55}
+            speed={2.5}
+            intensity={3.2}
+            spread={1.6}
+            density={5}
+            sharpness={0.35}
+            falloff={1.2}
             glow={0.4}
             saturation={1}
             mouseInfluence={0.12}

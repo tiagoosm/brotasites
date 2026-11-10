@@ -92,6 +92,15 @@ export function SignInForm() {
         </p>
       </header>
 
+      {/* After a reset (E30): every session ended, so the person signs in with the new one. */}
+      {params.get("senha") === "alterada" && !error && (
+        <p
+          role="status"
+          className="rounded-lg border border-leaf/30 bg-leaf-wash p-3 text-sm font-semibold text-leaf-deep"
+        >
+          Senha alterada. Entre com a nova senha.
+        </p>
+      )}
       <FormError message={error} />
       {unconfirmed && <ResendConfirmation email={email} next={next} />}
 

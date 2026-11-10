@@ -1,15 +1,21 @@
+"use client";
+
 import { cva, type VariantProps } from "class-variance-authority";
 import { Slot } from "radix-ui";
 import type * as React from "react";
+import { useRef } from "react";
 import { cn } from "@/lib/utils";
+import { SpecularLayers, useSpecular } from "./specular";
 
 const buttonVariants = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-[0.9375rem] font-semibold whitespace-nowrap transition-[transform,background-color,color,box-shadow] duration-150 ease-out outline-none not-disabled:not-aria-disabled:active:scale-[0.97] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
+        // The main action: solid green with the specular finish (E30, components/ui/specular.tsx);
+        // at most one per view.
         default:
-          "bg-primary text-primary-foreground shadow-[0_1px_0_rgb(255_255_255/0.18)_inset,0_6px_16px_-8px_rgb(20_36_27/0.6)] hover:bg-leaf-deep",
+          "specular bg-primary text-primary-foreground shadow-[0_1px_0_rgb(255_255_255/0.18)_inset,0_6px_16px_-8px_rgb(20_36_27/0.6)] hover:bg-leaf-deep",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
         outline:
@@ -41,21 +47,35 @@ function Button({
   variant = "default",
   size = "default",
   asChild = false,
+  ref,
+  children,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
   }) {
   const Comp = asChild ? Slot.Root : "button";
+  const own = useRef<HTMLButtonElement>(null);
+  const main = variant === "default";
+  useSpecular(own, main);
+  const setRef = (element: HTMLButtonElement | null) => {
+    own.current = element;
+    if (typeof ref === "function") ref(element);
+    else if (ref) ref.current = element;
+  };
 
   return (
     <Comp
+      ref={setRef}
       data-slot="button"
       data-variant={variant}
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
-    />
+    >
+      {main && <SpecularLayers />}
+      {asChild ? <Slot.Slottable>{children}</Slot.Slottable> : children}
+    </Comp>
   );
 }
 

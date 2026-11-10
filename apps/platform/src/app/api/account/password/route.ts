@@ -1,3 +1,5 @@
+import { cookies } from "next/headers";
+import { RECOVERY_COOKIE, recoveryState } from "@/lib/auth/recovery";
 import { changePasswordSchema, newPassword } from "@/lib/auth/schemas";
 import { isCaptchaError, isRateLimited } from "@/lib/server/auth-route";
 import { captchaError, captchaTokenFor } from "@/lib/server/captcha";
@@ -40,7 +42,13 @@ export async function POST(request: Request) {
       const message = "A senha atual não confere.";
       return refuse(400, message, { currentPassword: message });
     }
-  } else if (!signedInRecently((await sessionClaims(supabase))?.amr)) {
+  }
+  // The "Esqueci a senha" session (E30): good for 15 minutes, and it ends with the change.
+  const claims = await sessionClaims(supabase);
+  const marker = (await cookies()).get(RECOVERY_COOKIE)?.value;
+  const recovery = recoveryState(claims, marker);
+  if (recovery === "expired") return json({ error: accountErrors.reauth, reauth: true }, 403);
+  if (!body.data.currentPassword && recovery !== "active" && !signedInRecently(claims?.amr)) {
     return json({ error: accountErrors.reauth, reauth: true }, 403);
   }
 
@@ -54,6 +62,13 @@ export async function POST(request: Request) {
     return refuse(400, message, { password: message });
   }
   if (error) return refuse(503, guardErrors.unavailable);
+  if (recovery === "active") {
+    // Every session ends, this one too: the person signs in with the new password (E30).
+    await supabase.auth.signOut({ scope: "global" });
+    const done = json({ ok: true, signedOut: true });
+    done.cookies.delete(RECOVERY_COOKIE);
+    return done;
+  }
   await supabase.auth.signOut({ scope: "others" });
   return json({ ok: true });
 }

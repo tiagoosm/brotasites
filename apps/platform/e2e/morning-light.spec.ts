@@ -30,6 +30,84 @@ function countDraws(page: Page, asIfGpu: boolean) {
   }, asIfGpu);
 }
 
+/** Records the shader's clock (uTime) each frame, as the light draws it. */
+function recordTime(page: Page) {
+  return page.addInitScript(() => {
+    const store = window as unknown as { rayTimes: number[] };
+    store.rayTimes = [];
+    const names = new WeakMap<object, string>();
+    const locate = WebGL2RenderingContext.prototype.getUniformLocation;
+    WebGL2RenderingContext.prototype.getUniformLocation = function (program, name) {
+      const location = locate.call(this, program, name);
+      if (location) names.set(location, name);
+      return location;
+    };
+    const set = WebGL2RenderingContext.prototype.uniform1f;
+    WebGL2RenderingContext.prototype.uniform1f = function (location, value) {
+      if (location && names.get(location) === "uTime") store.rayTimes.push(value);
+      return set.call(this, location, value);
+    };
+  });
+}
+const lastTime = (page: Page) =>
+  page.evaluate(() => (window as unknown as { rayTimes: number[] }).rayTimes.at(-1) ?? 0);
+
+test("the light moves: its clock runs and the beams change (E30)", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "one size is enough");
+  test.setTimeout(90_000);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await countDraws(page, true);
+  await recordTime(page);
+  await page.goto("/entrar");
+  await expect.poll(() => draws(page), { timeout: 15_000 }).toBeGreaterThan(5);
+  const light = page.locator("[data-morning-light]");
+  const startTime = await lastTime(page);
+  const before = await light.screenshot();
+  await page.waitForTimeout(3000);
+  // In E27 the clock ran at 0.24 a second over beams so wide they were a flat veil: nothing
+  // visible moved. Now it runs at 1 a second (in a slow test browser, at least half of that).
+  expect((await lastTime(page)) - startTime).toBeGreaterThan(1.2);
+  const after = await light.screenshot();
+  expect(after.equals(before)).toBe(false);
+  // The still beams step back once the moving ones draw.
+  expect(
+    await page.locator(".morning-beams").evaluate((element) => getComputedStyle(element).opacity),
+  ).toBe("0");
+});
+
+test("with reduced motion the light stays still: no canvas, no frames (E30)", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== "desktop", "one size is enough");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await countDraws(page, true);
+  await page.goto("/entrar");
+  await page.waitForTimeout(1500);
+  expect(await draws(page)).toBe(0);
+  await expect(page.locator("[data-morning-light] canvas")).toHaveCount(0);
+  // The still light carries the whole look.
+  expect(
+    await page.locator(".morning-beams").evaluate((element) => getComputedStyle(element).opacity),
+  ).toBe("1");
+});
+
+test("the light pauses while the tab is hidden (E30)", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "one size is enough");
+  test.setTimeout(90_000);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await countDraws(page, true);
+  await page.goto("/entrar");
+  await expect.poll(() => draws(page), { timeout: 15_000 }).toBeGreaterThan(5);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.waitForTimeout(300);
+  const paused = await draws(page);
+  await page.waitForTimeout(1500);
+  expect(await draws(page)).toBeLessThanOrEqual(paused + 1);
+});
+
 for (const path of ["/entrar", "/cadastro"]) {
   test(`the light rays draw on ${path}, behind the card`, async ({ page }) => {
     test.setTimeout(90_000);

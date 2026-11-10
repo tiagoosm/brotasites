@@ -34,6 +34,7 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E27 Polished sign-in and sign-up: a soft morning light, a card that breathes, 8 characters as the only password rule
 - [x] E28 The domains in code: one place for every address, the team's area on its own host, redirects, HSTS and the contact addresses
 - [x] E29 Clean-up: nothing that repeats, confuses or leads where the person already is
+- [x] E30 "Entrar" and "Criar conta" in the header, cleaner account screens, a light that moves, one main button, and a restricted password-reset session
 
 ## Steps in detail
 
@@ -111,6 +112,17 @@ The same header and footer on every page (public pages, sign-in and password scr
 ### E18 Home page motion and navigation
 
 Every create-site button shares the specular finish, now a composited light eased once per frame (smooth where it stuttered). The header's sign-in link reads "Entrar ou cadastre-se". Section entrances repeat each time an element returns, with a cap on simultaneous entrances and an instant final state on jumps. The links to Como funciona, Preço and Dúvidas scroll smoothly there (also from other pages). The price card's glow turns slowly by itself and hands over to the mouse without jumps. The stem in "Como funciona" is one curved, tapering stroke with leaves that bud, grow and sway, ending in a bloom. The mouse vine roams the free space of the whole public page, kept off the content. All with reduced motion, no JavaScript and touch screens covered.
+
+### E30 Header buttons, account screens, the light, the main button and the reset session (owner's requests of 2026-11-10)
+
+One PR (`step-30-navbar-e-telas-de-conta`):
+
+- **Header:** visitors get "Entrar" (quiet) and "Criar conta" (the highlight), never the screen they are on, neither on the password screens; the right column is wider so the middle links never move; the phone menu ends with both.
+- **Sign-up:** strength only while typing, only the 8-character minimum listed, the button across the card, the terms in one line.
+- **Morning light:** root cause measured (beams so wide they were a flat veil, a slow clock under a still glow); beams and clock restored; still with reduced motion.
+- **Account screens:** no footer; all four fit 1366×650 and 1280×600.
+- **Main button:** one specular finish for every solid green action (`components/ui/specular.tsx`).
+- **Reset link:** a restricted recovery session that only reaches the reset page, ends on leaving or after 15 minutes, and after saving leads to sign in with the new password.
 
 ### E29 Clean-up (owner's request of 2026-11-10)
 

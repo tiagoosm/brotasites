@@ -6,10 +6,9 @@ import { footerLinks } from "./nav";
 
 /**
  * The one footer of every page (E17). Only what the header does not offer (E29): the Terms,
- * the Privacy Policy and, in the full footer, the contact address. `compact` is the quiet
- * single line of the focus screens (sign in, sign up, password).
+ * the Privacy Policy and the contact address. The account screens have none (E30).
  */
-export function SiteFooter({ compact = false }: { compact?: boolean }) {
+export function SiteFooter() {
   const list = (
     <ul className="flex flex-wrap gap-x-7 gap-y-6 text-[0.9375rem]">
       {footerLinks.map((link) => (
@@ -25,19 +24,6 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
       ))}
     </ul>
   );
-  if (compact) {
-    return (
-      // Exactly --auth-footer tall, so the account card's page can leave room for it (E26).
-      <footer className="flex min-h-(--auth-footer) items-center border-t border-line bg-paper">
-        <nav
-          aria-label="Rodapé"
-          className="mx-auto flex w-full max-w-6xl justify-center px-5 sm:px-8"
-        >
-          {list}
-        </nav>
-      </footer>
-    );
-  }
   return (
     <footer className="border-t border-line bg-paper">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-[1fr_auto] md:items-end">
