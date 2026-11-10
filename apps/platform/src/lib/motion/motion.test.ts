@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { lerpAngle, normalize, pointerAngle, resumeDelay, shortestDelta } from "./angle";
 import { MAX_RUNNING, planEntrances, STAGGER_CAP, shouldReset } from "./reveal";
 import { easeInOut, MAX_MS, MIN_MS, scrollDuration, scrollTarget, sectionOf } from "./scroll";
+import { BURSTS, easeOut, isTypingField, MAX_SPARKS, sparksAllowed, strokeAt } from "./sparks";
 import { centerlinePath, cubicAt, midpoints, mirrorPath, outlinePath, stemSegments } from "./stem";
 import { onScreen, outermost, type Rect, rectDistance, vineAlpha } from "./vine";
 
@@ -143,5 +144,56 @@ describe("where the mouse vine may show", () => {
     const page: Rect[] = [card, [0, 2000, 500, 2100]];
     expect(onScreen(page, [header], 0, 800)).toEqual([header, card]);
     expect(onScreen(page, [header], 1500, 800)).toEqual([header, [0, 500, 500, 600]]);
+  });
+});
+
+describe("click sparks (E31)", () => {
+  it("never shows in the team's area", () => {
+    expect(sparksAllowed("/", "brotasites.com.br", "admin.brotasites.com.br")).toBe(true);
+    expect(sparksAllowed("/admin", "brotasites.com.br", null)).toBe(false);
+    expect(sparksAllowed("/admin/sites/1", "localhost:3000", null)).toBe(false);
+    expect(sparksAllowed("/administrador", "localhost:3000", null)).toBe(true);
+    expect(sparksAllowed("/entrar", "Admin.BrotaSites.com.br:443", "admin.brotasites.com.br")).toBe(
+      false,
+    );
+  });
+
+  it("skips fields people type in, keeps the ones they press", () => {
+    for (const type of [null, "text", "password", "email", "search", "tel", "number"]) {
+      expect(isTypingField("INPUT", type, false), String(type)).toBe(true);
+    }
+    expect(isTypingField("TEXTAREA", null, false)).toBe(true);
+    expect(isTypingField("SELECT", null, false)).toBe(true);
+    expect(isTypingField("DIV", null, true)).toBe(true);
+    for (const type of ["checkbox", "radio", "submit", "button"]) {
+      expect(isTypingField("INPUT", type, false), type).toBe(false);
+    }
+    expect(isTypingField("BUTTON", null, false)).toBe(false);
+  });
+
+  it("bursts within the agreed sizes, fewer and shorter on touch", () => {
+    const { mouse, touch } = BURSTS;
+    expect(mouse.count).toBeGreaterThanOrEqual(6);
+    expect(mouse.count).toBeLessThanOrEqual(8);
+    expect(mouse.length).toEqual([8, 14]);
+    expect(mouse.travel).toEqual([18, 28]);
+    expect(mouse.duration).toEqual([450, 600]);
+    expect(touch.count).toBeLessThan(mouse.count);
+    expect(touch.duration[1]).toBeLessThan(mouse.duration[1]);
+    expect(MAX_SPARKS).toBe(40);
+  });
+
+  it("flies out, shortens, thins and fades to nothing", () => {
+    const start = strokeAt(0, 12, 24);
+    const middle = strokeAt(0.5, 12, 24);
+    const end = strokeAt(1, 12, 24);
+    expect(start.outer - start.inner).toBe(12);
+    expect(middle.inner).toBeGreaterThan(start.inner);
+    expect(middle.outer - middle.inner).toBeLessThan(12);
+    expect(middle.width).toBeLessThan(start.width);
+    expect(end.alpha).toBe(0);
+    expect(end.inner).toBeCloseTo(27);
+    // Ease-out: more than half the way at half the time.
+    expect(easeOut(0.5)).toBeGreaterThan(0.5);
   });
 });
