@@ -622,6 +622,25 @@ html:has([data-wizard]) {
 
 .word {
   display: inline-block;
+  white-space: nowrap;
+}
+
+/* The hero's title on load (E31, split-words.tsx, entrance "load"): CSS only, played once as
+   the page paints. Each word settles 0.32em up into place, fully opaque from the first frame:
+   a fade (even from 0.6) pushed the simulated phone's largest paint back by about 0.4s in
+   Lighthouse, the rise alone did not move it. Static without JavaScript and with reduced
+   motion. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-split="load"] .word {
+    animation: title-rise 460ms var(--ease-out) both;
+    animation-delay: calc(var(--word-index) * var(--word-stagger));
+  }
+}
+
+@keyframes title-rise {
+  from {
+    transform: translateY(0.32em);
+  }
 }
 
 @keyframes caret-blink {
