@@ -3,7 +3,7 @@
 import { MailCheck } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { postJson } from "@/components/account/api";
+import { formErrorOf, postJson } from "@/components/account/api";
 import { AuthShell } from "@/components/account/auth-shell";
 import { Captcha } from "@/components/account/captcha";
 import { Field, FormError } from "@/components/account/field";
@@ -31,7 +31,9 @@ export function ForgotPasswordForm() {
       return;
     }
     setFields(result.data.fields ?? {});
-    setError(result.data.error ?? "Não foi possível enviar agora. Tente de novo em instantes.");
+    setError(
+      formErrorOf(result.data, "Não foi possível enviar agora. Tente de novo em instantes."),
+    );
   }
 
   return (

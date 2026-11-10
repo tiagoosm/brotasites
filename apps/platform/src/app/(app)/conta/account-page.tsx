@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
-import { postJson } from "@/components/account/api";
+import { formErrorOf, postJson } from "@/components/account/api";
 import { Captcha } from "@/components/account/captcha";
 import { EmailConfirmBanner } from "@/components/account/email-banner";
 import { Field, FormError } from "@/components/account/field";
@@ -162,7 +162,7 @@ function ProfileSection({ profile, onSaved }: { profile: Profile; onSaved: () =>
     const result = await postJson("/api/account/profile", { fullName, phone });
     setFields(result.data.fields ?? {});
     if (!result.ok) {
-      setError(result.data.error ?? "Não foi possível salvar agora.");
+      setError(formErrorOf(result.data, "Não foi possível salvar agora."));
       return;
     }
     setSaved("Dados salvos.");
@@ -217,7 +217,7 @@ function TermsSection({ onSaved }: { onSaved: () => void }) {
     }
     const result = await postJson("/api/account/terms", { version: TERMS_VERSION });
     if (!result.ok) {
-      setError(result.data.error ?? "Não foi possível salvar agora.");
+      setError(formErrorOf(result.data, "Não foi possível salvar agora."));
       return;
     }
     onSaved();
@@ -264,7 +264,8 @@ function EmailSection({ account }: { account: Signed }) {
     const result = await postJson("/api/account/email", { email });
     setFields(result.data.fields ?? {});
     if (result.data.reauth) return setReauth(true);
-    if (!result.ok) return setError(result.data.error ?? "Não foi possível pedir a troca agora.");
+    if (!result.ok)
+      return setError(formErrorOf(result.data, "Não foi possível pedir a troca agora."));
     setSaved(`Enviamos um link para ${email.trim()}. A troca vale depois que você tocar nele.`);
   }
   return (
@@ -337,7 +338,8 @@ function PasswordSection({
     setAttempt((count) => count + 1);
     setFields(result.data.fields ?? {});
     if (result.data.reauth) return setReauth(true);
-    if (!result.ok) return setError(result.data.error ?? "Não foi possível salvar a senha agora.");
+    if (!result.ok)
+      return setError(formErrorOf(result.data, "Não foi possível salvar a senha agora."));
     setCurrent("");
     setPassword("");
     setRepeat("");
@@ -489,7 +491,8 @@ function DeleteSection({ account }: { account: Signed }) {
     setDeleting(false);
     setFields(result.data.fields ?? {});
     if (result.data.reauth) return setReauth(true);
-    if (!result.ok) return setError(result.data.error ?? "Não foi possível excluir a conta agora.");
+    if (!result.ok)
+      return setError(formErrorOf(result.data, "Não foi possível excluir a conta agora."));
     window.location.assign("/?conta=excluida");
   }
   return (

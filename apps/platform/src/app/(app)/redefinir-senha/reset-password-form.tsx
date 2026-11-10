@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
-import { postJson } from "@/components/account/api";
+import { formErrorOf, postJson } from "@/components/account/api";
 import { AuthShell } from "@/components/account/auth-shell";
 import { FormError } from "@/components/account/field";
 import { PasswordChecklist, PasswordField } from "@/components/account/password-field";
@@ -56,7 +56,7 @@ export function ResetPasswordForm() {
     setError(
       result.data.reauth
         ? "Este link já não vale. Peça um novo em Esqueci a senha."
-        : (result.data.error ?? "Não foi possível trocar a senha agora."),
+        : formErrorOf(result.data, "Não foi possível trocar a senha agora."),
     );
   }
 

@@ -28,3 +28,15 @@ export async function postJson<T = Record<string, unknown>>(
     };
   }
 }
+
+/**
+ * The message for the whole form, or null when the fields already say what to fix (E29: each
+ * error once, under its field; never a general message on top repeating them).
+ */
+export function formErrorOf(
+  data: { error?: string; fields?: Record<string, string> },
+  fallback: string,
+): string | null {
+  if (data.fields && Object.keys(data.fields).length > 0) return null;
+  return data.error ?? fallback;
+}
