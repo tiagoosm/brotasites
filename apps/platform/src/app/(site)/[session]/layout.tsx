@@ -34,7 +34,7 @@ export default async function SiteLayout({
       <main id="conteudo" className="bg-paper">
         {children}
       </main>
-      <SiteFooter signedIn={signedIn} />
+      <SiteFooter />
       <SiteVine />
       <MotionReveal />
       <AnchorScroll />

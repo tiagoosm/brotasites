@@ -2,29 +2,20 @@ import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { CONTACT_EMAIL } from "@/content/contact";
 import { LinkPending } from "./link-pending";
-import { footerLinks, memberLinks, signInLink } from "./nav";
+import { footerLinks } from "./nav";
 
 /**
- * The one footer of every page (E17). `compact` is the quiet single line of the focus screens
- * (sign in, sign up, password).
+ * The one footer of every page (E17). Only what the header does not offer (E29): the Terms,
+ * the Privacy Policy and, in the full footer, the contact address. `compact` is the quiet
+ * single line of the focus screens (sign in, sign up, password).
  */
-export function SiteFooter({
-  signedIn,
-  compact = false,
-}: {
-  /** null while the account is still being read (E26): its link waits, its room is kept. */
-  signedIn: boolean | null;
-  compact?: boolean;
-}) {
-  const account = signedIn === null ? null : signedIn ? memberLinks[0] : signInLink;
-  const links = [...footerLinks, account].filter((link) => link != null);
+export function SiteFooter({ compact = false }: { compact?: boolean }) {
   const list = (
     <ul className="flex flex-wrap gap-x-7 gap-y-6 text-[0.9375rem]">
-      {links.map((link) => (
+      {footerLinks.map((link) => (
         <li key={link.href}>
           <Link
             href={link.href}
-            prefetch={link.account ? false : undefined}
             className="touch-target text-ink-soft transition-colors duration-150 hover:text-ink"
           >
             {link.label}
@@ -32,11 +23,6 @@ export function SiteFooter({
           </Link>
         </li>
       ))}
-      {signedIn === null && (
-        <li aria-hidden="true" className="invisible">
-          {signInLink.label}
-        </li>
-      )}
     </ul>
   );
   if (compact) {

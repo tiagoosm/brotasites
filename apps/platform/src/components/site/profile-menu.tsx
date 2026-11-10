@@ -2,11 +2,11 @@
 
 import { User } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { initialsOf } from "@/lib/initials";
 import { cn } from "@/lib/utils";
-import { accountItems, type HeaderSession } from "./nav";
+import { accountItems, type HeaderSession, visiblePath, withoutCurrent } from "./nav";
 
 // The profile button and its menu (E17): the person's initials (or a person icon), and a menu
 // with who is signed in, Meus sites, Criar meu site, Perfil e segurança, Área da equipe (team only) and
@@ -124,7 +124,9 @@ export function ProfileMenu({ session }: { session: Signed }) {
   }
 
   const initials = initialsOf(who?.name);
-  const links = accountItems(who?.team ?? false);
+  // Never the page the person is already on (E29).
+  const pathname = visiblePath(usePathname());
+  const links = withoutCurrent(accountItems(who?.team ?? false), pathname);
 
   // Opening the menu is the intent (E26): its pages start loading before the choice.
   useEffect(() => {

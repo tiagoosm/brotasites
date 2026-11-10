@@ -6,7 +6,7 @@ import { expect, type Page, test } from "@playwright/test";
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 768;
 // Signed out (E26): the four links, then the main button, the one way in (sign in or sign up).
 // Never "Criar meu site" for visitors: it only led to signing in.
-const items = ["Como funciona", "Preço", "Dúvidas", "Ajuda", "Entrar ou cadastre-se"];
+const items = ["Como funciona", "Preço", "Ajuda", "Entrar ou cadastre-se"];
 const MAIN = "Entrar ou cadastre-se";
 
 async function openMenu(page: Page) {

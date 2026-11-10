@@ -64,15 +64,18 @@ test("every page has one title, the landmarks and no sideways scroll", async ({ 
 test("the header and footer lead to every page", async ({ page }) => {
   await page.goto("/");
   const footer = page.getByRole("contentinfo");
+  // The footer has only what the header lacks (E29): Ajuda lives in the header.
   for (const [name, path] of [
     ["Termos de uso", "/termos"],
     ["Privacidade", "/privacidade"],
-    ["Ajuda", "/ajuda"],
   ] as const) {
     await footer.getByRole("link", { name }).click();
     await expect(page).toHaveURL(new RegExp(`${path}$`));
   }
+  await expect(footer.getByRole("link", { name: "Ajuda" })).toHaveCount(0);
   if (!isPhone(page)) {
+    await page.getByRole("banner").getByRole("link", { name: "Ajuda" }).click();
+    await expect(page).toHaveURL(/\/ajuda$/);
     await page.getByRole("banner").getByRole("link", { name: "Como funciona" }).click();
     await expect(page).toHaveURL(/\/#como-funciona$/);
   }
