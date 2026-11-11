@@ -186,7 +186,8 @@ function SiteList({ sites }: { sites: DashboardSite[] }) {
       <div className="grid gap-3 rounded-xl border border-dashed border-line-strong p-6">
         <h2 className="font-display text-[1.5rem] leading-tight">Crie seu primeiro site</h2>
         <p className="text-[0.9375rem] text-ink-soft">5 passos e você escolhe entre 3 visuais.</p>
-        <CreateSiteButton className="justify-self-start" />
+        {/* Straight to the form: a bare /criar leads signed-in people back here (E32). */}
+        <CreateSiteButton href="/criar?novo=1" className="justify-self-start" />
       </div>
     );
   }

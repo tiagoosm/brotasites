@@ -36,8 +36,17 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E29 Clean-up: nothing that repeats, confuses or leads where the person already is
 - [x] E30 "Entrar" and "Criar conta" in the header, cleaner account screens, a light that moves, one main button, and a restricted password-reset session
 - [x] E31 Animations: a short, quieter mouse vine, click sparks, the hero title settling in, and a price card that arrives sharp
+- [x] E32 Signed in: no "Criar meu site" in the header, the same profile menu on every page, every "Criar meu site" leads to Meus sites
 
 ## Steps in detail
+
+### E32 The signed-in header and where creating starts (owner's request of 2026-11-11)
+
+One PR (`step-32-menu-logado`):
+
+- **Header:** signed in, no "Criar meu site" in the bar or the phone sheet; only the profile button.
+- **Profile menu:** the same items on every page (Meus sites, Perfil e segurança, Área da equipe for the team, Sair); the current page stays, marked (`aria-current`).
+- **Creating:** signed in, a bare `/criar` (every "Criar meu site" on the public pages, a sign-in that started from one) leads to Meus sites (307 in the proxy); the form opens from there with `/criar?novo=1` ("Criar outro site", or the first site's button). Drafts continue from their card on Meus sites.
 
 ### E31 Animations (owner's request of 2026-11-10)
 

@@ -76,17 +76,18 @@ test("with no sites: an invitation, and no notice band", async ({ page, context,
   await expect(page.getByText("Tudo em dia.")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Precisa de você" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Crie seu primeiro site" })).toBeVisible();
+  // Straight to the form: a bare /criar leads back here (E32).
   await expect(
     page.getByRole("main").getByRole("link", { name: "Criar meu site" }),
-  ).toHaveAttribute("href", "/criar");
+  ).toHaveAttribute("href", "/criar?novo=1");
   // The account lives in the profile menu of the one header (E17), read on the server.
   await page.getByRole("button", { name: "Menu da conta de Zé da Padaria" }).click();
-  // Never the page the person is on (E29): no "Meus sites" here.
-  await expect(page.getByRole("menuitem")).toHaveText([
-    "Criar meu site",
-    "Perfil e segurança",
-    "Sair",
-  ]);
+  // The same items on every page (E32): Meus sites stays, marked as the current page.
+  await expect(page.getByRole("menuitem")).toHaveText(["Meus sites", "Perfil e segurança", "Sair"]);
+  await expect(page.getByRole("menuitem", { name: "Meus sites" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
 });
 
 test("each status shows its label, what is pending and the right button", async ({

@@ -2,7 +2,8 @@ import { adminUrl } from "@/lib/domains/hosts";
 
 // The one header of every page (E17): the same three links in the middle, and on the right the
 // account (sign in, or the profile menu). Shared by the header, the phone menu and the footer.
-// E29: nothing leads to the page the person is on, and no link repeats another of the same menu.
+// E29: nothing leads to the page the person is on, and no link repeats another of the same menu;
+// except the profile menu, which keeps the same items on every page (E32).
 
 // Links to the form, sign-in and account pages use prefetch={false}: those pages carry the
 // account and schema code, which the public pages should not download in advance.
@@ -59,10 +60,13 @@ export function visitorButtons(pathname: string): { signIn: boolean; signUp: boo
   return { signIn: !on("/entrar"), signUp: !on("/cadastro") };
 }
 
-/** The profile menu ("Sair" is a form, after these). */
+/**
+ * The profile menu ("Sair" is a form, after these). The same items on every page (E32, owner's
+ * request): the page the person is on stays listed, marked as current. No "Criar meu site":
+ * creating starts from Meus sites (E32).
+ */
 export const memberLinks: readonly NavLink[] = [
   { href: DASHBOARD_HREF, label: "Meus sites", account: true },
-  { href: CREATE_HREF, label: "Criar meu site", account: true },
   { href: ACCOUNT_HREF, label: "Perfil e segurança", account: true },
 ];
 
@@ -90,15 +94,6 @@ export type HeaderSession =
 /** The account's items of the profile menu, in order ("Sair" comes after them). */
 export function accountItems(team: boolean): readonly NavLink[] {
   return team ? [...memberLinks, teamLink] : memberLinks;
-}
-
-/**
- * The main button on the right, signed in only. A visitor never sees "Criar meu site" in the
- * header (it only led to the sign-in page, E26): "Entrar" and "Criar conta" are their ways in
- * (E30), and the home page keeps its own "Criar meu site" buttons in the hero and the sections.
- */
-export function mainButton(session: HeaderSession): NavLink | null {
-  return session.signedIn ? { href: CREATE_HREF, label: "Criar meu site", account: true } : null;
 }
 
 /** The current page among the middle links: only "Ajuda" is a page of its own. */

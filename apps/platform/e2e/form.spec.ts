@@ -23,8 +23,9 @@ test("creating a site asks for an account first, on the server", async ({ page }
 test("signed in, a new site starts at the first question", async ({ page, context }) => {
   const user = await signIn(context);
   const state = await fakeSupabase(context, user);
-  // Nothing comes from the address anymore (the home page demo was removed in E17).
-  await page.goto("/criar?nome=Padaria%20do%20Z%C3%A9&tipo=padaria");
+  // Nothing comes from the address anymore (the home page demo was removed in E17). A new site
+  // starts from Meus sites (E32), which opens /criar?novo=1.
+  await page.goto("/criar?novo=1&nome=Padaria%20do%20Z%C3%A9&tipo=padaria");
   await expect(page).toHaveURL(step("negocio"));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Qual é o seu negócio?");
   expect(state.site?.id).toBe(SITE);
@@ -32,10 +33,13 @@ test("signed in, a new site starts at the first question", async ({ page, contex
   await expect(page.getByLabel("Tipo de negócio")).toHaveValue("");
 });
 
-test("an unfinished draft opens where the person stopped", async ({ page, context }) => {
+test("signed in, a bare /criar leads to Meus sites, where drafts continue (E32)", async ({
+  page,
+  context,
+}) => {
   await withSite(context, { draft: padaria, completed: ["negocio", "marca"] });
   await page.goto("/criar");
-  await expect(page).toHaveURL(step("secoes"));
+  await expect(page).toHaveURL(/\/meus-sites$/);
 });
 
 test("explains what is missing, in Portuguese, then saves and moves on", async ({
