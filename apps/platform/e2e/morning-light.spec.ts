@@ -75,6 +75,48 @@ test("the light moves: its clock runs and the beams change (E30)", async ({ page
   ).toBe("0");
 });
 
+/** Records the beams' aim (uAim) each frame: where the mouse turns them. */
+function recordAim(page: Page) {
+  return page.addInitScript(() => {
+    const store = window as unknown as { rayAims: number[] };
+    store.rayAims = [];
+    const names = new WeakMap<object, string>();
+    const locate = WebGL2RenderingContext.prototype.getUniformLocation;
+    WebGL2RenderingContext.prototype.getUniformLocation = function (program, name) {
+      const location = locate.call(this, program, name);
+      if (location) names.set(location, name);
+      return location;
+    };
+    const set = WebGL2RenderingContext.prototype.uniform1f;
+    WebGL2RenderingContext.prototype.uniform1f = function (location, value) {
+      if (location && names.get(location) === "uAim") store.rayAims.push(value);
+      return set.call(this, location, value);
+    };
+  });
+}
+
+test("the beams turn clearly toward the mouse (E31)", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "a mouse is needed");
+  test.setTimeout(90_000);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await countDraws(page, true);
+  await recordAim(page);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/entrar");
+  await expect.poll(() => draws(page), { timeout: 15_000 }).toBeGreaterThan(5);
+  const aims = () =>
+    page.evaluate(() => (window as unknown as { rayAims: number[] }).rayAims.slice());
+  // Across the page, from one side to the other: the aim follows by a visible angle.
+  await page.mouse.move(60, 400);
+  await page.waitForTimeout(1500);
+  const left = (await aims()).at(-1) ?? 0;
+  for (let x = 60; x <= 1220; x += 40) await page.mouse.move(x, 400);
+  await page.waitForTimeout(1500);
+  const right = (await aims()).at(-1) ?? 0;
+  // Until E31 the swing was about 0.07 rad (4°), hardly seen; now about 0.4 rad (24°).
+  expect(Math.abs(right - left)).toBeGreaterThan(0.3);
+});
+
 test("with reduced motion the light stays still: no canvas, no frames (E30)", async ({
   page,
 }, info) => {
