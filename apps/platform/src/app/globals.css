@@ -625,6 +625,11 @@ html:has([data-wizard]) {
   white-space: nowrap;
 }
 
+/* A letter of the hero title (title-lift.tsx): inline, so the kerning stays; lifted with top. */
+.char {
+  position: relative;
+}
+
 /* The hero's title on load (E31, split-words.tsx, entrance "load"): CSS only, played once as
    the page paints. Each word settles 0.32em up into place, fully opaque from the first frame:
    a fade (even from 0.6) pushed the simulated phone's largest paint back by about 0.4s in

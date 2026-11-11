@@ -385,6 +385,10 @@ test("the hero title enters word by word in CSS, whole in the HTML, wrapping as 
         top(word.getBoundingClientRect(), h1),
       );
       const plainTops: number[] = [];
+      const plainWidths: number[] = [];
+      const splitWidths = [...h1.querySelectorAll(".word")].map(
+        (word) => word.getBoundingClientRect().width,
+      );
       const walker = document.createTreeWalker(plain, NodeFilter.SHOW_TEXT);
       for (let node = walker.nextNode(); node; node = walker.nextNode()) {
         const text = node.textContent ?? "";
@@ -393,6 +397,7 @@ test("the hero title enters word by word in CSS, whole in the HTML, wrapping as 
           range.setStart(node, match.index ?? 0);
           range.setEnd(node, (match.index ?? 0) + match[0].length);
           plainTops.push(top(range.getBoundingClientRect(), plain));
+          plainWidths.push(range.getBoundingClientRect().width);
         }
       }
       // Line numbers, not px: a word box and a run of text sit at slightly different tops.
@@ -404,6 +409,8 @@ test("the hero title enters word by word in CSS, whole in the HTML, wrapping as 
         height: h1.getBoundingClientRect().height,
         plainHeight: plain.getBoundingClientRect().height,
         splitTops: lineOf(splitTops),
+        // Each word as wide as in plain text: the letter spans keep the kerning.
+        widthGap: Math.max(...splitWidths.map((w, i) => Math.abs(w - (plainWidths[i] ?? 0)))),
         plainTops: lineOf(plainTops),
         fontSize: getComputedStyle(h1).fontSize,
       };
@@ -412,6 +419,7 @@ test("the hero title enters word by word in CSS, whole in the HTML, wrapping as 
     });
     expect(layout.height, `${width}px`).toBeCloseTo(layout.plainHeight, 0);
     expect(layout.splitTops, `${width}px`).toEqual(layout.plainTops);
+    expect(layout.widthGap, `${width}px`).toBeLessThan(0.5);
     // The same sizes as before: 3.25rem, 5rem from 640px, 6rem from 1024px.
     expect(layout.fontSize).toBe(width >= 1024 ? "96px" : width >= 640 ? "80px" : "52px");
   }
@@ -453,4 +461,49 @@ test("the mouse vine is on the account pages too, and draws in their free space 
     }
     expect((await vineInk(page))?.count, path).toBeGreaterThan(0);
   }
+});
+
+test("the hero title's letters lift near the mouse and settle back (E31)", async ({ page }) => {
+  test.skip(isPhone(page), "Mouse only.");
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/");
+  await page.waitForTimeout(1000);
+  const letters = page.locator("#hero-titulo .char");
+  await expect(letters).toHaveCount(22);
+  const tops = () =>
+    letters.evaluateAll((all) => all.map((el) => Number.parseFloat(getComputedStyle(el).top) || 0));
+  const size = await page
+    .locator("#hero-titulo")
+    .evaluate((h1) => Number.parseFloat(getComputedStyle(h1).fontSize));
+  // Over the "s" in "passos" (the fifth letter).
+  const box = await letters.nth(4).boundingBox();
+  if (!box) throw new Error("no letter");
+  await page.mouse.move(box.x - 60, box.y + box.height / 2);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 6 });
+  await page.waitForTimeout(600);
+  const lifted = await tops();
+  // The letter under the cursor rises the most (about 0.14em), its neighbours less, the far
+  // ones not at all.
+  expect(lifted[4] ?? 0).toBeLessThan(-0.1 * size);
+  expect(lifted[4] ?? 0).toBeLessThan(lifted[2] ?? 0);
+  expect(lifted.at(-1)).toBe(0);
+  // Away from the title, everything settles back.
+  await page.mouse.move(box.x, box.y + 400, { steps: 4 });
+  await expect.poll(async () => (await tops()).every((top) => top === 0)).toBe(true);
+});
+
+test("the hero title's letters stay still with reduced motion (E31)", async ({ page }) => {
+  test.skip(isPhone(page), "Mouse only.");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/");
+  await page.waitForTimeout(800);
+  const box = await page.locator("#hero-titulo .char").nth(4).boundingBox();
+  if (!box) throw new Error("no letter");
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 6 });
+  await page.waitForTimeout(400);
+  const tops = await page
+    .locator("#hero-titulo .char")
+    .evaluateAll((all) => all.map((el) => getComputedStyle(el).top));
+  expect(new Set(tops)).toEqual(new Set(["0px"]));
 });
