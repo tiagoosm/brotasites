@@ -1,4 +1,4 @@
-// Where the mouse vine may show (E18): anywhere on the public pages except over content (text,
+// Where the mouse vine may show (E18): anywhere on the platform's pages (not the team's area) except over content (text,
 // buttons, links, cards, fields, images, the questions' window, the header and the footer).
 // The content's boxes are measured now and then (vine-avoid.ts) and kept in page coordinates;
 // each frame only shifts them by the scroll. Pure: the 2D vine (vine-trail.tsx) fades each

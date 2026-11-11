@@ -1,10 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-// A faint, short vine follows the mouse over the public pages (E18; since E31 no leaves, at most
-// about 140 px of tail, gone 0.4 s after the mouse stops). It shows only in the free space: over text, buttons,
+// A faint, short vine follows the mouse over every page of the platform but the team's area
+// (E18; since E31 no leaves, at most about 140 px of tail, gone 0.4 s after the mouse stops, and
+// on the account pages too). It shows only in the free space: over text, buttons,
 // links, cards, fields, images, the questions' window, the header and the footer it fades out
 // within a few px (vine-avoid.ts, lib/motion/vine.ts). Any width with a mouse; never on touch
 // screens. Never in the way of clicks, hidden from assistive technology, off with reduced
@@ -15,6 +17,9 @@ const WITH_MOUSE = "(hover: hover) and (pointer: fine)";
 
 export function SiteVine() {
   const [enabled, setEnabled] = useState(false);
+  // Every page of the platform (E31), except the team's area: there the screen is for work.
+  const path = usePathname() ?? "";
+  const teamArea = path === "/admin" || path.startsWith("/admin/");
 
   useEffect(() => {
     const query = window.matchMedia(WITH_MOUSE);
@@ -24,7 +29,7 @@ export function SiteVine() {
     return () => query.removeEventListener("change", update);
   }, []);
 
-  if (!enabled) return null;
+  if (!enabled || teamArea) return null;
   return (
     <div
       aria-hidden="true"

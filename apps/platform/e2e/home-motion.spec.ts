@@ -434,3 +434,23 @@ test("the hero title stays still with reduced motion and without JavaScript (E31
   await expect(plain.locator("h1 .word").first()).toHaveCSS("animation-name", "none");
   await noScript.close();
 });
+
+test("the mouse vine is on the account pages too, and draws in their free space (E31)", async ({
+  page,
+}) => {
+  test.skip(isPhone(page), "No vine on touch screens.");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  for (const path of ["/entrar", "/cadastro"]) {
+    await page.goto(path);
+    const vine = page.getByTestId("site-vine");
+    await expect(vine.locator("canvas"), path).toHaveCount(1);
+    await expect(vine).toHaveCSS("pointer-events", "none");
+    await page.waitForTimeout(800);
+    // Down the free left side of the page, away from the card.
+    for (let y = 250; y <= 650; y += 8) {
+      await page.mouse.move(60, y);
+      await page.waitForTimeout(8);
+    }
+    expect((await vineInk(page))?.count, path).toBeGreaterThan(0);
+  }
+});
