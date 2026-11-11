@@ -40,7 +40,8 @@
   --motion-word: 400ms;
   --motion-stagger: 70ms;
   --motion-shift: 16px;
-  --motion-blur: 3px;
+  /* Short titles only (split-words.tsx); never a block or a card (E31). */
+  --motion-blur: 2px;
 
   /* shadcn/ui tokens */
   --background: var(--paper);
@@ -511,11 +512,12 @@ html:has([data-wizard]) {
   }
 }
 
+/* Blocks with text to read (the hero's lines and buttons, the phone menu's items) rise with
+   opacity and transform only: a filter on them made the text look resampled (E31). */
 @keyframes enter-rise {
   from {
     opacity: 0;
     transform: translateY(var(--motion-shift));
-    filter: blur(var(--motion-blur));
   }
 }
 
@@ -534,22 +536,23 @@ html:has([data-wizard]) {
    element to "waiting" (fully off screen, JavaScript running, motion allowed), then to "done"
    (entering) when it arrives, or "shown" (final state at once, when too many arrive together
    or during a jump to a section). Without JavaScript, or with reduced motion, nothing is ever
-   hidden. Transforms, opacity and blur only, so nothing around it moves (no layout shift). */
+   hidden. Transforms and opacity only, so nothing around it moves (no layout shift). Blocks and
+   cards never blur on the way in (E31: the price card's whole face, text and border glow, was
+   blurred for about 0.35s while already visible); a blur stays only on short titles
+   (split-words.tsx). */
 
 @media (prefers-reduced-motion: no-preference) {
   [data-reveal=""][data-entry="waiting"],
   [data-reveal="stem"][data-entry="waiting"] > :not(.stem-anchor) {
     opacity: 0;
     transform: translateY(var(--motion-shift));
-    filter: blur(var(--motion-blur));
   }
 
   [data-reveal=""][data-entry="done"],
   [data-reveal="stem"][data-entry="done"] > :not(.stem-anchor) {
     transition:
       opacity var(--motion-enter) var(--ease-out),
-      transform var(--motion-enter) var(--ease-out),
-      filter var(--motion-enter) var(--ease-out);
+      transform var(--motion-enter) var(--ease-out);
     transition-delay: calc(var(--entry-index, 0) * var(--motion-stagger));
   }
 
@@ -605,7 +608,7 @@ html:has([data-wizard]) {
   [data-reveal="words"][data-entry="waiting"] .word {
     opacity: 0;
     transform: translateY(0.3em);
-    filter: blur(2px);
+    filter: blur(var(--motion-blur));
   }
 
   [data-reveal="words"][data-entry="done"] .word {
@@ -619,6 +622,25 @@ html:has([data-wizard]) {
 
 .word {
   display: inline-block;
+  white-space: nowrap;
+}
+
+/* The hero's title on load (E31, split-words.tsx, entrance "load"): CSS only, played once as
+   the page paints. Each word settles 0.32em up into place, fully opaque from the first frame:
+   a fade (even from 0.6) pushed the simulated phone's largest paint back by about 0.4s in
+   Lighthouse, the rise alone did not move it. Static without JavaScript and with reduced
+   motion. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-split="load"] .word {
+    animation: title-rise 460ms var(--ease-out) both;
+    animation-delay: calc(var(--word-index) * var(--word-stagger));
+  }
+}
+
+@keyframes title-rise {
+  from {
+    transform: translateY(0.32em);
+  }
 }
 
 @keyframes caret-blink {

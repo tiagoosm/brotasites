@@ -1,15 +1,15 @@
 // Where the mouse vine may show (E18): anywhere on the public pages except over content (text,
 // buttons, links, cards, fields, images, the questions' window, the header and the footer).
 // The content's boxes are measured now and then (vine-avoid.ts) and kept in page coordinates;
-// each frame only shifts them by the scroll. Pure, for the tests and the 2D leaves; the WebGL
-// stems apply the same rule in their shader.
+// each frame only shifts them by the scroll. Pure: the 2D vine (vine-trail.tsx) fades each
+// segment of its stem by this rule.
 
 /** A box: left, top, right, bottom. */
 export type Rect = [number, number, number, number];
 
 /** The vine fades out over this many px as it nears content. */
 export const FEATHER = 10;
-/** The most boxes the shader takes at once (the ones on screen). */
+/** The most boxes checked at once (the ones on screen). */
 export const MAX_RECTS = 64;
 
 /** Signed distance from a point to a box: negative inside, 0 on the edge. */

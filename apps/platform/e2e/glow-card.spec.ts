@@ -138,3 +138,44 @@ test("touch screens keep the slow turn; reduced motion keeps a still, soft glow"
   expect(rim).toBeLessThanOrEqual(0.5);
   await reduced.close();
 });
+
+test("the price card arrives sharp: never a blur, opacity and a short rise only (E31)", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/");
+  // Off screen, the card waits for its entrance (motion-reveal.tsx).
+  const card = page.locator("#preco [data-reveal]").filter({ hasText: "R$" }).first();
+  await expect(card).toHaveAttribute("data-entry", "waiting");
+  await page.evaluate(() => {
+    const store = window as unknown as { filters: string[]; entries: string[] };
+    store.filters = [];
+    store.entries = [];
+    const card = [...document.querySelectorAll<HTMLElement>("#preco [data-reveal]")].find((el) =>
+      /R\$/.test(el.textContent ?? ""),
+    ) as HTMLElement;
+    const started = performance.now();
+    const sample = () => {
+      store.filters.push(getComputedStyle(card).filter);
+      store.entries.push(card.dataset.entry ?? "");
+      if (performance.now() - started < 1200) setTimeout(sample, 50);
+    };
+    sample();
+    document.querySelector("#preco")?.scrollIntoView({ behavior: "instant" as ScrollBehavior });
+  });
+  await page.waitForTimeout(1400);
+  const { filters, entries } = await page.evaluate(() => {
+    const store = window as unknown as { filters: string[]; entries: string[] };
+    return { filters: store.filters, entries: store.entries };
+  });
+  // It did enter (the motion still runs), and no frame ever carried a filter.
+  expect(entries).toContain("done");
+  expect(filters.filter((value) => value !== "none")).toEqual([]);
+  // The same for every block that enters: blur is kept for short titles only.
+  const blurred = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-reveal=""], [data-reveal="stem"]')]
+      .map((el) => getComputedStyle(el).filter)
+      .filter((value) => value.includes("blur")),
+  );
+  expect(blurred).toEqual([]);
+});

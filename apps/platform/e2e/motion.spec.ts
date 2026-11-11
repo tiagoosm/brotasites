@@ -154,13 +154,31 @@ test("split titles wrap exactly like plain text", async ({ page }) => {
   expect(differences).toEqual([]);
 });
 
-test("the hero title stays still, so the largest paint is not delayed", async ({ page }) => {
+test("the hero title moves only, never fades, so the largest paint is not delayed (E31)", async ({
+  page,
+}) => {
   await page.goto("/");
   const title = page.getByRole("heading", { level: 1 });
   await expect(title).toHaveText("5 passos e seu site pronto.");
-  expect(await title.evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(
-    0,
+  // Its words rise into place (transform only); the title itself is opaque from the start,
+  // and the whole entrance is over within 750ms.
+  const animations = await title.evaluate((element) =>
+    element.getAnimations({ subtree: true }).map((animation) => {
+      const effect = animation.effect as KeyframeEffect;
+      const timing = effect.getComputedTiming();
+      return {
+        properties: [
+          ...new Set(effect.getKeyframes().flatMap((frame) => Object.keys(frame))),
+        ].filter((key) => !["offset", "computedOffset", "easing", "composite"].includes(key)),
+        end: Number(timing.endTime),
+      };
+    }),
   );
+  expect(animations.length).toBe(6);
+  for (const animation of animations) {
+    expect(animation.properties).toEqual(["transform"]);
+    expect(animation.end).toBeLessThanOrEqual(750);
+  }
   await expect(title).toHaveCSS("opacity", "1");
 });
 

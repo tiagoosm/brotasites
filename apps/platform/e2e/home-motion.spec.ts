@@ -251,20 +251,186 @@ test("the decorations never cover the page, with or without a GPU", async ({ pag
     return min;
   }, png);
   expect(darkest).toBeLessThan(80);
-  // Without a GPU the vine draws nothing and leaves no canvas over the page.
+  // The vine (a plain 2D canvas since E31, no GPU needed) is one canvas that never takes clicks.
   const vine = page.getByTestId("site-vine");
   if ((await vine.count()) > 0) {
-    const canvases = await vine.locator("canvas").count();
-    const gpu = await page.evaluate(() => {
-      const gl = document
-        .createElement("canvas")
-        .getContext("webgl2", { failIfMajorPerformanceCaveat: true });
-      const info = gl?.getExtension("WEBGL_debug_renderer_info");
-      const renderer = gl
-        ? String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER))
-        : "";
-      return Boolean(gl) && !/swiftshader|llvmpipe|softpipe|software/i.test(renderer);
-    });
-    if (!gpu) expect(canvases).toBe(0);
+    await expect(vine.locator("canvas")).toHaveCount(1);
+    await expect(vine).toHaveCSS("pointer-events", "none");
   }
+});
+
+/** The vine's drawn pixels: how many, and the box they fill, in CSS px. */
+function vineInk(page: Page) {
+  return page.evaluate(() => {
+    const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="site-vine"] canvas');
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return null;
+    const ratio = canvas.width / window.innerWidth;
+    const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let count = 0;
+    let top = Number.POSITIVE_INFINITY;
+    let bottom = Number.NEGATIVE_INFINITY;
+    let left = Number.POSITIVE_INFINITY;
+    let right = Number.NEGATIVE_INFINITY;
+    for (let i = 3; i < data.length; i += 4) {
+      if ((data[i] ?? 0) <= 8) continue;
+      const pixel = (i - 3) / 4;
+      const x = pixel % canvas.width;
+      const y = Math.floor(pixel / canvas.width);
+      count++;
+      top = Math.min(top, y);
+      bottom = Math.max(bottom, y);
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+    }
+    return {
+      count,
+      height: count ? (bottom - top) / ratio : 0,
+      width: count ? (right - left) / ratio : 0,
+    };
+  });
+}
+
+test("the mouse vine: no leaves, about 140 px of tail, gone soon after the mouse stops (E31)", async ({
+  page,
+}) => {
+  test.skip(isPhone(page), "No vine on touch screens.");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const vine = page.getByTestId("site-vine");
+  await expect(vine.locator("canvas")).toHaveCount(1);
+  await page.waitForTimeout(800);
+  // Down the free left margin, 500 px in one go.
+  for (let y = 250; y <= 750; y += 8) {
+    await page.mouse.move(40, y);
+    await page.waitForTimeout(8);
+  }
+  const moving = await vineInk(page);
+  expect(moving?.count).toBeGreaterThan(0);
+  // The tail is capped along the path (plus the round caps and the sway).
+  expect(moving?.height).toBeLessThanOrEqual(150);
+  expect(moving?.width).toBeLessThanOrEqual(12);
+  // Gone about 0.4 s after the mouse rests: nothing left on the canvas.
+  await page.waitForTimeout(500);
+  expect((await vineInk(page))?.count).toBe(0);
+});
+
+test("the mouse vine draws nothing with reduced motion (E31)", async ({ page }) => {
+  test.skip(isPhone(page), "No vine on touch screens.");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await expect(page.getByTestId("site-vine").locator("canvas")).toHaveCount(1);
+  await page.waitForTimeout(800);
+  for (let y = 250; y <= 600; y += 10) await page.mouse.move(40, y);
+  expect((await vineInk(page))?.count ?? 0).toBe(0);
+});
+
+test("the hero title enters word by word in CSS, whole in the HTML, wrapping as plain text (E31)", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  const sizes = [
+    [360, 640],
+    [390, 844],
+    [768, 1024],
+    [1280, 600],
+    [1366, 650],
+    [1440, 900],
+  ] as const;
+  for (const [width, height] of sizes) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/");
+    const title = page.getByRole("heading", { level: 1 });
+    // One name for assistive technology, the whole text in the HTML, the pieces hidden.
+    await expect(title).toHaveAccessibleName("5 passos e seu site pronto.");
+    expect((await title.textContent())?.replace(/\s+/g, " ").trim()).toBe(
+      "5 passos e seu site pronto.",
+    );
+    const words = title.locator(".word");
+    await expect(words).toHaveCount(6);
+    for (const word of await words.all()) {
+      await expect(word).toHaveAttribute("aria-hidden", "true");
+      await expect(word).toHaveCSS("white-space", "nowrap");
+    }
+    await expect(words.first()).toHaveCSS("animation-name", "title-rise");
+    // Opaque from the first frame (no fade): the largest paint never waits for it.
+    const keyframes = await page.evaluate(() => {
+      const word = document.querySelector("h1 .word");
+      const effect = word?.getAnimations()[0]?.effect as KeyframeEffect | undefined;
+      return (effect?.getKeyframes() ?? []).map((frame) => ({
+        opacity: frame.opacity ?? null,
+        transform: String(frame.transform ?? ""),
+      }));
+    });
+    expect(keyframes.length).toBeGreaterThan(0);
+    expect(keyframes.every((frame) => frame.opacity === null)).toBe(true);
+    // A rise of 0.32em (computed in px against the title's size).
+    const rise = Number(/translateY\(([\d.]+)px\)/.exec(keyframes[0]?.transform ?? "")?.[1]);
+    const size = Number.parseFloat(await title.evaluate((h1) => getComputedStyle(h1).fontSize));
+    expect(rise / size).toBeCloseTo(0.32, 2);
+    // Once it has settled, it wraps exactly as the same title in plain text.
+    await page.waitForTimeout(900);
+    const layout = await page.evaluate(() => {
+      const h1 = document.querySelector("h1") as HTMLElement;
+      const plain = document.createElement("h1");
+      plain.className = h1.className;
+      plain.innerHTML = '5 passos <span class="block text-stem">e seu site pronto.</span>';
+      plain.style.cssText = `position:absolute;visibility:hidden;width:${h1.clientWidth}px`;
+      h1.parentElement?.append(plain);
+      // Which line each word sits on, from the top of its own title.
+      const top = (rect: DOMRect, root: Element) =>
+        Math.round((rect.top - root.getBoundingClientRect().top) / 4);
+      const splitTops = [...h1.querySelectorAll(".word")].map((word) =>
+        top(word.getBoundingClientRect(), h1),
+      );
+      const plainTops: number[] = [];
+      const walker = document.createTreeWalker(plain, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const text = node.textContent ?? "";
+        for (const match of text.matchAll(/\S+/g)) {
+          const range = document.createRange();
+          range.setStart(node, match.index ?? 0);
+          range.setEnd(node, (match.index ?? 0) + match[0].length);
+          plainTops.push(top(range.getBoundingClientRect(), plain));
+        }
+      }
+      // Line numbers, not px: a word box and a run of text sit at slightly different tops.
+      const lineOf = (tops: number[]) => {
+        const lines = [...new Set(tops)].sort((a, b) => a - b);
+        return tops.map((value) => lines.indexOf(value));
+      };
+      const result = {
+        height: h1.getBoundingClientRect().height,
+        plainHeight: plain.getBoundingClientRect().height,
+        splitTops: lineOf(splitTops),
+        plainTops: lineOf(plainTops),
+        fontSize: getComputedStyle(h1).fontSize,
+      };
+      plain.remove();
+      return result;
+    });
+    expect(layout.height, `${width}px`).toBeCloseTo(layout.plainHeight, 0);
+    expect(layout.splitTops, `${width}px`).toEqual(layout.plainTops);
+    // The same sizes as before: 3.25rem, 5rem from 640px, 6rem from 1024px.
+    expect(layout.fontSize).toBe(width >= 1024 ? "96px" : width >= 640 ? "80px" : "52px");
+  }
+});
+
+test("the hero title stays still with reduced motion and without JavaScript (E31)", async ({
+  browser,
+}) => {
+  const reduced = await browser.newContext({ reducedMotion: "reduce" });
+  const still = await reduced.newPage();
+  await still.goto("/");
+  await expect(still.locator("h1 .word").first()).toHaveCSS("animation-name", "none");
+  await reduced.close();
+  const noScript = await browser.newContext({ javaScriptEnabled: false });
+  const plain = await noScript.newPage();
+  await plain.goto("/");
+  await expect(plain.getByRole("heading", { level: 1 })).toHaveAccessibleName(
+    "5 passos e seu site pronto.",
+  );
+  await expect(plain.locator("h1 .word").first()).toHaveCSS("animation-name", "none");
+  await noScript.close();
 });

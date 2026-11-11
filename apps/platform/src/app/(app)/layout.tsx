@@ -6,7 +6,10 @@ import { type HeaderSession, isAccountScreen } from "@/components/site/nav";
 import { NavigationProgress } from "@/components/site/navigation-progress";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
+import { SiteSparks } from "@/components/site/site-sparks";
 import { SkipLink } from "@/components/site/skip-link";
+import { readHosts } from "@/lib/domains/hosts";
+import { normalizeHost } from "@/lib/domains/routing";
 import { headerSession } from "@/lib/server/header-session";
 
 // The signed-in area and the account pages: rendered on each request, so every script carries
@@ -21,7 +24,13 @@ import { headerSession } from "@/lib/server/header-session";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   await connection();
-  const path = (await headers()).get("x-pathname") ?? "";
+  const requestHeaders = await headers();
+  const path = requestHeaders.get("x-pathname") ?? "";
+  // The team's host has no click sparks (E31); read per request, like the proxy's routing.
+  const adminHost = readHosts(process.env).adminHost;
+  const onAdminHost = Boolean(
+    adminHost && normalizeHost(requestHeaders.get("host")) === normalizeHost(adminHost),
+  );
   const focus = isAccountScreen(path);
   // Started now, read inside the boundaries below: the page renders meanwhile.
   const session = headerSession();
@@ -39,6 +48,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           sentence) and every other page's footer carry the Terms and the Privacy Policy. */}
       {!focus && <SiteFooter />}
       <AnchorScroll />
+      {!onAdminHost && <SiteSparks />}
     </>
   );
 }

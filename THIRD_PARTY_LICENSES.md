@@ -9,9 +9,9 @@ React Bits (https://reactbits.dev, https://github.com/DavidHDev/react-bits) is u
 Files adapted from React Bits (their code, ported to TypeScript and changed), each with a header comment naming the component:
 
 - `apps/platform/src/components/site/side-rays.tsx`: SideRays (the morning light behind the sign-in page; on the home page until 2026-11-05).
-- `apps/platform/src/components/site/vine-trail.tsx`: the stems come from Ribbons (the vine that follows the cursor).
+- `apps/platform/src/components/site/vine-trail.tsx`: the vine that follows the cursor grew from Ribbons; since E31 it is a 2D canvas rewrite, kept on this list because it descends from that code.
 
-Effects designed after React Bits components, written from scratch in CSS and our own components, with no React Bits code and no added dependency: SplitText, AnimatedContent, ScrollExpand, SpecularButton, BorderGlow and StaggeredMenu (the home page animations).
+Effects designed after React Bits components, written from scratch in CSS and our own components, with no React Bits code and no added dependency: SplitText (the titles and, since E31, the hero title), AnimatedContent, ScrollExpand, SpecularButton, BorderGlow, StaggeredMenu (the home page animations) and Click Spark (`click-sparks.tsx`, E31).
 
 When React Bits code is copied or adapted, list the file above and keep this notice with it.
 

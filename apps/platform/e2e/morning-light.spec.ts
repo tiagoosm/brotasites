@@ -22,7 +22,7 @@ function countDraws(page: Page, asIfGpu: boolean) {
     }
     const draw = WebGL2RenderingContext.prototype.drawArrays;
     WebGL2RenderingContext.prototype.drawArrays = function (...args) {
-      // The light's rays only: the vine that follows the cursor is a fixed WebGL canvas too.
+      // The light's rays only (the page's one fixed layer aside, kept out on purpose).
       const canvas = this.canvas as HTMLCanvasElement;
       if (!canvas.closest('[class*="fixed"]')) store.rayDraws += 1;
       return draw.apply(this, args);

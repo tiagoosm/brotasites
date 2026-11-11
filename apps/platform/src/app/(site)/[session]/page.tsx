@@ -66,9 +66,15 @@ export default function HomePage() {
       <div className="relative isolate overflow-hidden">
         <section className="mx-auto grid min-h-[calc(100svh-4rem)] max-w-6xl content-center px-5 pt-12 pb-20 sm:px-8 sm:pt-20 sm:pb-28 lg:min-h-[44rem]">
           <div className="hero-enter grid max-w-[52rem] gap-7 sm:gap-8">
-            <h1 className="font-display text-[3.25rem] leading-[0.98] tracking-[-0.025em] sm:text-[5rem] lg:text-[6rem]">
-              5 passos <span className="block text-stem">e seu site pronto.</span>
-            </h1>
+            <SplitWords
+              as="h1"
+              entrance="load"
+              className="font-display text-[3.25rem] leading-[0.98] tracking-[-0.025em] sm:text-[5rem] lg:text-[6rem]"
+              segments={[
+                { text: "5 passos" },
+                { text: "e seu site pronto.", className: "block text-stem" },
+              ]}
+            />
             <p className="max-w-[38ch] text-pretty text-[1.1875rem] text-ink-soft sm:text-[1.3125rem]">
               Responda, escolha entre 3 visuais e publique.
             </p>

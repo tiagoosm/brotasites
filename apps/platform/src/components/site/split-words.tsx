@@ -2,13 +2,22 @@ import { Fragment } from "react";
 
 // A title revealed word by word. The server writes every word, so the title is complete
 // and wraps the same without JavaScript. Screen readers get the whole title once, from
-// aria-label; the word pieces are hidden from them. The title enters once, when it reaches
-// the screen (motion-reveal.tsx). The hero title is not split: animating it on load delayed
-// the largest paint by about 0.4s on a simulated phone.
+// aria-label; the word pieces are hidden from them. Two entrances:
+// - "reveal" (h2, h3): once, when the title reaches the screen (motion-reveal.tsx);
+// - "load" (the hero's h1, E31): CSS only, as the page paints, no wait for JavaScript. Each word
+//   settles 0.32em up into place, opaque from the first frame (a fade, even from 0.6, delayed
+//   the simulated phone's largest paint by about 0.4s), 750ms in all, once. Whole words, not
+//   letters: each word keeps its kerning, so the title looks exactly as without the motion.
+//   Static without JavaScript (`scripting: enabled`) and with reduced motion (globals.css).
+// The split-text idea is designed after SplitText by React Bits (https://reactbits.dev, MIT +
+// Commons Clause); our own code, CSS only.
 
 /** The whole reveal lasts at most this long, however many words the title has. */
 const SPREAD_MS = 200;
 const MAX_STAGGER_MS = 60;
+/** The hero's entrance on load: each word's rise, and the whole title (globals.css). */
+const LOAD_WORD_MS = 460;
+const LOAD_TOTAL_MS = 750;
 
 interface Segment {
   text: string;
@@ -16,23 +25,38 @@ interface Segment {
 }
 
 interface SplitWordsProps {
-  as: "h2" | "h3";
+  as: "h1" | "h2" | "h3";
+  /** "reveal" on reaching the screen (default), or "load" as the page paints (the hero). */
+  entrance?: "reveal" | "load";
   /** The title, or its parts when part of it is styled apart (a second line, a color). */
   segments: Segment[];
   id?: string;
   className?: string;
 }
 
-export function SplitWords({ as: Tag, segments, id, className }: SplitWordsProps) {
+export function SplitWords({
+  as: Tag,
+  segments,
+  id,
+  className,
+  entrance = "reveal",
+}: SplitWordsProps) {
   const words = segments.flatMap((segment) => segment.text.split(/\s+/).filter(Boolean));
-  const stagger = words.length > 1 ? Math.min(MAX_STAGGER_MS, SPREAD_MS / (words.length - 1)) : 0;
+  const gaps = Math.max(1, words.length - 1);
+  const stagger =
+    words.length < 2
+      ? 0
+      : entrance === "load"
+        ? (LOAD_TOTAL_MS - LOAD_WORD_MS) / gaps
+        : Math.min(MAX_STAGGER_MS, SPREAD_MS / gaps);
   let index = 0;
 
   return (
     <Tag
       id={id}
       aria-label={segments.map((segment) => segment.text).join(" ")}
-      data-reveal="words"
+      data-reveal={entrance === "reveal" ? "words" : undefined}
+      data-split={entrance === "load" ? "load" : undefined}
       className={className}
       style={{ "--word-stagger": `${Math.round(stagger)}ms` } as React.CSSProperties}
     >

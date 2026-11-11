@@ -35,8 +35,18 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E28 The domains in code: one place for every address, the team's area on its own host, redirects, HSTS and the contact addresses
 - [x] E29 Clean-up: nothing that repeats, confuses or leads where the person already is
 - [x] E30 "Entrar" and "Criar conta" in the header, cleaner account screens, a light that moves, one main button, and a restricted password-reset session
+- [x] E31 Animations: a short, quieter mouse vine, click sparks, the hero title settling in, and a price card that arrives sharp
 
 ## Steps in detail
+
+### E31 Animations (owner's request of 2026-11-10)
+
+One PR (`step-31-animacoes`); nothing in client sites, no new library:
+
+- **Mouse vine:** no leaves; at most about 140 px of tail along the path, gone 0.4 s after the mouse rests; 2 px, opacity 0.28, stem green, a smaller sway. Measured over 3 s of mouse movement (CDP, 1440×900), main-thread task time went from about 3,350 ms (WebGL with leaves) and 2,700 ms (WebGL trimmed) to about 525 ms with one plain 2D canvas, so the vine is now 2D and no longer needs a GPU. Same protections (free space only, no touch, reduced motion, lazy, no pointer events, hidden from assistive technology, paused off screen and in a hidden tab).
+- **Click sparks:** a press anywhere on the public pages and the signed-in area bursts 7 short strokes (5 on touch) in pollen yellow only that fade in about half a second; one canvas made on the first press, a loop only while they live, at most 40. Never in the team's area (path and admin host), on typing fields or with reduced motion (decision: inputs and admin excluded so typing and the team's work stay calm).
+- **Hero title:** split into words in CSS (no wait for JavaScript), each rising 0.32em into place in 750 ms, once; opaque from the first frame because a fade from 0.6 moved the simulated phone LCP by about 0.4 s while the rise alone did not (median 2,677 ms against 2,679 ms without it, CLS 0). Whole words keep the kerning and the exact line breaks (tested at six sizes). Still without JavaScript and with reduced motion.
+- **Price card blur (root cause):** the whole card entered with `filter: blur(3px)`; while already readable (opacity 0.87 at 304 ms) its text and border glow were still resampled through a 0.4 px blur until about 660 ms. Blocks and cards now enter with opacity and a short rise only; blur (2 px) is kept for short titles.
 
 ### E1 Baseline
 

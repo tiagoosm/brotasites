@@ -3,6 +3,7 @@ import { MotionReveal } from "@/components/site/motion-reveal";
 import { NavigationProgress } from "@/components/site/navigation-progress";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
+import { SiteSparks } from "@/components/site/site-sparks";
 import { SiteVine } from "@/components/site/site-vine";
 import { SkipLink } from "@/components/site/skip-link";
 import { PUBLIC_VARIANTS, type PublicVariant } from "@/lib/public-variant";
@@ -36,6 +37,7 @@ export default async function SiteLayout({
       </main>
       <SiteFooter />
       <SiteVine />
+      <SiteSparks />
       <MotionReveal />
       <AnchorScroll />
     </>
