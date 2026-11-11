@@ -37,8 +37,16 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E30 "Entrar" and "Criar conta" in the header, cleaner account screens, a light that moves, one main button, and a restricted password-reset session
 - [x] E31 Animations: a short, quieter mouse vine, click sparks, the hero title settling in, and a price card that arrives sharp
 - [x] E32 Signed in: no "Criar meu site" in the header, the same profile menu on every page, every "Criar meu site" leads to Meus sites
+- [x] E33 The team's own sign-in on its host, and the team's second step behind a switch (off for now)
 
 ## Steps in detail
+
+### E33 The team's sign-in and the second step behind a switch (owner's request of 2026-11-11)
+
+One PR (`step-33-login-da-equipe`); the migration is applied by the owner (`docs/owner-steps.md`):
+
+- **Team sign-in:** on `admin.brotasites.com.br`, `/entrar` leads to `/entrar/equipe`: its own frame (dark ink page, the brand and an "Área da equipe" tag, the card on paper), "Área da equipe", e-mail, password, "Entrar"; no sign-up, no "Esqueci a senha" (a quiet line points to the platform), no client links, `noindex`. Same sign-in route; back only to `/admin…`; an account not on the team is signed out at once ("Esta conta não tem acesso à área da equipe."). "Acesso restrito" now offers "Ir para o site".
+- **Second step, switch:** `public.team_settings.require_second_factor` (one row, RLS, no client policy), **off** by the owner's decision; `is_admin()` = on the list, never a recovery session, and aal2 only while the switch is on. The panel shows the team a reminder while it is off; the sign-in route asks for the code only while it is on. Turn back on with `update public.team_settings set require_second_factor = true;`.
 
 ### E32 The signed-in header and where creating starts (owner's request of 2026-11-11)
 

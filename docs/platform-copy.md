@@ -107,3 +107,11 @@ On the page of a published site, *Usar o seu próprio domínio* / *Opcional e in
 ## Admin panel (team only)
 
 Plain and short, in pt-BR like the rest of the platform. Titles: *Fila de revisão* (tabs *Em revisão*, *Precisa de atenção*, *Suspensos*), the site's name, *Catálogo*. Actions: *Aprovar para o cliente*, *Pedir ajustes*, *Suspender*, *Retirar a suspensão*; on the catalog, *Recomendar*, *Aposentar*, *Voltar ao normal* and *Registrar pedido*. A note is required to ask for changes and to suspend: *Escreva o motivo: o cliente e o registro precisam dele.* People who are not admins see *Acesso restrito*. E24 adds *Visão geral*, *Custos*, *Contas* and *Limites*: empty figures say *sem dados ainda*, estimates in reais say *(estimativa)* and the rate is marked *a verificar*; the budget warns *O orçamento diário de IA passou de 80%.* and *O orçamento diário de IA acabou: hoje o motor trabalha sozinho.*; every exception asks for *Motivo (fica no log)* and a second click, then says *Feito. A ação foi registrada no log.*
+
+## The team's sign-in (E33)
+
+- Page title: *Entrar na área da equipe*. Header tag: *Área da equipe*.
+- Card: **Área da equipe** / *Entre com o e-mail e a senha da sua conta de equipe.* / *E-mail*, *Senha* / **Entrar** (*Entrando…* while it works) / a quiet line: *Esqueceu a senha? Redefina no site da BrotaSites.*
+- An account not on the team: **Sem acesso** / *Esta conta não tem acesso à área da equipe.* / *Você saiu desta conta aqui.* / **Entrar com outra conta** · *Ir para o site*.
+- Panel reminder, team only, while the second step is off: *A verificação em duas etapas está desligada.* *Para religar, rode no SQL do Supabase:* `update public.team_settings set require_second_factor = true;`
+- *Acesso restrito* (a signed-in client on /admin): *Esta área é só para a equipe da BrotaSites.* · *Ir para o site*.
