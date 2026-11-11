@@ -1,10 +1,20 @@
 import Link from "next/link";
 
 /** The BrotaSites mark: a sprout and the name. Links to the home page. */
-export function Brand({ className, href = "/" }: { className?: string; href?: string }) {
+export function Brand({
+  className,
+  href = "/",
+  prefetch,
+}: {
+  className?: string;
+  href?: string;
+  /** false where the target needs a session the page may not have yet (the team's sign-in). */
+  prefetch?: boolean;
+}) {
   return (
     <Link
       href={href}
+      prefetch={prefetch}
       className={`touch-target flex items-center gap-2.5 font-display text-[1.375rem] leading-none ${className ?? ""}`}
     >
       <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6 text-leaf">
