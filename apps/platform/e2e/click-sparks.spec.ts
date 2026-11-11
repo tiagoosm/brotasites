@@ -17,7 +17,8 @@ async function press(page: Page, x = 12, y = 420) {
 
 async function ready(page: Page, path = "/") {
   await page.goto(path);
-  await page.waitForLoadState("networkidle");
+  // The sparks load after the page (dynamic import): wait until presses spark.
+  await expect(page.locator("html")).toHaveAttribute("data-sparks", "ready", { timeout: 15_000 });
 }
 
 test("a press makes one canvas, a short burst, and the loop stops once it fades", async ({
