@@ -44,8 +44,12 @@ jobs:
       - name: Database migrations and RLS checks
         run: bash supabase/tests/local/run.sh
 
+      # With its system packages; if the Ubuntu mirror is unreachable (it was, on 2026-11-11),
+      # the browser alone: the runner image already has what Chromium needs to run.
       - name: Install Playwright browser
-        run: pnpm --filter @brotasites/templates exec playwright install --with-deps chromium
+        run: |
+          pnpm --filter @brotasites/templates exec playwright install --with-deps chromium \
+            || pnpm --filter @brotasites/templates exec playwright install chromium
 
       - name: End-to-end tests
         run: pnpm test:e2e
