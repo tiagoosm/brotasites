@@ -13,7 +13,7 @@ jobs:
   check:
     name: Lint, types, tests and e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -44,8 +44,13 @@ jobs:
       - name: Database migrations and RLS checks
         run: bash supabase/tests/local/run.sh
 
+      # With its system packages; if the Ubuntu mirror is unreachable (it was, on 2026-11-11),
+      # give up on them after 3 minutes and install the browser alone: the runner image already
+      # has what Chromium needs to run.
       - name: Install Playwright browser
-        run: pnpm --filter @brotasites/templates exec playwright install --with-deps chromium
+        run: |
+          timeout 180 pnpm --filter @brotasites/templates exec playwright install --with-deps chromium \
+            || pnpm --filter @brotasites/templates exec playwright install chromium
 
       - name: End-to-end tests
         run: pnpm test:e2e

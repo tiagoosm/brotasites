@@ -17,6 +17,9 @@ const calls = [];
 const dashboards = new Map(); // userId -> { sites, notices }
 // Who is on the team (E17: the profile menu shows "Área da equipe"), set at /__test/team.
 const team = new Set();
+// The team's second-factor switch (E33, team_settings): off, as in the owner's decision; a test
+// turns it on at /__test/second-factor. Sessions here are aal1, so on means "not an admin yet".
+let secondFactor = false;
 
 const b64 = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
 const unb64 = (value) => JSON.parse(Buffer.from(value, "base64url").toString());
@@ -153,6 +156,11 @@ const server = createServer(async (req, res) => {
     return send(res, 200, user ? { ...userJson(user), password: undefined } : null);
   }
   if (path === "/__test/calls") return send(res, 200, calls);
+  if (path === "/__test/second-factor" && method === "POST") {
+    const body = await readJson(req);
+    secondFactor = body.on === true;
+    return send(res, 200, {});
+  }
   if (path === "/__test/team" && method === "POST") {
     const body = await readJson(req);
     team.add(body.userId);
@@ -320,6 +328,11 @@ const server = createServer(async (req, res) => {
     const user = bearerUser(req);
     return send(res, 200, Boolean(user && team.has(user.id)));
   }
+  if (path === "/rest/v1/rpc/is_admin") {
+    const user = bearerUser(req);
+    return send(res, 200, Boolean(user && team.has(user.id) && !secondFactor));
+  }
+  if (path === "/rest/v1/rpc/second_factor_required") return send(res, 200, secondFactor);
   if (path === "/rest/v1/rpc/my_site_slots") {
     // E24: unpaid sites in progress against the account's allowance (one, unless the team adds).
     const user = bearerUser(req);

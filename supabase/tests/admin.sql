@@ -50,7 +50,11 @@ begin
   exception when insufficient_privilege then null;
   end;
 
-  -- Without the second factor (aal1) the admin is only a member, not an admin (E15).
+  -- With the switch on (E33), without the second factor (aal1) the admin is only a member (E15).
+  perform set_config('role', 'service_role', true);
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  update public.team_settings set require_second_factor = true;
+  perform set_config('role', 'authenticated', true);
   perform set_config('request.jwt.claims', json_build_object('sub', admin, 'role', 'authenticated', 'aal', 'aal1')::text, true);
   if public.is_admin() then raise exception 'FAIL: an admin without two factors is an admin'; end if;
   if not public.is_admin_member() then raise exception 'FAIL: the admin is not a member'; end if;

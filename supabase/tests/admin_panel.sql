@@ -73,11 +73,28 @@ begin
     exception when raise_exception then
       if sqlerrm <> 'forbidden' then raise; end if;
     end;
-    -- A team member without the second factor.
+    -- A team member without the second factor, with the switch on (E33).
+    perform set_config('role', 'service_role', true);
+    perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+    update public.team_settings set require_second_factor = true;
+    perform set_config('role', 'authenticated', true);
     perform set_config('request.jwt.claims', json_build_object('sub', t, 'role', 'authenticated', 'aal', 'aal1')::text, true);
     begin
       execute fn;
       raise exception 'FAIL: the team without aal2 ran %', fn;
+    exception when raise_exception then
+      if sqlerrm <> 'forbidden' then raise; end if;
+    end;
+    -- A password-reset session of the team, with the switch off: never (E30, E33).
+    perform set_config('role', 'service_role', true);
+    perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+    update public.team_settings set require_second_factor = false;
+    perform set_config('role', 'authenticated', true);
+    perform set_config('request.jwt.claims', json_build_object('sub', t, 'role', 'authenticated', 'aal', 'aal1',
+      'amr', json_build_array(json_build_object('method', 'recovery', 'timestamp', 1)))::text, true);
+    begin
+      execute fn;
+      raise exception 'FAIL: a recovery session of the team ran %', fn;
     exception when raise_exception then
       if sqlerrm <> 'forbidden' then raise; end if;
     end;

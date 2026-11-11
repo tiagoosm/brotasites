@@ -68,11 +68,12 @@ export function routeByHost(
     if (path === "/") {
       return { kind: "redirect", location: to(`${scheme}://${admin}`, "/admin"), status: 307 };
     }
-    // Signing in on the admin host goes back to the team's area, never to the client pages.
-    if (path === "/entrar" && !search.includes("voltar=")) {
+    // Signing in on the admin host is the team's own sign-in (E33), never the clients' one; it
+    // goes back to the team's area (the page itself keeps "voltar" inside /admin).
+    if (path === "/entrar") {
       return {
         kind: "redirect",
-        location: `${scheme}://${admin}/entrar?voltar=%2Fadmin`,
+        location: `${scheme}://${admin}/entrar/equipe${search.includes("voltar=") ? search : "?voltar=%2Fadmin"}`,
         status: 307,
       };
     }

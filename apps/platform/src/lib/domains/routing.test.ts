@@ -66,13 +66,13 @@ describe("host routing", () => {
     ]) {
       expect(route("admin.brotasites.com.br", path), path).toEqual({ kind: "pass", admin: true });
     }
-    expect(route("admin.brotasites.com.br", "/entrar", "?voltar=%2Fadmin%2Fcontas")).toEqual({
-      kind: "pass",
-      admin: true,
-    });
+    // The team's own sign-in (E33) passes; /entrar itself leads there (below).
+    expect(route("admin.brotasites.com.br", "/entrar/equipe", "?voltar=%2Fadmin%2Fcontas")).toEqual(
+      { kind: "pass", admin: true },
+    );
   });
 
-  it("sends the admin host's root and a bare sign-in to the team's area", () => {
+  it("sends the admin host's root to the team's area, and its sign-in to the team's own (E33)", () => {
     expect(route("admin.brotasites.com.br", "/")).toEqual({
       kind: "redirect",
       location: "https://admin.brotasites.com.br/admin",
@@ -80,7 +80,12 @@ describe("host routing", () => {
     });
     expect(route("admin.brotasites.com.br", "/entrar")).toEqual({
       kind: "redirect",
-      location: "https://admin.brotasites.com.br/entrar?voltar=%2Fadmin",
+      location: "https://admin.brotasites.com.br/entrar/equipe?voltar=%2Fadmin",
+      status: 307,
+    });
+    expect(route("admin.brotasites.com.br", "/entrar", "?voltar=%2Fadmin%2Fcontas")).toEqual({
+      kind: "redirect",
+      location: "https://admin.brotasites.com.br/entrar/equipe?voltar=%2Fadmin%2Fcontas",
       status: 307,
     });
   });
