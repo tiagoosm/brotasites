@@ -62,7 +62,9 @@ export function MorningLight() {
             falloff={1.2}
             glow={0.4}
             saturation={1}
-            mouseInfluence={0.12}
+            // The beams turn toward the mouse by a clearly visible angle (E31: 0.12 turned
+            // them about 4° across the page, hardly seen; 0.7 turns them about 24°).
+            mouseInfluence={0.7}
             opacity={1}
             maxDevicePixelRatio={1}
           />

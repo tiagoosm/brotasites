@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CreateSiteButton } from "@/components/site/create-site-button";
 import { FaqAccordion } from "@/components/site/faq-accordion";
+import { HeroTitleLift } from "@/components/site/hero-title-lift";
 import { PriceSection } from "@/components/site/home/price-section";
 import { SplitWords } from "@/components/site/split-words";
 import { Stem } from "@/components/site/stem/stem";
@@ -68,13 +69,16 @@ export default function HomePage() {
           <div className="hero-enter grid max-w-[52rem] gap-7 sm:gap-8">
             <SplitWords
               as="h1"
+              id="hero-titulo"
               entrance="load"
+              letters
               className="font-display text-[3.25rem] leading-[0.98] tracking-[-0.025em] sm:text-[5rem] lg:text-[6rem]"
               segments={[
                 { text: "5 passos" },
                 { text: "e seu site pronto.", className: "block text-stem" },
               ]}
             />
+            <HeroTitleLift target="hero-titulo" />
             <p className="max-w-[38ch] text-pretty text-[1.1875rem] text-ink-soft sm:text-[1.3125rem]">
               Responda, escolha entre 3 visuais e publique.
             </p>

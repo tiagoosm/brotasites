@@ -28,6 +28,11 @@ interface SplitWordsProps {
   as: "h1" | "h2" | "h3";
   /** "reveal" on reaching the screen (default), or "load" as the page paints (the hero). */
   entrance?: "reveal" | "load";
+  /**
+   * Each letter in its own inline span, for the letters to lift near the mouse (the hero,
+   * title-lift.tsx). Inline, not inline-block, so the letters keep their kerning.
+   */
+  letters?: boolean;
   /** The title, or its parts when part of it is styled apart (a second line, a color). */
   segments: Segment[];
   id?: string;
@@ -40,6 +45,7 @@ export function SplitWords({
   id,
   className,
   entrance = "reveal",
+  letters = false,
 }: SplitWordsProps) {
   const words = segments.flatMap((segment) => segment.text.split(/\s+/).filter(Boolean));
   const gaps = Math.max(1, words.length - 1);
@@ -74,7 +80,14 @@ export function SplitWords({
                 className="word"
                 style={{ "--word-index": index++ } as React.CSSProperties}
               >
-                {word}
+                {letters
+                  ? [...word].map((letter, l) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: the letters of a fixed word
+                      <span key={l} className="char">
+                        {letter}
+                      </span>
+                    ))
+                  : word}
               </span>
             </Fragment>
           ));

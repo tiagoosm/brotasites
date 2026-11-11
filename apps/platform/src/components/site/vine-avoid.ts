@@ -5,7 +5,7 @@ import { outermost, type Rect } from "@/lib/motion/vine";
 // move. Page boxes are kept in page coordinates; the sticky header stays where it is.
 
 const CONTENT =
-  "main h1, main h2, main h3, main h4, main p, main li, main label, main a, main button, main input, main textarea, main select, main img, main details, main [data-card], main .glow-card, main [role='region'], footer";
+  "main h1, main h2, main h3, main h4, main p, main li, main label, main a, main button, main input, main textarea, main select, main img, main details, main [data-card], main .glow-card, main [role='region'], main form, main [class*='rounded-xl'], main [class*='rounded-2xl'], footer";
 
 export interface Avoid {
   page: Rect[];
@@ -38,12 +38,17 @@ export function watchContent(onChange: (avoid: Avoid) => void): () => void {
 
   const sized = new ResizeObserver(schedule);
   sized.observe(document.body);
+  // A move to another page (or a message appearing) can change the content without changing
+  // the page's size: measure again, once the browser is idle.
+  const changed = new MutationObserver(schedule);
+  changed.observe(document.body, { childList: true, subtree: true });
   window.addEventListener("resize", schedule);
   document.fonts?.ready.then(schedule).catch(() => {});
   schedule();
   return () => {
     if (task) cancel(task);
     sized.disconnect();
+    changed.disconnect();
     window.removeEventListener("resize", schedule);
   };
 }

@@ -179,3 +179,49 @@ test("the price card arrives sharp: never a blur, opacity and a short rise only 
   );
   expect(blurred).toEqual([]);
 });
+
+test("the halo never shows inside the card, even when the card is its own layer (E31)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  await page.locator("#preco").scrollIntoViewIfNeeded();
+  const card = page.locator(".glow-card");
+  await expect(card).toHaveAttribute("data-entry", "done");
+  // As during its entrance (a transform and an opacity): the card becomes a stacking context,
+  // which once let the blurred halo paint over the card's face.
+  await card.evaluate((element) => {
+    element.style.transform = "translateY(1px)";
+    element.style.opacity = "0.99";
+  });
+  await page.waitForTimeout(200);
+  const png = (await card.screenshot()).toString("base64");
+  const tinted = await page.evaluate(async (data) => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${data}`;
+    await image.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("no canvas");
+    context.drawImage(image, 0, 0);
+    // The right part, 20px in from the rim. Text there is grey (no colour); the halo's blur
+    // was a wide light green and amber tint: count the light pixels that carry a colour.
+    const x = Math.round(image.width * 0.6);
+    const pixels = context.getImageData(x, 20, image.width - x - 20, image.height - 40).data;
+    let light = 0;
+    let coloured = 0;
+    for (let i = 0; i < pixels.length; i += 4) {
+      const r = pixels[i] ?? 255;
+      const g = pixels[i + 1] ?? 255;
+      const b = pixels[i + 2] ?? 255;
+      if (Math.min(r, g, b) < 200) continue;
+      light++;
+      if (Math.max(r, g, b) - Math.min(r, g, b) > 6) coloured++;
+    }
+    return coloured / Math.max(1, light);
+  }, png);
+  // A plain white face: almost no tinted pixel, no green or amber blur.
+  expect(tinted).toBeLessThan(0.02);
+});

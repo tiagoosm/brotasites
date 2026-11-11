@@ -123,7 +123,10 @@ export default function ClickSparks() {
     };
 
     window.addEventListener("pointerdown", onPress, { passive: true, capture: true });
+    // Loaded after the page: says when presses start to spark (the e2e tests wait for it).
+    document.documentElement.dataset.sparks = "ready";
     return () => {
+      delete document.documentElement.dataset.sparks;
       cancelAnimationFrame(raf);
       window.removeEventListener("pointerdown", onPress, { capture: true });
       window.removeEventListener("resize", size);
