@@ -100,24 +100,31 @@ test("no sparks in the team's area, on its own host", async ({ page }, info) => 
 });
 
 test("the sparks are yellow only (the pollen token)", async ({ page }) => {
+  // Every stroke the canvas draws, recorded as it is drawn (no race with the fade).
+  await page.addInitScript(() => {
+    const store = window as unknown as { strokes: string[] };
+    store.strokes = [];
+    const stroke = CanvasRenderingContext2D.prototype.stroke as (
+      this: CanvasRenderingContext2D,
+      ...args: unknown[]
+    ) => void;
+    CanvasRenderingContext2D.prototype.stroke = function (
+      this: CanvasRenderingContext2D,
+      ...args: unknown[]
+    ) {
+      if (this.canvas.dataset.testid === "click-sparks")
+        store.strokes.push(String(this.strokeStyle));
+      stroke.apply(this, args);
+    } as CanvasRenderingContext2D["stroke"];
+  });
   await ready(page);
   await press(page);
   await expect(sparks(page)).toHaveCount(1);
-  // Strongly drawn pixels, early in the burst: every one is the pollen yellow, none green.
-  const colors = await page.evaluate(() => {
-    const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="click-sparks"]');
-    const data = canvas?.getContext("2d")?.getImageData(0, 0, canvas.width, canvas.height).data;
-    const found: number[][] = [];
-    for (let i = 0; data && i < data.length; i += 4) {
-      if ((data[i + 3] ?? 0) > 160) found.push([data[i] ?? 0, data[i + 1] ?? 0, data[i + 2] ?? 0]);
-    }
-    return found;
-  });
-  expect(colors.length).toBeGreaterThan(0);
-  for (const [r = 0, g = 0, b = 0] of colors) {
-    // #e2b23c: red over green over blue, nothing like the leaf green (#2f7a4a).
-    expect(r).toBeGreaterThan(g);
-    expect(g).toBeGreaterThan(b);
-    expect(r).toBeGreaterThan(180);
-  }
+  await expect.poll(() => live(page), { timeout: 2000 }).toBe(0);
+  const pollen = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue("--pollen").trim().toLowerCase(),
+  );
+  const strokes = await page.evaluate(() => (window as unknown as { strokes: string[] }).strokes);
+  expect(strokes.length).toBeGreaterThan(0);
+  expect(new Set(strokes.map((color) => color.toLowerCase()))).toEqual(new Set([pollen]));
 });
