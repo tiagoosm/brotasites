@@ -10,7 +10,9 @@ import { guardErrors, json, readBody, refuse, steadyPace } from "@/lib/server/gu
 import { safeNextPath } from "@/lib/supabase/env";
 
 // Signing in with the password (E15). One message for a wrong email or a wrong password. With
-// a second factor enrolled (the team), the answer asks for the code before going on.
+// a second factor enrolled (the team), the answer asks for the code before going on, but only
+// while the team's switch asks for it (E33, team_settings.require_second_factor: off for now).
+// If the switch can't be read, it counts as on, as before E33.
 export async function POST(request: Request) {
   const started = Date.now();
   const body = await readBody(request, signInSchema);
@@ -35,8 +37,20 @@ export async function POST(request: Request) {
 
   const target = safeNextPath(next);
   const { data: level } = await auth.supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (level?.nextLevel === "aal2" && level.currentLevel !== "aal2") {
+  if (
+    level?.nextLevel === "aal2" &&
+    level.currentLevel !== "aal2" &&
+    (await secondFactorOn(auth))
+  ) {
     return json({ ok: true, next: `/entrar/verificacao?voltar=${encodeURIComponent(target)}` });
   }
   return json({ ok: true, next: target });
+}
+
+/** The team's switch (E33); anything but a clear "off" keeps the second factor on. */
+async function secondFactorOn(auth: {
+  supabase: { rpc: (name: string) => PromiseLike<{ data: unknown; error: unknown }> };
+}) {
+  const { data, error } = await auth.supabase.rpc("second_factor_required");
+  return Boolean(error) || data !== false;
 }

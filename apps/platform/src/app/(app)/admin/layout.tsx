@@ -6,12 +6,15 @@ import { useEffect, useState } from "react";
 import { MfaChallenge } from "@/components/account/mfa";
 import { Loading, Notice, unavailable } from "@/components/shared/page-state";
 import { useRequiredAccount } from "@/lib/account";
+import { PLATFORM_URL } from "@/lib/site-url";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 
-// The admin panel (E11): only for people the owner listed as admins, and only in a session with
-// the second step (aal2, E15): the database's is_admin() checks both. Team members without it
-// turn it on or type the code here. The pages read through the admin route handlers, which
-// check the role again on every request.
+// The admin panel (E11): only for people the owner listed as admins. The second step (aal2, E15)
+// is behind the team's switch (E33, team_settings.require_second_factor, off for now by the
+// owner's decision): the database's is_admin() checks the list, the switch and, when it is on,
+// aal2. With the switch on, team members without aal2 type the code here; with it off, they go
+// straight in and the panel shows a reminder that the second step is off. The pages read through
+// the admin route handlers, which check the role again on every request.
 // The team's tabs, a second row under the header (E17), only once the person is an admin.
 const teamTabs = [
   {
@@ -52,6 +55,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [admin, setAdmin] = useState<boolean | null>(null);
   const [member, setMember] = useState(false);
+  // The team's switch (E33); anything but a clear "off" counts as on, as before E33.
+  const [secondFactor, setSecondFactor] = useState(true);
   const [checks, setChecks] = useState(0);
   // biome-ignore lint/correctness/useExhaustiveDependencies: checks re-runs the test after the second step
   useEffect(() => {
@@ -59,7 +64,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const supabase = getBrowserSupabase();
     if (!supabase) return;
     (async () => {
-      const { data } = await supabase.rpc("is_admin");
+      const [{ data }, required] = await Promise.all([
+        supabase.rpc("is_admin"),
+        supabase.rpc("second_factor_required"),
+      ]);
+      setSecondFactor(Boolean(required.error) || required.data !== false);
       if (data === true) {
         setAdmin(true);
         return;
@@ -73,6 +82,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-[calc(100dvh-4rem)] bg-paper">
       <main className="mx-auto w-full max-w-[72rem] px-5 pt-6 pb-20 sm:px-8">
+        {admin && !secondFactor && (
+          // Only the team sees this (inside the panel, once is_admin is true): the reminder for
+          // the owner to turn the second step back on (docs/owner-steps.md).
+          <p
+            role="note"
+            className="mb-6 rounded-lg border border-pollen/50 bg-pollen/10 px-4 py-3 text-[0.875rem] text-ink"
+          >
+            <strong className="font-semibold">A verificação em duas etapas está desligada.</strong>{" "}
+            Para religar, rode no SQL do Supabase:{" "}
+            <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[0.8125rem]">
+              update public.team_settings set require_second_factor = true;
+            </code>
+          </p>
+        )}
         {admin && (
           <nav
             aria-label="Área da equipe"
@@ -97,7 +120,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Loading />
         ) : admin ? (
           children
-        ) : member ? (
+        ) : member && secondFactor ? (
           <section className="mx-auto grid max-w-md gap-6 py-12">
             <header className="grid gap-3">
               <h1 className="font-display text-[2rem] leading-tight">Verificação em duas etapas</h1>
@@ -117,7 +140,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Notice
             title="Acesso restrito"
             text="Esta área é só para a equipe da BrotaSites."
-            action={{ href: "/", label: "Voltar para o início" }}
+            // On the team's host "/" only leads back here: the platform's own address instead.
+            action={{ href: PLATFORM_URL, label: "Ir para o site" }}
           />
         )}
       </main>

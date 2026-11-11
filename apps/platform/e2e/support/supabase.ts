@@ -119,6 +119,10 @@ export interface FakeState {
   api: string[];
   /** The person is on the admins list (is_admin). */
   admin?: boolean;
+  /** On the list but not an admin yet (is_admin_member; with the switch on and no code). */
+  member?: boolean;
+  /** The team's second-factor switch (E33, team_settings): off unless a test turns it on. */
+  secondFactor?: boolean;
   /** Bodies posted to the admin route handlers, by path. */
   adminPosts: { path: string; body: Record<string, unknown> }[];
   /** Rounds of directions used on the site, the free ones and when the next one opens (E24). */
@@ -262,6 +266,10 @@ export async function fakeSupabase(
         return route.fulfill(json(state.quota));
       case "is_admin":
         return route.fulfill(json(state.admin === true));
+      case "is_admin_member":
+        return route.fulfill(json(state.admin === true || state.member === true));
+      case "second_factor_required":
+        return route.fulfill(json(state.secondFactor === true));
       case "request_rebuild":
         setStatus("building");
         return route.fulfill(json("job-rebuild"));

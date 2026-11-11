@@ -165,13 +165,47 @@ begin
   ok := public.server_rate_limit('signin:other', 2, 60);
   if not ok then raise exception 'FAIL: one key limited another'; end if;
 
-  -- 6. Admins need two factors (aal2). -----------------------------------------------------
+  -- 6. Admins and the second factor, behind the switch (E15, E33). -------------------------
   insert into public.admins (user_id) values (admin);
+  -- Off by default since E33 (owner's decision of 2026-11-11): the row in admins is enough.
   perform set_config('role', 'authenticated', true);
   perform set_config('request.jwt.claims', json_build_object('sub', admin, 'role', 'authenticated', 'aal', 'aal1')::text, true);
-  if public.is_admin() then raise exception 'FAIL: an aal1 session is an admin'; end if;
+  if public.second_factor_required() then raise exception 'FAIL: the switch starts on'; end if;
+  if not public.is_admin() then raise exception 'FAIL: switch off, an aal1 admin is not an admin'; end if;
+  -- Never without the row, whatever the switch.
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  if public.is_admin() then raise exception 'FAIL: switch off, a client is an admin'; end if;
+  -- Never in a password-reset session (E30), whatever the switch.
+  perform set_config('request.jwt.claims', json_build_object('sub', admin, 'role', 'authenticated', 'aal', 'aal1',
+    'amr', json_build_array(json_build_object('method', 'recovery', 'timestamp', 1)))::text, true);
+  if public.is_admin() then raise exception 'FAIL: switch off, a recovery session is an admin'; end if;
+  -- A client can neither read nor change the switch.
+  begin
+    update public.team_settings set require_second_factor = false;
+    raise exception 'FAIL: a client changed the switch';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform 1 from public.team_settings;
+    raise exception 'FAIL: a client read the switch table';
+  exception when insufficient_privilege then null;
+  end;
+  -- On (the update the owner runs to turn it back): aal2 again, exactly as in E15.
+  perform set_config('role', 'service_role', true);
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  update public.team_settings set require_second_factor = true;
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', json_build_object('sub', admin, 'role', 'authenticated', 'aal', 'aal1')::text, true);
+  if not public.second_factor_required() then raise exception 'FAIL: the switch did not turn on'; end if;
+  if public.is_admin() then raise exception 'FAIL: switch on, an aal1 session is an admin'; end if;
+  if not public.is_admin_member() then raise exception 'FAIL: switch on, the admin is not a member'; end if;
   perform set_config('request.jwt.claims', json_build_object('sub', admin, 'role', 'authenticated', 'aal', 'aal2')::text, true);
-  if not public.is_admin() then raise exception 'FAIL: an aal2 admin is not an admin'; end if;
+  if not public.is_admin() then raise exception 'FAIL: switch on, an aal2 admin is not an admin'; end if;
+  perform set_config('request.jwt.claims', json_build_object('sub', admin, 'role', 'authenticated', 'aal', 'aal2',
+    'amr', json_build_array(json_build_object('method', 'recovery', 'timestamp', 1)))::text, true);
+  if public.is_admin() then raise exception 'FAIL: switch on, a recovery session is an admin'; end if;
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  if public.is_admin() then raise exception 'FAIL: switch on, a client is an admin'; end if;
 
   -- 7. Deleting an account. ------------------------------------------------------------------
   perform set_config('role', 'service_role', true);

@@ -97,3 +97,34 @@ test("the catalog shows the metrics and records recommendations and requests", a
     { family: "food", section: "galeria", note: "Uma galeria em mosaico para padarias." },
   ]);
 });
+
+test("with the switch off, the team goes straight in and sees the reminder (E33)", async ({
+  page,
+  context,
+}) => {
+  await withSite(context, { ...inReview, admin: true });
+  await page.goto("/admin");
+  await expect(page.getByRole("navigation", { name: "Área da equipe" })).toBeVisible();
+  const note = page.getByRole("note");
+  await expect(note).toContainText("A verificação em duas etapas está desligada.");
+  await expect(note).toContainText("update public.team_settings set require_second_factor = true;");
+});
+
+test("with the switch on, the team types the code first, and no reminder shows (E33)", async ({
+  page,
+  context,
+}) => {
+  await withSite(context, { ...inReview, admin: false, member: true, secondFactor: true });
+  await page.goto("/admin");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Verificação em duas etapas");
+  await expect(page.getByText("A verificação em duas etapas está desligada.")).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Área da equipe" })).toHaveCount(0);
+});
+
+test("a client sees no reminder and is sent to the site (E33)", async ({ page, context }) => {
+  await withSite(context, inReview);
+  await page.goto("/admin");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Acesso restrito");
+  await expect(page.getByText("A verificação em duas etapas está desligada.")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Ir para o site" })).toBeVisible();
+});

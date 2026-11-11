@@ -132,6 +132,9 @@ test("the link works once", async ({ page, request }) => {
 });
 
 test("recovering a team account never opens the team's area", async ({ page, request }) => {
+  // With the team's second step off (E33, the fake's default, as in production now): the list
+  // alone would let a team session in, never a recovery one. The database refuses it too
+  // (supabase/tests/accounts.sql, both positions of the switch).
   const { user } = await openResetLink(page, request, "recuperar-equipe");
   await request.post(`${SUPABASE}/__test/team`, { data: { userId: user.id } });
   await page.goto("/admin");
