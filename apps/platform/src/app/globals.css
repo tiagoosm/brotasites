@@ -749,6 +749,21 @@ html:has([data-wizard]) {
   position: relative;
 }
 
+/* The card's own face, a layer above the halo (E31). The halo sits behind the card with a
+   negative z-index; whenever the card becomes its own stacking context (its entrance's
+   transform and opacity, a browser that composites it) the halo would paint over the card's
+   background and show as a green and amber blur inside the card. This face covers it in
+   every case, so the halo only ever shows outside the card. */
+.glow-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--card);
+  pointer-events: none;
+}
+
 .glow-ring,
 .glow-halo {
   --glow-strength: 0.5;
@@ -773,7 +788,7 @@ html:has([data-wizard]) {
 /* A soft halo behind the card: its background hides the part under it, so only the outside
    shows. The card's parent isolates it, so the halo stays above the section's background. */
 .glow-halo {
-  z-index: -1;
+  z-index: -2;
   inset: -2px;
   overflow: visible;
   container-type: normal;
