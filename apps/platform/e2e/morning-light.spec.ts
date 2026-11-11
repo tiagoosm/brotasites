@@ -107,12 +107,26 @@ test("the beams turn clearly toward the mouse (E31)", async ({ page }, info) => 
   const aims = () =>
     page.evaluate(() => (window as unknown as { rayAims: number[] }).rayAims.slice());
   // Across the page, from one side to the other: the aim follows by a visible angle.
+  // On a slow, busy test browser the light renders few frames: wait for it to settle.
+  const settled = async () => {
+    let previous = Number.NaN;
+    await expect
+      .poll(
+        async () => {
+          const now = (await aims()).at(-1) ?? 0;
+          const still = Math.abs(now - previous) < 0.002;
+          previous = now;
+          return still;
+        },
+        { timeout: 20_000, intervals: [400] },
+      )
+      .toBe(true);
+    return previous;
+  };
   await page.mouse.move(60, 400);
-  await page.waitForTimeout(1500);
-  const left = (await aims()).at(-1) ?? 0;
+  const left = await settled();
   for (let x = 60; x <= 1220; x += 40) await page.mouse.move(x, 400);
-  await page.waitForTimeout(1500);
-  const right = (await aims()).at(-1) ?? 0;
+  const right = await settled();
   // Until E31 the swing was about 0.07 rad (4°), hardly seen; now about 0.4 rad (24°).
   expect(Math.abs(right - left)).toBeGreaterThan(0.3);
 });
