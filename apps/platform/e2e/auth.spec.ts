@@ -169,14 +169,15 @@ test("without a page to go back to, signing in and confirming lead to Meus sites
   expect((await page.context().request.get("/visitante/ajuda")).status()).toBe(404);
 });
 
-test("a page asked for still comes first: voltar=/criar opens the form", async ({
+test("signing in from a Criar meu site button lands on Meus sites (E32)", async ({
   page,
   request,
 }) => {
   const email = uniqueEmail("voltar");
   await createUser(request, { email });
+  // Every way to create a site starts from Meus sites, signed in (owner's request).
   await signInWithPassword(page, email, PASSWORD, "/criar");
-  await expect(page).toHaveURL(/\/criar(\/|$)/);
+  await expect(page).toHaveURL(/\/meus-sites$/);
 });
 
 test("resending the confirmation waits a minute between emails", async ({ page, request }) => {

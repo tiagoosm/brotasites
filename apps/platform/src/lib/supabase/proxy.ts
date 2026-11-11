@@ -136,6 +136,11 @@ export async function updateSession(request: NextRequest) {
     const back = safeNextPath(request.nextUrl.searchParams.get("voltar"), DEFAULT_NEXT);
     const next = /^\/(entrar|cadastro)(\/|\?|$)/.test(back) ? DEFAULT_NEXT : back;
     response = keep(NextResponse.redirect(new URL(next, request.url), { status: 307 }));
+  } else if (signedIn && path === "/criar" && request.nextUrl.searchParams.get("novo") !== "1") {
+    // Signed in, every "Criar meu site" leads to Meus sites (E32, owner's request): creating
+    // starts there ("Criar outro site", or the first site's button, open /criar?novo=1), next to
+    // the sites already started.
+    response = keep(NextResponse.redirect(new URL(DEFAULT_NEXT, request.url), { status: 307 }));
   } else if (isProtectedPath(path) && !signedIn) {
     const back = `${path}${request.nextUrl.search}`;
     // "Criar meu site" leads new people to create the account; the rest to sign in.

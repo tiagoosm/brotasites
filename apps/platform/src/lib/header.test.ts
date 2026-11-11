@@ -3,10 +3,8 @@ import {
   accountItems,
   currentLink,
   footerLinks,
-  type HeaderSession,
   headerLinks,
   isAccountScreen,
-  mainButton,
   signInLink,
   signUpLink,
   visiblePath,
@@ -38,16 +36,6 @@ describe("initials of the profile button", () => {
 });
 
 describe("what the header shows", () => {
-  const visitor: HeaderSession = { signedIn: false };
-  const member: HeaderSession = {
-    signedIn: true,
-    known: true,
-    name: "Zé",
-    email: "z@x.com",
-    team: false,
-  };
-  const unknown: HeaderSession = { signedIn: true, known: false };
-
   it("always has the same three links in the middle (E29: no Dúvidas, Ajuda covers it)", () => {
     expect(headerLinks.map((link) => link.label)).toEqual(["Como funciona", "Preço", "Ajuda"]);
     expect(headerLinks.map((link) => link.href)).toEqual(["/#como-funciona", "/#preco", "/ajuda"]);
@@ -55,22 +43,14 @@ describe("what the header shows", () => {
     expect(currentLink("/")).toBeNull();
   });
 
-  it("offers the main button by state", () => {
-    // A visitor never sees "Criar meu site" in the header (E26), on any page.
-    expect(mainButton(visitor)).toBeNull();
-    expect(mainButton(member)?.label).toBe("Criar meu site");
-    expect(mainButton(unknown)?.href).toBe("/criar");
-  });
-
   it("puts the account in the profile menu, and the team link only for the team", () => {
+    // No "Criar meu site" (E32): creating starts from Meus sites.
     expect(accountItems(false).map((link) => link.label)).toEqual([
       "Meus sites",
-      "Criar meu site",
       "Perfil e segurança",
     ]);
     expect(accountItems(true).map((link) => link.label)).toEqual([
       "Meus sites",
-      "Criar meu site",
       "Perfil e segurança",
       "Área da equipe",
     ]);
@@ -94,10 +74,6 @@ describe("what the header shows", () => {
     }
     expect(isAccountScreen("/")).toBe(false);
     expect(isAccountScreen("/entrarx")).toBe(false);
-    expect(withoutCurrent(accountItems(false), "/meus-sites").map((link) => link.label)).toEqual([
-      "Criar meu site",
-      "Perfil e segurança",
-    ]);
     expect(withoutCurrent(headerLinks, "/ajuda").map((link) => link.label)).toEqual([
       "Como funciona",
       "Preço",

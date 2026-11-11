@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { initialsOf } from "@/lib/initials";
 import { cn } from "@/lib/utils";
-import { accountItems, type HeaderSession, visiblePath, withoutCurrent } from "./nav";
+import { accountItems, type HeaderSession, visiblePath } from "./nav";
 
 // The profile button and its menu (E17): the person's initials (or a person icon), and a menu
 // with who is signed in, Meus sites, Criar meu site, Perfil e segurança, Área da equipe (team only) and
@@ -124,9 +124,9 @@ export function ProfileMenu({ session }: { session: Signed }) {
   }
 
   const initials = initialsOf(who?.name);
-  // Never the page the person is already on (E29).
+  // The same items on every page (E32, owner's request); the page the person is on is marked.
   const pathname = visiblePath(usePathname());
-  const links = withoutCurrent(accountItems(who?.team ?? false), pathname);
+  const links = accountItems(who?.team ?? false);
 
   // Opening the menu is the intent (E26): its pages start loading before the choice.
   useEffect(() => {
@@ -173,8 +173,9 @@ export function ProfileMenu({ session }: { session: Signed }) {
               role="menuitem"
               tabIndex={-1}
               prefetch={false}
+              aria-current={link.href === pathname ? "page" : undefined}
               onClick={() => close(false)}
-              className={itemClass}
+              className={`${itemClass} aria-[current=page]:font-semibold aria-[current=page]:text-leaf-deep`}
             >
               {link.label}
             </Link>

@@ -11,11 +11,9 @@ import { CreateSiteButton } from "./create-site-button";
 import { LinkPending, useIntentPrefetch } from "./link-pending";
 import {
   accountItems,
-  CREATE_HREF,
   currentLink,
   type HeaderSession,
   headerLinks,
-  mainButton,
   signInLink,
   signUpLink,
   visiblePath,
@@ -44,7 +42,6 @@ export function SiteHeader({
   const [open, setOpen] = useState(false);
   const pathname = visiblePath(usePathname());
   const current = currentLink(pathname);
-  const main = mainButton(session);
   const visitor = visitorButtons(pathname);
 
   // Navigating closes the phone menu.
@@ -92,16 +89,6 @@ export function SiteHeader({
               {signUpLink.label}
             </CreateSiteButton>
           )}
-          {!pending && main && (
-            <CreateSiteButton
-              href={main.href}
-              size="nav"
-              arrow={false}
-              className="hidden whitespace-nowrap md:inline-flex"
-            >
-              {main.label}
-            </CreateSiteButton>
-          )}
           {!pending && session.signedIn && <ProfileMenu session={session} />}
           <Button
             type="button"
@@ -136,18 +123,12 @@ function PhoneMenu({
   pathname: string;
   onClose: () => void;
 }) {
-  // The middle links, then the account signed in ("Criar meu site" is the main button at the
-  // bottom). Signed out, the bottom holds "Criar conta" and "Entrar" (E30), each only away from
-  // its own screen and neither on the password screens. Never the page the person is on.
+  // The middle links (never the page the person is on), then, signed in, the account's items:
+  // the same on every page, the current one marked (E32; no "Criar meu site", creating starts
+  // from Meus sites). Signed out, the bottom holds "Criar conta" and "Entrar" (E30), each only
+  // away from its own screen and neither on the password screens.
   const middle = withoutCurrent(headerLinks, pathname);
-  const account = session.signedIn
-    ? withoutCurrent(
-        accountItems(session.known ? session.team : false).filter(
-          (link) => link.href !== CREATE_HREF,
-        ),
-        pathname,
-      )
-    : [];
+  const account = session.signedIn ? [...accountItems(session.known ? session.team : false)] : [];
   const links = [...middle, ...account];
   const visitor = visitorButtons(pathname);
   const ref = useRef<HTMLDivElement>(null);
@@ -237,9 +218,10 @@ function PhoneMenu({
               href={link.href}
               // The form and account pages carry the account code; load it only when opened.
               prefetch={link.account ? false : undefined}
+              aria-current={link.href === pathname ? "page" : undefined}
               onClick={onClose}
               style={{ "--item": index } as React.CSSProperties}
-              className="phone-menu-item group flex min-h-14 items-center justify-between border-b border-line py-3 font-display text-[1.75rem] leading-tight text-ink transition-colors duration-150 active:text-leaf-deep"
+              className="phone-menu-item group flex min-h-14 items-center justify-between border-b border-line py-3 font-display text-[1.75rem] leading-tight text-ink transition-colors duration-150 active:text-leaf-deep aria-[current=page]:text-leaf-deep"
             >
               {link.label}
               <ArrowRight
@@ -257,33 +239,27 @@ function PhoneMenu({
           style={{ "--item": links.length } as React.CSSProperties}
         />
       )}
-      {(session.signedIn || visitor.signIn || visitor.signUp) && (
+      {!session.signedIn && (visitor.signIn || visitor.signUp) && (
         <div
           className="phone-menu-item mt-auto grid shrink-0 gap-3 pt-8"
           style={{ "--item": links.length + 1 } as React.CSSProperties}
         >
-          {session.signedIn ? (
-            <CreateSiteButton onClick={onClose}>Criar meu site</CreateSiteButton>
-          ) : (
-            <>
-              {/* E30: the highlight on top, the quiet one under it, both full width. */}
-              {visitor.signUp && (
-                <CreateSiteButton href={signUpLink.href} arrow={false} onClick={onClose}>
-                  {signUpLink.label}
-                </CreateSiteButton>
-              )}
-              {visitor.signIn && (
-                <Link
-                  href={signInLink.href}
-                  prefetch={false}
-                  onClick={onClose}
-                  className={buttonVariants({ variant: "outline", size: "lg" })}
-                >
-                  {signInLink.label}
-                  <LinkPending dot={false} />
-                </Link>
-              )}
-            </>
+          {/* E30: the highlight on top, the quiet one under it, both full width. */}
+          {visitor.signUp && (
+            <CreateSiteButton href={signUpLink.href} arrow={false} onClick={onClose}>
+              {signUpLink.label}
+            </CreateSiteButton>
+          )}
+          {visitor.signIn && (
+            <Link
+              href={signInLink.href}
+              prefetch={false}
+              onClick={onClose}
+              className={buttonVariants({ variant: "outline", size: "lg" })}
+            >
+              {signInLink.label}
+              <LinkPending dot={false} />
+            </Link>
           )}
         </div>
       )}

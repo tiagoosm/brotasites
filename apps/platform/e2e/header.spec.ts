@@ -11,7 +11,7 @@ import { SITE, SUPABASE, signIn } from "./support/supabase";
 
 // The one header of every page (E17): the same three links (E29: "Dúvidas" left); signed out
 // "Entrar" and "Criar conta" (E30), never the page the person is on
-// (E26: never "Criar meu site" for visitors), "Criar meu site" and the profile menu signed in,
+// (E26: never "Criar meu site" for visitors), only the profile menu signed in (E32),
 // decided on the server (no flicker).
 
 const middle = ["Como funciona", "Preço", "Ajuda"];
@@ -135,9 +135,10 @@ test.describe("the same header everywhere", () => {
       const nav = banner(page).getByRole("navigation", { name: "Principal" });
       await expect(nav.getByRole("link")).toHaveText(middle);
       await expect(profileButton(page)).toBeVisible();
-      const create = banner(page).getByRole("link", { name: "Criar meu site", exact: true });
-      await expect(create).toBeVisible();
-      await expect(create).toHaveClass(/specular-nav/);
+      // No "Criar meu site" in the bar (E32, owner's request): creating starts from Meus sites.
+      await expect(
+        banner(page).getByRole("link", { name: "Criar meu site", exact: true }),
+      ).toHaveCount(0);
       // No account links loose in the bar: they are in the profile menu.
       for (const name of [
         "Meus sites",
@@ -183,8 +184,9 @@ test("the profile menu works with the keyboard", async ({ page, context, request
   await expect(button).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByRole("menu")).toBeVisible();
   await expect(page.getByText("Zé da Padaria", { exact: true })).toBeVisible();
-  // On Meus sites, the menu leaves out Meus sites (E29: never the current page).
-  await expect(items).toHaveText(["Criar meu site", "Perfil e segurança", "Sair"]);
+  // The same items on every page (E32): on Meus sites, Meus sites stays, marked as current.
+  await expect(items).toHaveText(["Meus sites", "Perfil e segurança", "Sair"]);
+  await expect(items.first()).toHaveAttribute("aria-current", "page");
   await expect(items.first()).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(items.nth(1)).toBeFocused();
@@ -237,11 +239,21 @@ test("the team sees Área da equipe, others do not", async ({ page, context, req
   await signedIn(context, request, other);
   await page.goto("/meus-sites");
   await profileButton(page).click();
-  await expect(page.getByRole("menuitem")).toHaveText([
-    "Criar meu site",
-    "Perfil e segurança",
-    "Sair",
-  ]);
+  await expect(page.getByRole("menuitem")).toHaveText(["Meus sites", "Perfil e segurança", "Sair"]);
+});
+
+test("the profile menu is the same on every page (E32)", async ({ page, context, request }) => {
+  await signedIn(context, request, person());
+  for (const path of ["/", "/ajuda", "/meus-sites", "/conta"]) {
+    await page.goto(path);
+    await profileButton(page).click();
+    await expect(page.getByRole("menuitem"), path).toHaveText([
+      "Meus sites",
+      "Perfil e segurança",
+      "Sair",
+    ]);
+    await page.keyboard.press("Escape");
+  }
 });
 
 test("signing out from the menu goes back to the visitor's header", async ({
@@ -266,15 +278,19 @@ test("on phones the sheet lists the links and the account", async ({ page, conte
   await expect(profileButton(page)).toBeVisible();
   await banner(page).getByRole("button", { name: "Abrir menu" }).click();
   const sheet = page.getByRole("dialog", { name: "Menu" });
-  // The account block, then "Criar meu site" as the sheet's main button (E18).
-  // Never the page the person is on (E29): no "Meus sites" on Meus sites.
+  // The account block, the same on every page (E32): Meus sites stays, marked as current; no
+  // "Criar meu site" button (creating starts from Meus sites).
   await expect(sheet.getByRole("link")).toHaveText([
     ...middle,
+    "Meus sites",
     "Perfil e segurança",
     "Área da equipe",
-    "Criar meu site",
   ]);
-  await expect(sheet.locator("a[data-create-site]")).toHaveClass(/specular/);
+  await expect(sheet.getByRole("link", { name: "Meus sites" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(sheet.locator("a[data-create-site]")).toHaveCount(0);
   await expect(sheet.getByText("Sua conta")).toBeVisible();
   await expect(sheet.getByRole("button", { name: "Sair" })).toBeVisible();
   for (let i = 0; i < 12; i++) {
