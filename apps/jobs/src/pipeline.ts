@@ -12,6 +12,7 @@ import { type BrowserResult, type ReviewerAgent, reviewSite } from "@brotasites/
 import {
   familyOf,
   formToSiteConfig,
+  reviewLevel,
   type SiteConfig,
   sectionsOf,
   siteConfigSchema,
@@ -44,7 +45,11 @@ export interface PipelineDeps {
   build?: typeof buildStaticSite;
   /** Removes a deleted site's files from R2 and KV (E15); without R2 the cleanups wait. */
   purger?: Purger;
-  /** Development only: skip the human review and go straight to the client. */
+  /**
+   * Development only: skip the human review and go straight to the client. Never for a
+   * category with reinforced or mandatory review (E38), nor "outro": those always wait for a
+   * person.
+   */
   skipHumanReview?: boolean;
   log?: (message: string) => void;
 }
@@ -55,6 +60,15 @@ const ATTENTION_MESSAGE =
   "Encontramos um problema que precisa de uma pessoa. Nossa equipe já foi avisada e responde por aqui.";
 
 export class JobError extends Error {}
+
+/**
+ * Whether a built site waits for a person before the client sees it. Always, unless
+ * REVIEW_SKIP_HUMAN (development) is on; even then, a category with reinforced or mandatory
+ * review, or "outro", waits (E38: every wave is open, these rules stay).
+ */
+export function needsHumanReview(category: string | undefined, skipHumanReview = false): boolean {
+  return !skipHumanReview || reviewLevel(category ?? "outro") !== "standard";
+}
 
 function engineInputOf(site: SiteRecord, workspace: Workspace): EngineInput {
   const business = site.draft.business ?? {};
@@ -257,7 +271,9 @@ export async function runBuild(deps: PipelineDeps, job: Job): Promise<void> {
       deps.previews.base(site.id, token),
     );
     await deps.previews.upload(site.id, token, outDir);
-    const next = deps.skipHumanReview ? "awaiting_approval" : "in_review";
+    const next = needsHumanReview(site.draft.business?.category, deps.skipHumanReview)
+      ? "in_review"
+      : "awaiting_approval";
     await store.updateSite(site.id, {
       status: next,
       statusMessage: null,

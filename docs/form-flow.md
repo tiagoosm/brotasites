@@ -17,11 +17,24 @@ Signing in is required to create a site (decision of 2026-10-27, replacing the d
 
 ## Steps
 
-1. **Negócio (business):** name, category (searchable list from `docs/categories.md`), city and state, short description (up to 500), founding year (optional). A blocked category stops here, with a kind explanation and no charge. Optional but encouraged questions that make the site specific: how it started, what only they do, what clients praise most, a detail of the neighborhood or city, the most requested item or service.
+1. **Negócio (business):** name, category (searchable list from `docs/categories.md`), city and state, short description (up to 500), founding year (optional: the field shows what is typed and the draft gets the year at 4 digits; "Use 4 números, como 1998." only after leaving the field or trying to move on, E38). A blocked category stops here, with a kind explanation and no charge. Optional but encouraged questions that make the site specific: how it started, what only they do, what clients praise most, a detail of the neighborhood or city, the most requested item or service.
 2. **Marca e sensação (brand and feeling):** logo upload (optional), brand colors (optional, up to 3), up to 2 feelings among acolhedor, elegante, moderno, robusto and ousado. Without a logo, the system generates a monogram.
 3. **Seções (sections):** the system suggests the family's sections; the client turns them on or off. Testimonials only turn on with a real testimonial.
 4. **Conteúdo (content):** services or products (name, short description, up to 9), differentiators (up to 8, short), FAQ (optional), real testimonials with name and authorization, photos (up to 12, with a guide on how to take them). Image authorization confirmation when people appear, and parents' or guardians' authorization when minors appear.
-5. **Contato (contact):** WhatsApp, phone, email (at least one channel). Full address, or "não tenho endereço fixo" with a list of neighborhoods or cities served. Structured opening hours: day chips, shortcuts ("Seg a Sex", "Seg a Sáb", "Todos os dias"), "copiar para os outros dias", "sob agendamento" and "24 horas" options. Instagram and Facebook. Professional registration when the family requires it.
+5. **Contato (contact):** WhatsApp, phone, email (at least one channel). Full address, or "não tenho endereço fixo" with a list of neighborhoods or cities served. Structured opening hours, day by day (E38):
+   - one card per day, open or closed, with up to 3 intervals of its own;
+   - "Copiar o horário de [dia] para…" Seg a Sex, Seg a Sáb or Todos os dias. It only copies: each day can change alone afterwards;
+   - same time to open and close, and overlapping intervals, are flagged next to the day; an interval past midnight shows "Fecha depois da meia-noite";
+   - a summary follows the list ("Seg a Sex 08:00–18:00; Sáb 08:00–12:00; Dom fechado");
+   - the "sob agendamento" and "24 horas" options stay;
+   - the draft keeps the schema's rules unchanged: days with the same hours share one rule (`apps/platform/src/lib/hours-days.ts`), and drafts saved with groups of days open as they were.
+
+   Instagram and Facebook (E38):
+   - a pasted link (any of the network's addresses, `m.`, `fb.com`, `?igsh=...`) or "@nome" becomes the name;
+   - typing keeps every letter;
+   - the message says the cause (spaces, characters, length, another network's link, `profile.php`), on leaving the field or moving on, with the same words as the server (`packages/schema/src/v1.2/social.ts`).
+
+   Professional registration when the family requires it.
 The 5th step ends with a short look at the answers of steps 1 to 4 (each with a link back) and **Enviar e ver as direções**: the answers are saved, the directions are requested and the client goes to the site's page. Drafts saved by the former 7-step form may list `direcao` and `endereco` as done; they are ignored when read (`knownSteps`), the answers stay.
 
 ## After the 5 steps (not numbered)

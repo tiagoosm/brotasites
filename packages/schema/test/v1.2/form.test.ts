@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   blockedTopic,
   businessAnswersSchema,
+  categories,
   categoryNotOpen,
   contactAnswersSchema,
   contentAnswersSchema,
   type FormDraft,
   formToSiteConfig,
   missingToGenerate,
+  OPEN_LAUNCH_WAVE,
   sectionsOf,
   siteConfigSchema,
 } from "../../src/v1.2/index.js";
@@ -131,6 +133,15 @@ describe("form checks", () => {
     );
     expect(blockedTopic("Padaria", "Pão quente")).toBeNull();
     expect(categoryNotOpen("padaria")).toBeNull();
+  });
+
+  it("opens every category of every wave (E38), and can still close one", () => {
+    expect(OPEN_LAUNCH_WAVE).toBe(3);
+    for (const category of categories) expect(categoryNotOpen(category.id), category.id).toBeNull();
+    expect(categoryNotOpen("psicologia", new Set(["psicologia"]))).toMatch(/Ainda não/);
+    // A smaller open wave still closes the later ones.
+    expect(categoryNotOpen("advogado", new Set(), 2)).toMatch(/Ainda não/);
+    expect(categoryNotOpen("idiomas", new Set(), 2)).toBeNull();
   });
 
   it("suggests the family's sections until the client chooses", () => {

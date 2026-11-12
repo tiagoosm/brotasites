@@ -7,7 +7,10 @@ import {
   type FormDraft,
   familyInfo,
   familyOf,
+  normalizeSocial,
   type OpeningHours,
+  type SocialNetwork,
+  socialProblem,
   whatsappSchema,
 } from "@brotasites/schema/v1.2";
 import { useState } from "react";
@@ -25,13 +28,6 @@ type Contact = NonNullable<FormDraft["contact"]>;
 
 const digitsOf = (value: string) => value.replace(/\D/g, "");
 const blank = (value: string | undefined) => (value?.trim() ? value.trim() : undefined);
-/** "@padariadoze" or "instagram.com/padariadoze/" → "padariadoze". */
-const handle = (value: string, site: string) =>
-  value
-    .trim()
-    .replace(new RegExp(`^(https?://)?(www\\.)?${site}\\.com/`, "i"), "")
-    .replace(/^@/, "")
-    .replace(/[/?#].*$/, "");
 
 /** The answers as the step checks them: blanks dropped, hours defaulted. */
 export function contactAnswers(contact: Contact) {
@@ -65,6 +61,8 @@ export function ContactStep() {
   const family = familyOf(draft.business?.category);
   const needsRegistration = family ? familyInfo[family].requiresRegistration : false;
   const sender = useSendAnswers();
+  // Moving on with a wrong social name shows the message next to its field too (E38).
+  const [triedNext, setTriedNext] = useState(false);
 
   return (
     <StepForm
@@ -72,6 +70,7 @@ export function ContactStep() {
       onDone={() => void sender.send()}
       action={<SendButton sender={sender} />}
       validate={() => {
+        setTriedNext(true);
         const answers = contactAnswers(contact);
         if (
           needsRegistration &&
@@ -152,19 +151,19 @@ export function ContactStep() {
 
       <SectionCard name="Redes sociais" note="Opcional. Só o nome de usuário.">
         <div className="grid gap-5 sm:grid-cols-2">
-          <TextField
+          <SocialField
+            network="instagram"
             label="Instagram"
             value={contact.instagram}
-            maxLength={60}
-            placeholder="padariadoze"
-            onChange={(value) => set({ instagram: handle(value, "instagram") })}
+            checkNow={triedNext}
+            onChange={(instagram) => set({ instagram })}
           />
-          <TextField
+          <SocialField
+            network="facebook"
             label="Facebook"
             value={contact.facebook}
-            maxLength={60}
-            placeholder="padariadoze"
-            onChange={(value) => set({ facebook: handle(value, "facebook") })}
+            checkNow={triedNext}
+            onChange={(facebook) => set({ facebook })}
           />
         </div>
       </SectionCard>
@@ -254,6 +253,52 @@ function PhoneField({
         const formatted = formatPhone(typed);
         setShown(formatted);
         onChange(digitsOf(formatted));
+      }}
+    />
+  );
+}
+
+/**
+ * An Instagram or Facebook name (E38). The field keeps what is typed, letter by letter; a pasted
+ * link or "@nome" becomes the name at once, and anything else is tidied when leaving the field.
+ * The draft always gets the tidied name. What is wrong shows here on leaving the field or on
+ * moving on, with the same words the server uses (packages/schema/src/v1.2/social.ts).
+ */
+function SocialField({
+  network,
+  label,
+  value,
+  checkNow,
+  onChange,
+}: {
+  network: SocialNetwork;
+  label: string;
+  value: string | undefined;
+  checkNow: boolean;
+  onChange: (name: string) => void;
+}) {
+  const [shown, setShown] = useState(value ?? "");
+  const [left, setLeft] = useState(false);
+  const name = normalizeSocial(shown, network);
+  const problem = name && (left || checkNow) ? socialProblem(name, network) : null;
+  return (
+    <TextField
+      label={label}
+      value={shown}
+      maxLength={200}
+      placeholder="padariadoze"
+      hint="Só o nome de usuário, ou cole o link do perfil."
+      error={problem ?? undefined}
+      onBlur={() => {
+        setLeft(true);
+        setShown(name);
+      }}
+      onChange={(typed) => {
+        // A paste (several characters at once, or a line break): show the name it holds.
+        const pasted = typed.length - shown.length > 1 || /[\r\n]/.test(typed);
+        setShown(pasted ? normalizeSocial(typed, network) : typed);
+        setLeft(false);
+        onChange(normalizeSocial(typed, network));
       }}
     />
   );

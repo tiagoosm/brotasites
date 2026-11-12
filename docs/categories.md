@@ -49,4 +49,12 @@ Chaveiro, guincho, desentupidora, mudanças e fretes, regulated health, suppleme
 - **Minors:** a photo showing the face of a child or teenager only with the guardians' authorization confirmed. The AI never generates nor picks photos of minors.
 - **Donations:** no Pix key, bank account or donate button in the MVP. An external link given by the client, with manual review.
 - **Food:** never claim "sem glúten", "vegano", "sem açúcar" or "natural" without the client saying so; never invent health inspection seals.
-- **Launch waves:** wave 1 food, beauty, automotive, home services, events and creatives (except reinforced-review categories). Wave 2 education, selected retail, pet and agro, low-risk professionals. Wave 3 regulated health and reinforced review, only after legal validation.
+- **Launch waves:** wave 1 food, beauty, automotive, home services, events and creatives (except reinforced-review categories). Wave 2 education, selected retail, pet and agro, low-risk professionals. Wave 3 regulated health and reinforced review.
+  - **All three waves are open since 2026-11-12 (E38).** It was the owner's decision. The legal validation of the advertising rules of the wave 3 professions (health councils, OAB) is still pending.
+  - `OPEN_LAUNCH_WAVE` in `packages/schema/src/v1.2/form.ts` is the highest wave. `CLOSED_CATEGORIES` closes a single category again, whatever its wave.
+  - **What opening changes nothing about:**
+    - Registration: health requires the professional registration and shows it in the footer.
+    - Psychology never shows testimonials.
+    - Blocked topics are refused.
+    - Reinforced and mandatory review, and "outro", always wait for a person, even with `REVIEW_SKIP_HUMAN=true` (E38: before, that switch skipped the person for every category).
+  - `apps/jobs/test/categories.test.ts` runs every category in simulated mode: directions, config, copy and these rules.
