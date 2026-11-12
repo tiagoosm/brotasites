@@ -48,3 +48,57 @@ test("a saved year comes back, and a year in the future is refused next to the f
   await page.getByRole("button", { name: "Próximo: marca e sensação" }).click();
   await expect(page.locator("#step-problem")).toHaveText("Use 4 números, como 1998.");
 });
+
+test("hours day by day: Monday to Friday 8 to 18 and Saturday 8 to 12 (E38)", async ({
+  page,
+  context,
+}) => {
+  const state = await withSite(context, {
+    draft: { business: padaria.business, content: padaria.content },
+    completed: ["negocio", "marca", "conteudo", "secoes"],
+  });
+  await page.goto(`/criar/${SITE}/contato`);
+  // The start: Monday to Friday, 08:00 to 18:00; the weekend closed.
+  await expect(page.getByText("Seg a Sex 08:00–18:00; Sáb e Dom fechados.")).toBeVisible();
+  const saturday = page.getByRole("listitem", { name: "Sábado" });
+  await saturday.getByRole("switch", { name: "Sábado: aberto" }).click();
+  await saturday.getByLabel("Fecha").fill("12:00");
+  await expect(
+    page.getByText("Seg a Sex 08:00–18:00; Sáb 08:00–12:00; Dom fechado."),
+  ).toBeVisible();
+  // Each day changes alone: Wednesday opens later.
+  await page.getByRole("listitem", { name: "Quarta" }).getByLabel("Abre").fill("09:00");
+  await expect(
+    page.getByText(
+      "Seg, Ter, Qui e Sex 08:00–18:00; Qua 09:00–18:00; Sáb 08:00–12:00; Dom fechado.",
+    ),
+  ).toBeVisible();
+  await expect
+    .poll(() => (state.saved.at(-1)?.draft.contact as { openingHours?: unknown })?.openingHours)
+    .toEqual({
+      mode: "schedule",
+      rules: [
+        { days: ["mon", "tue", "thu", "fri"], intervals: [{ open: "08:00", close: "18:00" }] },
+        { days: ["wed"], intervals: [{ open: "09:00", close: "18:00" }] },
+        { days: ["sat"], intervals: [{ open: "08:00", close: "12:00" }] },
+      ],
+    });
+});
+
+test("hours: the same time to open and close is flagged next to the day; past midnight is a hint", async ({
+  page,
+  context,
+}) => {
+  await withSite(context, {
+    draft: { business: padaria.business, content: padaria.content },
+    completed: ["negocio", "marca", "conteudo", "secoes"],
+  });
+  await page.goto(`/criar/${SITE}/contato`);
+  const friday = page.getByRole("listitem", { name: "Sexta" });
+  await friday.getByLabel("Fecha").fill("08:00");
+  await expect(friday.getByText(/Abre e fecha no mesmo horário/)).toBeVisible();
+  await friday.getByLabel("Abre").fill("18:00");
+  await friday.getByLabel("Fecha").fill("02:00");
+  await expect(friday.getByText("Fecha depois da meia-noite.")).toBeVisible();
+  await expect(friday.getByText(/Abre e fecha no mesmo horário/)).toHaveCount(0);
+});

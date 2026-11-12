@@ -1,39 +1,31 @@
 "use client";
 
-import { type HoursRule, type OpeningHours, type WeekDay, weekDays } from "@brotasites/schema/v1.2";
+import { type OpeningHours, type WeekDay, weekDays } from "@brotasites/schema/v1.2";
 import { Plus, X } from "lucide-react";
-import { useId } from "react";
+import { Switch } from "radix-ui";
+import { useId, useState } from "react";
 import { chipClass } from "@/components/shared/chip";
+import {
+  checkDay,
+  copyDay,
+  copyTargets,
+  DEFAULT_INTERVAL,
+  dayLong,
+  expandRules,
+  type Interval,
+  overlapsAcrossDays,
+  setDayOpen,
+  type Week,
+  weekSummary,
+  withWeek,
+} from "@/lib/hours-days";
 import { cn } from "@/lib/utils";
 import { TextField } from "./fields";
 
-// Structured opening hours (docs/form-flow.md, step 5): groups of days with up to 3 intervals
-// each, shortcuts for the usual weeks, "sob agendamento" and "24 horas".
-
-const dayLabels: Record<WeekDay, string> = {
-  mon: "Seg",
-  tue: "Ter",
-  wed: "Qua",
-  thu: "Qui",
-  fri: "Sex",
-  sat: "Sáb",
-  sun: "Dom",
-};
-const dayNames: Record<WeekDay, string> = {
-  mon: "segunda",
-  tue: "terça",
-  wed: "quarta",
-  thu: "quinta",
-  fri: "sexta",
-  sat: "sábado",
-  sun: "domingo",
-};
-
-const shortcuts: [string, WeekDay[]][] = [
-  ["Seg a Sex", ["mon", "tue", "wed", "thu", "fri"]],
-  ["Seg a Sáb", ["mon", "tue", "wed", "thu", "fri", "sat"]],
-  ["Todos os dias", [...weekDays]],
-];
+// Opening hours, day by day (docs/form-flow.md, step 5; E38). One card per day: open or closed
+// and its own hours (up to 3). "Copiar para" only copies; each day can still be changed on its
+// own. The draft keeps the schema's rules: days with the same hours share one rule
+// (lib/hours-days.ts), so older drafts with groups of days open as they were.
 
 const modes: { value: OpeningHours["mode"]; label: string }[] = [
   { value: "schedule", label: "Tenho horário" },
@@ -41,14 +33,9 @@ const modes: { value: OpeningHours["mode"]; label: string }[] = [
   { value: "always", label: "24 horas" },
 ];
 
-const newRule = (days: WeekDay[]): HoursRule => ({
-  days,
-  intervals: [{ open: "08:00", close: "18:00" }],
-});
-
 export const defaultHours: OpeningHours = {
   mode: "schedule",
-  rules: [newRule(["mon", "tue", "wed", "thu", "fri"])],
+  rules: [{ days: ["mon", "tue", "wed", "thu", "fri"], intervals: [{ ...DEFAULT_INTERVAL }] }],
 };
 
 export function HoursEditor({
@@ -59,10 +46,8 @@ export function HoursEditor({
   onChange: (hours: OpeningHours) => void;
 }) {
   const legend = useId();
-  const used = new Set(value.rules.flatMap((rule) => rule.days));
-  const free = weekDays.filter((day) => !used.has(day));
-  const setRule = (index: number, rule: HoursRule) =>
-    onChange({ ...value, rules: value.rules.map((r, i) => (i === index ? rule : r)) });
+  const week = expandRules(value.rules);
+  const setWeek = (next: Week) => onChange(withWeek(value, next));
 
   return (
     <div className="grid gap-5">
@@ -104,59 +89,23 @@ export function HoursEditor({
       </fieldset>
 
       {value.mode === "schedule" && (
-        <ol className="grid gap-3">
-          {value.rules.map((rule, index) => (
-            <li
-              // biome-ignore lint/suspicious/noArrayIndexKey: rules have no ids; values are controlled
-              key={index}
-              className="grid gap-4 rounded-lg border border-border bg-paper p-4"
-            >
-              <RuleEditor
-                rule={rule}
-                index={index}
-                taken={new Set(value.rules.filter((_, i) => i !== index).flatMap((r) => r.days))}
-                onChange={(next) => setRule(index, next)}
-                onRemove={
-                  value.rules.length > 1
-                    ? () => onChange({ ...value, rules: value.rules.filter((_, i) => i !== index) })
-                    : undefined
-                }
-              />
-              {free.length > 0 && (
-                <button
-                  type="button"
-                  className="touch-target justify-self-start text-sm font-semibold text-leaf-deep underline underline-offset-4"
-                  onClick={() =>
-                    setRule(index, {
-                      ...rule,
-                      days: weekDays.filter((day) => rule.days.includes(day) || free.includes(day)),
-                    })
-                  }
-                >
-                  Copiar para os outros dias
-                </button>
-              )}
-            </li>
-          ))}
-        </ol>
-      )}
-
-      {value.mode === "schedule" && free.length > 0 && value.rules.length < 7 && (
-        <button
-          type="button"
-          onClick={() =>
-            onChange({ ...value, rules: [...value.rules, newRule([free[0] as WeekDay])] })
-          }
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-dashed border-line-strong text-[0.9375rem] font-semibold text-leaf-deep hover:border-leaf"
-        >
-          <Plus aria-hidden="true" className="size-4" />
-          Adicionar outros dias com horário diferente
-        </button>
-      )}
-      {value.mode === "schedule" && free.length > 0 && (
-        <p className="text-sm text-ink-soft">
-          Fechado: {free.map((day) => dayNames[day]).join(", ")}.
-        </p>
+        <>
+          <ul aria-label="Horário de cada dia" className="grid gap-3">
+            {weekDays.map((day) => (
+              <DayCard key={day} day={day} week={week} onChange={setWeek} />
+            ))}
+          </ul>
+          {overlapsAcrossDays(week) && (
+            <p className="text-sm font-semibold text-destructive">
+              Um horário que passa da meia-noite encontra o horário do dia seguinte. Ajuste um
+              deles.
+            </p>
+          )}
+          <p aria-live="polite" className="rounded-lg bg-table px-4 py-3 text-sm">
+            <span className="font-semibold">Resumo: </span>
+            {weekSummary(week)}.
+          </p>
+        </>
       )}
 
       <TextField
@@ -170,175 +119,194 @@ export function HoursEditor({
   );
 }
 
-function RuleEditor({
-  rule,
-  index,
-  taken,
+function DayCard({
+  day,
+  week,
   onChange,
-  onRemove,
 }: {
-  rule: HoursRule;
-  index: number;
-  taken: Set<WeekDay>;
-  onChange: (rule: HoursRule) => void;
-  onRemove?: () => void;
+  day: WeekDay;
+  week: Week;
+  onChange: (week: Week) => void;
 }) {
-  const toggle = (day: WeekDay) =>
-    onChange({
-      ...rule,
-      days: rule.days.includes(day)
-        ? rule.days.filter((d) => d !== day)
-        : weekDays.filter((d) => d === day || rule.days.includes(d)),
-    });
+  const nameId = useId();
+  const [copying, setCopying] = useState(false);
+  const intervals = week[day];
+  const open = intervals !== null;
+  const name = dayLong[day];
+  const check = intervals ? checkDay(intervals) : null;
+  const setIntervals = (next: Interval[]) => onChange({ ...week, [day]: next });
+
   return (
-    <>
-      <div className="flex items-center justify-between gap-3">
-        <span className="tag text-stem">Dias {index + 1}</span>
-        {onRemove && (
-          <button
-            type="button"
-            onClick={onRemove}
-            aria-label={`Remover o grupo de dias ${index + 1}`}
-            className="inline-flex size-8 items-center justify-center rounded-full text-ink-soft hover:bg-table hover:text-ink"
+    <li
+      aria-labelledby={nameId}
+      className={cn(
+        "grid gap-3 rounded-lg border p-4",
+        open ? "border-border bg-paper" : "border-dashed border-border bg-transparent",
+      )}
+    >
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <span id={nameId} className="text-[0.9375rem] font-semibold">
+          {name}
+        </span>
+        <span className="flex items-center gap-3">
+          <span className={cn("text-sm", open ? "text-leaf-deep" : "text-ink-soft")} aria-hidden>
+            {open ? "Aberto" : "Fechado"}
+          </span>
+          <Switch.Root
+            checked={open}
+            aria-label={`${name}: aberto`}
+            onCheckedChange={(checked) => {
+              setCopying(false);
+              onChange(setDayOpen(week, day, checked));
+            }}
+            className="touch-target relative h-7 w-12 shrink-0 cursor-pointer rounded-full bg-line-strong transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf data-[state=checked]:bg-leaf motion-reduce:transition-none"
           >
-            <X aria-hidden="true" className="size-4" />
-          </button>
-        )}
+            <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow-sm transition-transform duration-200 ease-[var(--ease-out)] data-[state=checked]:translate-x-[1.375rem] motion-reduce:transition-none" />
+          </Switch.Root>
+        </span>
       </div>
-      <fieldset className="grid gap-3">
-        <legend className="sr-only">Dias do grupo {index + 1}</legend>
-        <div className="flex flex-wrap gap-2">
-          {weekDays.map((day) => {
-            const checked = rule.days.includes(day);
-            const blocked = !checked && taken.has(day);
-            return (
-              <label
-                key={day}
-                title={blocked ? "Esse dia já está em outro grupo" : undefined}
-                className={cn(
-                  chipClass({ checked }),
-                  "cursor-pointer px-3 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-leaf",
-                  blocked && "cursor-not-allowed opacity-40",
+
+      {intervals && check && (
+        <>
+          <div className="grid gap-3">
+            {intervals.map((interval, i) => (
+              <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: intervals have no ids
+                key={i}
+                className="grid gap-1.5"
+              >
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.75rem] items-end gap-3">
+                  <TimeField
+                    label={i === 0 ? "Abre" : "Abre de novo"}
+                    context={name}
+                    value={interval.open}
+                    invalid={check.same.includes(i) || check.overlap}
+                    onChange={(time) =>
+                      setIntervals(intervals.map((v, j) => (j === i ? { ...v, open: time } : v)))
+                    }
+                  />
+                  <TimeField
+                    label="Fecha"
+                    context={name}
+                    value={interval.close}
+                    invalid={check.same.includes(i) || check.overlap}
+                    onChange={(time) =>
+                      setIntervals(intervals.map((v, j) => (j === i ? { ...v, close: time } : v)))
+                    }
+                  />
+                  {intervals.length > 1 ? (
+                    <button
+                      type="button"
+                      aria-label={`Remover o horário ${i + 1} de ${name.toLowerCase()}`}
+                      onClick={() => setIntervals(intervals.filter((_, j) => j !== i))}
+                      className="inline-flex size-11 items-center justify-center rounded-lg text-ink-soft hover:bg-table hover:text-ink"
+                    >
+                      <X aria-hidden="true" className="size-4" />
+                    </button>
+                  ) : (
+                    <span aria-hidden="true" />
+                  )}
+                </div>
+                {check.same.includes(i) && (
+                  <p className="text-sm text-destructive">
+                    Abre e fecha no mesmo horário. Para atender o dia todo, use “24 horas”.
+                  </p>
                 )}
-              >
-                <input
-                  type="checkbox"
-                  className="sr-only"
-                  checked={checked}
-                  disabled={blocked}
-                  onChange={() => toggle(day)}
-                />
-                <span aria-hidden="true">{dayLabels[day]}</span>
-                <span className="sr-only">{dayNames[day]}</span>
-              </label>
-            );
-          })}
-        </div>
-        {/* A day another group already has cannot be picked here: said in text, not only by a
-            dimmed chip or a tooltip (E26). */}
-        {weekDays.some((day) => !rule.days.includes(day) && taken.has(day)) && (
-          <p className="text-sm text-ink-soft">
-            Dias apagados já estão em outro grupo. Tire de lá para marcar aqui.
-          </p>
-        )}
-        <div className="flex flex-wrap gap-x-4 gap-y-1">
-          {shortcuts.map(([label, days]) => {
-            const usable = days.filter((day) => !taken.has(day));
-            return (
-              <button
-                key={label}
-                type="button"
-                className="touch-target text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
-                onClick={() => onChange({ ...rule, days: usable })}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
-      <div className="grid gap-3">
-        {rule.intervals.map((interval, i) => (
-          <div
-            // biome-ignore lint/suspicious/noArrayIndexKey: intervals have no ids
-            key={i}
-            className="flex flex-wrap items-end gap-3"
-          >
-            <TimeField
-              label={i === 0 ? "Abre" : `Abre de novo`}
-              value={interval.open}
-              onChange={(open) =>
-                onChange({
-                  ...rule,
-                  intervals: rule.intervals.map((v, j) => (j === i ? { ...v, open } : v)),
-                })
-              }
-            />
-            <TimeField
-              label="Fecha"
-              value={interval.close}
-              onChange={(close) =>
-                onChange({
-                  ...rule,
-                  intervals: rule.intervals.map((v, j) => (j === i ? { ...v, close } : v)),
-                })
-              }
-            />
-            {rule.intervals.length > 1 && (
-              <button
-                type="button"
-                aria-label={`Remover o horário ${i + 1}`}
-                onClick={() =>
-                  onChange({ ...rule, intervals: rule.intervals.filter((_, j) => j !== i) })
-                }
-                className="inline-flex size-12 items-center justify-center rounded-lg text-ink-soft hover:bg-table hover:text-ink"
-              >
-                <X aria-hidden="true" className="size-4" />
-              </button>
+                {check.overnight.includes(i) && (
+                  <p className="text-sm text-ink-soft">Fecha depois da meia-noite.</p>
+                )}
+              </div>
+            ))}
+            {check.overlap && (
+              <p className="text-sm text-destructive">
+                Dois horários de {name.toLowerCase()} se sobrepõem. Ajuste para um terminar antes do
+                outro começar.
+              </p>
             )}
           </div>
-        ))}
-        {rule.intervals.length < 3 && (
-          <button
-            type="button"
-            className="touch-target justify-self-start text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
-            onClick={() =>
-              onChange({
-                ...rule,
-                intervals: [...rule.intervals, { open: "14:00", close: "18:00" }],
-              })
-            }
-          >
-            Adicionar outro horário no mesmo dia (ex.: fecha para o almoço)
-          </button>
-        )}
-      </div>
-    </>
+
+          <div className="flex flex-wrap gap-x-5 gap-y-1">
+            {intervals.length < 3 && (
+              <button
+                type="button"
+                className="touch-target inline-flex items-center gap-1.5 text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
+                onClick={() => setIntervals([...intervals, { open: "14:00", close: "18:00" }])}
+              >
+                <Plus aria-hidden="true" className="size-4" />
+                Adicionar outro horário no mesmo dia (ex.: fecha para o almoço)
+              </button>
+            )}
+            <button
+              type="button"
+              aria-expanded={copying}
+              className="touch-target text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
+              onClick={() => setCopying((value) => !value)}
+            >
+              Copiar o horário de {name.toLowerCase()} para…
+            </button>
+          </div>
+
+          {copying && (
+            <fieldset className="grid gap-2">
+              <legend className="sr-only">Copiar o horário de {name.toLowerCase()} para</legend>
+              <div className="flex flex-wrap gap-2">
+                {copyTargets.map(([label, days]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    className={cn(chipClass({ checked: false }), "touch-target cursor-pointer")}
+                    onClick={() => {
+                      setCopying(false);
+                      onChange(copyDay(week, day, days));
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-sm text-ink-soft">
+                Só copia. Depois dá para mudar cada dia sozinho.
+              </p>
+            </fieldset>
+          )}
+        </>
+      )}
+    </li>
   );
 }
 
 function TimeField({
   label,
+  context,
   value,
+  invalid,
   onChange,
 }: {
   label: string;
+  /** The day, for screen readers: "Abre, segunda". */
+  context: string;
   value: string;
+  invalid: boolean;
   onChange: (time: string) => void;
 }) {
   const id = useId();
   return (
-    <div className="grid gap-1.5">
+    <div className="grid min-w-0 gap-1.5">
       <label htmlFor={id} className="text-sm font-semibold">
         {label}
+        <span className="sr-only">, {context.toLowerCase()}</span>
       </label>
       <input
         id={id}
         type="time"
         value={value}
         step={300}
+        aria-invalid={invalid || undefined}
         onChange={(event) => onChange(event.target.value)}
-        className="h-12 rounded-lg border border-input bg-card px-3 text-base text-ink outline-none focus-visible:border-leaf focus-visible:ring-4 focus-visible:ring-leaf/15"
+        className={cn(
+          "h-12 w-full min-w-0 rounded-lg border bg-card px-3 text-base text-ink outline-none focus-visible:border-leaf focus-visible:ring-4 focus-visible:ring-leaf/15",
+          invalid ? "border-destructive" : "border-input",
+        )}
       />
     </div>
   );

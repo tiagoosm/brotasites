@@ -106,13 +106,15 @@ test("contact: one channel at least, a place, and structured hours", async ({ pa
   );
   await page.getByLabel("Bairros ou cidades que você atende").fill("Centro, Jardim América");
 
-  // Hours: the usual week in one tap, then a lunch break.
-  await page.getByRole("button", { name: "Seg a Sáb" }).click();
-  await expect(page.getByRole("checkbox", { name: "sábado" })).toBeChecked();
-  await expect(page.getByText("Fechado: domingo.")).toBeVisible();
-  await page.getByRole("button", { name: /Adicionar outro horário no mesmo dia/ }).click();
-  await expect(page.getByLabel("Abre de novo")).toHaveValue("14:00");
-  await page.getByLabel("Fecha").first().fill("12:00");
+  // Hours, day by day (E38): Monday with a lunch break, then copied to Monday to Saturday.
+  const monday = page.getByRole("listitem", { name: "Segunda" });
+  await monday.getByRole("button", { name: /Adicionar outro horário no mesmo dia/ }).click();
+  await expect(monday.getByLabel("Abre de novo")).toHaveValue("14:00");
+  await monday.getByLabel("Fecha").first().fill("12:00");
+  await monday.getByRole("button", { name: "Copiar o horário de segunda para…" }).click();
+  await monday.getByRole("button", { name: "Seg a Sáb" }).click();
+  await expect(page.getByRole("switch", { name: "Sábado: aberto" })).toBeChecked();
+  await expect(page.getByText("Seg a Sáb 08:00–12:00 e 14:00–18:00; Dom fechado.")).toBeVisible();
 
   await next.click();
   // The 5th step sends the answers and opens the site's page (no step 6 any more).
