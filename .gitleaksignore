@@ -6,3 +6,7 @@ cae1ba2e7c3b5a15d0ee5c725ff2fd1f51782dca:apps/platform/e2e/support/supabase.ts:g
 6e361e50be7bd3d2c5e47a4a8a120a8f28de27a5:apps/platform/e2e/support/accounts.ts:generic-api-key:9
 # The e2e recovery test's new password (a made-up phrase for an account on the fake Supabase, E30).
 795439e8a377dbff691b204730e67f5b4495fc23:apps/platform/e2e/recovery.spec.ts:generic-api-key:21
+# E39: made-up key-shaped values in the error mask's tests (packages/schema/src/job-error.test.ts),
+# since rewritten so the scan does not flag them.
+bba3c3de84b17ca883838f79faf695a80e298b06:packages/schema/src/job-error.test.ts:generic-api-key:18
+bba3c3de84b17ca883838f79faf695a80e298b06:packages/schema/src/job-error.test.ts:jwt:19
