@@ -6,6 +6,7 @@
 //   pnpm check:launch --target vercel --env vercel.env    (a file pulled with `vercel env pull`)
 //   pnpm check:launch --target trigger --env trigger.env
 //   pnpm check:launch --target worker
+//   pnpm check:launch --target github                      (only lists what GitHub needs)
 //   pnpm check:launch --online                             (network checks of the addresses)
 //
 // Without --target, every target is checked. Exits 1 when something required is missing.
@@ -15,6 +16,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   checkTarget,
+  GITHUB_SETTINGS,
   nextAction,
   onlineChecks,
   parseEnv,
@@ -40,8 +42,23 @@ const NEED = {
 
 const results = [];
 for (const target of targets) {
+  if (target === "github") {
+    // GitHub never shows a secret back, so nothing is read: only what to set, and where.
+    console.log("\n== github ==");
+    console.log(
+      "Cadastre no repositório, em Settings > Environments > production (nada aqui é lido):",
+    );
+    for (const item of GITHUB_SETTINGS) {
+      console.log(`  ${item.kind.padEnd(9)} ${item.name.padEnd(24)} ${item.workflow}`);
+      console.log(`            ${item.what}`);
+    }
+    console.log(
+      'Depois: Actions > "Deploy Worker" e "Deploy jobs" > Run workflow, digitando publicar.',
+    );
+    continue;
+  }
   if (!["vercel", "trigger", "worker"].includes(target)) {
-    console.error(`Destino desconhecido: ${target}. Use vercel, trigger ou worker.`);
+    console.error(`Destino desconhecido: ${target}. Use vercel, trigger, worker ou github.`);
     process.exit(2);
   }
   let source = env;
@@ -49,16 +66,11 @@ for (const target of targets) {
     const wrangler = workerEnvFromWrangler(
       readFileSync(join(root, "apps/sites-worker/wrangler.jsonc"), "utf8"),
     );
-    // The secret and the deploy token live with Cloudflare and wrangler: read from the env.
-    source = {
-      ...wrangler,
-      EXPORT_SECRET: env.EXPORT_SECRET,
-      CLOUDFLARE_API_TOKEN: env.CLOUDFLARE_API_TOKEN,
-    };
+    // EXPORT_SECRET lives in the Cloudflare dashboard and the deploy token in GitHub (E35): the
+    // first is listed to check by hand, the second under --target github.
+    source = { ...wrangler };
     if (wrangler.routes === 0) {
-      console.log(
-        "worker: as rotas de wrangler.jsonc ainda estão comentadas (passo 4 do arquivo).",
-      );
+      console.log("worker: wrangler.jsonc não tem rotas; o Worker só responderia em workers.dev.");
     }
   }
   const result = checkTarget(target, source);
@@ -66,8 +78,14 @@ for (const target of targets) {
   console.log(`\n== ${target} ==`);
   for (const row of result.rows) {
     if (row.need === "optional" && row.state === "faltando") continue;
-    const mark = row.state === "presente" ? "ok " : row.need === "optional" ? " · " : "✗  ";
-    console.log(`${mark} ${row.name.padEnd(38)} ${row.state.padEnd(12)} ${NEED[row.need]}`);
+    const mark =
+      row.state === "presente"
+        ? "ok "
+        : row.need === "optional" || row.state === "conferir"
+          ? " · "
+          : "✗  ";
+    const where = row.state === "conferir" ? `  (${row.manual})` : "";
+    console.log(`${mark} ${row.name.padEnd(38)} ${row.state.padEnd(12)} ${NEED[row.need]}${where}`);
   }
   console.log(
     result.ok
@@ -96,5 +114,6 @@ if (args.includes("--online")) {
   if (checks.some((check) => !check.ok)) results.push({ ok: false, blocking: [] });
 }
 
-console.log(`\n${nextAction(results)}`);
+// --target github alone only lists what to set: there is nothing to judge.
+if (results.length > 0) console.log(`\n${nextAction(results)}`);
 process.exit(results.every((r) => r.ok) ? 0 : 1);

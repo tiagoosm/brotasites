@@ -22,6 +22,7 @@
  * @property {string} without   what happens without it
  * @property {string} step      the owner's step that sets it (docs/launch-status.md)
  * @property {string} [mustBe]  an exact value production needs
+ * @property {string} [manual]  set by hand where this script cannot read it: where to check it
  */
 
 /** @type {Variable[]} */
@@ -449,22 +450,24 @@ export const VARIABLES = [
     step: "cloudflare",
   },
   {
+    name: "ACCOUNT_ID",
+    target: "worker",
+    need: "required",
+    secret: false,
+    expected: "the Cloudflare account id in wrangler.jsonc (an identifier, not a secret)",
+    without: "wrangler deploy asks which account to use.",
+    step: "cloudflare",
+  },
+  {
     name: "EXPORT_SECRET",
     target: "worker",
     need: "generation",
     secret: true,
-    expected: "wrangler secret put EXPORT_SECRET (same value as Vercel's)",
+    expected: "set once in the Cloudflare dashboard (same value as Vercel's)",
     without: '"Baixar o site" links are refused.',
     step: "cloudflare",
-  },
-  {
-    name: "CLOUDFLARE_API_TOKEN",
-    target: "worker",
-    need: "required",
-    secret: true,
-    expected: "a token that deploys Workers (only where you run wrangler)",
-    without: "wrangler deploy asks you to sign in instead.",
-    step: "cloudflare",
+    manual:
+      "no painel do Cloudflare (Workers & Pages > brotasites-sites > Settings > Variables and Secrets)",
   },
 ];
 
@@ -473,12 +476,14 @@ export const STEPS = {
   "vercel-base":
     "Conferir na Vercel as variáveis básicas da plataforma (Supabase, endereços, CRON_SECRET, captcha) e fazer Redeploy.",
   cloudflare:
-    "Criar no Cloudflare a zona brotasites.com, o bucket R2, o namespace KV e os tokens, e publicar o Worker (docs/owner-steps.md).",
+    "No Cloudflare: zona brotasites.com, bucket R2, namespace KV (id em wrangler.jsonc), EXPORT_SECRET no painel do Worker e os registros DNS proxied * e raiz (docs/owner-steps.md).",
   anthropic: "Criar a chave da Anthropic, com limite de gasto, e guardá-la só no Trigger.dev.",
   trigger:
-    "Criar o projeto no Trigger.dev, colocar as variáveis de produção dos jobs e rodar o deploy (pnpm --filter @brotasites/jobs exec trigger deploy).",
+    "Criar o projeto no Trigger.dev e colocar as variáveis de produção dos jobs; a publicação é pelo GitHub (Deploy jobs).",
+  github:
+    "Cadastrar no GitHub (ambiente production) os segredos e a variável de pnpm check:launch --target github, e rodar Deploy Worker e Deploy jobs em Actions.",
   "vercel-generation":
-    "Colocar na Vercel as variáveis da geração (TRIGGER_SECRET_KEY, Cloudflare KV, NEXT_PUBLIC_PREVIEW_ORIGIN, EXPORT_SECRET) e fazer Redeploy.",
+    "Colocar na Vercel as variáveis da geração (TRIGGER_SECRET_KEY, Cloudflare KV, NEXT_PUBLIC_PREVIEW_ORIGIN, EXPORT_SECRET) e fazer um Redeploy.",
   turnstile:
     "Ligar o Turnstile antes de aceitar clientes reais e tirar NEXT_PUBLIC_CAPTCHA_MODE=off.",
   payments: "Ligar o Asaas antes de cobrar (fora do escopo agora).",
@@ -491,10 +496,44 @@ export const STEP_ORDER = [
   "cloudflare",
   "anthropic",
   "trigger",
+  "github",
   "vercel-generation",
   "turnstile",
   "payments",
   "client-domains",
+];
+
+/**
+ * What GitHub needs to publish the Worker and the jobs (E35, .github/workflows/deploy-*.yml).
+ * The script never reads them (GitHub never shows a secret back): `--target github` only lists
+ * them. All go in Settings > Environments > production.
+ * @type {{ name: string, kind: "segredo" | "variável", workflow: string, what: string }[]}
+ */
+export const GITHUB_SETTINGS = [
+  {
+    name: "CLOUDFLARE_API_TOKEN",
+    kind: "segredo",
+    workflow: "Deploy Worker",
+    what: 'Token do Cloudflare com o modelo "Edit Cloudflare Workers", restrito à conta e à zona brotasites.com.',
+  },
+  {
+    name: "CLOUDFLARE_ACCOUNT_ID",
+    kind: "segredo",
+    workflow: "Deploy Worker",
+    what: "O id da conta do Cloudflare (o mesmo de wrangler.jsonc; como segredo, some dos logs).",
+  },
+  {
+    name: "TRIGGER_ACCESS_TOKEN",
+    kind: "segredo",
+    workflow: "Deploy jobs",
+    what: 'Chave de API do ambiente Production do projeto no Trigger.dev, com o preset "Deploy only" (tr_prod_…).',
+  },
+  {
+    name: "TRIGGER_PROJECT_REF",
+    kind: "variável",
+    workflow: "Deploy jobs",
+    what: "O ref do projeto no Trigger.dev (proj_…), em Variables, não em Secrets.",
+  },
 ];
 
 /**
@@ -528,7 +567,8 @@ export function isPlaceholder(value) {
 
 /**
  * Compares an environment with what a target needs. Never returns a secret's value: each
- * variable comes back as "presente", "faltando", "vazia", "exemplo" or "valor errado".
+ * variable comes back as "presente", "faltando", "vazia", "exemplo" or "valor errado", or
+ * "conferir" for one set by hand where this script cannot read it (never blocking).
  * @param {Target} target
  * @param {Record<string, string | undefined>} env
  */
@@ -536,7 +576,8 @@ export function checkTarget(target, env) {
   const rows = VARIABLES.filter((v) => v.target === target).map((v) => {
     const raw = env[v.name];
     let state = "presente";
-    if (raw === undefined) state = "faltando";
+    if (raw === undefined && v.manual) state = "conferir";
+    else if (raw === undefined) state = "faltando";
     else if (raw.trim() === "") state = "vazia";
     else if (isPlaceholder(raw)) state = "exemplo";
     else if (v.mustBe && raw.trim() !== v.mustBe) state = "valor errado";
@@ -547,6 +588,7 @@ export function checkTarget(target, env) {
       state,
       step: v.step,
       expected: v.expected,
+      manual: v.manual,
     };
   });
   // The captcha in production: a Turnstile key, or "off" until there is one.
@@ -558,7 +600,10 @@ export function checkTarget(target, env) {
     if (modeRow && mode === "simulated") modeRow.state = "valor errado";
   }
   const blocking = rows.filter(
-    (r) => (r.need === "required" || r.need === "generation") && r.state !== "presente",
+    (r) =>
+      (r.need === "required" || r.need === "generation") &&
+      r.state !== "presente" &&
+      r.state !== "conferir",
   );
   return { target, rows, blocking, ok: blocking.length === 0 };
 }
@@ -598,6 +643,7 @@ export function workerEnvFromWrangler(text) {
     BASE_DOMAIN: config.vars?.BASE_DOMAIN,
     PLATFORM_URL: config.vars?.PLATFORM_URL,
     KV_NAMESPACE_ID: kv?.id,
+    ACCOUNT_ID: config.account_id,
     routes: Array.isArray(config.routes) ? config.routes.length : 0,
   };
 }

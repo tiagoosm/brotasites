@@ -1,38 +1,40 @@
 // The single Worker that serves every client site (docs/hosting.md). Nothing here is deployed
-// by the platform or by Claude Code: the owner deploys it (docs/owner-steps.md, "Cloudflare",
-// and docs/launch-status.md).
+// by the platform or by Claude Code: the owner publishes it from GitHub (docs/owner-steps.md).
 //
 // The values below are production's (E34): sites on brotasites.com, the platform on
-// brotasites.com.br. Locally, `pnpm --filter @brotasites/sites-worker dev` runs it with Miniflare
-// (wrangler dev) and overrides them: `wrangler dev --var BASE_DOMAIN:sites.localhost
-// --var PLATFORM_URL:http://localhost:3000`, with local R2 and KV.
+// brotasites.com.br. Locally, `pnpm --filter @brotasites/sites-worker dev` runs a copy without the
+// routes (dev/local-config.ts) in Miniflare, with sites.localhost, localhost:3000 and local R2/KV.
 //
-// Order of the owner's steps (docs/owner-steps.md):
-//   1. Create the R2 bucket brotasites-sites and the KV namespace; put the namespace id below
-//      (`pnpm check:launch --target worker` refuses the zeros).
-//   2. `wrangler secret put EXPORT_SECRET` (the same value as the platform's EXPORT_SECRET).
-//   3. `wrangler deploy` with the routes still commented: the Worker answers on workers.dev,
-//      by path (https://brotasites-sites.<account>.workers.dev/<subdomain>/).
-//   4. With the brotasites.com zone on Cloudflare and its DNS (a proxied wildcard * and the bare
-//      domain), uncomment the routes and `wrangler deploy` again.
+// Order of the owner's steps (docs/owner-steps.md, E35; nothing is deployed from a laptop):
+//   1. Secrets in GitHub's `production` environment (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID);
+//      `pnpm check:launch --target github` lists them.
+//   2. DNS in the brotasites.com zone: proxied `*` and root records to a reserved address
+//      (192.0.2.1), so requests reach the routes below.
+//   3. GitHub > Actions > "Deploy Worker" > Run workflow on main, typing "publicar". It runs
+//      `wrangler deploy`, which uploads the Worker and sets the routes below.
+//   4. EXPORT_SECRET once, in the Cloudflare dashboard (Workers & Pages > brotasites-sites >
+//      Settings > Variables and Secrets, type Secret), the same value as the platform's. Never
+//      in a workflow; later deploys keep it.
+// The account and KV ids below are identifiers, not secrets (the API token is the secret).
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "brotasites-sites",
   "main": "src/index.ts",
+  "account_id": "fe5c7c59048cdbc3bccc2e1da2315135",
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
   "r2_buckets": [{ "binding": "SITES", "bucket_name": "brotasites-sites" }],
-  // Site pointers and states, custom domains and preview tokens.
-  // TODO(owner): replace with the id of the KV namespace you create (step 1 above).
-  "kv_namespaces": [{ "binding": "HOSTING", "id": "00000000000000000000000000000000" }],
+  // Site pointers and states, custom domains and preview tokens: the brotasites-hosting namespace.
+  "kv_namespaces": [{ "binding": "HOSTING", "id": "73cce7141d614ffdb33f7ed100510900" }],
   // The client sites' own domain, separate from the platform's, and the platform's address (the
   // bare sites domain and its www redirect there, E28).
   "vars": { "BASE_DOMAIN": "brotasites.com", "PLATFORM_URL": "https://brotasites.com.br" },
-  // Step 4 only, after the first deploy: one route for every subdomain, so the zone's route
-  // limits never grow with clients, and one for the bare domain (it redirects to the platform).
-  // "routes": [
-  //   { "pattern": "*.brotasites.com/*", "zone_name": "brotasites.com" },
-  //   { "pattern": "brotasites.com/*", "zone_name": "brotasites.com" }
-  // ],
+  // One route for every subdomain, so the zone's route limits never grow with clients, and one
+  // for the bare domain (it redirects to the platform). wrangler only needs the zone to exist to
+  // set them; requests reach them once the proxied DNS records of step 3 exist.
+  "routes": [
+    { "pattern": "*.brotasites.com/*", "zone_name": "brotasites.com" },
+    { "pattern": "brotasites.com/*", "zone_name": "brotasites.com" }
+  ],
   "observability": { "enabled": true }
 }

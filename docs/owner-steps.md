@@ -8,31 +8,39 @@ Keep this list up to date during the project. Claude Code does not create accoun
 
 - [x] `brotasites.com.br` registered at Registro.br, its DNS there, and the platform on Vercel at `brotasites.com.br`, with the team's area on `admin.brotasites.com.br` (E28).
 - [x] Custom SMTP in Supabase with Resend; sign-up tested end to end (E15, step 1 below).
-- [x] Supabase migrations applied up to `20261111000000_team_second_factor_switch` (E10, E11, E15, E16, E24, E33; everything in `supabase/migrations/` except `20261105000000_site_domains.sql`, which waits for E25). One admin in `public.admins`.
-- [x] `NEXT_PUBLIC_PLATFORM_URL` and `NEXT_PUBLIC_ADMIN_HOST` in Vercel's Production. The other variables sign-up needs must also be there (see the note in `docs/launch-status.md`, "Services"); check with `pnpm check:launch --target vercel --env <file>`.
+- [x] Supabase migrations applied up to `20261111000000_team_second_factor_switch` (E10, E11, E15, E16, E24, E33; everything in `supabase/migrations/` except `20261105000000_site_domains.sql`, which waits for E25). One admin in `public.admins`. CAPTCHA turned on in Supabase.
+- [x] Vercel's Production variables checked (E34), except `TRIGGER_SECRET_KEY`, left out on purpose until the jobs are published.
 - [x] `CRON_SECRET` in Vercel and the daily keep-alive (2026-11-02, below).
+- [x] Cloudflare: `brotasites.com` registered and its zone active; R2 bucket `brotasites-sites` with its token; KV namespace `brotasites-hosting` (its id and the account id are in `apps/sites-worker/wrangler.jsonc`).
+- [x] Anthropic key and the jobs' production variables in Trigger.dev.
 
-## To make site creation work, in order
+## To make site creation work, in order (E35: everything from GitHub, no machine of yours)
 
-Until step 5 is done, the platform keeps site creation closed on purpose (E34): `/criar` says "Estamos preparando a criação de sites", the API answers 503, and the team panel lists the missing Vercel variables. Nothing gets stuck in the queue.
+Until step 5 is done, the platform keeps site creation closed on purpose (E34): `/criar` says "Estamos preparando a criação de sites", the API answers 503, and the team panel lists the missing Vercel variables. Nothing gets stuck in the queue. The same steps, in Portuguese, are in `docs/launch-status.md`.
 
-1. **Vercel, the basics.** `vercel env pull --environment=production .env.vercel` then `pnpm check:launch --target vercel --env .env.vercel` (delete the file afterwards). Every `required` row must say "presente": `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (Sensitive), `NEXT_PUBLIC_PLATFORM_URL=https://brotasites.com.br`, `NEXT_PUBLIC_BASE_DOMAIN=brotasites.com`, `CRON_SECRET`, and, until Turnstile, `NEXT_PUBLIC_CAPTCHA_MODE=off`. Redeploy after any change.
-2. **Cloudflare, for the client sites (E12).** The same order is in the header of `apps/sites-worker/wrangler.jsonc`.
-   1. Create the account with 2FA. Register `brotasites.com` (the sites' domain) if not yet, add it as a zone, turn on the transfer lock; later, request inclusion in the Public Suffix List.
-   2. R2: create the bucket `brotasites-sites` and an R2 API token with Object Read & Write on that bucket only (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`: Trigger.dev only).
-   3. Workers KV: create a namespace (for example `brotasites-hosting`) and put its id in `apps/sites-worker/wrangler.jsonc` (`kv_namespaces`, replacing the zeros; an id is not a secret). Create an API token with "Workers KV Storage: Edit" only (`CLOUDFLARE_KV_API_TOKEN`, with `CLOUDFLARE_KV_NAMESPACE_ID` and `CLOUDFLARE_ACCOUNT_ID`: Trigger.dev and Vercel).
-   4. Generate a long random `EXPORT_SECRET` (for example `openssl rand -hex 32`); put it in the Worker with `pnpm --filter @brotasites/sites-worker exec wrangler secret put EXPORT_SECRET`, and the same value in Vercel at step 5.
-   5. Deploy the Worker with an API token in your shell (`CLOUDFLARE_API_TOKEN`, "Edit Cloudflare Workers" on that account): `pnpm check:launch --target worker`, then `pnpm --filter @brotasites/sites-worker deploy`. `wrangler.jsonc` already has `BASE_DOMAIN=brotasites.com` and `PLATFORM_URL=https://brotasites.com.br`.
-   6. In the `brotasites.com` zone: a proxied wildcard DNS record `*` (it also covers `previa.` and `www.`) and a proxied record for the root; uncomment the routes `*.brotasites.com/*` and `brotasites.com/*` in `wrangler.jsonc` and deploy again. Check that `https://previa.brotasites.com/` answers the Worker's 404 and `https://brotasites.com/` redirects to the platform (`pnpm check:launch --online`).
-   7. Move to Workers Paid ($5/month) before the sites near 100,000 requests a day: on Free, the Worker and its KV reads fail past that (`docs/hosting.md`, Costs).
-3. **Anthropic.** Create the organization in the Claude Console (platform.claude.com), add credit, set a monthly spend limit there and create an API key. The key goes only in Trigger.dev (`ANTHROPIC_API_KEY`), never in Vercel or the repository.
-4. **Trigger.dev (E10).** Create the account and a project. In the project's production environment put the jobs' variables (table "trigger" in `docs/launch-status.md`): the Supabase URL and secret key, `AI_MODE=live`, `AI_MODEL_ID`, `ANTHROPIC_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, the R2 and KV variables, `BASE_DOMAIN=brotasites.com` and `REVIEW_SKIP_HUMAN=false`. Check a copy of them with `pnpm check:launch --target trigger --env <file>`. Then, from a machine with the repository and `TRIGGER_PROJECT_REF` set in the shell (a deploy setting, not a run-time variable): `pnpm --filter @brotasites/jobs exec trigger deploy`.
-5. **Vercel, generation.** Add `TRIGGER_SECRET_KEY` (the project's production secret key, Sensitive), `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_KV_NAMESPACE_ID`, `CLOUDFLARE_KV_API_TOKEN` (Sensitive), `NEXT_PUBLIC_PREVIEW_ORIGIN=https://previa.brotasites.com` and `EXPORT_SECRET` (Sensitive), then Redeploy. `pnpm check:launch --target vercel` must end without a blocking row.
-6. **Check it end to end.** `/admin/visao-geral` shows no "criação de sites está fechada" notice. Create a test site, choose a direction, approve it in the team's queue. The old site "Real Dente" (queued since 2026-10-29, found on 2026-11-04) can now be restarted from its page with "Tentar de novo", or discarded.
+1. **GitHub secrets and variable.** Settings > Environments > New environment `production`. Recommended: under "Required reviewers", add yourself, so each publish waits for your approval. In it (`pnpm check:launch --target github` lists the same):
+   - Secret `CLOUDFLARE_API_TOKEN`: Cloudflare, My Profile > API Tokens > Create Token > template "Edit Cloudflare Workers"; Account Resources: only your account; Zone Resources: only `brotasites.com`.
+   - Secret `CLOUDFLARE_ACCOUNT_ID`: the account id (the same as in `wrangler.jsonc`; as a secret, GitHub masks it in the logs).
+   - Secret `TRIGGER_ACCESS_TOKEN`: Trigger.dev, the project > API keys > Production environment > preset "Deploy only" (`tr_prod_…`). A personal access token (`tr_pat_…`, Account > Tokens) also works but ties deploys to your account.
+   - Variable `TRIGGER_PROJECT_REF`: the project's `proj_…` ref (under Variables, not Secrets).
+2. **DNS in the `brotasites.com` zone.** Two **proxied** records: `A` named `*` and `A` named `brotasites.com` (the root), both to `192.0.2.1`, an address reserved for documentation (RFC 5737). Cloudflare answers before the request would reach it; its docs suggest such reserved addresses (or `AAAA 100::`) for records that only exist to turn the proxy on. The wildcard also covers `previa.` and `www.`. Without these records the Worker's routes exist but no browser reaches them.
+3. **Publish.** GitHub > Actions > "Deploy Worker" > Run workflow, branch `main`, type `publicar`. Then "Deploy jobs" the same way. The Worker's deploy sets its routes (`*.brotasites.com/*`, `brotasites.com/*`); the jobs' deploy builds the Playwright image on Trigger.dev's side.
+4. **`EXPORT_SECRET`, once, in the Cloudflare dashboard** (never through GitHub). The dashboard accepts it only once the Worker exists (step 3): Workers & Pages > `brotasites-sites` > Settings > Variables and Secrets > Add, type Secret, name `EXPORT_SECRET`, the same value as in Vercel (if Vercel has none yet, generate a long random value, for example with a password manager, and use it in both places). Later deploys keep it. Then check `https://previa.brotasites.com/` (the Worker's 404) and `https://brotasites.com/` (redirects to the platform), or `pnpm check:launch --online`.
+5. **Vercel, last.** Add `TRIGGER_SECRET_KEY` (the project's production secret key, `tr_prod_…`, Sensitive), check the other generation variables are there (`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_KV_NAMESPACE_ID`, `CLOUDFLARE_KV_API_TOKEN`, `NEXT_PUBLIC_PREVIEW_ORIGIN=https://previa.brotasites.com`, `EXPORT_SECRET`), and Redeploy once. Site creation opens.
+6. **First a simulated generation, then a real one.** With `AI_MODE=simulated` in Trigger.dev, create a test site, choose a direction, approve it in the team's queue: no AI spend. Then set `AI_MODE=live` in Trigger.dev and create another (Trigger.dev's variables apply to new runs; if the jobs still run simulated, run "Deploy jobs" again). `/admin/visao-geral` shows neither a "criação de sites está fechada" notice nor stuck generations. The old site "Real Dente" (queued since 2026-10-29) can be restarted from its page with "Tentar de novo", or discarded.
+7. **Later:** move to Workers Paid ($5/month) before the sites near 100,000 requests a day: on Free, the Worker and its KV reads fail past that (`docs/hosting.md`, Costs). Request the inclusion of `brotasites.com` in the Public Suffix List, and keep its transfer lock on.
+
+### How to revert
+
+- **Stop publishing from GitHub:** Actions > the workflow > "…" > Disable workflow. They never run on their own anyway: only on a click with `publicar` typed.
+- **Revoke the access:** Cloudflare, My Profile > API Tokens > the GitHub token > Delete (or Roll to replace it). Trigger.dev, the project > API keys > the "Deploy only" key > Revoke. Then delete the secrets in GitHub (Settings > Environments > production). Revoking does not take down what is already published.
+- **Roll the Worker back:** Workers & Pages > `brotasites-sites` > Deployments > the previous version > Rollback. Client sites do not change: their files and pointers live in R2 and KV.
+- **Take the Worker off the air:** delete the two DNS records of step 2, or remove its routes in Settings > Domains & Routes.
+- **Roll the jobs back:** Trigger.dev, the project > Deployments > the previous version > Promote. To stop generation at once, remove `TRIGGER_SECRET_KEY` from Vercel and redeploy: the platform goes back to "Estamos preparando a criação de sites" and nothing gets stuck.
 
 ## Before real clients
 
-- [ ] **Turnstile** (Accounts (E15) step 4 below), then delete `NEXT_PUBLIC_CAPTCHA_MODE` in Vercel.
+- [ ] **Turnstile** (Accounts (E15) step 4 below): reported on in Supabase on 2026-11-12. Vercel must then have `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and no `NEXT_PUBLIC_CAPTCHA_MODE`; with the mode still `off`, the pages send no CAPTCHA token and Supabase refuses sign-in and sign-up.
 - [ ] **Turn the team's second step back on:** `update public.team_settings set require_second_factor = true;` (Accounts (E15) step 5 below).
 - [ ] Supabase Authentication settings and pt-BR templates (Accounts (E15) steps 2 and 3), if not done yet.
 - [ ] Optional: run the 30-business evaluation against the real model (`AI_MODE=live AI_MODEL_ID=claude-opus-5-5 ANTHROPIC_API_KEY=... pnpm --filter @brotasites/ai eval`) and keep the numbers as the baseline. Each full run is about 60 model calls.
@@ -58,7 +66,7 @@ Until step 5 is done, the platform keeps site creation closed on purpose (E34): 
 
 Included in the price and optional. The code runs against a simulated hosting (`DOMAINS_MODE=simulated`, development only); the calls to Cloudflare for SaaS are written and have never been run. To turn it on:
 
-1. **Cloudflare for SaaS** on the `BASE_DOMAIN` zone (after step 2 of "To make site creation work" above): in the zone, SSL/TLS > Custom Hostnames, enable it; create the fallback origin (for example `fallback.brotasites.com`, a proxied record the Worker answers on); create the CNAME target `clientes.brotasites.com` (proxied, pointing to the fallback origin).
+1. **Cloudflare for SaaS** on the `BASE_DOMAIN` zone (after the Worker is published, "To make site creation work" above): in the zone, SSL/TLS > Custom Hostnames, enable it; create the fallback origin (for example `fallback.brotasites.com`, a proxied record the Worker answers on); create the CNAME target `clientes.brotasites.com` (proxied, pointing to the fallback origin).
 2. **API token** with the least permission for custom hostnames on that zone only (Cloudflare's docs name "SSL and Certificates: Edit"; **to verify** when creating it). Put `CLOUDFLARE_SAAS_ZONE_ID`, `CLOUDFLARE_SAAS_API_TOKEN`, `CUSTOM_DOMAIN_TARGET=clientes.brotasites.com` and `DOMAINS_MODE=cloudflare` in Vercel (server only), plus the KV variables if not there yet. Never `simulated` in production.
 3. **Apply the migration** `supabase/migrations/20261105000000_site_domains.sql` (after the E24 one) and run the database tests locally first.
 4. **Confirm in the account** that 100 custom hostnames are included and the price of each extra one (official docs, 2026-11-05: 100 included on Free, Pro and Business, then $0.10 a month each, up to 50,000; **to verify**). The team panel (`/admin/limites`) shows "Domínios de clientes: N de 100 incluídos" and warns from 80. Past 100, each new domain costs at Cloudflare; the yearly renewal covers it. If the account answers "quota" (error 1405), Cloudflare's sales team allocates more.
@@ -67,10 +75,10 @@ Included in the price and optional. The code runs against a simulated hosting (`
 
 ## Testing before launch: CAPTCHA off
 
-Kept because one part is still in use: production runs with `NEXT_PUBLIC_CAPTCHA_MODE=off` until Turnstile is set up. The domain and SMTP parts no longer apply (both are done), so only the CAPTCHA note stays.
+Kept as a reference only. On 2026-11-12 the owner reported the CAPTCHA on in Supabase, which means this setup must already be gone: with `NEXT_PUBLIC_CAPTCHA_MODE=off` the pages send no CAPTCHA token, and a Supabase project that requires one refuses sign-in and sign-up.
 
-- `NEXT_PUBLIC_CAPTCHA_MODE=off` in Vercel turns the CAPTCHA off on purpose, also in production. The platform's own rate limits keep working (they need `SUPABASE_SECRET_KEY`).
-- Before launch: delete `NEXT_PUBLIC_CAPTCHA_MODE` in Vercel, then follow "Accounts (E15)".
+- `NEXT_PUBLIC_CAPTCHA_MODE=off` in Vercel turns the platform's CAPTCHA off on purpose, also in production; it only works while Supabase's CAPTCHA protection is off too. The platform's own rate limits keep working (they need `SUPABASE_SECRET_KEY`).
+- With Turnstile on: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in Vercel, `NEXT_PUBLIC_CAPTCHA_MODE` deleted, the secret key in Supabase ("Accounts (E15)", step 4).
 
 ## Dashboard (E16)
 

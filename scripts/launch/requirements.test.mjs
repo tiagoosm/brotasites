@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   checkTarget,
   GENERATION_ON_VERCEL,
+  GITHUB_SETTINGS,
   isPlaceholder,
   nextAction,
   onlineChecks,
@@ -122,15 +123,67 @@ describe("what production needs (E34)", () => {
     expect(result.rows.find((r) => r.name === "AI_MODE")?.state).toBe("valor errado");
   });
 
-  it("refuses the Worker's zero KV id, reads its domains from wrangler.jsonc", () => {
-    const wrangler = workerEnvFromWrangler(
-      readFileSync(join(root, "apps/sites-worker/wrangler.jsonc"), "utf8"),
-    );
+  it("accepts the Worker's real ids from wrangler.jsonc and still refuses a zero KV id", () => {
+    const text = readFileSync(join(root, "apps/sites-worker/wrangler.jsonc"), "utf8");
+    const wrangler = workerEnvFromWrangler(text);
     expect(wrangler.BASE_DOMAIN).toBe("brotasites.com");
     expect(wrangler.PLATFORM_URL).toBe("https://brotasites.com.br");
+    expect(wrangler.routes).toBe(2);
     const result = checkTarget("worker", wrangler);
-    expect(result.rows.find((r) => r.name === "KV_NAMESPACE_ID")?.state).toBe("exemplo");
-    expect(result.ok).toBe(false);
+    const state = Object.fromEntries(result.rows.map((r) => [r.name, r.state]));
+    expect(state.KV_NAMESPACE_ID).toBe("presente");
+    expect(state.ACCOUNT_ID).toBe("presente");
+    // Set by hand in the Cloudflare dashboard: listed to check, never blocking.
+    expect(state.EXPORT_SECRET).toBe("conferir");
+    expect(result.ok).toBe(true);
+    const zeros = workerEnvFromWrangler(
+      text.replace(/"id": "[0-9a-f]{32}"/, '"id": "00000000000000000000000000000000"'),
+    );
+    const refused = checkTarget("worker", zeros);
+    expect(refused.rows.find((r) => r.name === "KV_NAMESPACE_ID")?.state).toBe("exemplo");
+    expect(refused.ok).toBe(false);
+  });
+
+  it("lists what GitHub needs for the deploy workflows, and the workflows use exactly that", () => {
+    expect(GITHUB_SETTINGS.map((s) => s.name)).toEqual([
+      "CLOUDFLARE_API_TOKEN",
+      "CLOUDFLARE_ACCOUNT_ID",
+      "TRIGGER_ACCESS_TOKEN",
+      "TRIGGER_PROJECT_REF",
+    ]);
+    const used = new Set();
+    for (const file of ["deploy-worker.yml", "deploy-jobs.yml"]) {
+      const yml = readFileSync(join(root, ".github/workflows", file), "utf8");
+      for (const m of yml.matchAll(/\b(?:secrets|vars)\.([A-Z_]+)/g)) used.add(m[1]);
+    }
+    expect([...used].sort()).toEqual(GITHUB_SETTINGS.map((s) => s.name).sort());
+    for (const s of GITHUB_SETTINGS) {
+      const store = s.kind === "variável" ? "vars" : "secrets";
+      const any = ["deploy-worker.yml", "deploy-jobs.yml"].some((f) =>
+        readFileSync(join(root, ".github/workflows", f), "utf8").includes(`${store}.${s.name}`),
+      );
+      expect(any, s.name).toBe(true);
+    }
+  });
+
+  it("keeps both deploy workflows manual, main-only, confirmed and least-privileged", () => {
+    for (const file of ["deploy-worker.yml", "deploy-jobs.yml"]) {
+      const yml = readFileSync(join(root, ".github/workflows", file), "utf8");
+      const on = yml.slice(yml.indexOf("\non:"), yml.indexOf("\npermissions:"));
+      expect(on, file).toMatch(/workflow_dispatch:/);
+      expect(on, file).not.toMatch(
+        /\b(push|pull_request|pull_request_target|schedule|workflow_run):/,
+      );
+      expect(yml, file).not.toMatch(/pull_request_target/);
+      expect(yml, file).toMatch(/^permissions:\n {2}contents: read$/m);
+      expect(yml, file).toMatch(/refs\/heads\/main/);
+      expect(yml, file).toMatch(/publicar/);
+      expect(yml, file).toMatch(/environment: production/);
+      expect(yml, file).toMatch(/concurrency:/);
+      expect(yml, file).toMatch(/timeout-minutes: \d+/);
+      // The typed confirmation goes through env, never interpolated into a script.
+      expect(yml, file).not.toMatch(/run:[^\n]*\$\{\{\s*(inputs|github\.event)/);
+    }
   });
 
   it("reads dotenv files", () => {

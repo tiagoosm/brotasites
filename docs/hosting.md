@@ -16,7 +16,8 @@ A single Cloudflare Worker serves every site (`apps/sites-worker`). Do not use "
 - **Suspension:** an admin's suspension (E11) sets the state in KV through the Cloudflare API; it can take up to 60 s to reach every location.
 - **Custom domain:** included in the price and optional (decision of 2026-11-04). Cloudflare for SaaS on the `BASE_DOMAIN` zone (100 custom hostnames included, then $0.10 each per month: **to verify** in the owner's account). The flow on the site's page (asking, DNS instructions, verification, activation) is E25, see "Client domains (E25)" below.
 - **Batch rebuild:** when the template is fixed, regenerate every site from its JSON and locked identity, with a visual comparison, a gradual rollout and a quick rollback (not built yet).
-- **Locally:** `pnpm --filter @brotasites/sites-worker dev` runs the Worker in Miniflare with local R2 and KV; `test/local/miniflare.test.ts` does the same in CI.
+- **Locally:** `pnpm --filter @brotasites/sites-worker dev` runs the Worker in Miniflare with local R2 and KV; `test/local/miniflare.test.ts` does the same in CI. Both use a copy of `wrangler.jsonc` without the production routes (`dev/local-config.ts`), because `wrangler dev` rewrites every request to the first route's host.
+- **Publishing (E35):** only from GitHub, by hand: Actions > "Deploy Worker" runs `wrangler deploy` on `main`, which uploads the Worker and sets the routes `*.brotasites.com/*` and `brotasites.com/*`. The routes need proxied DNS records (`*` and the root, to a reserved address) to receive requests. Steps and how to revert: `docs/owner-steps.md`.
 
 ## Domains (E28)
 
@@ -71,4 +72,4 @@ Limits: values up to 25 MiB, keys up to 512 bytes, 1 write per second to the sam
 
 ## Not done here
 
-Nothing was deployed and no account was created. Every Cloudflare step is in `docs/owner-steps.md`.
+Nothing was deployed and no account was created by Claude Code. Every Cloudflare step is in `docs/owner-steps.md`.

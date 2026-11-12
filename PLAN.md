@@ -39,8 +39,18 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E32 Signed in: no "Criar meu site" in the header, the same profile menu on every page, every "Criar meu site" leads to Meus sites
 - [x] E33 The team's own sign-in on its host, and the team's second step behind a switch (off for now)
 - [x] E34 Generation in production: the launch map, `pnpm check:launch`, the Worker's real config, and no site ever stuck
+- [x] E35 Publishing the Worker and the jobs from GitHub, by hand, with no machine of the owner's
 
 ## Steps in detail
+
+### E35 Publishing from GitHub (owner's request of 2026-11-12)
+
+One PR (`step-35-publicar-pelo-github`); no account, secret or deploy was made by Claude Code:
+
+- **Worker config:** `wrangler.jsonc` with the real account id and KV id (identifiers, not secrets) and the routes `*.brotasites.com/*` and `brotasites.com/*` (`zone_name: brotasites.com`). `pnpm dev` and the Miniflare test run a copy without routes (`dev/local-config.ts`).
+- **Workflows:** "Deploy Worker" and "Deploy jobs", `workflow_dispatch` only, `main` only, the word `publicar`, the `production` environment, `contents: read`, one at a time. The jobs deploy with `TRIGGER_ACCESS_TOKEN` (a Production "Deploy only" key) and `vars.TRIGGER_PROJECT_REF`, `--env prod`.
+- **`pnpm check:launch --target github`** lists what GitHub needs without reading it; the Worker target now reads the account id and leaves `EXPORT_SECRET` to check by hand in the Cloudflare dashboard.
+- **Docs:** the final order (GitHub secrets, DNS, publish, `EXPORT_SECRET`, `TRIGGER_SECRET_KEY` and one redeploy, a simulated then a real generation) and how to revert.
 
 ### E34 Generation in production (owner's request of 2026-11-12)
 

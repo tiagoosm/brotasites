@@ -5,7 +5,7 @@
   "description": "Cloudflare Worker that serves every client site (<subdomain>.<BASE_DOMAIN>) from R2.",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --var BASE_DOMAIN:sites.localhost --var PLATFORM_URL:http://localhost:3000",
+    "dev": "node dev/local-config.ts",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
