@@ -10,6 +10,7 @@ No value here is a secret. Secrets go only in Vercel, Trigger.dev, GitHub's `pro
 - `pnpm check:launch --target trigger --env <file>`: the same for the jobs.
 - `pnpm check:launch --target worker`: reads `apps/sites-worker/wrangler.jsonc` (domains, account id, KV id, and `workers_dev`, which must be `false`; the zeros are refused). `EXPORT_SECRET` shows as "conferir": it lives in the Cloudflare dashboard, where no script reads it.
 - `pnpm check:launch --target github`: lists the secrets and the variable GitHub needs for the deploy workflows, and where they go. It reads nothing (GitHub never shows a secret back).
+- `pnpm --filter @brotasites/jobs image:smoke`: builds a folder laid out like the Trigger.dev image (only the packages and files `apps/jobs/trigger.config.ts` puts there) and generates the example site from it (E35d). Needs the npm registry; no account.
 - `pnpm check:launch --online`: fetches the platform, the admin host and the sites domain and says what answers.
 - The team panel (`/admin/visao-geral`) says whether site creation is open and, when it is not, which Vercel variables are missing (names only). It also counts generations stuck in the queue for more than 15 minutes.
 - Exit code 1 means something blocking is missing; the last line says the next action.

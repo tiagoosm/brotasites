@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./index.js",
+    "./package.json": "./package.json",
     "./classico": "./src/templates/classico/ClassicoPage.astro"
   },
   "scripts": {
