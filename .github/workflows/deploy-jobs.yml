@@ -77,6 +77,58 @@ jobs:
       - name: Build the packages the jobs use
         run: pnpm exec turbo run build --filter=@brotasites/jobs^...
 
+      # E36: what the deploy will use, to compare with the Trigger.dev dashboard. Prints no secret
+      # and no email: the token only as its prefix kind, the whoami output without lines that
+      # contain "@", and from the project lookup only its name and id (never its apiKey). No
+      # `set -x`. A failure here never stops the deploy, so its own error still shows below.
+      - name: Diagnóstico (sem segredos)
+        continue-on-error: true
+        env:
+          TRIGGER_ACCESS_TOKEN: ${{ secrets.TRIGGER_ACCESS_TOKEN }}
+          TRIGGER_PROJECT_REF: ${{ vars.TRIGGER_PROJECT_REF }}
+        run: |
+          echo "CLI do Trigger.dev: $(pnpm --silent --filter @brotasites/jobs exec trigger --version 2>&1 | tail -n 1)"
+          echo "TRIGGER_PROJECT_REF: $TRIGGER_PROJECT_REF"
+          case "$TRIGGER_ACCESS_TOKEN" in
+            "") kind="vazio" ;;
+            tr_prod_*) kind="chave de API do ambiente Production (tr_prod_)" ;;
+            tr_pat_*) kind="token pessoal (tr_pat_)" ;;
+            tr_*) kind="outra chave do Trigger.dev (tr_)" ;;
+            *) kind="formato desconhecido" ;;
+          esac
+          echo "TRIGGER_ACCESS_TOKEN: $kind"
+
+          # whoami reads only the login saved by `trigger login` (a personal token), not
+          # TRIGGER_ACCESS_TOKEN: with an environment API key it is expected to fail here.
+          # It exits 0 even when it fails, so the outcome is read from its text.
+          out="$(mktemp)"
+          (cd apps/jobs && pnpm --silent exec trigger whoami --project-ref "$TRIGGER_PROJECT_REF") >"$out" 2>&1 || true
+          if grep -q "Account details" "$out" && ! grep -q "Whoami failed" "$out"; then
+            echo "whoami: ok"
+          else
+            echo "whoami falhou (esperado com chave de ambiente: o whoami só usa o login pessoal)"
+          fi
+          sed 's/\x1b\[[0-9;?]*[A-Za-z]//g' "$out" | grep -v '@' | grep '[[:alnum:]]' | sed 's/^/  /' || true
+          rm -f "$out"
+
+          # The same lookup the deploy makes before it starts: does this key open this project?
+          # shellcheck disable=SC2016 # the ${...} below are JavaScript, not shell
+          node --input-type=module -e '
+            const ref = process.env.TRIGGER_PROJECT_REF;
+            const response = await fetch(`https://api.trigger.dev/api/v1/projects/${ref}/prod`, {
+              headers: { Authorization: `Bearer ${process.env.TRIGGER_ACCESS_TOKEN}` },
+              signal: AbortSignal.timeout(15000),
+            }).catch((error) => ({ ok: false, status: "sem resposta", error }));
+            if (!response.ok) {
+              let detail = "";
+              try { detail = (await response.json()).error ?? ""; } catch {}
+              console.log(`Projeto com esta chave: falhou (${response.status}) ${String(detail).replace(/\S+@\S+/g, "[e-mail]")}`);
+            } else {
+              const body = await response.json();
+              console.log(`Projeto com esta chave: ok, nome "${body.name}", id ${body.projectId}`);
+            }
+          ' || echo "Projeto com esta chave: não foi possível consultar"
+
       # --env prod must match the API key's environment; --external-id makes a second run on the
       # same commit return the existing version instead of building it again.
       - name: Deploy

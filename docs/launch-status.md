@@ -28,11 +28,24 @@ No value here is a secret. Secrets go only in Vercel, Trigger.dev, GitHub's `pro
 | Cloudflare Workers KV | Site pointers and status | Namespace `brotasites-hosting` (id in `wrangler.jsonc`) | — |
 | Cloudflare Worker (`apps/sites-worker`) | Serves `*.brotasites.com` | Not published | `EXPORT_SECRET` (step 2), then "Deploy Worker" (step 4) |
 | Anthropic | The AI (art director, copy, reviewer) | Key in Trigger.dev | — |
-| Trigger.dev | The job queue | Production variables set; tasks not published | "Deploy jobs" (step 4) |
+| Trigger.dev | The job queue | Production variables set; tasks not published: **deploy blocked** (see below) | Unblock the account, then "Deploy jobs" (step 4) |
 | GitHub | Publishing the Worker and the jobs (E35) | Workflows in the repository; secrets not set | Step 1 |
 | Turnstile | CAPTCHA on sign-in and sign-up | On in Supabase (reported) | Check that Vercel has the site key and no `NEXT_PUBLIC_CAPTCHA_MODE=off` |
 | Asaas | Payments | Not started (out of scope) | Before charging |
 | Cloudflare for SaaS | Clients' own domains (E25) | Not started | Optional, after launch |
+
+### Deploy dos jobs bloqueado pelo Trigger.dev (2026-11-12)
+
+Status: deploy dos jobs bloqueado pelo Trigger.dev: `Deployments are not available for this organization`. "Deploy jobs" builds and uploads the code, then Trigger.dev refuses `initializeDeployment` (`POST /api/v1/deployments`) with that message.
+
+- **Main hypothesis (not confirmed):** a restriction of the Trigger.dev account or organization (plan, billing or a block on deployments). Only the owner can check it, in the dashboard or with Trigger.dev support.
+- **Hypotheses the repository can rule out:**
+  1. `TRIGGER_PROJECT_REF` belongs to another organization than the token.
+  2. `TRIGGER_ACCESS_TOKEN` belongs to another account.
+  3. An outdated CLI: since E36 the project uses 4.8.5, the latest at the time.
+- **Already in the failed run's log:** with an environment API key the CLI resolves the project (`GET /api/v1/projects/<ref>/prod`) before it builds. That call worked, since the error came only at the deployment. So the key opens that project, which makes hypotheses 1 and 2 unlikely.
+- **Since E36,** the workflow's "Diagnóstico (sem segredos)" step prints the CLI version, `TRIGGER_PROJECT_REF`, the kind of key (prefix only), `whoami` (without e-mail) and the project name and id that this key opens. `whoami` reads only a personal login (`trigger login`), never `TRIGGER_ACCESS_TOKEN`, so with the environment key it reports a failure by design; the organization is checked in the dashboard instead.
+- **`[bundleSkills] skill discovery failed … Failed to import some task files`:** harmless. Before deploying, the CLI imports the bundled tasks from `apps/jobs` to look for `skills.define(...)`. The project defines no skills, and the tasks' external packages (`sharp`, `playwright`) are not linked in `apps/jobs/node_modules` by pnpm. In the image they are installed, and the real indexer runs there.
 
 ## Order of the remaining steps
 
