@@ -9,6 +9,12 @@ export const CARD_VIEWPORTS = [
   { width: 1280, height: 800 },
 ] as const;
 
+/**
+ * Chromium in a container (E37): /dev/shm is small there, and Chromium falls back to /tmp with
+ * this flag instead of crashing or swelling. The sandbox stays on.
+ */
+export const CHROMIUM_ARGS = ["--disable-dev-shm-usage"];
+
 export type Screenshotter = (distDir: string) => Promise<{ width: number; png: Buffer }[]>;
 
 export function playwrightScreenshotter(
@@ -16,10 +22,15 @@ export function playwrightScreenshotter(
 ): Screenshotter & {
   close(): Promise<void>;
 } {
+  // One browser for the whole run, launched on first use; one short-lived context per shot,
+  // taken one after the other (E37: memory).
   let browser: Browser | undefined;
   const shoot = async (distDir: string) => {
     const executablePath = options.executablePath ?? process.env.PW_CHROMIUM;
-    browser ??= await chromium.launch(executablePath ? { executablePath } : {});
+    browser ??= await chromium.launch({
+      args: CHROMIUM_ARGS,
+      ...(executablePath ? { executablePath } : {}),
+    });
     const server = await serveDir(distDir);
     const shots: { width: number; png: Buffer }[] = [];
     try {
@@ -29,15 +40,18 @@ export function playwrightScreenshotter(
           reducedMotion: "reduce",
           locale: "pt-BR",
         });
-        const origin = new URL(server.url).origin;
-        await context.route("**/*", (route) =>
-          route.request().url().startsWith(origin) ? route.continue() : route.abort(),
-        );
-        const page = await context.newPage();
-        await page.goto(server.url, { waitUntil: "load" });
-        await page.evaluate(() => document.fonts.ready);
-        shots.push({ width: viewport.width, png: await page.screenshot({ type: "png" }) });
-        await context.close();
+        try {
+          const origin = new URL(server.url).origin;
+          await context.route("**/*", (route) =>
+            route.request().url().startsWith(origin) ? route.continue() : route.abort(),
+          );
+          const page = await context.newPage();
+          await page.goto(server.url, { waitUntil: "load" });
+          await page.evaluate(() => document.fonts.ready);
+          shots.push({ width: viewport.width, png: await page.screenshot({ type: "png" }) });
+        } finally {
+          await context.close();
+        }
       }
     } finally {
       await server.close();

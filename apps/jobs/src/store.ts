@@ -89,6 +89,11 @@ export interface PipelineStore {
   finishJob(jobId: string, status: "done" | "failed", error?: string): Promise<void>;
   /** Puts a failed job back in the queue for its one automatic retry. */
   requeueJob(jobId: string, error: string): Promise<void>;
+  /**
+   * Puts a job back in the queue only if it is still "running": its process died (E37, out of
+   * memory) and nothing marked it. A finished or queued job is left alone.
+   */
+  requeueIfRunning(jobId: string, error: string): Promise<void>;
 
   loadSite(siteId: string): Promise<SiteRecord>;
   updateSite(siteId: string, patch: SitePatch): Promise<void>;
