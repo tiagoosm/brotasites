@@ -2,6 +2,7 @@ import { aiBudget } from "@/lib/admin/budget";
 import { requireAdmin, teamRpcError } from "@/lib/server/admin";
 import { generationStatus, STUCK_JOB_MINUTES } from "@/lib/server/generation";
 import { json } from "@/lib/server/guard";
+import { runningCutoff, STUCK_RUNNING_MINUTES } from "@/lib/stuck-job";
 
 // Team panel, overview (E24): the database aggregates (admin_overview) with the member's own
 // session; it checks the team and the second step again. E34: whether generation is set up
@@ -17,6 +18,12 @@ export async function GET() {
     .select("id", { count: "exact", head: true })
     .eq("status", "queued")
     .lt("created_at", since);
+  // E37: jobs "running" with no process left (killed, e.g. out of memory).
+  const { count: running } = await admin.db
+    .from("jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "running")
+    .lt("started_at", runningCutoff());
   const { enforced, missing, ready } = generationStatus();
   return json({
     overview: data,
@@ -25,8 +32,9 @@ export async function GET() {
       enforced,
       ready,
       missing,
-      stuckJobs: count ?? 0,
+      stuckJobs: (count ?? 0) + (running ?? 0),
       stuckMinutes: STUCK_JOB_MINUTES,
+      stuckRunningMinutes: STUCK_RUNNING_MINUTES,
     },
   });
 }

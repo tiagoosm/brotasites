@@ -124,7 +124,7 @@ export interface FakeState {
   /** The team's second-factor switch (E33, team_settings): off unless a test turns it on. */
   secondFactor?: boolean;
   /** The site's latest job (E34: a stuck one offers "Tentar de novo"). */
-  job?: { id: string; status: string; created_at: string } | null;
+  job?: { id: string; status: string; created_at: string; started_at?: string | null } | null;
   /** What /api/jobs/start answers (E34). */
   jobStarts?: boolean;
   /** Whether generation is set up, as the overview reports it (E34). */
@@ -134,6 +134,7 @@ export interface FakeState {
     missing: string[];
     stuckJobs: number;
     stuckMinutes: number;
+    stuckRunningMinutes?: number;
   };
   /** Bodies posted to the admin route handlers, by path. */
   adminPosts: { path: string; body: Record<string, unknown> }[];

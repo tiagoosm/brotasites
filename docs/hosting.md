@@ -29,6 +29,11 @@ A single Cloudflare Worker serves every site (`apps/sites-worker`). Do not use "
 ## Generation jobs and previews (built in E10)
 
 - **Queue:** Trigger.dev (decision in `docs/owner-steps.md`). The database is the source of truth: the platform's database functions (`request_directions`, `choose_direction`, `request_rebuild`, `server_approve`, `server_confirm_payment`) write a `jobs` row, then the platform triggers the `site-job` task of `apps/jobs` with the job id (`/api/jobs/start`, with `TRIGGER_SECRET_KEY`). The task claims the row (`claim_job`), so a job that is never triggered stays queued for the local runner (`pnpm --filter @brotasites/jobs dev:local`) or a later trigger. Each job is retried once, then the site goes to "needs attention".
+- **Machine (E37):** `site-job` runs on `medium-2x` (2 vCPU, 4 GB). The default `small-1x` (0.5 vCPU, 0.5 GB) was killed for memory (`TASK_PROCESS_OOM_KILLED`) on the first real run, because a job runs `astro build` (Vite, Tailwind, sharp) and Chromium.
+  - **Out of memory:** a run killed for memory gets one more attempt on `large-1x` (4 vCPU, 8 GB), the only retry Trigger.dev makes (`catchError` skips the others; the pipeline keeps its own). That attempt puts its job back in the queue first, because the killed process left it `running`.
+  - **Chromium:** one browser per run, one context per screenshot taken one after the other, launched with `--disable-dev-shm-usage` (the sandbox stays on).
+  - **`site-purge`:** stays on the default machine (it only deletes files and keys).
+- **A job left `running` (E37):** if its process died, the platform takes it as stuck after 45 minutes (`STUCK_RUNNING_MINUTES`, above the task's 30-minute `maxDuration`). The client sees "Tentar de novo", which puts it back in the queue (only if it is still `running` and that old), and the team's overview counts it.
 - **Jobs:** `directions` (engine and art director, 3 directions, screenshots at 390 and 1280 px into the private `site-renders` bucket), `build` (approved identity, AI copy, reviewer with up to 2 fix rounds, private preview), `publish` (only with a paid publish payment).
 - **Private preview of the finished site:** R2 key `previews/{siteId}/{token}/...`, served by `apps/sites-worker` at `previa.{BASE_DOMAIN}/{siteId}/{token}/` with `noindex`, `no-store` and the strict CSP. The token has 192 random bits (24 bytes, base64url). The platform links to it with `NEXT_PUBLIC_PREVIEW_ORIGIN`. In development the local runner serves the same paths at `http://127.0.0.1:4500`.
 - **Photos:** clients upload into the private `site-uploads` bucket; the job re-encodes each photo (no metadata) before any site uses it, so only clean copies reach R2.
@@ -58,6 +63,13 @@ Included in the price and optional (owner's decision of 2026-11-04). Built again
 - **Left out:** the HTML `<link rel="canonical">` of the generated pages still names the BrotaSites address until the site is built again with the domain (the redirect already keeps one address).
 
 ## Costs
+
+Trigger.dev compute (pricing page and `llms-full.txt`, through search results on 2026-11-12, because this session's network could not open the site, so **to verify** on trigger.dev/pricing):
+- `medium-2x`: $0.00017 per second.
+- `large-1x`: $0.00034 per second.
+- Every run also costs $0.000025.
+- Only the seconds the code runs are counted.
+- No real run has been timed yet. A guess, to replace with the dashboard's numbers after the first sites: a directions job (3 builds and 6 screenshots) at 2 to 3 minutes is about $0.02 to $0.03, and a build job (a build, the review and its screenshots) about the same. A retry for memory on `large-1x` costs twice as much per second.
 
 R2 and Workers: see the table in `CLAUDE.md` (checked on 2026-10-25). The platform (Next.js) runs on Vercel (Pro before charging clients).
 

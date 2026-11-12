@@ -7,16 +7,38 @@ import { JOB_KINDS, runJob } from "../pipeline.js";
 // the row stays the source of truth, so a task that never runs leaves the job queued for the
 // local runner or a later trigger.
 
+/**
+ * The machine (E37). The default (small-1x: 0.5 vCPU, 0.5 GB) was killed for running out of
+ * memory on the first real run: a job runs `astro build` (Vite, Tailwind, sharp) and Chromium
+ * for the screenshots and the review. medium-2x: 2 vCPU, 4 GB. A run killed for memory gets one
+ * more attempt on large-1x (4 vCPU, 8 GB); nothing else is retried by Trigger.dev.
+ */
+export const SITE_JOB_MACHINE = "medium-2x" as const;
+export const SITE_JOB_OOM_MACHINE = "large-1x" as const;
+/** Builds, the review in Chromium and the uploads take minutes, not hours. */
+export const SITE_JOB_MAX_DURATION = 1800;
+
 export const siteJob = task({
   id: "site-job",
-  // Builds, the review in Chromium and the uploads take minutes, not hours.
-  maxDuration: 1800,
-  // Retries are ours (runJob retries once, then needs_attention).
-  retry: { maxAttempts: 1 },
+  machine: SITE_JOB_MACHINE,
+  maxDuration: SITE_JOB_MAX_DURATION,
+  // Two attempts only so an out-of-memory kill can run again on the bigger machine. Errors the
+  // run throws are never retried here (catchError below): runJob already retries a failed job
+  // once, then sends the site to needs_attention.
+  retry: { maxAttempts: 2, outOfMemory: { machine: SITE_JOB_OOM_MACHINE } },
+  catchError: () => ({ skipRetrying: true }),
   queue: { concurrencyLimit: 4 },
-  run: async (payload: { jobId: string }) => {
+  run: async (payload: { jobId: string }, { ctx }) => {
     const deps = depsFromEnv(process.env);
     try {
+      // A second attempt only follows a process killed for memory: its job is still "running"
+      // with no one working on it. Put it back in the queue so this attempt can take it.
+      if (ctx.attempt.number > 1) {
+        await deps.store.requeueIfRunning(
+          payload.jobId,
+          "O processo parou por falta de memória; nova tentativa numa máquina maior.",
+        );
+      }
       const job = await deps.store.claimJob(JOB_KINDS, payload.jobId);
       if (!job) return { status: "skipped" as const };
       let outcome = await runJob(deps, job);

@@ -31,6 +31,45 @@ test("a job stuck in the queue offers to try again, and says when it still canno
   await expect(failed).toHaveCount(0);
 });
 
+test("a job left running by a process that died offers to try again (E37)", async ({
+  page,
+  context,
+}) => {
+  // The first real run was killed for using too much memory: the job stayed "running".
+  const state = await withSite(context, {
+    site: siteRow("generating_directions"),
+    draft: padaria,
+    job: {
+      id: "a0000000-0000-4000-8000-000000000001",
+      status: "running",
+      created_at: ago(60),
+      started_at: ago(50),
+    },
+    jobStarts: true,
+  });
+  await page.goto(`/meus-sites/${SITE}`);
+  const stuck = page.getByRole("region", { name: "Isto está demorando mais que o normal" });
+  await expect(stuck).toBeVisible();
+  await stuck.getByRole("button", { name: "Tentar de novo" }).click();
+  expect(state.api).toContain("/api/jobs/start");
+});
+
+test("a job running for a few minutes is not stuck (E37)", async ({ page, context }) => {
+  await withSite(context, {
+    site: siteRow("generating_directions"),
+    draft: padaria,
+    job: {
+      id: "a0000000-0000-4000-8000-000000000001",
+      status: "running",
+      created_at: ago(10),
+      started_at: ago(5),
+    },
+  });
+  await page.goto(`/meus-sites/${SITE}`);
+  await expect(page.getByText("Criando as 3 direções").first()).toBeVisible();
+  await expect(page.getByText("Isto está demorando mais que o normal")).toHaveCount(0);
+});
+
 test("a job queued a few minutes ago is not stuck", async ({ page, context }) => {
   await withSite(context, {
     site: siteRow("generating_directions"),
@@ -54,6 +93,7 @@ test("the team's overview names what generation is missing, never values", async
       missing: ["TRIGGER_SECRET_KEY", "CLOUDFLARE_KV_NAMESPACE_ID"],
       stuckJobs: 2,
       stuckMinutes: 15,
+      stuckRunningMinutes: 45,
     },
   });
   await page.goto("/admin/visao-geral");
@@ -63,7 +103,9 @@ test("the team's overview names what generation is missing, never values", async
   await expect(notice).toContainText("CLOUDFLARE_KV_NAMESPACE_ID");
   await expect(notice).toContainText("docs/launch-status.md");
   await expect(
-    page.getByText("2 gerações estão paradas na fila há mais de 15 minutos."),
+    page.getByText(
+      "2 gerações estão paradas: na fila há mais de 15 minutos ou rodando há mais de 45 minutos sem terminar.",
+    ),
   ).toBeVisible();
 });
 

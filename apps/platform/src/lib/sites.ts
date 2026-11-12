@@ -160,7 +160,7 @@ export async function loadLatestJob(
 ): Promise<JobState | null> {
   const { data, error } = await supabase
     .from("jobs")
-    .select("id, status, created_at")
+    .select("id, status, created_at, started_at")
     .eq("site_id", siteId)
     .order("created_at", { ascending: false })
     .limit(1)
