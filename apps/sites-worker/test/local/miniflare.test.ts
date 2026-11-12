@@ -55,7 +55,12 @@ beforeAll(async () => {
   worker = await unstable_dev("src/index.ts", {
     config: "wrangler.jsonc",
     persistTo: persist,
-    vars: { EXPORT_SECRET: SECRET },
+    // wrangler.jsonc holds the production domain (E34); locally the sites live on sites.localhost.
+    vars: {
+      EXPORT_SECRET: SECRET,
+      BASE_DOMAIN: "sites.localhost",
+      PLATFORM_URL: "http://localhost:3000",
+    },
     logLevel: "none",
     experimental: { disableExperimentalWarning: true },
   });
