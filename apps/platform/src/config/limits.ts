@@ -29,6 +29,12 @@ export const limits = {
    */
   domainsIncluded: 100,
   domainsAlertAt: 80,
+  /**
+   * E39: times the team may run a failed step of one site again ("Tentar de novo" in the admin)
+   * in 24 hours. Each run can call the AI again, so it is capped; past it, look at the cause
+   * first.
+   */
+  adminRetriesPerDay: 3,
 } as const;
 
 export const extraRoundWaitSeconds = limits.extraRoundWaitMinutes * 60;

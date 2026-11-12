@@ -504,6 +504,12 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
       if (note.length < 3) return route.fulfill(json({ error: "Escreva o motivo." }, 400));
       return route.fulfill(json({ ok: true }));
     }
+    if (url.pathname.endsWith("/retry") && state.site) {
+      // E39: the step runs again; the site leaves needs_attention.
+      if (body.confirm !== true) return route.fulfill(json({ error: "Pedido inválido." }, 400));
+      state.site = { ...state.site, status: "building", status_message: null };
+      return route.fulfill(json({ jobId: "job-retry", started: true, status: "building" }));
+    }
     if (url.pathname.endsWith("/decide") && state.site) {
       const next: Record<string, string> = {
         approve: "awaiting_approval",
@@ -573,6 +579,10 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
         events: state.events,
         decisions: [],
         payments: [],
+        retry:
+          state.site.status === "needs_attention"
+            ? { available: true, step: "Montar o site", used: 0, limit: 3 }
+            : { available: false, reason: "wrong_status", used: 0, limit: 3 },
       }),
     );
   }

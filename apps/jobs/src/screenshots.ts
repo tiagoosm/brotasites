@@ -1,4 +1,4 @@
-import { serveDir } from "@brotasites/reviewer";
+import { KEEP_NAMES_SHIM, serveDir } from "@brotasites/reviewer";
 import { type Browser, chromium } from "@playwright/test";
 
 // The direction cards show the real site: the first screen of each direction, built and
@@ -41,6 +41,8 @@ export function playwrightScreenshotter(
           locale: "pt-BR",
         });
         try {
+          // E39: the bundled page.evaluate below needs __name in the page.
+          await context.addInitScript(KEEP_NAMES_SHIM);
           const origin = new URL(server.url).origin;
           await context.route("**/*", (route) =>
             route.request().url().startsWith(origin) ? route.continue() : route.abort(),
