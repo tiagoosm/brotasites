@@ -38,8 +38,18 @@ This plan comes from the owner's master file (2026-10-27) and is adapted to the 
 - [x] E31 Animations: a short, quieter mouse vine, click sparks, the hero title settling in, and a price card that arrives sharp
 - [x] E32 Signed in: no "Criar meu site" in the header, the same profile menu on every page, every "Criar meu site" leads to Meus sites
 - [x] E33 The team's own sign-in on its host, and the team's second step behind a switch (off for now)
+- [x] E34 Generation in production: the launch map, `pnpm check:launch`, the Worker's real config, and no site ever stuck
 
 ## Steps in detail
+
+### E34 Generation in production (owner's request of 2026-11-12)
+
+One PR (`step-34-geracao-em-producao`); nothing outside the repository was changed (no account, deploy or setting):
+
+- **Map:** `docs/launch-status.md`: every variable the code reads (who reads it, where to set it, need, effect without it, production value), the services with the state the owner reported, the order of what is left, and the divergences with `.env.example` and `docs/owner-steps.md`. Its tables come from `scripts/launch/requirements.mjs`; a test fails when the code reads a variable that list lacks.
+- **`pnpm check:launch`:** `--target vercel|trigger|worker`, `--env <file>`, `--online`. Prints names and states only, never values; exit 1 and the next action when something blocking is missing.
+- **Worker:** `wrangler.jsonc` with `brotasites.com` and `https://brotasites.com.br`; the KV id stays zeros (`TODO(owner)`), the routes commented until the zone exists; the order in its header. Development passes local values with `--var`.
+- **Never stuck:** in production (or with `BROTASITES_STRICT_GENERATION=1`), creating a site or asking for directions is refused (503 `generation_not_ready`) while the Vercel generation variables are missing, and `/criar` says "Estamos preparando a criação de sites". A job queued for more than 15 minutes shows the client "Isto está demorando mais que o normal" with "Tentar de novo", and the team panel counts it and lists the missing variables.
 
 ### E33 The team's sign-in and the second step behind a switch (owner's request of 2026-11-11)
 

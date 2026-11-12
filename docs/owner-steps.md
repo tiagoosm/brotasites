@@ -2,87 +2,86 @@
 
 Keep this list up to date during the project. Claude Code does not create accounts and does not deploy.
 
-- [ ] Domains (E28; the step-by-step is in the owner's `GUIA-DOMINIO-PASSO-A-PASSO.md`, kept outside the repository). The code is ready; nothing was configured or deployed. Real values:
-  - Platform: `brotasites.com.br` (registered). Vercel: add `brotasites.com.br`, `www.brotasites.com.br` and `admin.brotasites.com.br` to the project; then set `NEXT_PUBLIC_PLATFORM_URL=https://brotasites.com.br` and `NEXT_PUBLIC_ADMIN_HOST=admin.brotasites.com.br`.
-  - Client sites: `brotasites.com` (`BASE_DOMAIN`, to register): `NEXT_PUBLIC_BASE_DOMAIN=brotasites.com` and `BASE_DOMAIN=brotasites.com` in Vercel and in the jobs, `NEXT_PUBLIC_PREVIEW_ORIGIN=https://previa.brotasites.com`, and in `apps/sites-worker/wrangler.jsonc` `BASE_DOMAIN=brotasites.com` and `PLATFORM_URL=https://brotasites.com.br`, with the routes `*.brotasites.com/*` and `brotasites.com/*`. Turn on the transfer lock; request inclusion in the Public Suffix List.
-  - **Set `NEXT_PUBLIC_PLATFORM_URL` and `NEXT_PUBLIC_BASE_DOMAIN` in Vercel's Production environment before the next production deploy:** without them (or with both on one registrable domain) the production build now stops with a clear message, and Vercel keeps the previous deployment online.
-  - Supabase (Authentication, URL Configuration): Site URL `https://brotasites.com.br`, and add `https://brotasites.com.br/**` and `https://admin.brotasites.com.br/**` to Redirect URLs.
-  - Email addresses, as forwards to your inbox (for example Cloudflare Email Routing on the `brotasites.com.br` zone; to verify its terms): `contato@`, `privacidade@` and `abuso@brotasites.com.br`. The site shows them by default once the platform's address is set; `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_PRIVACY_EMAIL` and `NEXT_PUBLIC_ABUSE_EMAIL` override them.
-  - Later, once everything is stable on HTTPS: decide on the HSTS preload list (`docs/security.md`).
-- [ ] Cloudflare, for the client sites (E12; nothing was deployed). In order:
-  1. Create the account with 2FA.
-  2. R2: create the bucket `brotasites-sites` and an R2 API token with Object Read & Write on it only (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` in the jobs' environment).
-  3. Workers KV: create a namespace (for example `brotasites-hosting`), put its id in `apps/sites-worker/wrangler.jsonc` (`kv_namespaces`, replacing the zeros), and create an API token with "Workers KV Storage: Edit" only; put `CLOUDFLARE_KV_NAMESPACE_ID` and `CLOUDFLARE_KV_API_TOKEN` in the jobs' and in Vercel's environment.
-  4. Register `brotasites.com` (`BASE_DOMAIN`, see "Domains" above), add it as a zone in Cloudflare, set `BASE_DOMAIN` and `PLATFORM_URL` in `wrangler.jsonc` and `NEXT_PUBLIC_BASE_DOMAIN` and `NEXT_PUBLIC_PREVIEW_ORIGIN=https://previa.brotasites.com` in Vercel.
-  5. Generate a long random `EXPORT_SECRET` (for example `openssl rand -hex 32`); put it in Vercel and in the Worker with `pnpm --filter @brotasites/sites-worker exec wrangler secret put EXPORT_SECRET`.
-  6. Deploy the Worker: `pnpm --filter @brotasites/sites-worker deploy`, then uncomment the routes `*.brotasites.com/*` and `brotasites.com/*` in `wrangler.jsonc` and deploy again. Add a proxied wildcard DNS record `*` (it also covers `previa.` and `www.`) and a proxied record for the root. Check `https://previa.brotasites.com/` answers the Worker's 404 and `https://brotasites.com/` redirects to the platform.
-  7. Move to Workers Paid ($5/month) before the sites near 100,000 requests a day: on Free, the Worker and its KV reads fail past that (`docs/hosting.md`, Costs).
-  8. Later, with the custom-domain product: Cloudflare for SaaS on the `BASE_DOMAIN` zone (fallback origin and custom hostnames), and `domain:<host>` → subdomain in KV for each client domain.
-- [ ] Accounts: Supabase, Vercel (Pro plan before charging clients), Cloudflare, email/SMTP provider, Asaas, GitHub (2FA).
-- [ ] Set up a custom SMTP in Supabase (the default only delivers to the project team and has a low limit): see "Accounts (E15)" below, step 1.
-- [ ] Apply the E10 migrations to the Supabase project (`supabase/migrations/20261028000000_platform_v12.sql` and `20261028010000_approval.sql`), for example with `supabase db push`, after checking them on a branch or a copy. They were tested only on a local Postgres (`bash supabase/tests/local/run.sh`). Then run the checks in `supabase/tests` in the SQL editor: each one must end with "ALL CHECKS PASSED".
-- [ ] Apply the E11 migration (`supabase/migrations/20261029000000_admin.sql`) after the E10 ones, then make yourself an admin in the SQL editor: `insert into public.admins (user_id) select id from auth.users where email = 'your@email' returning user_id;` (the returned id confirms the row; no row back means the email has no account yet). Only people in that table open `/admin`. Remove a person with `delete from public.admins where user_id = ...`.
-- [ ] Supabase Authentication templates: replaced by the four templates of `docs/email-templates/` (see "Accounts (E15)" below, step 3).
-- [ ] Vercel environment variables for E10: `SUPABASE_SECRET_KEY` (server only), `TRIGGER_SECRET_KEY`, `NEXT_PUBLIC_PREVIEW_ORIGIN` (`https://previa.<BASE_DOMAIN>` once the domain exists), `NEXT_PUBLIC_BASE_DOMAIN`, and `PAYMENTS_MODE`. Leave `PAYMENTS_MODE` empty in production until Asaas is in: `stub` shows a test payment screen that confirms without charging.
-- [ ] Trigger.dev (queue chosen in E10, see "Decisions to review"): create the account and a project, then put `TRIGGER_SECRET_KEY` in the Vercel environment variables and deploy `apps/jobs` with `pnpm --filter @brotasites/jobs exec trigger deploy`. Until then the jobs run with the local runner (`pnpm --filter @brotasites/jobs dev:local`).
-- [ ] Anthropic: create the organization in the Claude Console (platform.claude.com), add credit, set a monthly spend limit there, create an API key and put it only in the hosting's environment variables as `ANTHROPIC_API_KEY`, with `AI_MODE=live` and `AI_MODEL_ID`. Until then the platform runs in simulated mode (no API call).
-- [ ] Optional: run the 30-business evaluation against the real model (`AI_MODE=live AI_MODEL_ID=claude-opus-5-5 ANTHROPIC_API_KEY=... pnpm --filter @brotasites/ai eval`) and keep the numbers as the baseline. Each full run is about 60 model calls; see the cost estimate below.
+**Start here: `docs/launch-status.md`.** It has every variable the code reads (where to set it, what happens without it), the services and their state, and the order of what is left. `pnpm check:launch` tells you the next action without printing any secret.
+
+## Done (reported by the owner on 2026-11-12, not verified by Claude Code)
+
+- [x] `brotasites.com.br` registered at Registro.br, its DNS there, and the platform on Vercel at `brotasites.com.br`, with the team's area on `admin.brotasites.com.br` (E28).
+- [x] Custom SMTP in Supabase with Resend; sign-up tested end to end (E15, step 1 below).
+- [x] Supabase migrations applied up to `20261111000000_team_second_factor_switch` (E10, E11, E15, E16, E24, E33; everything in `supabase/migrations/` except `20261105000000_site_domains.sql`, which waits for E25). One admin in `public.admins`.
+- [x] `NEXT_PUBLIC_PLATFORM_URL` and `NEXT_PUBLIC_ADMIN_HOST` in Vercel's Production. The other variables sign-up needs must also be there (see the note in `docs/launch-status.md`, "Services"); check with `pnpm check:launch --target vercel --env <file>`.
+- [x] `CRON_SECRET` in Vercel and the daily keep-alive (2026-11-02, below).
+
+## To make site creation work, in order
+
+Until step 5 is done, the platform keeps site creation closed on purpose (E34): `/criar` says "Estamos preparando a criação de sites", the API answers 503, and the team panel lists the missing Vercel variables. Nothing gets stuck in the queue.
+
+1. **Vercel, the basics.** `vercel env pull --environment=production .env.vercel` then `pnpm check:launch --target vercel --env .env.vercel` (delete the file afterwards). Every `required` row must say "presente": `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (Sensitive), `NEXT_PUBLIC_PLATFORM_URL=https://brotasites.com.br`, `NEXT_PUBLIC_BASE_DOMAIN=brotasites.com`, `CRON_SECRET`, and, until Turnstile, `NEXT_PUBLIC_CAPTCHA_MODE=off`. Redeploy after any change.
+2. **Cloudflare, for the client sites (E12).** The same order is in the header of `apps/sites-worker/wrangler.jsonc`.
+   1. Create the account with 2FA. Register `brotasites.com` (the sites' domain) if not yet, add it as a zone, turn on the transfer lock; later, request inclusion in the Public Suffix List.
+   2. R2: create the bucket `brotasites-sites` and an R2 API token with Object Read & Write on that bucket only (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`: Trigger.dev only).
+   3. Workers KV: create a namespace (for example `brotasites-hosting`) and put its id in `apps/sites-worker/wrangler.jsonc` (`kv_namespaces`, replacing the zeros; an id is not a secret). Create an API token with "Workers KV Storage: Edit" only (`CLOUDFLARE_KV_API_TOKEN`, with `CLOUDFLARE_KV_NAMESPACE_ID` and `CLOUDFLARE_ACCOUNT_ID`: Trigger.dev and Vercel).
+   4. Generate a long random `EXPORT_SECRET` (for example `openssl rand -hex 32`); put it in the Worker with `pnpm --filter @brotasites/sites-worker exec wrangler secret put EXPORT_SECRET`, and the same value in Vercel at step 5.
+   5. Deploy the Worker with an API token in your shell (`CLOUDFLARE_API_TOKEN`, "Edit Cloudflare Workers" on that account): `pnpm check:launch --target worker`, then `pnpm --filter @brotasites/sites-worker deploy`. `wrangler.jsonc` already has `BASE_DOMAIN=brotasites.com` and `PLATFORM_URL=https://brotasites.com.br`.
+   6. In the `brotasites.com` zone: a proxied wildcard DNS record `*` (it also covers `previa.` and `www.`) and a proxied record for the root; uncomment the routes `*.brotasites.com/*` and `brotasites.com/*` in `wrangler.jsonc` and deploy again. Check that `https://previa.brotasites.com/` answers the Worker's 404 and `https://brotasites.com/` redirects to the platform (`pnpm check:launch --online`).
+   7. Move to Workers Paid ($5/month) before the sites near 100,000 requests a day: on Free, the Worker and its KV reads fail past that (`docs/hosting.md`, Costs).
+3. **Anthropic.** Create the organization in the Claude Console (platform.claude.com), add credit, set a monthly spend limit there and create an API key. The key goes only in Trigger.dev (`ANTHROPIC_API_KEY`), never in Vercel or the repository.
+4. **Trigger.dev (E10).** Create the account and a project. In the project's production environment put the jobs' variables (table "trigger" in `docs/launch-status.md`): the Supabase URL and secret key, `AI_MODE=live`, `AI_MODEL_ID`, `ANTHROPIC_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, the R2 and KV variables, `BASE_DOMAIN=brotasites.com` and `REVIEW_SKIP_HUMAN=false`. Check a copy of them with `pnpm check:launch --target trigger --env <file>`. Then, from a machine with the repository and `TRIGGER_PROJECT_REF` set in the shell (a deploy setting, not a run-time variable): `pnpm --filter @brotasites/jobs exec trigger deploy`.
+5. **Vercel, generation.** Add `TRIGGER_SECRET_KEY` (the project's production secret key, Sensitive), `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_KV_NAMESPACE_ID`, `CLOUDFLARE_KV_API_TOKEN` (Sensitive), `NEXT_PUBLIC_PREVIEW_ORIGIN=https://previa.brotasites.com` and `EXPORT_SECRET` (Sensitive), then Redeploy. `pnpm check:launch --target vercel` must end without a blocking row.
+6. **Check it end to end.** `/admin/visao-geral` shows no "criação de sites está fechada" notice. Create a test site, choose a direction, approve it in the team's queue. The old site "Real Dente" (queued since 2026-10-29, found on 2026-11-04) can now be restarted from its page with "Tentar de novo", or discarded.
+
+## Before real clients
+
+- [ ] **Turnstile** (Accounts (E15) step 4 below), then delete `NEXT_PUBLIC_CAPTCHA_MODE` in Vercel.
+- [ ] **Turn the team's second step back on:** `update public.team_settings set require_second_factor = true;` (Accounts (E15) step 5 below).
+- [ ] Supabase Authentication settings and pt-BR templates (Accounts (E15) steps 2 and 3), if not done yet.
+- [ ] Optional: run the 30-business evaluation against the real model (`AI_MODE=live AI_MODEL_ID=claude-opus-5-5 ANTHROPIC_API_KEY=... pnpm --filter @brotasites/ai eval`) and keep the numbers as the baseline. Each full run is about 60 model calls.
 - [ ] Blind test before opening sales (`docs/blind-test.md`; the kit was built in E13 and tried with the simulated AI only):
-  1. After the Anthropic step, generate the BrotaSites half with the real model: `AI_MODE=live AI_MODEL_ID=claude-opus-5-5 ANTHROPIC_API_KEY=... pnpm --filter @brotasites/jobs blind-test generate` (10 sites, about one generation each; see the AI cost estimate below). Optionally add photos you have the right to use (`--photos`).
+  1. Generate the BrotaSites half with the real model: `AI_MODE=live AI_MODEL_ID=claude-opus-5-5 ANTHROPIC_API_KEY=... pnpm --filter @brotasites/jobs blind-test generate` (10 sites, about one generation each). Optionally add photos you have the right to use (`--photos`).
   2. Commission the hand-made half: one designer (or several) makes the 10 sites from the briefs in `apps/jobs/kit/briefs/`, with the same photos. This is a paid job, at your discretion.
   3. `blind-test assemble`, then show `participantes/` to 10 to 20 people (small business owners and designers) without saying which product is being tested, and record the answers in `chave/respostas.csv`.
   4. `blind-test score`. If the target fails, the report says which pairs lost; invest there (catalog, playbooks, reviewer) and repeat.
 - [ ] Legal review: Terms, Privacy, guarantee and refund. Invoicing with an accountant.
+- [ ] Email addresses, as forwards to your inbox (for example Cloudflare Email Routing on the `brotasites.com.br` zone; to verify its terms): `contato@`, `privacidade@` and `abuso@brotasites.com.br`. The site shows them by default; `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_PRIVACY_EMAIL` and `NEXT_PUBLIC_ABUSE_EMAIL` override them.
 - [ ] GitHub settings (Settings > Advanced Security): turn on Dependabot alerts and security updates, and secret scanning with push protection (free on public repositories; check the plan if the repository becomes private). CI also scans for secrets with gitleaks and audits dependencies on every push.
 - [ ] External pentest before selling.
 - [ ] Check INPI before investing in the brand.
 - [ ] Decide the repository's visibility: the master plan assumes a private repository, and `tiagoosm/brotasites` is public. Adapted React Bits code (`side-rays.tsx`, `vine-trail.tsx`) is visible while it is public.
+- [ ] Later, once everything is stable on HTTPS: decide on the HSTS preload list (`docs/security.md`).
 
-## Client domains (E25)
+## Before charging
+
+- [ ] Vercel Pro (the Hobby plan is for non-commercial use only).
+- [ ] Asaas (out of scope for now). Until then leave `PAYMENTS_MODE` empty in production; `stub` shows a test payment screen that confirms without charging, for testing only.
+
+## Client domains (E25, optional, after launch)
 
 Included in the price and optional. The code runs against a simulated hosting (`DOMAINS_MODE=simulated`, development only); the calls to Cloudflare for SaaS are written and have never been run. To turn it on:
 
-1. **Cloudflare for SaaS** on the `BASE_DOMAIN` zone (after the Cloudflare and `BASE_DOMAIN` items above): in the zone, SSL/TLS > Custom Hostnames, enable it; create the fallback origin (for example `fallback.<BASE_DOMAIN>`, a proxied record the Worker answers on); create the CNAME target `clientes.<BASE_DOMAIN>` (proxied, pointing to the fallback origin).
-2. **API token** with the least permission for custom hostnames on that zone only (Cloudflare's docs name "SSL and Certificates: Edit"; **to verify** when creating it). Put `CLOUDFLARE_SAAS_ZONE_ID`, `CLOUDFLARE_SAAS_API_TOKEN`, `CUSTOM_DOMAIN_TARGET=clientes.<BASE_DOMAIN>` and `DOMAINS_MODE=cloudflare` in Vercel (server only), plus the KV variables if not there yet. Never `simulated` in production.
+1. **Cloudflare for SaaS** on the `BASE_DOMAIN` zone (after step 2 of "To make site creation work" above): in the zone, SSL/TLS > Custom Hostnames, enable it; create the fallback origin (for example `fallback.brotasites.com`, a proxied record the Worker answers on); create the CNAME target `clientes.brotasites.com` (proxied, pointing to the fallback origin).
+2. **API token** with the least permission for custom hostnames on that zone only (Cloudflare's docs name "SSL and Certificates: Edit"; **to verify** when creating it). Put `CLOUDFLARE_SAAS_ZONE_ID`, `CLOUDFLARE_SAAS_API_TOKEN`, `CUSTOM_DOMAIN_TARGET=clientes.brotasites.com` and `DOMAINS_MODE=cloudflare` in Vercel (server only), plus the KV variables if not there yet. Never `simulated` in production.
 3. **Apply the migration** `supabase/migrations/20261105000000_site_domains.sql` (after the E24 one) and run the database tests locally first.
 4. **Confirm in the account** that 100 custom hostnames are included and the price of each extra one (official docs, 2026-11-05: 100 included on Free, Pro and Business, then $0.10 a month each, up to 50,000; **to verify**). The team panel (`/admin/limites`) shows "Domínios de clientes: N de 100 incluídos" and warns from 80. Past 100, each new domain costs at Cloudflare; the yearly renewal covers it. If the account answers "quota" (error 1405), Cloudflare's sales team allocates more.
 5. **Legal review** of the Terms: the connection is included; registering and renewing the domain are the client's; BrotaSites is not responsible for an expired domain or a registrar's failure (marked pending review).
 6. **Decide** whether the team helps clients with their DNS, and whether that help is paid. Today the page only gives the step by step and promises no help.
 
-## Making generation run in production (checked on 2026-11-04)
+## Testing before launch: CAPTCHA off
 
-What was found: the site "Real Dente" has been in "Criando as 3 direções" since 2026-10-29. Its job is in `public.jobs` with `status = queued` and `attempts = 0`: nothing ever picked it up. Vercel has no `TRIGGER_SECRET_KEY`, so the platform cannot hand jobs to Trigger.dev (`apps/platform/src/lib/server/jobs.ts` returns without starting it), and there is no runner in production. The code is not broken; the production side of the queue was never set up.
+Kept because one part is still in use: production runs with `NEXT_PUBLIC_CAPTCHA_MODE=off` until Turnstile is set up. The domain and SMTP parts no longer apply (both are done), so only the CAPTCHA note stays.
 
-What a job needs to run (`apps/jobs/src/env.ts`):
-
-1. **Trigger.dev** (account and project are yours): create the project, put its ref in `TRIGGER_PROJECT_REF`, and deploy the tasks from a machine with the repository: `pnpm --filter @brotasites/jobs exec trigger deploy`.
-2. **Variables in Trigger.dev** (production environment of that project), because the jobs run there, not on Vercel:
-   - `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY` (the same values as in Vercel).
-   - `AI_MODE=simulated` to test without spending, or `AI_MODE=live` with `ANTHROPIC_API_KEY`, `AI_MODEL_ID` and `AI_EFFORT` (the Anthropic item above), plus the budget variables if you want other values.
-   - `CLOUDFLARE_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `CLOUDFLARE_KV_NAMESPACE_ID`, `CLOUDFLARE_KV_API_TOKEN` and `BASE_DOMAIN` (the Cloudflare item above). Today the jobs refuse to start without the R2 variables, even for the directions, whose screenshots go to Supabase Storage; only the finished site needs R2.
-   - `REVIEW_SKIP_HUMAN=false`.
-3. **Variables in Vercel:** `TRIGGER_SECRET_KEY` (the production secret key of that project, marked sensitive), then `NEXT_PUBLIC_PREVIEW_ORIGIN`, `NEXT_PUBLIC_BASE_DOMAIN`, `EXPORT_SECRET` and the two KV variables once Cloudflare exists. Redeploy so the server reads them.
-4. **The job already waiting:** setting the key does not start jobs queued before it. After step 3, discard "Real Dente" in its page and create it again (a code change could also restart jobs left queued; not done yet).
-
-## Testing before launch (no domain, no SMTP, no Turnstile)
-
-A temporary setup to try accounts on `https://brotasites.vercel.app`. Undo it before launch (steps of "Accounts (E15)" below).
-
-- Emails go through Supabase's built-in service: it sends only to the addresses of the organization's team members (Supabase "Test auth flows" guide) and only a few per hour (the current number is on that page). Test with your own email. Supabase's default English templates work; the pt-BR ones in `docs/email-templates/` can wait.
 - `NEXT_PUBLIC_CAPTCHA_MODE=off` in Vercel turns the CAPTCHA off on purpose, also in production. The platform's own rate limits keep working (they need `SUPABASE_SECRET_KEY`).
-- Owner steps: in Supabase, Authentication > URL Configuration, Site URL `https://brotasites.vercel.app` and Redirect URL `https://brotasites.vercel.app/auth/confirm**`; copy the secret key (Project Settings > API Keys) into Vercel as `SUPABASE_SECRET_KEY` (type "Sensitive", production).
 - Before launch: delete `NEXT_PUBLIC_CAPTCHA_MODE` in Vercel, then follow "Accounts (E15)".
 
 ## Dashboard (E16)
 
-1. **Migration.** Apply `supabase/migrations/20261031000000_notifications.sql` after the accounts migration (SQL Editor, the whole file, Run), then run `supabase/tests/notifications.sql`: it must end with "ALL CHECKS PASSED".
+1. **Migration** (done: applied, per the owner on 2026-11-12). Apply `supabase/migrations/20261031000000_notifications.sql` after the accounts migration (SQL Editor, the whole file, Run), then run `supabase/tests/notifications.sql`: it must end with "ALL CHECKS PASSED".
 2. Nothing else to configure: the dashboard and the notices use the existing session, tables and limits. Notices read more than 90 days ago are removed by the database itself, whenever the same person gets a new notice (no scheduled job needed).
 
 ## Accounts (E15)
 
 In this order. Nothing here was done by Claude Code; values marked "to verify" were not checked in the official pages from this session (supabase.com and resend.com were out of the session's network; Supabase facts come from its documentation search).
 
-1. **Email sending.** Register the platform's domain and set up a custom SMTP for Supabase (suggestion to verify: Resend). In the provider: verify the domain with SPF, DKIM and DMARC records, use a sender like `nao-responda@<domain>`, turn **off** link and open tracking (it rewrites the confirmation links). Then in Supabase, Authentication > Emails > SMTP Settings, enter the provider's SMTP host, user and password. Send a test to Gmail, Outlook and Hotmail and check it lands in the inbox. Prices and sending limits of the provider: to verify on its pricing page. With a custom SMTP, Supabase's own limit for auth emails starts at 30 new users per hour (Supabase production checklist) and can be raised in Authentication > Rate Limits.
+1. **Email sending** (done with Resend, per the owner on 2026-11-12). Register the platform's domain and set up a custom SMTP for Supabase (suggestion to verify: Resend). In the provider: verify the domain with SPF, DKIM and DMARC records, use a sender like `nao-responda@<domain>`, turn **off** link and open tracking (it rewrites the confirmation links). Then in Supabase, Authentication > Emails > SMTP Settings, enter the provider's SMTP host, user and password. Send a test to Gmail, Outlook and Hotmail and check it lands in the inbox. Prices and sending limits of the provider: to verify on its pricing page. With a custom SMTP, Supabase's own limit for auth emails starts at 30 new users per hour (Supabase production checklist) and can be raised in Authentication > Rate Limits.
 2. **Supabase Authentication settings:**
    - Providers > Email: **Confirm email** on (accounts confirm before the first sign-in; decision of 2026-10-29 below); **Secure email change** on (both addresses confirm); minimum password length 8; turn on **leaked password protection** (Authentication, "Leaked password protection", checked against HaveIBeenPwned) if the plan offers it (to verify: it may need a paid plan). E26 (2026-11-09): the platform itself does not call any leaked-password service; deciding whether to check new passwords against one stays with the owner. E27 (2026-11-09): the platform's only requirement is now 8 characters (the kinds of character only raise the strength meter; `docs/security.md`). Set Supabase's minimum length to 8 and leave "Password requirements" on "No required characters", so Supabase never refuses a password the form accepts. With common passwords no longer refused, leaked-password protection matters more.
    - Anonymous sign-ins: off. Phone sign-in: off.
@@ -93,8 +92,8 @@ In this order. Nothing here was done by Claude Code; values marked "to verify" w
 3. **Email templates (pt-BR)**, Authentication > Emails > Templates: paste the files of `docs/email-templates/` (Confirm signup: `confirm-signup.html`; Reset Password: `reset-password.html`; Change Email Address: `change-email.html`) with the subjects written at the top of each file. They link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=...&redirect_to={{ .RedirectTo }}`. To verify in the dashboard: with Secure email change on, which token variable the message to the new address uses (the template may need `{{ .TokenHashNew }}` there).
 4. **Turnstile.** In Cloudflare, Turnstile > Add widget, for the platform's domain (and `localhost` for development), mode "Managed". Put the **site key** in Vercel as `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and leave `NEXT_PUBLIC_CAPTCHA_MODE` empty in production. Put the **secret key** only in Supabase, Authentication > Bot and Abuse Protection > Enable CAPTCHA protection (the path in Supabase's CAPTCHA guide), provider Cloudflare Turnstile. Turnstile's free plan and limits: to verify on Cloudflare's pricing page. In production without a site key the account routes refuse to work on purpose.
 5. **Two-step verification for the team: off for now; turn it back on before accepting real clients.** (E33, owner's decision of 2026-11-11.) The migration `supabase/migrations/20261111000000_team_second_factor_switch.sql` was applied to the production project on 2026-11-11 at the owner's request (recorded in Supabase as `team_second_factor_switch`); it created `public.team_settings` with the second step off. While it is off, use a long, unique password for the team account and keep at most one or two rows in `public.admins`. To turn it back on: `update public.team_settings set require_second_factor = true;` (nothing else). When it is on, the rest of this step applies: TOTP is on by default in Supabase (Authentication > Multi-Factor). Make yourself an admin (E11 step), sign in, open `/admin`: the panel asks to turn on an authenticator app (QR code) and, from then on, the code at every sign-in. `/admin` refuses sessions without the second step (the database's `is_admin()` checks `aal2`). Keep the key shown under the QR code in a safe place to restore the app.
-6. **Migration.** Apply `supabase/migrations/20261030000000_accounts.sql` after the E10 and E11 ones, then run `supabase/tests/accounts.sql` (and the other files of `supabase/tests`) in the SQL editor: each must end with "ALL CHECKS PASSED". Existing accounts get an empty profile: they are asked for their name and to accept the terms at /conta.
-7. **Jobs.** Deploy `apps/jobs` again (`pnpm --filter @brotasites/jobs exec trigger deploy`): the new `site-purge` task removes deleted accounts' sites from R2 and KV.
+6. **Migration** (done, per the owner on 2026-11-12). Apply `supabase/migrations/20261030000000_accounts.sql` after the E10 and E11 ones, then run `supabase/tests/accounts.sql` (and the other files of `supabase/tests`) in the SQL editor: each must end with "ALL CHECKS PASSED". Existing accounts get an empty profile: they are asked for their name and to accept the terms at /conta.
+7. **Jobs.** Covered by the Trigger.dev deploy (step 4 of "To make site creation work"): it includes the `site-purge` task that removes deleted accounts' sites from R2 and KV.
 8. **Terms and privacy: legal review.** `/termos` and `/privacidade` are provisional (version `2026-10-draft`, marked "pendente de revisão jurídica" on the pages and in `src/content/legal.ts`). After the lawyer's review, publish the new text with a new version in `TERMS_VERSION` (`src/lib/auth/schemas.ts`) and in `private.current_terms_version()` (a new migration): everyone is asked to accept again at /conta.
 
 ## Supabase keep-alive (2026-11-02)
