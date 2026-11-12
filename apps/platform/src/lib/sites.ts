@@ -1,5 +1,6 @@
 import type { FormDraft } from "@brotasites/schema/v1.2";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { JobState } from "@/lib/stuck-job";
 import { hosts } from "./domains/hosts";
 
 // The client's sites, read through Supabase with the person's session (RLS: only their own).
@@ -150,6 +151,34 @@ export async function loadDirections(
   return ((data ?? []) as DirectionRow[]).sort(
     (a, b) => order.indexOf(a.direction) - order.indexOf(b.direction),
   );
+}
+
+/** The site's latest job (RLS: the owner's own), to tell a stuck one (E34, lib/stuck-job.ts). */
+export async function loadLatestJob(
+  supabase: SupabaseClient,
+  siteId: string,
+): Promise<JobState | null> {
+  const { data, error } = await supabase
+    .from("jobs")
+    .select("id, status, created_at")
+    .eq("site_id", siteId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as JobState | null) ?? null;
+}
+
+/** Asks for a queued job to start again (E34); false when it still cannot start. */
+export async function retryJob(jobId: string): Promise<boolean> {
+  const response = await fetch("/api/jobs/start", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jobId }),
+  });
+  if (!response.ok) return false;
+  const body = (await response.json().catch(() => ({}))) as { started?: boolean };
+  return body.started === true;
 }
 
 export async function loadEvents(supabase: SupabaseClient, siteId: string): Promise<EventRow[]> {

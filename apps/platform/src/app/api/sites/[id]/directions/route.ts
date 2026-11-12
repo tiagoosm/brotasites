@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { extraRoundWaitSeconds, limits } from "@/config/limits";
 import { nextRoundAt } from "@/lib/limits-copy";
+import { generationClosed, generationReady } from "@/lib/server/generation";
 import { clientIp, guardErrors, json, limitKey, readBody, refuse } from "@/lib/server/guard";
 import { triggerJob } from "@/lib/server/jobs";
 import { rulesFor, withinLimits } from "@/lib/server/rate-limit";
@@ -8,7 +9,8 @@ import { accountErrors, errors, ownSite } from "@/lib/server/session";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 
 // A round of directions (E24): free rounds, then one per wait, decided by the database under a
-// row lock (server_request_directions) with the values from config/limits.ts.
+// row lock (server_request_directions) with the values from config/limits.ts. In production,
+// only once generation is set up (E34, lib/server/generation.ts).
 
 const known: Record<string, [number, string]> = {
   wrong_status: [409, "Este passo não está disponível agora. Atualize a página."],
@@ -24,6 +26,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id } = await params;
   const owned = await ownSite(id);
   if ("error" in owned) return owned.error;
+  // E34: no job that cannot start. The answers stay saved in the draft for when it opens.
+  if (!generationReady()) {
+    return json({ error: generationClosed.text, code: generationClosed.code }, 503);
+  }
   if (!(await withinLimits(rulesFor("sites", clientIp(request), owned.user.id, limitKey)))) {
     return refuse(429, guardErrors.rateLimited);
   }

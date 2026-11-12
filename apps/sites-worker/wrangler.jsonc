@@ -1,12 +1,20 @@
 // The single Worker that serves every client site (docs/hosting.md). Nothing here is deployed
-// by the platform or by Claude Code: the owner deploys it (docs/owner-steps.md, Cloudflare).
+// by the platform or by Claude Code: the owner deploys it (docs/owner-steps.md, "Cloudflare",
+// and docs/launch-status.md).
 //
-// Locally, `pnpm --filter @brotasites/sites-worker dev` runs it with Miniflare (wrangler dev),
-// with local R2 and KV. Before deploying, the owner replaces the KV namespace id below and
-// BASE_DOMAIN, uncomments the route and sets the secret: `wrangler secret put EXPORT_SECRET`.
+// The values below are production's (E34): sites on brotasites.com, the platform on
+// brotasites.com.br. Locally, `pnpm --filter @brotasites/sites-worker dev` runs it with Miniflare
+// (wrangler dev) and overrides them: `wrangler dev --var BASE_DOMAIN:sites.localhost
+// --var PLATFORM_URL:http://localhost:3000`, with local R2 and KV.
 //
-// Until the domain exists, sites open on the free workers.dev address, by path:
-//   https://brotasites-sites.<account>.workers.dev/<subdomain>/
+// Order of the owner's steps (docs/owner-steps.md):
+//   1. Create the R2 bucket brotasites-sites and the KV namespace; put the namespace id below
+//      (`pnpm check:launch --target worker` refuses the zeros).
+//   2. `wrangler secret put EXPORT_SECRET` (the same value as the platform's EXPORT_SECRET).
+//   3. `wrangler deploy` with the routes still commented: the Worker answers on workers.dev,
+//      by path (https://brotasites-sites.<account>.workers.dev/<subdomain>/).
+//   4. With the brotasites.com zone on Cloudflare and its DNS (a proxied wildcard * and the bare
+//      domain), uncomment the routes and `wrangler deploy` again.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "brotasites-sites",
@@ -15,12 +23,13 @@
   "workers_dev": true,
   "r2_buckets": [{ "binding": "SITES", "bucket_name": "brotasites-sites" }],
   // Site pointers and states, custom domains and preview tokens.
+  // TODO(owner): replace with the id of the KV namespace you create (step 1 above).
   "kv_namespaces": [{ "binding": "HOSTING", "id": "00000000000000000000000000000000" }],
-  // The client sites' own domain, separate from the platform's: brotasites.com in production.
-  // The platform's address: the bare sites domain and its www redirect there (E28).
-  "vars": { "BASE_DOMAIN": "sites.localhost", "PLATFORM_URL": "http://localhost:3000" },
-  // One route for every subdomain, so the zone's route limits never grow with clients:
-  // The bare domain needs its own route (it redirects to the platform, E28):
+  // The client sites' own domain, separate from the platform's, and the platform's address (the
+  // bare sites domain and its www redirect there, E28).
+  "vars": { "BASE_DOMAIN": "brotasites.com", "PLATFORM_URL": "https://brotasites.com.br" },
+  // Step 4 only, after the first deploy: one route for every subdomain, so the zone's route
+  // limits never grow with clients, and one for the bare domain (it redirects to the platform).
   // "routes": [
   //   { "pattern": "*.brotasites.com/*", "zone_name": "brotasites.com" },
   //   { "pattern": "brotasites.com/*", "zone_name": "brotasites.com" }

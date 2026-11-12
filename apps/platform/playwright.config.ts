@@ -82,6 +82,8 @@ export default defineConfig({
         ...serverEnv,
         NEXT_PUBLIC_PLATFORM_URL: `http://platform.localhost:${ADMIN_PORT}`,
         NEXT_PUBLIC_ADMIN_HOST: `admin.localhost:${ADMIN_PORT}`,
+        // As in production without the generation set up (E34): creating sites is closed here.
+        BROTASITES_STRICT_GENERATION: "1",
       },
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { limits } from "@/config/limits";
 import { siteSlotCopy } from "@/lib/limits-copy";
+import { generationClosed, generationReady } from "@/lib/server/generation";
 import { clientIp, guardErrors, json, limitKey, readBody, refuse } from "@/lib/server/guard";
 import { rulesFor, withinLimits } from "@/lib/server/rate-limit";
 import { currentUser } from "@/lib/server/session";
@@ -8,6 +9,7 @@ import { getAdminSupabase } from "@/lib/supabase/admin";
 
 // A new site (E24): one unpaid site in progress per account, decided by the database
 // (server_create_site and the trigger behind it), with the allowance from config/limits.ts.
+// In production, only once generation is set up (E34, lib/server/generation.ts).
 
 const OPEN = [
   "draft",
@@ -24,6 +26,10 @@ export async function POST(request: Request) {
   if ("error" in body) return body.error;
   const session = await currentUser();
   if ("error" in session) return session.error;
+  // E34: never a site that would wait for a generation that cannot start.
+  if (!generationReady()) {
+    return json({ error: generationClosed.text, code: generationClosed.code }, 503);
+  }
   if (!(await withinLimits(rulesFor("sites", clientIp(request), session.user.id, limitKey)))) {
     return refuse(429, guardErrors.rateLimited);
   }
