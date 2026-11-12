@@ -16,10 +16,12 @@ import {
 import { type Cta, iconNames } from "./sections.js";
 import { feelings, type Identity, type SiteConfigInput } from "./site-config.js";
 import {
+  categories,
   categoryIds,
   categoryInfo,
   type Family,
   familyInfo,
+  type LaunchWave,
   type SectionId,
   sectionIds,
 } from "./taxonomy.js";
@@ -358,14 +360,27 @@ export function blockedTopic(...texts: (string | undefined)[]): string | null {
   return blockedTopics.find(([pattern]) => pattern.test(joined))?.[1] ?? null;
 }
 
-/** Launch waves open now (docs/categories.md): wave 1 first. */
-export const OPEN_LAUNCH_WAVE = 1;
+/**
+ * Launch waves open now (docs/categories.md). Every wave is open since 2026-11-12 (E38, the
+ * owner's decision): the last one. The wave stays in the taxonomy, and the review level and the
+ * registration rules of each category keep applying whatever the wave.
+ */
+export const OPEN_LAUNCH_WAVE: LaunchWave = Math.max(
+  ...categories.map((category) => category.wave),
+) as LaunchWave;
+
+/** Categories closed one by one, whatever their wave (none today). */
+export const CLOSED_CATEGORIES: ReadonlySet<string> = new Set<string>();
 
 /** Why a category cannot be served yet, or null. */
-export function categoryNotOpen(categoryId: string | undefined): string | null {
+export function categoryNotOpen(
+  categoryId: string | undefined,
+  closed: ReadonlySet<string> = CLOSED_CATEGORIES,
+  openWave: LaunchWave = OPEN_LAUNCH_WAVE,
+): string | null {
   if (!categoryId) return null;
   const info = categoryInfo(categoryId);
-  if (info && info.wave > OPEN_LAUNCH_WAVE) {
+  if (closed.has(categoryId) || (info && info.wave > openWave)) {
     return "Ainda não estamos atendendo esse tipo de negócio. Ele entra numa próxima etapa.";
   }
   return null;
