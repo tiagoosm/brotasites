@@ -133,12 +133,19 @@ describe("what production needs (E34)", () => {
     const state = Object.fromEntries(result.rows.map((r) => [r.name, r.state]));
     expect(state.KV_NAMESPACE_ID).toBe("presente");
     expect(state.ACCOUNT_ID).toBe("presente");
+    expect(state.WORKERS_DEV).toBe("presente");
     // Set by hand in the Cloudflare dashboard: listed to check, never blocking.
     expect(state.EXPORT_SECRET).toBe("conferir");
     expect(result.ok).toBe(true);
     const zeros = workerEnvFromWrangler(
       text.replace(/"id": "[0-9a-f]{32}"/, '"id": "00000000000000000000000000000000"'),
     );
+    const workersDev = checkTarget(
+      "worker",
+      workerEnvFromWrangler(text.replace('"workers_dev": false', '"workers_dev": true')),
+    );
+    expect(workersDev.rows.find((r) => r.name === "WORKERS_DEV")?.state).toBe("valor errado");
+    expect(workersDev.ok).toBe(false);
     const refused = checkTarget("worker", zeros);
     expect(refused.rows.find((r) => r.name === "KV_NAMESPACE_ID")?.state).toBe("exemplo");
     expect(refused.ok).toBe(false);
