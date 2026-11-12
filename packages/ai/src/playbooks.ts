@@ -1,4 +1,7 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { Family } from "@brotasites/schema/v1.2";
 
 // The copy playbooks (packages/ai/playbooks): one per family, plus the common rules. Each file
@@ -14,7 +17,28 @@ export interface Playbook {
   banned: string[];
 }
 
-const dir = new URL("../playbooks/", import.meta.url);
+/**
+ * The playbooks folder: next to this package's dist/ normally. In the Trigger.dev image the
+ * jobs are bundled, so this file's URL points into the bundle; there the playbooks ship as
+ * files under /app/node_modules/@brotasites/ai (apps/jobs/trigger.config.ts, E35d) and are
+ * found by package resolution: from the bundle's location, then from the working directory.
+ */
+function playbooksDir(): URL {
+  const own = new URL("../playbooks/", import.meta.url);
+  if (existsSync(own)) return own;
+  for (const from of [import.meta.url, join(process.cwd(), "index.js")]) {
+    try {
+      const pkg = createRequire(from).resolve("@brotasites/ai/package.json");
+      const found = pathToFileURL(join(dirname(pkg), "playbooks/"));
+      if (existsSync(found)) return found;
+    } catch {
+      // Not resolvable from there: try the next place.
+    }
+  }
+  return own;
+}
+
+let dir: URL | undefined;
 
 /** Families with their own playbook this round; the others use general.md. */
 export const playbookFamilies: readonly Family[] = ["food", "beauty", "events-creative"];
@@ -44,6 +68,7 @@ const loaded = new Map<string, Playbook>();
 function load(name: string): Playbook {
   const cached = loaded.get(name);
   if (cached) return cached;
+  dir ??= playbooksDir();
   const playbook = parsePlaybook(readFileSync(new URL(`${name}.md`, dir), "utf8"));
   loaded.set(name, playbook);
   return playbook;

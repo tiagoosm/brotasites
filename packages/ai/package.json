@@ -12,7 +12,8 @@
     "./evals": {
       "types": "./dist/evals/businesses.d.ts",
       "default": "./dist/evals/businesses.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
