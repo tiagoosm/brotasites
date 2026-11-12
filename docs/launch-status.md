@@ -34,6 +34,10 @@ No value here is a secret. Secrets go only in Vercel, Trigger.dev, GitHub's `pro
 | Asaas | Payments | Not started (out of scope) | Before charging |
 | Cloudflare for SaaS | Clients' own domains (E25) | Not started | Optional, after launch |
 
+### Todas as categorias abertas (2026-11-12)
+
+Since E38 the three launch waves are open (owner's decision). The legal validation of the advertising rules of the wave 3 professions (health councils, OAB) is still pending. The rules of those categories stay on (`docs/categories.md`, "Launch waves"), and reinforced or mandatory review now always waits for a person, even with `REVIEW_SKIP_HUMAN=true`.
+
 ### Primeira execução real: falta de memória (2026-11-12)
 
 The first real `site-job` (directions) ran on Trigger.dev's default machine (`small-1x`, 0.5 GB) and was killed at 56 s with `TASK_PROCESS_OOM_KILLED`. The job stayed `running` and the site `generating_directions`, with no directions saved.
