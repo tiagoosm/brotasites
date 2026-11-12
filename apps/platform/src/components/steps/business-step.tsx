@@ -8,8 +8,9 @@ import {
   type FormDraft,
   storyQuestions,
 } from "@brotasites/schema/v1.2";
-import { useId } from "react";
+import { useEffect, useId, useState } from "react";
 import { useForm12 } from "@/lib/form-store";
+import { yearProblem, yearText, yearValue } from "@/lib/year-input";
 import { CategorySearch } from "./category-search";
 import { SectionCard, TextField } from "./fields";
 import { LockedNote, StepForm } from "./step-form";
@@ -30,6 +31,23 @@ export function BusinessStep() {
     ...Object.values(business.story ?? {}),
   );
   const notOpen = categoryNotOpen(business.category);
+  // The year as typed (E38): the draft gets a number only at 4 digits.
+  const [year, setYear] = useState(() =>
+    business.foundedYear ? String(business.foundedYear) : "",
+  );
+  const [yearDone, setYearDone] = useState(false);
+  useEffect(() => {
+    // A draft loaded or changed elsewhere: show its year, unless the text already says it.
+    setYear((text) =>
+      yearValue(text) === business.foundedYear
+        ? text
+        : business.foundedYear
+          ? String(business.foundedYear)
+          : text.length === 4
+            ? ""
+            : text,
+    );
+  }, [business.foundedYear]);
 
   return (
     <StepForm
@@ -37,6 +55,11 @@ export function BusinessStep() {
       validate={() => {
         if (blocked) return `Não atendemos negócios de ${blocked}.`;
         if (notOpen) return notOpen;
+        const yearIssue = yearProblem(year, true);
+        if (yearIssue) {
+          setYearDone(true);
+          return yearIssue;
+        }
         const parsed = businessAnswersSchema.safeParse({
           ...business,
           name: business.name ?? "",
@@ -88,12 +111,18 @@ export function BusinessStep() {
         <TextField
           label="Ano em que começou (opcional)"
           inputMode="numeric"
-          value={business.foundedYear ? String(business.foundedYear) : ""}
+          autoComplete="off"
+          value={year}
           maxLength={4}
           placeholder="Ex.: 1998"
-          onChange={(year) => {
-            const digits = year.replace(/\D/g, "").slice(0, 4);
-            set({ foundedYear: digits.length === 4 ? Number(digits) : undefined });
+          error={yearProblem(year, yearDone) ?? undefined}
+          onBlur={() => setYearDone(true)}
+          onChange={(typed) => {
+            const text = yearText(typed);
+            setYear(text);
+            // Typing again hides the "4 números" note until the person leaves the field.
+            setYearDone(false);
+            if (yearValue(text) !== business.foundedYear) set({ foundedYear: yearValue(text) });
           }}
         />
       </SectionCard>
