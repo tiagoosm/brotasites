@@ -123,6 +123,18 @@ export interface FakeState {
   member?: boolean;
   /** The team's second-factor switch (E33, team_settings): off unless a test turns it on. */
   secondFactor?: boolean;
+  /** The site's latest job (E34: a stuck one offers "Tentar de novo"). */
+  job?: { id: string; status: string; created_at: string } | null;
+  /** What /api/jobs/start answers (E34). */
+  jobStarts?: boolean;
+  /** Whether generation is set up, as the overview reports it (E34). */
+  generation?: {
+    enforced: boolean;
+    ready: boolean;
+    missing: string[];
+    stuckJobs: number;
+    stuckMinutes: number;
+  };
   /** Bodies posted to the admin route handlers, by path. */
   adminPosts: { path: string; body: Record<string, unknown> }[];
   /** Rounds of directions used on the site, the free ones and when the next one opens (E24). */
@@ -325,6 +337,7 @@ export async function fakeSupabase(
       }
     }
     if (table === "site_events" && method === "GET") return answer(state.events);
+    if (table === "jobs" && method === "GET") return answer(state.job ? [state.job] : []);
     if (table === "site_directions" && method === "GET") {
       return answer(state.directions.filter((d) => !idFilter || idFilter === `eq.${d.id}`));
     }
@@ -371,7 +384,9 @@ export async function fakeSupabase(
     const url = new URL(route.request().url());
     state.api.push(url.pathname);
     if (url.pathname.startsWith("/api/admin/")) return answerAdmin(route, url, state, json);
-    if (url.pathname === "/api/jobs/start") return route.fulfill(json({ started: false }));
+    if (url.pathname === "/api/jobs/start") {
+      return route.fulfill(json({ started: state.jobStarts === true }));
+    }
     // E24: creating a site, a round of directions and discarding go through the server, which
     // applies the limits in the database.
     if (url.pathname === "/api/sites" && route.request().method() === "POST") {
@@ -713,6 +728,7 @@ function overviewFor(state: FakeState) {
       today: { day: "2026-11-03", spentUsd: spent },
     },
     budget: BUDGET,
+    ...(state.generation ? { generation: state.generation } : {}),
   };
 }
 

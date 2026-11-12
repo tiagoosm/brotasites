@@ -22,14 +22,17 @@ import {
   loadDirections,
   loadDirectionsQuota,
   loadEvents,
+  loadLatestJob,
   loadSite,
   previewUrl,
   renderUrls,
   requestDirections,
   requestRebuild,
+  retryJob,
   SiteActionError,
   type SiteWithDraft,
 } from "@/lib/sites";
+import { isStuck, type JobState } from "@/lib/stuck-job";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +54,8 @@ interface View {
   renders: Record<string, string>;
   /** Rounds of directions used and free (E24), while choosing. */
   quota: DirectionsQuota | null;
+  /** The latest job, while the system works: a stuck one offers "Tentar de novo" (E34). */
+  job: JobState | null;
 }
 
 // Where an unpaid site waits on the person, they may discard it (E24).
@@ -71,17 +76,19 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         return;
       }
       const choosing = site.status === "awaiting_direction_choice";
-      const [events, directions, renders, quota] = await Promise.all([
+      const [events, directions, renders, quota, job] = await Promise.all([
         loadEvents(supabase, siteId),
         choosing ? loadDirections(supabase, siteId, site.round) : Promise.resolve([]),
         choosing ? renderUrls(siteId) : Promise.resolve({}),
         choosing ? loadDirectionsQuota(supabase, siteId) : Promise.resolve(null),
+        infoFor(site.status).busy ? loadLatestJob(supabase, siteId) : Promise.resolve(null),
       ]);
       setView((current) => ({
         site,
         events,
         directions,
         quota,
+        job,
         // Keep addresses already signed, so the images do not flash on each refresh.
         renders: { ...(typeof current === "object" && current ? current.renders : {}), ...renders },
       }));
@@ -130,7 +137,8 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
   if (view === "failed")
     return <Notice title="Não foi possível abrir agora" text="Tente de novo em instantes." />;
 
-  const { site, directions, events, renders, quota } = view;
+  const { site, directions, events, renders, quota, job } = view;
+  const stuck = infoFor(site.status).busy && isStuck(job);
   // The next round opens later (E24): the button says why instead of failing on click.
   const waitUntil =
     quota?.availableAt && new Date(quota.availableAt) > new Date()
@@ -168,6 +176,40 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         <p role="alert" className="text-[0.9375rem] font-semibold text-destructive">
           {error}
         </p>
+      )}
+
+      {stuck && job && (
+        // E34: a job that waited in the queue too long (the queue was down or not set up).
+        <section
+          aria-labelledby="demorando"
+          className="grid gap-3 rounded-xl border border-pollen/60 bg-pollen/10 p-5"
+        >
+          <h2 id="demorando" className="text-[1.0625rem] font-semibold">
+            Isto está demorando mais que o normal
+          </h2>
+          <p className="text-[0.9375rem] text-ink-soft">
+            Suas respostas estão guardadas. Peça para começar de novo; se ainda não der, a equipe já
+            está vendo e avisamos aqui.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="justify-self-start"
+            aria-busy={acting === "retry" || undefined}
+            disabled={acting !== null}
+            onClick={() =>
+              act("retry", async () => {
+                if (!(await retryJob(job.id))) {
+                  throw new SiteActionError(
+                    "Ainda não foi possível começar. Tente de novo mais tarde.",
+                  );
+                }
+              })
+            }
+          >
+            {acting === "retry" ? "Tentando…" : "Tentar de novo"}
+          </Button>
+        </section>
       )}
 
       {site.status === "draft" && (

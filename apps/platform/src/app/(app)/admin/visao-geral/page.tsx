@@ -44,20 +44,32 @@ const periods = [
   ["all", "Sempre"],
 ] as const;
 
+/** E34: whether generation is set up, and the jobs waiting past the limit. */
+interface Generation {
+  enforced: boolean;
+  ready: boolean;
+  missing: string[];
+  stuckJobs: number;
+  stuckMinutes: number;
+}
+
 export default function OverviewPage() {
-  const [data, setData] = useState<{ overview: Overview; budget: AiBudget } | null>(null);
+  const [data, setData] = useState<{
+    overview: Overview;
+    budget: AiBudget;
+    generation?: Generation;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<(typeof periods)[number][0]>("30");
   useEffect(() => {
     document.title = "Visão geral · BrotaSites";
-    adminGet<{ overview: Overview; budget: AiBudget }>("/api/admin/overview").then(
-      setData,
-      (caught: Error) => setError(caught.message),
-    );
+    adminGet<{ overview: Overview; budget: AiBudget; generation?: Generation }>(
+      "/api/admin/overview",
+    ).then(setData, (caught: Error) => setError(caught.message));
   }, []);
   if (error) return <Notice title="Não foi possível abrir a visão geral" text={error} />;
   if (!data) return <Loading />;
-  const { overview, budget } = data;
+  const { overview, budget, generation } = data;
   const now = overview[period];
   const funnel = now.funnel;
   const spent = Number(overview.today.spentUsd);
@@ -66,6 +78,7 @@ export default function OverviewPage() {
 
   return (
     <div className="grid gap-10">
+      {generation && <GenerationNotice generation={generation} />}
       <header className="grid gap-4">
         <h1 className="font-display text-[2.5rem] leading-[1.05]">Visão geral</h1>
         <div role="tablist" aria-label="Período" className="flex flex-wrap gap-2">
@@ -170,6 +183,49 @@ export default function OverviewPage() {
           </ul>
         )}
       </PanelSection>
+    </div>
+  );
+}
+
+/**
+ * E34: the creation of sites is closed until generation is set up; the names of what is missing
+ * (never values) and where to read the steps. Jobs waiting past the limit, when there are any.
+ */
+function GenerationNotice({ generation }: { generation: Generation }) {
+  const closed = generation.enforced && !generation.ready;
+  if (!closed && generation.stuckJobs === 0) return null;
+  return (
+    <div
+      role="status"
+      className="grid gap-2 rounded-lg border border-pollen/60 bg-pollen/10 p-4 text-[0.9375rem]"
+    >
+      {closed && (
+        <>
+          <p className="font-semibold">
+            A criação de sites está fechada: a geração ainda não está configurada.
+          </p>
+          <p>
+            Falta na Vercel:{" "}
+            {generation.missing.map((name, index) => (
+              <span key={name}>
+                {index > 0 && ", "}
+                <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[0.8125rem]">
+                  {name}
+                </code>
+              </span>
+            ))}
+            . Os passos estão em{" "}
+            <code className="font-mono text-[0.8125rem]">docs/launch-status.md</code>.
+          </p>
+        </>
+      )}
+      {generation.stuckJobs > 0 && (
+        <p className="font-semibold">
+          {generation.stuckJobs === 1
+            ? `1 geração está parada na fila há mais de ${generation.stuckMinutes} minutos.`
+            : `${generation.stuckJobs} gerações estão paradas na fila há mais de ${generation.stuckMinutes} minutos.`}
+        </p>
+      )}
     </div>
   );
 }
