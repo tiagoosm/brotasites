@@ -102,3 +102,38 @@ test("hours: the same time to open and close is flagged next to the day; past mi
   await expect(friday.getByText("Fecha depois da meia-noite.")).toBeVisible();
   await expect(friday.getByText(/Abre e fecha no mesmo horário/)).toHaveCount(0);
 });
+
+test("social names: a pasted link becomes the name; typing keeps every letter (E38)", async ({
+  page,
+  context,
+}) => {
+  const state = await withSite(context, {
+    draft: { business: padaria.business, content: padaria.content },
+    completed: ["negocio", "marca", "conteudo", "secoes"],
+  });
+  await page.goto(`/criar/${SITE}/contato`);
+  const instagram = page.getByLabel("Instagram");
+  await instagram.fill("https://www.instagram.com/padariadoze/?igsh=MXZ5bGd2");
+  await expect(instagram).toHaveValue("padariadoze");
+  await expect
+    .poll(() => (state.saved.at(-1)?.draft.contact as { instagram?: string })?.instagram)
+    .toBe("padariadoze");
+
+  // Typed slowly, nothing jumps; the message waits for leaving the field and says what is wrong.
+  await instagram.fill("");
+  await instagram.pressSequentially("padaria doze");
+  await expect(instagram).toHaveValue("padaria doze");
+  await expect(page.getByText("O nome de usuário do Instagram não tem espaços.")).toHaveCount(0);
+  await instagram.blur();
+  await expect(page.getByText("O nome de usuário do Instagram não tem espaços.")).toBeVisible();
+  await expect(page.getByText(/sem @/)).toHaveCount(0);
+
+  const facebook = page.getByLabel("Facebook");
+  await facebook.fill("https://www.facebook.com/profile.php?id=100012345");
+  await facebook.blur();
+  await expect(
+    page.getByText(
+      "Perfis do Facebook com número (profile.php) não são aceitos: use o nome da página.",
+    ),
+  ).toBeVisible();
+});

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { hexColorSchema } from "../primitives.js";
 import { isReservedSubdomain } from "./reserved.js";
+import { SOCIAL_RULES, socialProblem } from "./social.js";
 
 // Building blocks of schema 1.2. Error messages are user-facing, so they are written in pt-BR.
 
@@ -127,14 +128,15 @@ export const states = [
 export const stateSchema = z.enum(states, "Escolha o estado (UF).");
 
 /** Username only: the generator builds the address. */
-export const instagramSchema = z
-  .string()
-  .regex(/^[A-Za-z0-9._]{1,30}$/, "Informe só o nome de usuário do Instagram, sem @.");
+export const instagramSchema = z.string().regex(SOCIAL_RULES.instagram, {
+  // The same rule as before, with a message that says what is wrong (E38, social.ts).
+  error: (issue) => socialProblem(String(issue.input), "instagram") ?? undefined,
+});
 
 /** Page name only (facebook.com/<page>): the generator builds the address. */
-export const facebookSchema = z
-  .string()
-  .regex(/^[A-Za-z0-9.-]{3,50}$/, "Informe só o nome da página do Facebook.");
+export const facebookSchema = z.string().regex(SOCIAL_RULES.facebook, {
+  error: (issue) => socialProblem(String(issue.input), "facebook") ?? undefined,
+});
 
 /** 24-hour "HH:MM". */
 export const timeSchema = z

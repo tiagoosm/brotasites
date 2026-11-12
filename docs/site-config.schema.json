@@ -390,7 +390,7 @@
             },
             "facebook": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9.-]{3,50}$"
+              "pattern": "^(?!profile\\.php$)[A-Za-z0-9.-]{3,50}$"
             }
           },
           "additionalProperties": false
