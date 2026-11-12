@@ -140,7 +140,7 @@ function DayCard({
     <li
       aria-labelledby={nameId}
       className={cn(
-        "grid gap-3 rounded-lg border p-4",
+        "grid gap-3 rounded-lg border p-3 sm:p-4",
         open ? "border-border bg-paper" : "border-dashed border-border bg-transparent",
       )}
     >
@@ -175,7 +175,7 @@ function DayCard({
                 key={i}
                 className="grid gap-1.5"
               >
-                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.75rem] items-end gap-3">
+                <div className="grid grid-cols-2 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.75rem]">
                   <TimeField
                     label={i === 0 ? "Abre" : "Abre de novo"}
                     context={name}
@@ -194,17 +194,19 @@ function DayCard({
                       setIntervals(intervals.map((v, j) => (j === i ? { ...v, close: time } : v)))
                     }
                   />
+                  {/* On a phone the two times take the whole row; removing goes under them. */}
                   {intervals.length > 1 ? (
                     <button
                       type="button"
                       aria-label={`Remover o horário ${i + 1} de ${name.toLowerCase()}`}
                       onClick={() => setIntervals(intervals.filter((_, j) => j !== i))}
-                      className="inline-flex size-11 items-center justify-center rounded-lg text-ink-soft hover:bg-table hover:text-ink"
+                      className="col-span-2 inline-flex h-11 items-center justify-self-start gap-1.5 rounded-lg px-2 text-sm text-ink-soft hover:bg-table hover:text-ink sm:col-span-1 sm:size-11 sm:justify-center sm:px-0"
                     >
                       <X aria-hidden="true" className="size-4" />
+                      <span className="sm:sr-only">Remover este horário</span>
                     </button>
                   ) : (
-                    <span aria-hidden="true" />
+                    <span aria-hidden="true" className="hidden sm:block" />
                   )}
                 </div>
                 {check.same.includes(i) && (
@@ -229,7 +231,7 @@ function DayCard({
             {intervals.length < 3 && (
               <button
                 type="button"
-                className="touch-target inline-flex items-center gap-1.5 text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
+                className="touch-target inline-flex items-center gap-1.5 text-left text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
                 onClick={() => setIntervals([...intervals, { open: "14:00", close: "18:00" }])}
               >
                 <Plus aria-hidden="true" className="size-4" />
@@ -304,7 +306,7 @@ function TimeField({
         aria-invalid={invalid || undefined}
         onChange={(event) => onChange(event.target.value)}
         className={cn(
-          "h-12 w-full min-w-0 rounded-lg border bg-card px-3 text-base text-ink outline-none focus-visible:border-leaf focus-visible:ring-4 focus-visible:ring-leaf/15",
+          "h-12 w-full min-w-0 rounded-lg border bg-card px-2 text-base sm:px-3 text-ink outline-none focus-visible:border-leaf focus-visible:ring-4 focus-visible:ring-leaf/15",
           invalid ? "border-destructive" : "border-input",
         )}
       />
