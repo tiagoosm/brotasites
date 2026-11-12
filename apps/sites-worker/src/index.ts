@@ -2,9 +2,11 @@
 //
 // - Domain mode (production): <subdomain>.<BASE_DOMAIN> serves that client's site, and a
 //   client's own domain serves the site KV maps it to (domain:<host>).
-// - Path mode (testing, before the domain exists): on the Worker's free *.workers.dev
-//   address, /<subdomain>/ serves that site. The page sets a cookie with the site it
-//   belongs to, so files the site asks for by absolute path (/_astro/...) are found too.
+// - Path mode (testing only): on a *.workers.dev host, /<subdomain>/ serves that site. The page
+//   sets a cookie with the site it belongs to, so files the site asks for by absolute path
+//   (/_astro/...) are found too. Production has workers.dev turned off (wrangler.jsonc, E35c):
+//   the Worker answers only on its brotasites.com routes. The mode stays for the tests and for
+//   `wrangler dev`, with a Host header ending in .workers.dev.
 //
 // Layout in the bucket (written by the generation jobs, packages/generator/src/r2.ts):
 //   sites/<subdomain>/<deploy id>/...    the files of a deploy

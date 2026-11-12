@@ -22,7 +22,12 @@
   "main": "src/index.ts",
   "account_id": "fe5c7c59048cdbc3bccc2e1da2315135",
   "compatibility_date": "2026-10-01",
-  "workers_dev": true,
+  // Only the routes below, never <name>.<subdomain>.workers.dev (E35c). With true, wrangler deploy
+  // needs the account's workers.dev subdomain and, unattended on GitHub, stopped asking to
+  // register one. The account's subdomain is shared with its other Workers and must not change.
+  "workers_dev": false,
+  // No per-version preview URLs either (they also live on workers.dev).
+  "preview_urls": false,
   "r2_buckets": [{ "binding": "SITES", "bucket_name": "brotasites-sites" }],
   // Site pointers and states, custom domains and preview tokens: the brotasites-hosting namespace.
   "kv_namespaces": [{ "binding": "HOSTING", "id": "73cce7141d614ffdb33f7ed100510900" }],

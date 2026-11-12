@@ -450,6 +450,17 @@ export const VARIABLES = [
     step: "cloudflare",
   },
   {
+    name: "WORKERS_DEV",
+    target: "worker",
+    need: "required",
+    secret: false,
+    expected: "false in wrangler.jsonc: the Worker answers only on its routes (E35c)",
+    without:
+      "wrangler deploy needs the account's workers.dev subdomain and, unattended, stops asking to register one.",
+    step: "cloudflare",
+    mustBe: "false",
+  },
+  {
     name: "ACCOUNT_ID",
     target: "worker",
     need: "required",
@@ -644,6 +655,8 @@ export function workerEnvFromWrangler(text) {
     PLATFORM_URL: config.vars?.PLATFORM_URL,
     KV_NAMESPACE_ID: kv?.id,
     ACCOUNT_ID: config.account_id,
+    // Absent means wrangler's default (true when there are no routes): written out, always.
+    WORKERS_DEV: config.workers_dev === undefined ? undefined : String(config.workers_dev),
     routes: Array.isArray(config.routes) ? config.routes.length : 0,
   };
 }

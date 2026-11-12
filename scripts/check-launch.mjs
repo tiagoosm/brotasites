@@ -70,7 +70,9 @@ for (const target of targets) {
     // first is listed to check by hand, the second under --target github.
     source = { ...wrangler };
     if (wrangler.routes === 0) {
-      console.log("worker: wrangler.jsonc não tem rotas; o Worker só responderia em workers.dev.");
+      console.log(
+        "worker: wrangler.jsonc não tem rotas; com workers_dev desligado, o Worker não responderia em lugar nenhum.",
+      );
     }
   }
   const result = checkTarget(target, source);
