@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getPlatformProxy, type Unstable_DevWorker, unstable_dev } from "wrangler";
+import { writeLocalConfig } from "../../dev/local-config";
 import { type Env, exportSignature } from "../../src/index";
 
 // The Worker as it runs on Cloudflare, locally: wrangler bundles it and runs it in Miniflare
@@ -15,9 +16,11 @@ let worker: Unstable_DevWorker;
 
 beforeAll(async () => {
   persist = await mkdtemp(join(tmpdir(), "brotasites-worker-"));
+  // wrangler.jsonc without its production routes (dev/local-config.ts explains why).
+  const config = writeLocalConfig();
   // wrangler dev keeps its state in <persistTo>/v3; the proxy is pointed at that folder.
   const proxy = await getPlatformProxy<Env>({
-    configPath: "wrangler.jsonc",
+    configPath: config,
     persist: { path: join(persist, "v3") },
   });
   const { SITES, HOSTING } = proxy.env;
@@ -53,7 +56,7 @@ beforeAll(async () => {
   await HOSTING.put("domain:www.lojasuspensa.com.br", "loja");
   await proxy.dispose();
   worker = await unstable_dev("src/index.ts", {
-    config: "wrangler.jsonc",
+    config,
     persistTo: persist,
     // wrangler.jsonc holds the production domain (E34); locally the sites live on sites.localhost.
     vars: {

@@ -1,13 +1,15 @@
-# Launch status (E34)
+# Launch status (E34, E35)
 
-What production needs, what the owner reported as done, and the order of what is left. The variable tables are generated from `scripts/launch/requirements.mjs`, the same list `pnpm check:launch` uses; a test (`scripts/launch/requirements.test.mjs`) fails when the code reads a variable that list does not have. If a table here and that file disagree, the file wins.
+What production needs, what the owner reported as done, and the order of what is left. The variable tables are generated from `scripts/launch/requirements.mjs`, the same list `pnpm check:launch` uses; a test (`scripts/launch/requirements.test.mjs`) fails when the code reads a variable that list does not have, or when the deploy workflows use a GitHub secret or variable it does not list. If a table here and that file disagree, the file wins.
 
-No value here is a secret. Secrets go only in Vercel, Trigger.dev or `wrangler secret`, never in the repository.
+No value here is a secret. Secrets go only in Vercel, Trigger.dev, GitHub's `production` environment or the Cloudflare dashboard, never in the repository. The Cloudflare account id and the KV namespace id in `apps/sites-worker/wrangler.jsonc` are identifiers, not secrets.
 
 ## How to check
 
-- `pnpm check:launch --target vercel --env <file>`: compares a file from `vercel env pull --environment=production <file>` with what the platform needs. Prints only names and states (presente, faltando, vazia, exemplo, valor errado), never values. Delete the file afterwards.
-- `pnpm check:launch --target trigger --env <file>` and `--target worker`: the same for the jobs and the Worker (the Worker reads `apps/sites-worker/wrangler.jsonc` plus `EXPORT_SECRET` and `CLOUDFLARE_API_TOKEN` from the shell).
+- `pnpm check:launch --target vercel --env <file>`: compares a file from `vercel env pull --environment=production <file>` with what the platform needs. Prints only names and states (presente, faltando, vazia, exemplo, valor errado, conferir), never values. Delete the file afterwards.
+- `pnpm check:launch --target trigger --env <file>`: the same for the jobs.
+- `pnpm check:launch --target worker`: reads `apps/sites-worker/wrangler.jsonc` (domains, account id, KV id; the zeros are refused). `EXPORT_SECRET` shows as "conferir": it lives in the Cloudflare dashboard, where no script reads it.
+- `pnpm check:launch --target github`: lists the secrets and the variable GitHub needs for the deploy workflows, and where they go. It reads nothing (GitHub never shows a secret back).
 - `pnpm check:launch --online`: fetches the platform, the admin host and the sites domain and says what answers.
 - The team panel (`/admin/visao-geral`) says whether site creation is open and, when it is not, which Vercel variables are missing (names only). It also counts generations stuck in the queue for more than 15 minutes.
 - Exit code 1 means something blocking is missing; the last line says the next action.
@@ -16,34 +18,42 @@ No value here is a secret. Secrets go only in Vercel, Trigger.dev or `wrangler s
 
 | Service | Used for | State (informado pelo dono) | What is left |
 |---|---|---|---|
-| Registro.br | `brotasites.com.br` and its DNS | Done | Register `brotasites.com` (the sites' domain) if not yet |
-| Vercel | The platform (`apps/platform`) | `brotasites.com.br` and the `admin` host working | Generation variables (step 5); see the note below on the variables reported |
-| Supabase | Database, accounts, storage | Migrations applied up to `20261111000000_team_second_factor_switch`; 1 admin; second factor off (E33) | `20261105000000_site_domains` (only with E25); turn the second factor back on before selling |
+| Registro.br | `brotasites.com.br` and its DNS | Done | — |
+| Vercel | The platform (`apps/platform`) | `brotasites.com.br` and the `admin` host working; Production variables checked | `TRIGGER_SECRET_KEY` and one redeploy (step 5), on purpose last |
+| Supabase | Database, accounts, storage | Migrations applied up to `20261111000000_team_second_factor_switch`; 1 admin; second factor off (E33); CAPTCHA on | `20261105000000_site_domains` (only with E25); turn the second factor back on before selling |
 | Resend | SMTP for the account emails | Done; sign-up tested | — |
-| Cloudflare R2 | Previews and published sites | Not started | Step 2 |
-| Cloudflare Workers KV | Site pointers and status | Not started | Step 2 |
-| Cloudflare Worker (`apps/sites-worker`) | Serves `*.brotasites.com` | Not started | Step 2 |
-| Anthropic | The AI (art director, copy, reviewer) | Not started | Step 3 |
-| Trigger.dev | The job queue | Not started | Step 4 |
-| Turnstile | CAPTCHA on sign-in and sign-up | Not started (`NEXT_PUBLIC_CAPTCHA_MODE=off` assumed) | Before real clients |
+| Cloudflare zone `brotasites.com` | The sites' domain | Registered, zone active | Proxied DNS records (step 3) |
+| Cloudflare R2 | Previews and published sites | Bucket `brotasites-sites` and its token | — |
+| Cloudflare Workers KV | Site pointers and status | Namespace `brotasites-hosting` (id in `wrangler.jsonc`) | — |
+| Cloudflare Worker (`apps/sites-worker`) | Serves `*.brotasites.com` | Not published | `EXPORT_SECRET` (step 2), then "Deploy Worker" (step 4) |
+| Anthropic | The AI (art director, copy, reviewer) | Key in Trigger.dev | — |
+| Trigger.dev | The job queue | Production variables set; tasks not published | "Deploy jobs" (step 4) |
+| GitHub | Publishing the Worker and the jobs (E35) | Workflows in the repository; secrets not set | Step 1 |
+| Turnstile | CAPTCHA on sign-in and sign-up | On in Supabase (reported) | Check that Vercel has the site key and no `NEXT_PUBLIC_CAPTCHA_MODE=off` |
 | Asaas | Payments | Not started (out of scope) | Before charging |
 | Cloudflare for SaaS | Clients' own domains (E25) | Not started | Optional, after launch |
 
-**Note on the reported Vercel variables.** The owner reported only `NEXT_PUBLIC_PLATFORM_URL` and `NEXT_PUBLIC_ADMIN_HOST` in Vercel's Production. That cannot be the whole list while sign-up works: sign-up needs `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` and `NEXT_PUBLIC_CAPTCHA_MODE=off` (or a Turnstile key), and the production build stops without `NEXT_PUBLIC_BASE_DOMAIN` (E28). They may be set on "All Environments" or as shared variables. Check with `pnpm check:launch --target vercel --env <file>` before step 5.
-
 ## Order of the remaining steps
 
-Em português, na ordem em que destravam a geração. `pnpm check:launch` diz qual é o próximo.
+Em português, na ordem em que destravam a geração. Nada disso precisa de máquina com o projeto instalado: tudo é feito nos painéis e no GitHub.
 
-1. **Vercel, básico.** Conferir com `pnpm check:launch --target vercel` que as variáveis básicas estão lá (Supabase, endereços, `CRON_SECRET`, `NEXT_PUBLIC_CAPTCHA_MODE=off`). Se faltar alguma, colocar e fazer Redeploy.
-2. **Cloudflare.** Registrar `brotasites.com` e criar a zona; criar o bucket R2 `brotasites-sites` e o namespace KV; criar os tokens (R2 só nesse bucket, KV só nesse namespace); colocar o id do KV em `apps/sites-worker/wrangler.jsonc`; `wrangler secret put EXPORT_SECRET`; publicar o Worker em workers.dev; depois DNS da zona e as rotas. Passo a passo em `docs/owner-steps.md` e no cabeçalho do `wrangler.jsonc`.
-3. **Anthropic.** Criar a organização no Claude Console, pôr crédito e limite mensal de gasto, criar a chave. A chave vai só no Trigger.dev, nunca na Vercel.
-4. **Trigger.dev.** Criar o projeto, colocar as variáveis de produção dos jobs (tabela "Trigger.dev" abaixo, com `AI_MODE=live`), conferir com `pnpm check:launch --target trigger --env <arquivo>` e rodar `pnpm --filter @brotasites/jobs exec trigger deploy`.
-5. **Vercel, geração.** Colocar `TRIGGER_SECRET_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_KV_NAMESPACE_ID`, `CLOUDFLARE_KV_API_TOKEN`, `NEXT_PUBLIC_PREVIEW_ORIGIN` e `EXPORT_SECRET`, e fazer Redeploy. Só então a criação de sites abre (até lá, `/criar` mostra "Estamos preparando a criação de sites").
-6. **Conferir.** `pnpm check:launch --online`; abrir `/admin/visao-geral` (sem aviso de geração fechada); criar um site de teste do começo ao fim e aprovar na fila da equipe.
-7. **Antes de clientes reais.** Turnstile (e apagar `NEXT_PUBLIC_CAPTCHA_MODE`); religar a verificação em duas etapas da equipe (`update public.team_settings set require_second_factor = true;`); revisão jurídica.
+1. **Segredos no GitHub.** Em Settings > Environments, criar o ambiente `production` (opcional, mas recomendado: em "Required reviewers", colocar você mesmo, para cada publicação pedir sua aprovação). Nele, em Secrets: `CLOUDFLARE_API_TOKEN` (no Cloudflare, My Profile > API Tokens > Create Token > modelo "Edit Cloudflare Workers", com Account Resources só a sua conta e Zone Resources só `brotasites.com`), `CLOUDFLARE_ACCOUNT_ID` e `TRIGGER_ACCESS_TOKEN` (no Trigger.dev, o projeto > API keys > ambiente Production > preset "Deploy only"). Em Variables: `TRIGGER_PROJECT_REF` (o `proj_…` do projeto). `pnpm check:launch --target github` mostra a mesma lista.
+2. **DNS da zona `brotasites.com`.** Dois registros **proxied** (nuvem laranja): `A` com nome `*` e `A` com nome `brotasites.com` (a raiz), ambos com o endereço `192.0.2.1`. É um endereço reservado para documentação: o Cloudflare responde antes de chegar a ele, e é o que a própria documentação do Cloudflare indica para registros que só existem para ligar o proxy (um `AAAA` para `100::` também serve). Sem esses registros, as rotas do Worker existem mas nenhum navegador chega a elas.
+3. **Publicar.** No GitHub: Actions > "Deploy Worker" > Run workflow (branch `main`, digite `publicar`). Depois Actions > "Deploy jobs" > Run workflow, do mesmo jeito.
+4. **`EXPORT_SECRET` no Worker, uma vez só.** Ele não passa pelo GitHub, e o painel só aceita o segredo depois que o Worker existe (passo 3). No Cloudflare: Workers & Pages > `brotasites-sites` > Settings > Variables and Secrets > Add, tipo Secret, nome `EXPORT_SECRET`, o mesmo valor da Vercel (se ainda não existir na Vercel, gere um valor longo e aleatório e use o mesmo nos dois lugares). Publicações seguintes pelo GitHub mantêm o segredo. Confira com `pnpm check:launch --online`, ou abrindo `https://previa.brotasites.com/` (deve responder o 404 do Worker) e `https://brotasites.com/` (deve levar à plataforma).
+5. **Vercel, por último.** Colocar `TRIGGER_SECRET_KEY` (a chave secreta de produção do projeto no Trigger.dev, `tr_prod_…`, tipo Sensitive) e conferir que as variáveis de geração estão lá (`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_KV_NAMESPACE_ID`, `CLOUDFLARE_KV_API_TOKEN`, `NEXT_PUBLIC_PREVIEW_ORIGIN`, `EXPORT_SECRET`). Fazer **um** Redeploy. A criação de sites abre.
+6. **Primeira geração simulada, depois real.** Com `AI_MODE=simulated` no Trigger.dev, criar um site de teste e ver as 3 direções e o site pronto (sem gastar com a IA). Depois trocar para `AI_MODE=live` no Trigger.dev (as variáveis do Trigger.dev entram em cada execução nova; se as tarefas continuarem simuladas, rode "Deploy jobs" de novo) e criar outro. `/admin/visao-geral` não deve mostrar aviso de geração fechada nem gerações paradas.
+7. **Antes de clientes reais.** Conferir o Turnstile na Vercel (chave do site, sem `NEXT_PUBLIC_CAPTCHA_MODE=off`); religar a verificação em duas etapas da equipe (`update public.team_settings set require_second_factor = true;`); revisão jurídica.
 8. **Antes de cobrar.** Asaas (fora do escopo agora; até lá `PAYMENTS_MODE` vazio ou `stub` só para teste).
 9. **Depois do lançamento, opcional.** Domínio próprio do cliente (E25): migração `site_domains` e Cloudflare for SaaS.
+
+## Como reverter
+
+- **Parar de publicar pelo GitHub:** Actions > "Deploy Worker" (ou "Deploy jobs") > botão "…" > Disable workflow. Nada mais roda; os workflows já não rodam sozinhos, só com o clique e a palavra `publicar`.
+- **Revogar o acesso:** no Cloudflare, My Profile > API Tokens > o token do GitHub > Delete (ou Roll, para trocar). No Trigger.dev, o projeto > API keys > a chave "Deploy only" > Revoke. Depois apague os segredos no GitHub (Settings > Environments > production). Revogar não tira do ar o que já foi publicado.
+- **Voltar o Worker a uma versão anterior:** no Cloudflare, Workers & Pages > `brotasites-sites` > Deployments > a versão anterior > Rollback. Os sites dos clientes não mudam: os arquivos e os ponteiros ficam no R2 e no KV.
+- **Tirar o Worker do ar:** apagar os dois registros DNS do passo 3 (as rotas param de receber visitas) ou, no Worker, Settings > Domains & Routes > remover as rotas.
+- **Voltar as tarefas:** no Trigger.dev, o projeto > Deployments > a versão anterior > Promote. Para parar a geração na hora, tire `TRIGGER_SECRET_KEY` da Vercel e faça um Redeploy: a plataforma volta a mostrar "Estamos preparando a criação de sites" e nada fica preso.
 
 ## Variables
 
@@ -109,16 +119,33 @@ Em português, na ordem em que destravam a geração. `pnpm check:launch` diz qu
 | `BASE_DOMAIN` | sites Worker (`apps/sites-worker`) | `apps/sites-worker/wrangler.jsonc` | required | The Worker answers for the wrong domain. | brotasites.com (wrangler.jsonc vars) |
 | `PLATFORM_URL` | sites Worker (`apps/sites-worker`) | `apps/sites-worker/wrangler.jsonc` | required | The bare sites domain redirects nowhere. | https://brotasites.com.br (wrangler.jsonc vars) |
 | `KV_NAMESPACE_ID` | sites Worker (`apps/sites-worker`) | `apps/sites-worker/wrangler.jsonc` | required | wrangler deploy fails. | the HOSTING namespace id in wrangler.jsonc (not zeros) |
-| `EXPORT_SECRET` | sites Worker (`apps/sites-worker`) | `wrangler secret put` | generation | "Baixar o site" links are refused. | secret (never in the repo) |
-| `CLOUDFLARE_API_TOKEN` | sites Worker (`apps/sites-worker`) | your shell, when deploying | required | wrangler deploy asks you to sign in instead. | secret (never in the repo) |
+| `ACCOUNT_ID` | sites Worker (`apps/sites-worker`) | `apps/sites-worker/wrangler.jsonc` | required | wrangler deploy asks which account to use. | the Cloudflare account id in wrangler.jsonc (an identifier, not a secret) |
+| `EXPORT_SECRET` | sites Worker (`apps/sites-worker`) | Cloudflare dashboard, the Worker's Variables and Secrets (type Secret) | generation | "Baixar o site" links are refused. | secret (never in the repo) |
+
+### github
+
+Read by the deploy workflows only (`.github/workflows/deploy-worker.yml`, `deploy-jobs.yml`), in the repository's `production` environment (Settings > Environments > production). No script reads them; `pnpm check:launch --target github` lists them.
+
+| Name | Kind | Workflow | What it is |
+|---|---|---|---|
+| `CLOUDFLARE_API_TOKEN` | secret | Deploy Worker | Cloudflare API token from the "Edit Cloudflare Workers" template, limited to the account and to the `brotasites.com` zone. |
+| `CLOUDFLARE_ACCOUNT_ID` | secret | Deploy Worker | The Cloudflare account id (the same as in `wrangler.jsonc`; as a secret, GitHub masks it in the logs). |
+| `TRIGGER_ACCESS_TOKEN` | secret | Deploy jobs | A Trigger.dev API key of the project's Production environment with the "Deploy only" preset (`tr_prod_…`). A personal access token (`tr_pat_…`) also works, but ties deploys to one person. |
+| `TRIGGER_PROJECT_REF` | variable | Deploy jobs | The Trigger.dev project ref (`proj_…`). Not a secret: a variable, so it shows in the logs. |
 
 ## Divergences found (2026-11-12)
 
 Between what the code reads and what `.env.example` and `docs/owner-steps.md` said before this step:
 
-- **Read by the code, missing from `docs/owner-steps.md`:** `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (Vercel, required), the Worker's KV id in `wrangler.jsonc` and `CLOUDFLARE_API_TOKEN` (needed by `wrangler deploy`). Added in this step.
+- **Read by the code, missing from `docs/owner-steps.md`:** `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (Vercel, required), the Worker's KV id in `wrangler.jsonc` and `CLOUDFLARE_API_TOKEN` (needed by `wrangler deploy`). Added in E34; since E35 the token is a GitHub secret.
 - **Not in `.env.example`, by design:** the Worker's `BASE_DOMAIN`, `PLATFORM_URL` and KV id live in `apps/sites-worker/wrangler.jsonc`, not in an env file.
-- **In `.env.example`, not production settings:** `LOCAL_PREVIEWS_DIR` and `LOCAL_PREVIEWS_PORT` (local runner only) and `TRIGGER_PROJECT_REF` (read by `trigger.config.ts` when deploying, not at run time).
+- **In `.env.example`, not production settings:** `LOCAL_PREVIEWS_DIR` and `LOCAL_PREVIEWS_PORT` (local runner only) and `TRIGGER_PROJECT_REF` (read by `trigger.config.ts` when deploying, not at run time; since E35 a GitHub variable).
 - **In `docs/owner-steps.md`, not environment variables:** `TRIGGER_PROJECT_REF` (a deploy-time setting, see above) and `TERMS_VERSION` (a constant in `src/lib/auth/schemas.ts`, correctly described there as code). Nothing to set in production for either.
 - **Owner-reported Vercel variables:** see the note under "Services".
 - **Where generation is checked:** the platform only sees Vercel's variables. `generationReady()` checks those; the AI and R2 variables live on Trigger.dev and are checked only by `pnpm check:launch --target trigger`. If Trigger.dev is misconfigured, jobs fail there; the stuck-job notice (15 minutes) and the client's "Tentar de novo" cover that case.
+
+### Changed in E35 (2026-11-12)
+
+- The Worker's `EXPORT_SECRET` moved from `wrangler secret put` to the Cloudflare dashboard, and `CLOUDFLARE_API_TOKEN` from the owner's shell to GitHub: nothing is deployed from a personal machine.
+- `wrangler.jsonc` now has the real account id, the real KV id and the routes. Because `wrangler dev` rewrites every request to the first route's host, `pnpm --filter @brotasites/sites-worker dev` and the Miniflare test run a copy without the routes (`apps/sites-worker/dev/local-config.ts`).
+- The owner reported the CAPTCHA on in Supabase. If `NEXT_PUBLIC_CAPTCHA_MODE=off` is still in Vercel while Supabase requires a CAPTCHA token, sign-in and sign-up fail (Supabase asks for a token the page never sends). Check it with `pnpm check:launch --target vercel --env <file>`: the Turnstile key must be there and the mode empty.

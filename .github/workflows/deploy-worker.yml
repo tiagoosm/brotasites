@@ -1,0 +1,70 @@
+# Publishes the sites Worker (apps/sites-worker) to Cloudflare (E35). Manual only: the owner
+# clicks "Run workflow" on main and types "publicar". Nothing here runs on push or pull request.
+# Secrets live in the repository's "production" environment (which the owner can protect with a
+# required reviewer); EXPORT_SECRET never passes through here: it is set once in the Cloudflare
+# dashboard. See docs/owner-steps.md, "Publishing from GitHub", and "How to revert".
+name: Deploy Worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmacao:
+        description: 'Digite "publicar" para publicar o Worker dos sites'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    name: Check the request
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      # The typed value goes through env, never into the script's text.
+      - name: Only main, only with the confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmacao }}
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::Publique só a partir da main (pedido em $REF)."
+            exit 1
+          fi
+          if [ "$CONFIRMATION" != "publicar" ]; then
+            echo "::error::Confirmação ausente: digite publicar."
+            exit 1
+          fi
+
+  deploy:
+    name: Deploy the Worker
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable pnpm
+        run: corepack enable pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # wrangler reads the token and the account from the environment; both are masked in logs.
+      - name: Deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm --filter @brotasites/sites-worker deploy
