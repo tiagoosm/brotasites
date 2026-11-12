@@ -218,8 +218,13 @@ export async function checkInBrowser(
   const server = await serveDir(distDir, options.base ?? "/");
   const own = !options.browser;
   const executablePath = options.executablePath ?? process.env.PW_CHROMIUM;
+  // In a container /dev/shm is small (E37): Chromium uses /tmp instead. The sandbox stays on.
   const browser =
-    options.browser ?? (await chromium.launch(executablePath ? { executablePath } : {}));
+    options.browser ??
+    (await chromium.launch({
+      args: ["--disable-dev-shm-usage"],
+      ...(executablePath ? { executablePath } : {}),
+    }));
   const findings: Finding[] = [];
   const screenshots: Screenshot[] = [];
   const origin = new URL(server.url).origin;

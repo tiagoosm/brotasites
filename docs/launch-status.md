@@ -34,7 +34,18 @@ No value here is a secret. Secrets go only in Vercel, Trigger.dev, GitHub's `pro
 | Asaas | Payments | Not started (out of scope) | Before charging |
 | Cloudflare for SaaS | Clients' own domains (E25) | Not started | Optional, after launch |
 
+### Primeira execução real: falta de memória (2026-11-12)
+
+The first real `site-job` (directions) ran on Trigger.dev's default machine (`small-1x`, 0.5 GB) and was killed at 56 s with `TASK_PROCESS_OOM_KILLED`. The job stayed `running` and the site `generating_directions`, with no directions saved.
+
+Since E37:
+- `site-job` runs on `medium-2x` (4 GB), with one retry on `large-1x` for out-of-memory only.
+- A job left `running` for more than 45 minutes is offered "Tentar de novo" and counted on the team's overview.
+- After the merge: run "Deploy jobs", then open the stuck site's page and use "Tentar de novo" once its job is 45 minutes old (or create a new test site).
+
 ### Deploy dos jobs bloqueado pelo Trigger.dev (2026-11-12)
+
+Resolved on 2026-11-12, on the owner's side: the jobs were deployed and the first real run started (see above). Kept for the record.
 
 Status: deploy dos jobs bloqueado pelo Trigger.dev: `Deployments are not available for this organization`. "Deploy jobs" builds and uploads the code, then Trigger.dev refuses `initializeDeployment` (`POST /api/v1/deployments`) with that message.
 

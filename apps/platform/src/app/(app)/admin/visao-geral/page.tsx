@@ -51,6 +51,8 @@ interface Generation {
   missing: string[];
   stuckJobs: number;
   stuckMinutes: number;
+  /** E37: a job "running" with no process left after this long also counts as stuck. */
+  stuckRunningMinutes?: number;
 }
 
 export default function OverviewPage() {
@@ -222,8 +224,11 @@ function GenerationNotice({ generation }: { generation: Generation }) {
       {generation.stuckJobs > 0 && (
         <p className="font-semibold">
           {generation.stuckJobs === 1
-            ? `1 geração está parada na fila há mais de ${generation.stuckMinutes} minutos.`
-            : `${generation.stuckJobs} gerações estão paradas na fila há mais de ${generation.stuckMinutes} minutos.`}
+            ? "1 geração está parada"
+            : `${generation.stuckJobs} gerações estão paradas`}
+          {`: na fila há mais de ${generation.stuckMinutes} minutos ou rodando há mais de ${
+            generation.stuckRunningMinutes ?? 45
+          } minutos sem terminar.`}
         </p>
       )}
     </div>

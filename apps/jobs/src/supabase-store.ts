@@ -202,6 +202,16 @@ export function supabaseStore(db: SupabaseClient): PipelineStore {
         "requeue job",
       );
     },
+    async requeueIfRunning(jobId, error) {
+      check(
+        await db
+          .from("jobs")
+          .update({ status: "queued", error: error.slice(0, 2000) })
+          .eq("id", jobId)
+          .eq("status", "running"),
+        "requeue running job",
+      );
+    },
 
     async loadSite(siteId) {
       const site = check(
