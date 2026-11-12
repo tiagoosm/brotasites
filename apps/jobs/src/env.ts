@@ -1,6 +1,7 @@
 import { aiProviderFromEnv } from "@brotasites/ai";
 import { type KvOptions, purgeSite, type R2Options } from "@brotasites/generator";
 import { reviewerAgentFromEnv } from "@brotasites/reviewer";
+import { envSecrets } from "@brotasites/schema/job-error";
 import { createClient } from "@supabase/supabase-js";
 import type { PipelineDeps } from "./pipeline.js";
 import { LocalPreviewHost, type PreviewHost, R2PreviewHost, R2Publisher } from "./previews.js";
@@ -71,6 +72,7 @@ export function depsFromEnv(
     screenshot,
     skipHumanReview: env.REVIEW_SKIP_HUMAN === "true",
     log: (message) => console.log(message),
+    secrets: envSecrets(env),
     close: () => screenshot.close(),
   };
 }

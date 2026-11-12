@@ -1,4 +1,5 @@
 import { aiBudget } from "@/lib/admin/budget";
+import { failuresBySite } from "@/lib/job-failures";
 import { requireAdmin, teamRpcError } from "@/lib/server/admin";
 import { generationStatus, STUCK_JOB_MINUTES } from "@/lib/server/generation";
 import { json } from "@/lib/server/guard";
@@ -24,6 +25,34 @@ export async function GET() {
     .select("id", { count: "exact", head: true })
     .eq("status", "running")
     .lt("started_at", runningCutoff());
+  // E39: the sites that need attention, newest first, with what went wrong in a short line.
+  const { data: attention } = await admin.db
+    .from("sites")
+    .select("id, updated_at, site_configs(draft)")
+    .eq("status", "needs_attention")
+    .order("updated_at", { ascending: false })
+    .limit(10);
+  const attentionIds = (attention ?? []).map((site) => site.id as string);
+  const { data: failedJobs } = attentionIds.length
+    ? await admin.db
+        .from("jobs")
+        .select("site_id, id, kind, status, error, payload, created_at, finished_at")
+        .in("site_id", attentionIds)
+        .eq("status", "failed")
+        .order("created_at", { ascending: false })
+        .limit(100)
+    : { data: [] };
+  const failureOf = failuresBySite(failedJobs ?? []);
+  const failures = (attention ?? []).map((site) => {
+    const config = Array.isArray(site.site_configs) ? site.site_configs[0] : site.site_configs;
+    const name = (config?.draft as { business?: { name?: string } } | undefined)?.business?.name;
+    return {
+      siteId: site.id as string,
+      name: name ?? null,
+      updatedAt: site.updated_at as string,
+      failure: failureOf.get(site.id as string) ?? null,
+    };
+  });
   const { enforced, missing, ready } = generationStatus();
   return json({
     overview: data,
@@ -36,5 +65,6 @@ export async function GET() {
       stuckMinutes: STUCK_JOB_MINUTES,
       stuckRunningMinutes: STUCK_RUNNING_MINUTES,
     },
+    failures,
   });
 }

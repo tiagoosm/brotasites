@@ -41,6 +41,8 @@ export const siteJob = task({
       }
       const job = await deps.store.claimJob(JOB_KINDS, payload.jobId);
       if (!job) return { status: "skipped" as const };
+      // E39: the admin links the job to this run (Trigger.dev > Runs).
+      await deps.store.recordRun(job.id, ctx.run.id).catch(() => undefined);
       let outcome = await runJob(deps, job);
       // The automatic retry runs right away, in the same task.
       while (outcome === "retry") {

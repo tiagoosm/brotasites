@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminJobs } from "@/lib/job-failures";
 import { jobStepLabels, retryPlan } from "@/lib/retry-job";
 import { isUuid, requireAdmin } from "@/lib/server/admin";
 import { errors, fail } from "@/lib/server/session";
@@ -6,7 +7,8 @@ import { errors, fail } from "@/lib/server/session";
 const SIGNED_SECONDS = 3600;
 
 // One site for the review: the client's answers, the approved direction with its screenshots,
-// the private preview, every reviewer report, the timeline and the admins' decisions.
+// the private preview, every reviewer report, the timeline and the admins' decisions, and (E39)
+// the recent jobs with their masked errors.
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!isUuid(id)) return fail(404, errors.notFound);
@@ -53,7 +55,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     db.auth.admin.getUserById(site.owner_id as string).catch(() => ({ data: { user: null } })),
     db
       .from("jobs")
-      .select("id, kind, status, payload, created_at")
+      .select("id, kind, status, attempts, error, payload, created_at, started_at, finished_at")
       .eq("site_id", id)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -81,6 +83,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       decisions: decisions.data ?? [],
       payments: payments.data ?? [],
       retry,
+      // E39: the recent jobs, newest first, errors masked (admin only).
+      jobs: adminJobs(jobs.data ?? []).slice(0, 10),
     },
     { headers: { "cache-control": "private, no-store" } },
   );

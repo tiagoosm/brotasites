@@ -6,6 +6,7 @@ import {
   type DesignSignature,
   normalizeText,
 } from "@brotasites/engine";
+import { maskJobError } from "@brotasites/schema/job-error";
 import type { Family, FormDraft, SiteConfig } from "@brotasites/schema/v1.2";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
@@ -186,7 +187,7 @@ export function supabaseStore(db: SupabaseClient): PipelineStore {
           .from("jobs")
           .update({
             status,
-            error: error?.slice(0, 2000) ?? null,
+            error: error === undefined ? null : maskJobError(error),
             finished_at: new Date().toISOString(),
           })
           .eq("id", jobId),
@@ -197,16 +198,26 @@ export function supabaseStore(db: SupabaseClient): PipelineStore {
       check(
         await db
           .from("jobs")
-          .update({ status: "queued", error: error.slice(0, 2000) })
+          .update({ status: "queued", error: maskJobError(error) })
           .eq("id", jobId),
         "requeue job",
       );
+    },
+    async recordRun(jobId, runId) {
+      const { data } = await db.from("jobs").select("payload").eq("id", jobId).maybeSingle();
+      if (!data) return;
+      const payload = (data.payload as Record<string, unknown> | null) ?? {};
+      if (payload.triggerRunId === runId) return;
+      await db
+        .from("jobs")
+        .update({ payload: { ...payload, triggerRunId: runId } })
+        .eq("id", jobId);
     },
     async requeueIfRunning(jobId, error) {
       check(
         await db
           .from("jobs")
-          .update({ status: "queued", error: error.slice(0, 2000) })
+          .update({ status: "queued", error: maskJobError(error) })
           .eq("id", jobId)
           .eq("status", "running"),
         "requeue running job",

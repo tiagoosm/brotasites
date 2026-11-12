@@ -22,6 +22,8 @@ interface QueueItem {
   review: string | null;
   costUsd: number | null;
   rounds: number | null;
+  /** E39: the newest failed step, in a short line (sites that need attention). */
+  failure?: { step: string; summary: string; at: string } | null;
 }
 
 const tabs = [
@@ -104,6 +106,12 @@ export default function AdminQueuePage() {
                     .join(" · ")}
                 </span>
                 {item.statusMessage && <span className="text-sm">{item.statusMessage}</span>}
+                {item.failure && (
+                  <span className="text-sm">
+                    <span className="font-semibold">{item.failure.step} falhou:</span>{" "}
+                    {item.failure.summary}
+                  </span>
+                )}
               </Link>
             </li>
           ))}

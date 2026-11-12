@@ -80,8 +80,8 @@ export function retryPlan(
   }
   if (used >= limit) return { ok: false, reason: "limit", used, limit };
   const kind = newest.kind as JobKind;
-  // The same work as before; a retry never carries a retry's own marks forward.
-  const { retryOf: _, retriedBy: __, ...payload } = newest.payload ?? {};
+  // The same work as before; a retry never carries a retry's or a run's own marks forward.
+  const { retryOf: _, retriedBy: __, triggerRunId: ___, ...payload } = newest.payload ?? {};
   return {
     ok: true,
     kind,

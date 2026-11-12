@@ -20,7 +20,7 @@ describe("retryPlan (E39)", () => {
       "needs_attention",
       [
         job({ id: "old", kind: "directions", status: "done", created_at: "2026-11-12T08:00:00Z" }),
-        job({ id: "build-1" }),
+        job({ id: "build-1", payload: { direction: "d1", triggerRunId: "run_abc" } }),
       ],
       ADMIN,
       NOW,

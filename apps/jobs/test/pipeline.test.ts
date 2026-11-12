@@ -217,6 +217,34 @@ describe("pipeline", { timeout: 240_000 }, () => {
     expect(store.events.at(-1)?.kind).toBe("job_failed");
   });
 
+  it("stores the error masked: no secret of the environment nor key-shaped text (E39)", async () => {
+    const { store, siteId, deps } = setup();
+    await store.updateSite(siteId, { status: "generating_directions" });
+    const job = store.enqueue(siteId, "directions");
+    // The AI fails with a message that carries a secret and a key-shaped value.
+    const ai = Object.create(deps.ai) as PipelineDeps["ai"];
+    ai.generateDirections = async () => {
+      throw new Error("auth with value-of-a-secret-123 and sk-ant-api03-abcdef123456 failed");
+    };
+    const leaky: PipelineDeps = { ...deps, secrets: ["value-of-a-secret-123"], ai };
+    expect(await runNext(leaky, store)).toBe("retry");
+    expect(await runNext(leaky, store)).toBe("failed");
+    const stored = store.jobs.find((item) => item.id === job.id)?.error ?? "";
+    expect(stored).toContain("auth with [oculto] and sk-[oculto] failed");
+    expect(stored).not.toContain("value-of-a-secret-123");
+    expect(stored).not.toContain("abcdef123456");
+  });
+
+  it("records the Trigger.dev run of a job (E39)", async () => {
+    const { store, siteId } = setup();
+    const job = store.enqueue(siteId, "build", { direction: "d1" });
+    await store.recordRun(job.id, "run_abc123def");
+    expect(store.jobs.find((item) => item.id === job.id)?.payload).toEqual({
+      direction: "d1",
+      triggerRunId: "run_abc123def",
+    });
+  });
+
   it("refuses a photo that is not an image and goes on without it", async () => {
     const { store, siteId, deps } = setup();
     const [first] = store.assets.values();

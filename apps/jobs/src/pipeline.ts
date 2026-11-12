@@ -9,6 +9,7 @@ import {
 } from "@brotasites/engine";
 import { buildStaticSite } from "@brotasites/generator";
 import { type BrowserResult, type ReviewerAgent, reviewSite } from "@brotasites/reviewer";
+import { maskJobError } from "@brotasites/schema/job-error";
 import {
   familyOf,
   formToSiteConfig,
@@ -52,6 +53,11 @@ export interface PipelineDeps {
    */
   skipHumanReview?: boolean;
   log?: (message: string) => void;
+  /**
+   * E39: values of the environment's secrets, masked by value in the stored error (shapes such
+   * as sk-, eyJ and Bearer are masked anyway).
+   */
+  secrets?: readonly string[];
 }
 
 export const JOB_KINDS: JobKind[] = ["directions", "build", "publish"];
@@ -336,7 +342,8 @@ export async function runJob(deps: PipelineDeps, job: Job): Promise<"done" | "re
     await store.finishJob(job.id, "done");
     return "done";
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    // E39: masked before it is logged or stored; the team reads it in the admin.
+    const message = maskJobError(error, deps.secrets);
     deps.log?.(`Job ${job.id} (${job.kind}) failed on attempt ${job.attempts}: ${message}`);
     if (job.attempts < 2) {
       await store.requeueJob(job.id, message);
