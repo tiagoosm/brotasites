@@ -145,6 +145,61 @@ test("asking for changes rebuilds with the approved identity", async ({ page, co
   expect(state.rpc.at(-1)?.name).toBe("request_rebuild");
 });
 
+test("a build that failed on our side: a generic message and one way to try again (E39)", async ({
+  page,
+  context,
+}) => {
+  const state = await withSite(context, {
+    ...finished,
+    site: {
+      ...finished.site,
+      status: "needs_attention",
+      preview_token: null,
+      status_message: "Algo deu errado do nosso lado. Nossa equipe já foi avisada.",
+    },
+    events: [
+      {
+        id: 9,
+        kind: "job_failed",
+        message: "Algo deu errado do nosso lado. Nossa equipe já foi avisada.",
+        created_at: "2026-11-12T10:00:00Z",
+      },
+    ],
+  });
+  await page.goto(dashboard);
+  await expect(page.getByRole("status").first()).toContainText("Precisa de atenção");
+  await expect(
+    page.getByRole("heading", { name: "Não conseguimos terminar o seu site" }),
+  ).toBeVisible();
+  // Never the technical detail: that is for the team only.
+  await expect(page.getByText(/__name|ReferenceError|stack|JobError/)).toHaveCount(0);
+  // One button for it (the rebuild button of "Pedir ajustes" stays out of the way).
+  await expect(
+    page.getByRole("button", { name: "Montar o site de novo com as mudanças" }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Tentar de novo" }).click();
+  await expect(page.getByRole("status").first()).toContainText("Montando seu site");
+  expect(state.rpc.at(-1)?.name).toBe("request_rebuild");
+});
+
+test("directions that failed on our side: the page opens and leads back to the answers", async ({
+  page,
+  context,
+}) => {
+  await withSite(context, {
+    site: siteRow("needs_attention", {
+      status_message: "Algo deu errado do nosso lado. Nossa equipe já foi avisada.",
+    }),
+    draft: padaria,
+    completed: allSteps,
+  });
+  await page.goto(dashboard);
+  await expect(page.getByRole("status").first()).toContainText("Precisa de atenção");
+  await expect(
+    page.getByRole("link", { name: "Revisar as respostas e tentar de novo" }),
+  ).toHaveAttribute("href", `/criar/${SITE}/contato`);
+});
+
 test("the address: suggestion, availability and keeping it before approving", async ({
   page,
   context,

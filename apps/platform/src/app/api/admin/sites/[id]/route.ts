@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { jobStepLabels, retryPlan } from "@/lib/retry-job";
 import { isUuid, requireAdmin } from "@/lib/server/admin";
 import { errors, fail } from "@/lib/server/session";
 
@@ -20,7 +21,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     .eq("id", id)
     .maybeSingle();
   if (!site) return fail(404, errors.notFound);
-  const [direction, reports, events, decisions, payments, owner] = await Promise.all([
+  const [direction, reports, events, decisions, payments, owner, jobs] = await Promise.all([
     site.approved_direction
       ? db
           .from("site_directions")
@@ -50,7 +51,18 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       .select("purpose, status, amount_cents, created_at, paid_at")
       .eq("site_id", id),
     db.auth.admin.getUserById(site.owner_id as string).catch(() => ({ data: { user: null } })),
+    db
+      .from("jobs")
+      .select("id, kind, status, payload, created_at")
+      .eq("site_id", id)
+      .order("created_at", { ascending: false })
+      .limit(50),
   ]);
+  // E39: whether "Tentar de novo" can run now, and which step it would run.
+  const plan = retryPlan(site.status as string, jobs.data ?? [], admin.userId);
+  const retry = plan.ok
+    ? { available: true, step: jobStepLabels[plan.kind], used: plan.used, limit: plan.limit }
+    : { available: false, reason: plan.reason, used: plan.used, limit: plan.limit };
   const shots = (direction.data?.screenshots as string[] | undefined) ?? [];
   const signed = shots.length
     ? ((await db.storage.from("site-renders").createSignedUrls(shots, SIGNED_SECONDS)).data ?? [])
@@ -68,6 +80,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       events: events.data ?? [],
       decisions: decisions.data ?? [],
       payments: payments.data ?? [],
+      retry,
     },
     { headers: { "cache-control": "private, no-store" } },
   );

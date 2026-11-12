@@ -1,4 +1,4 @@
-# Launch status (E34, E35)
+# Launch status (E34, E35, E39)
 
 What production needs, what the owner reported as done, and the order of what is left. The variable tables are generated from `scripts/launch/requirements.mjs`, the same list `pnpm check:launch` uses; a test (`scripts/launch/requirements.test.mjs`) fails when the code reads a variable that list does not have, or when the deploy workflows use a GitHub secret or variable it does not list. If a table here and that file disagree, the file wins.
 
@@ -37,6 +37,22 @@ No value here is a secret. Secrets go only in Vercel, Trigger.dev, GitHub's `pro
 ### Todas as categorias abertas (2026-11-12)
 
 Since E38 the three launch waves are open (owner's decision). The legal validation of the advertising rules of the wave 3 professions (health councils, OAB) is still pending. The rules of those categories stay on (`docs/categories.md`, "Launch waves"), and reinforced or mandatory review now always waits for a person, even with `REVIEW_SKIP_HUMAN=true`.
+
+### Build: `__name is not defined` (2026-11-12, E39)
+
+The directions of the first real site worked; its build failed twice with `ReferenceError: __name is not defined` and the site went to `needs_attention`.
+
+- **Cause.** Trigger.dev bundles the jobs with esbuild and `keepNames`, which wraps named functions in `__name(fn, "name")` calls. The reviewer's browser checks hand functions to Playwright (`page.evaluate`), which serializes them and runs them in Chromium. The `__name` helper exists only in the bundle, not in the page, so the first wrapped function failed there. Nothing in the reviewer's checks was wrong; only how the functions reach the browser.
+- **Fix.** Every browser context the reviewer and the direction screenshots open registers `KEEP_NAMES_SHIM` (`packages/reviewer/src/browser-checks.ts`) with `context.addInitScript`, before any page code runs. It is a string on purpose: a function would be bundled and wrapped too. It defines `__name` in the page as a function that returns its argument. The checks and quality limits did not change.
+- **Test.** `packages/reviewer/test/e2e/keep-names.test.ts` bundles `browser-checks.ts` with esbuild 0.23.1 (the version Trigger.dev's CLI uses) and `keepNames`, and runs it on a local page in Chromium: without the shim it fails with `__name is not defined`, as in production; with it every check runs.
+- **Reprocessing a site in `needs_attention`, without creating a new site:**
+  - **Team (admin):** the site's page in `/admin` shows "Tentar de novo" at the top. It runs the failed step ("Criar as 3 direções", "Montar o site" or "Publicar") again as a new job with the same answers; the failed job stays, with its error. It asks for a confirmation, works only when nothing is queued or running, and allows `adminRetriesPerDay` (3, in `apps/platform/src/config/limits.ts`) per site in 24 hours. The client sees "Nossa equipe pediu uma nova tentativa." in the site's history.
+  - **Client:** a site whose look was already chosen shows "Não conseguimos terminar o seu site" and "Tentar de novo" (`request_rebuild`, limited by the database to 30 per site a day). A site whose directions failed keeps "Revisar as respostas e tentar de novo". The client only ever sees "Algo deu errado do nosso lado. Nossa equipe já foi avisada.": never the technical error.
+- **Passo a passo para o dono, depois de mesclar:**
+  1. Espere o deploy da Vercel terminar (ele leva o botão novo do admin).
+  2. No GitHub: Actions > "Deploy jobs" > Run workflow (branch `main`, digite `publicar`). Sem isso, a correção do `__name` não chega ao Trigger.dev e a nova tentativa falha igual.
+  3. Abra o site travado em `/admin` (aba "Precisa de atenção") > "Tentar de novo" > confirme. Ou, na conta do cliente, a página do site > "Tentar de novo".
+  4. Acompanhe a tarefa em Trigger.dev > Runs. Se falhar de novo, o site volta para "Precisa de atenção"; veja o erro antes de tentar outra vez (o limite é de 3 tentativas por dia).
 
 ### Primeira execução real: falta de memória (2026-11-12)
 

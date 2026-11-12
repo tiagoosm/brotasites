@@ -367,13 +367,46 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         </div>
       )}
 
+      {locked && site.status === "needs_attention" && (
+        // E39: the build failed on our side. The answers and the chosen look are kept; the
+        // client asks for the same build again (request_rebuild, limited per day), no new site.
+        <section
+          aria-labelledby="tentar-de-novo"
+          className="grid gap-3 rounded-xl border border-pollen/60 bg-pollen/10 p-5"
+        >
+          <h2 id="tentar-de-novo" className="text-[1.0625rem] font-semibold">
+            Não conseguimos terminar o seu site
+          </h2>
+          <p className="text-[0.9375rem] text-ink-soft">
+            Suas respostas e o visual escolhido estão guardados. Peça para tentar de novo; se ainda
+            não der, nossa equipe já foi avisada e resolve por aqui.
+          </p>
+          <Button
+            type="button"
+            size="lg"
+            className="justify-self-start"
+            aria-busy={acting === "rebuild" || undefined}
+            disabled={acting !== null}
+            onClick={() =>
+              act("rebuild", async () => {
+                if (supabase) await requestRebuild(supabase, site.id);
+              })
+            }
+          >
+            {acting === "rebuild" ? "Pedindo…" : "Tentar de novo"}
+          </Button>
+        </section>
+      )}
+
       {locked && ["awaiting_approval", "needs_attention", "live"].includes(site.status) && (
         <section aria-labelledby="ajustes" className="grid gap-4">
           <h2 id="ajustes" className="font-display text-[1.75rem] leading-tight">
             Pedir ajustes
           </h2>
           <p className="text-[0.9375rem] text-ink-soft">
-            Mude as respostas e peça uma nova versão. O visual aprovado continua.
+            {site.status === "needs_attention"
+              ? "Se quiser mudar alguma resposta, mude antes de tentar de novo. O visual escolhido continua."
+              : "Mude as respostas e peça uma nova versão. O visual aprovado continua."}
             {site.status === "live" &&
               ` Ajustes incluídos por ${pricing.adjustmentsDays} dias depois de publicar.`}
           </p>
@@ -393,21 +426,24 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
               </Link>
             ))}
           </div>
-          <Button
-            aria-busy={acting === "rebuild" || undefined}
-            variant="outline"
-            size="lg"
-            // Wraps on phones: on one line it was wider than a 360px screen.
-            className="h-auto min-h-12 justify-self-start py-3 text-center whitespace-normal"
-            disabled={acting !== null}
-            onClick={() =>
-              act("rebuild", async () => {
-                if (supabase) await requestRebuild(supabase, site.id);
-              })
-            }
-          >
-            {acting === "rebuild" ? "Pedindo…" : "Montar o site de novo com as mudanças"}
-          </Button>
+          {/* In needs_attention, "Tentar de novo" above is the one button for this (Hick). */}
+          {site.status !== "needs_attention" && (
+            <Button
+              aria-busy={acting === "rebuild" || undefined}
+              variant="outline"
+              size="lg"
+              // Wraps on phones: on one line it was wider than a 360px screen.
+              className="h-auto min-h-12 justify-self-start py-3 text-center whitespace-normal"
+              disabled={acting !== null}
+              onClick={() =>
+                act("rebuild", async () => {
+                  if (supabase) await requestRebuild(supabase, site.id);
+                })
+              }
+            >
+              {acting === "rebuild" ? "Pedindo…" : "Montar o site de novo com as mudanças"}
+            </Button>
+          )}
         </section>
       )}
 

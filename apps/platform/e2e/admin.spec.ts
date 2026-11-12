@@ -65,6 +65,31 @@ test("reviewing a site: report, answers, and decisions that need a reason", asyn
   await expect(page.getByText(/Montando seu site/)).toBeVisible();
 });
 
+test("a site that needs attention runs its failed step again, after a confirmation (E39)", async ({
+  page,
+  context,
+}) => {
+  const state = await withSite(context, {
+    ...inReview,
+    site: { ...inReview.site, status: "needs_attention", preview_token: null },
+    admin: true,
+  });
+  await page.goto(`/admin/sites/${SITE}`);
+  const retry = page.getByRole("region", { name: "Tentar de novo" });
+  await expect(retry).toContainText("Montar o site");
+  await expect(retry).toContainText("0 de 3 tentativas");
+  await retry.getByRole("button", { name: "Tentar de novo" }).click();
+  // Nothing is sent before the second click.
+  expect(state.adminPosts.filter((post) => post.path.endsWith("/retry"))).toEqual([]);
+  await retry.getByRole("button", { name: "Confirmar: montar o site de novo" }).click();
+  await expect(page.getByText(/Nova tentativa iniciada/)).toBeVisible();
+  expect(state.adminPosts.at(-1)).toEqual({
+    path: `/api/admin/sites/${SITE}/retry`,
+    body: { confirm: true },
+  });
+  expect(state.site?.status).toBe("building");
+});
+
 test("approving sends the finished site to the client", async ({ page, context }) => {
   const state = await withSite(context, { ...inReview, admin: true });
   await page.goto(`/admin/sites/${SITE}`);

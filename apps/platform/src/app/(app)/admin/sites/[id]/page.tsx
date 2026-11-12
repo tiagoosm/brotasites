@@ -10,6 +10,7 @@ import { Loading, Notice } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/config/pricing";
 import { adminGet, adminPost } from "@/lib/admin/client";
+import { type RetryPlan, retryRefusals } from "@/lib/retry-job";
 import { infoFor } from "@/lib/site-status";
 import { previewUrl } from "@/lib/sites";
 
@@ -53,6 +54,15 @@ interface Detail {
     created_at: string;
   }[];
   payments: { purpose: string; status: string; amount_cents: number }[];
+  /** E39: "Tentar de novo" for a site in needs_attention. */
+  retry?:
+    | { available: true; step: string; used: number; limit: number }
+    | {
+        available: false;
+        reason: Exclude<RetryPlan, { ok: true }>["reason"];
+        used: number;
+        limit: number;
+      };
 }
 
 const actionLabels: Record<string, string> = {
@@ -69,6 +79,8 @@ export default function AdminSitePage() {
   const { id } = useParams<{ id: string }>();
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // E39: the answer to "Tentar de novo" outlives its section (the site leaves needs_attention).
+  const [retried, setRetried] = useState<string | null>(null);
   const load = useCallback(
     () =>
       adminGet<Detail>(`/api/admin/sites/${id}`).then(setDetail, (caught: Error) =>
@@ -123,6 +135,23 @@ export default function AdminSitePage() {
         </p>
         {site.status_message && <p className="text-[0.9375rem]">{site.status_message}</p>}
       </header>
+
+      {site.status === "needs_attention" && detail.retry ? (
+        <RetryStep
+          siteId={site.id}
+          retry={detail.retry}
+          onDone={async (text) => {
+            setRetried(text);
+            await load();
+          }}
+        />
+      ) : (
+        retried && (
+          <p role="status" className="text-[0.9375rem] font-semibold">
+            {retried}
+          </p>
+        )
+      )}
 
       {/* Team exceptions for this site (E24), each logged with the reason. */}
       <section
@@ -334,6 +363,101 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <dt className="font-semibold">{label}</dt>
       <dd className="break-words">{children}</dd>
     </div>
+  );
+}
+
+/**
+ * E39: runs the failed step again, as a new job with the same answers; no new site. Two clicks
+ * (Murphy): each run can call the AI again, and the count per day is limited.
+ */
+function RetryStep({
+  siteId,
+  retry,
+  onDone,
+}: {
+  siteId: string;
+  retry: NonNullable<Detail["retry"]>;
+  /** Called with the answer once the new attempt is queued. */
+  onDone: (message: string) => Promise<unknown>;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function run() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const result = await adminPost<{ started: boolean }>(`/api/admin/sites/${siteId}/retry`, {
+        confirm: true,
+      });
+      setConfirming(false);
+      await onDone(
+        result.started
+          ? "Nova tentativa iniciada. O site sai desta lista e volta se falhar de novo."
+          : "Nova tentativa na fila, mas a fila de tarefas não respondeu. Confira o Trigger.dev.",
+      );
+    } catch (caught) {
+      setMessage((caught as Error).message);
+    }
+    setBusy(false);
+  }
+
+  return (
+    <section
+      aria-labelledby="tentar-de-novo"
+      className="grid gap-3 rounded-xl border border-pollen/60 bg-pollen/10 p-5"
+    >
+      <h2 id="tentar-de-novo" className="font-display text-[1.5rem]">
+        Tentar de novo
+      </h2>
+      {retry.available ? (
+        <>
+          <p className="text-[0.9375rem]">
+            Etapa que falhou: <strong>{retry.step}</strong>. Roda de novo com as mesmas respostas,
+            sem criar outro site. Use depois de corrigir a causa (por exemplo, depois do “Deploy
+            jobs”).
+          </p>
+          <p className="text-sm text-ink-soft">
+            {retry.used} de {retry.limit} tentativas usadas nas últimas 24 horas.
+          </p>
+          {confirming ? (
+            <span className="flex flex-wrap items-center gap-3">
+              <Button
+                size="lg"
+                disabled={busy}
+                aria-busy={busy || undefined}
+                onClick={() => void run()}
+              >
+                {busy ? "Pedindo…" : `Confirmar: ${retry.step.toLowerCase()} de novo`}
+              </Button>
+              <Button
+                size="lg"
+                variant="ghost"
+                disabled={busy}
+                onClick={() => setConfirming(false)}
+              >
+                Cancelar
+              </Button>
+            </span>
+          ) : (
+            <Button
+              size="lg"
+              variant="outline"
+              className="justify-self-start"
+              onClick={() => setConfirming(true)}
+            >
+              Tentar de novo
+            </Button>
+          )}
+        </>
+      ) : (
+        <p className="text-[0.9375rem]">{retryRefusals[retry.reason][1]}</p>
+      )}
+      <p role="status" className="text-[0.9375rem] font-semibold empty:hidden">
+        {message}
+      </p>
+    </section>
   );
 }
 

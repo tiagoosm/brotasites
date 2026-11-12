@@ -34,6 +34,17 @@ export interface BrowserResult {
   screenshots: Screenshot[];
 }
 
+/**
+ * E39: Trigger.dev bundles the jobs with esbuild's keepNames, which wraps named functions in
+ * `__name(fn, "name")` calls. Functions handed to page.evaluate are serialized and run in
+ * Chromium, where that helper does not exist: "__name is not defined". This shim defines it in
+ * every page before any of our code runs. It is a string on purpose: a function here would be
+ * bundled, and wrapped, too. Every context we open registers it (browser-checks.ts and the jobs'
+ * screenshots).
+ */
+export const KEEP_NAMES_SHIM =
+  "globalThis.__name = globalThis.__name || function (target) { return target; };";
+
 /** Section of an element: the section id, "hero" for the opening, "page" for header and footer. */
 const sectionScript = `
   window.__sectionOf = (el) => {
@@ -236,6 +247,7 @@ export async function checkInBrowser(
         locale: "pt-BR",
         timezoneId: "America/Sao_Paulo",
       });
+      await context.addInitScript(KEEP_NAMES_SHIM);
       const outside = new Set<string>();
       const broken = new Set<string>();
       await context.route("**/*", (route) => {
