@@ -300,6 +300,7 @@ export function TakedownPanel({
               variant={open === "delete_now" ? "destructive" : "default"}
               aria-busy={busy || undefined}
               disabled={busy || !ready}
+              className="h-auto min-h-12 py-3 text-center whitespace-normal"
             >
               {busy ? "Salvando…" : `Confirmar: ${actionTitles[open].toLowerCase()}`}
             </Button>

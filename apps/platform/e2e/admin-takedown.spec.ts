@@ -159,7 +159,7 @@ test("the list of published sites: filters, search and the scheduled counter", a
   expect(state.adminGets.at(-1)).toBe("/api/admin/sites?q=salao&filter=&page=0");
 });
 
-for (const width of [375, 1280]) {
+for (const width of [340, 375, 1280]) {
   test(`'Retirada do ar' passes axe, with 44px targets and no sideways scroll at ${width}px`, async ({
     page,
     context,

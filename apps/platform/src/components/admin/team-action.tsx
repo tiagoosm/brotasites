@@ -73,6 +73,7 @@ export function TeamAction({
               size="lg"
               disabled={busy || note.trim().length < 3}
               aria-describedby={`${noteId}-why`}
+              className="h-auto min-h-12 py-3 text-center whitespace-normal"
               onClick={confirm}
             >
               {confirmLabel}
@@ -86,7 +87,8 @@ export function TeamAction({
         <Button
           variant="outline"
           size="lg"
-          className="justify-self-start"
+          // Wraps on phones: long labels were wider than a 375px screen.
+          className="h-auto min-h-12 justify-self-start py-3 text-center whitespace-normal"
           onClick={() => setOpen(true)}
         >
           {label}
