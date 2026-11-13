@@ -20,7 +20,13 @@ const teamTabs = [
   {
     href: "/admin",
     label: "Fila de revisão",
-    match: (path: string) => path === "/admin" || path.startsWith("/admin/sites"),
+    match: (path: string) => path === "/admin" || path.startsWith("/admin/sites/"),
+  },
+  // E42: every published site, with "Fora do ar" and "Exclusão agendada".
+  {
+    href: "/admin/sites",
+    label: "Sites",
+    match: (path: string) => path === "/admin/sites",
   },
   {
     href: "/admin/catalogo",
@@ -107,7 +113,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 key={tab.href}
                 href={tab.href}
                 aria-current={tab.match(pathname) ? "page" : undefined}
-                className="-mb-px inline-flex min-h-11 items-center border-b-2 border-transparent font-semibold text-leaf-deep aria-[current=page]:border-leaf-deep aria-[current=page]:text-ink"
+                className="-mb-px inline-flex min-h-11 min-w-11 items-center justify-center border-b-2 border-transparent font-semibold text-leaf-deep aria-[current=page]:border-leaf-deep aria-[current=page]:text-ink"
               >
                 {tab.label}
               </Link>
