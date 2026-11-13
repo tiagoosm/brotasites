@@ -94,7 +94,9 @@ Em português, na ordem em que destravam a geração. Nada disso precisa de máq
 6. **Primeira geração simulada, depois real.** Com `AI_MODE=simulated` no Trigger.dev, criar um site de teste e ver as 3 direções e o site pronto (sem gastar com a IA). Depois trocar para `AI_MODE=live` no Trigger.dev (as variáveis do Trigger.dev entram em cada execução nova; se as tarefas continuarem simuladas, rode "Deploy jobs" de novo) e criar outro. `/admin/visao-geral` não deve mostrar aviso de geração fechada nem gerações paradas.
 7. **Antes de clientes reais.** Conferir o Turnstile na Vercel (chave do site, sem `NEXT_PUBLIC_CAPTCHA_MODE=off`); religar a verificação em duas etapas da equipe (`update public.team_settings set require_second_factor = true;`); revisão jurídica.
 8. **Antes de cobrar.** Asaas (fora do escopo agora; até lá `PAYMENTS_MODE` vazio ou `stub` só para teste).
-9. **Depois do lançamento, opcional.** Domínio próprio do cliente (E25): migração `site_domains` e Cloudflare for SaaS.
+9. **Tirar do ar e excluir sites (E42).** Aplicar a migração `supabase/migrations/20261113000000_takedown.sql` no Supabase: SQL Editor > New query > colar o arquivo inteiro > Run. Ela pode rodar de novo sem estragar nada. Antes dela, as rotas "Tirar do ar" e "Excluir" respondem erro e o cron diário só registra a falha. Nenhuma variável nova.
+   - **Decisões pendentes do dono:** política de reembolso quando o cliente exclui um site pago (hoje o admin decide à mão; o texto não promete nada e indica o contato); direito de arrependimento do consumidor (7 dias) e como ele aparece nos Termos; o prazo de 7 dias antes da exclusão (`deletionWaitDays`); a quarentena de 30 dias do endereço (`subdomainHoldDays`). Os valores ficam em `apps/platform/src/config/limits.ts` (o banco usa 30 dias fixos para a quarentena e no máximo 30 dias de espera).
+10. **Depois do lançamento, opcional.** Domínio próprio do cliente (E25): migração `site_domains` e Cloudflare for SaaS.
 
 ## Como reverter
 

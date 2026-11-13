@@ -314,7 +314,15 @@ export type NoticeKind =
   | "email_confirmed"
   | "site_deletion_warning"
   | "domain_active"
-  | "domain_failed";
+  | "domain_failed"
+  // E42
+  | "site_taken_offline"
+  | "site_back_online"
+  | "site_deletion_scheduled"
+  | "site_deletion_cancelled"
+  | "site_deleted"
+  | "team_owner_took_offline"
+  | "team_owner_requested_deletion";
 
 export interface Notice {
   id: string;
@@ -340,6 +348,16 @@ const noticeTexts: Record<NoticeKind, (site: string, daysLeft?: number | null) =
       : `${site} será apagado em ${daysLeft} dias se não houver novidades.`,
   domain_active: (site) => `O domínio próprio de ${site} está ativo.`,
   domain_failed: (site) => `Não conseguimos verificar o domínio próprio de ${site}.`,
+  site_taken_offline: (site) => `${site} saiu do ar.`,
+  site_back_online: (site) => `${site} voltou ao ar.`,
+  site_deletion_scheduled: (site) =>
+    `${site} saiu do ar e será excluído no prazo. Dá para cancelar até lá.`,
+  site_deletion_cancelled: (site) =>
+    `A exclusão de ${site} foi cancelada. Ele continua fora do ar.`,
+  // The site is gone with its name: the notice keeps no site.
+  site_deleted: () => "Um site seu foi excluído, como pedido. As cobranças ficam guardadas.",
+  team_owner_took_offline: (site) => `Equipe: o cliente tirou ${site} do ar.`,
+  team_owner_requested_deletion: (site) => `Equipe: o cliente pediu para excluir ${site}.`,
 };
 
 /** The pt-BR sentence of a notice; the site's name is plain text (rendered escaped). */
