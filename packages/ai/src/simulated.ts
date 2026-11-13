@@ -11,7 +11,8 @@ import { type ModelClient, ModelError, type ModelRequest, type ModelResponse } f
 
 export type SimulatedPayload =
   | { task: "art-director"; input: EngineInput }
-  | { task: "copy"; input: CopyInput };
+  | { task: "copy"; input: CopyInput }
+  | { task: "copy-editor"; copy: unknown };
 
 export class SimulatedModelClient implements ModelClient {
   readonly modelId = "simulated";
@@ -29,6 +30,9 @@ export class SimulatedModelClient implements ModelClient {
       answer = compositionOf(drawn.directions.map(choiceOf));
     } else if (payload.task === "copy") {
       answer = draftCopy(payload.input);
+    } else if (payload.task === "copy-editor") {
+      // The editor returns the draft as it came (E41).
+      answer = payload.copy;
     } else {
       // The reviewer has its own simulated agent (packages/reviewer).
       throw new ModelError(`The simulated model does not answer ${request.task}`, false);

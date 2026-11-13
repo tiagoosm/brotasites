@@ -1,7 +1,7 @@
 ---
 family: beauty
-version: 1
-updated: 2026-10-27
+version: 2
+updated: 2026-11-13
 ---
 
 # Playbook: beauty (salão, barbearia, manicure, sobrancelha e cílios, maquiagem, estética, massagem e spa, depilação, tatuagem e piercing)
@@ -29,6 +29,18 @@ updated: 2026-10-27
 - Hero subtitle: "Atendimento com hora marcada de terça a sábado."
 - Sobre: "O Tonho corta cabelo desde 2009. A barbearia tem três cadeiras, café e um bom papo."
 - Final call: "Marque seu horário pelo WhatsApp"
+
+## Examples: little from the client, honest text
+
+The client wrote little. Use only what is there; say less, say it plainly. Never add results, techniques, products or certifications the client did not state.
+
+- Client: "Salão de beleza, corte e escova." · City: Pouso Alegre
+  - Hero: "Corte e escova em Pouso Alegre"
+  - Sobre: "Salão de beleza com corte e escova. Agende pelo WhatsApp." (only if WhatsApp is a contact)
+  - Not: "profissionais especializados", "produtos de primeira linha", "transformação" (not in the data)
+- Client: "Design de sobrancelha." · Mode: by appointment
+  - Hero: "Design de sobrancelha com hora marcada"
+  - Not: "olhar marcante", "técnica exclusiva" (not in the data)
 
 ## Banned phrases
 

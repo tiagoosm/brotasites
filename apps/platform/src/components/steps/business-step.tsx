@@ -6,12 +6,14 @@ import {
   businessAnswersSchema,
   categoryNotOpen,
   type FormDraft,
+  storyHints,
   storyQuestions,
 } from "@brotasites/schema/v1.2";
 import { useEffect, useId, useState } from "react";
 import { useForm12 } from "@/lib/form-store";
 import { yearProblem, yearText, yearValue } from "@/lib/year-input";
 import { CategorySearch } from "./category-search";
+import { DescriptionCoach } from "./description-coach";
 import { SectionCard, TextField } from "./fields";
 import { LockedNote, StepForm } from "./step-form";
 
@@ -105,9 +107,10 @@ export function BusinessStep() {
           multiline
           value={business.description}
           maxLength={500}
-          hint="Do seu jeito. Ex.: Padaria de bairro com pão de fermentação natural e bolos por encomenda."
+          hint="Do seu jeito, com detalhes: o que você vende, para quem, desde quando."
           onChange={(description) => set({ description })}
         />
+        <DescriptionCoach category={business.category} description={business.description} />
         <TextField
           label="Ano em que começou (opcional)"
           inputMode="numeric"
@@ -129,7 +132,7 @@ export function BusinessStep() {
 
       <SectionCard
         name="Deixe o site com a sua cara"
-        note="Opcional, mas faz diferença: o site usa só o que você contar."
+        note="Opcional, mas faz diferença: o site usa só o que você contar. Nomes, lugares e detalhes concretos deixam o texto com a sua cara."
       >
         {storyQuestions.map(([key, question]) => (
           <TextField
@@ -137,6 +140,7 @@ export function BusinessStep() {
             label={question}
             multiline
             value={business.story?.[key]}
+            hint={storyHints[key]}
             maxLength={200}
             onChange={(answer) => set({ story: { ...business.story, [key]: answer } })}
           />

@@ -82,6 +82,12 @@ Status: deploy dos jobs bloqueado pelo Trigger.dev: `Deployments are not availab
 - **Since E36,** the workflow's "Diagnóstico (sem segredos)" step prints the CLI version, `TRIGGER_PROJECT_REF`, the kind of key (prefix only), `whoami` (without e-mail) and the project name and id that this key opens. `whoami` reads only a personal login (`trigger login`), never `TRIGGER_ACCESS_TOKEN`, so with the environment key it reports a failure by design; the organization is checked in the dashboard instead.
 - **`[bundleSkills] skill discovery failed … Failed to import some task files`:** harmless. Before deploying, the CLI imports the bundled tasks from `apps/jobs` to look for `skills.define(...)`. The project defines no skills, and the tasks' external packages (`sharp`, `playwright`) are not linked in `apps/jobs/node_modules` by pnpm. In the image they are installed, and the real indexer runs there.
 
+### Textos melhores (E41, parte A)
+
+- **Editor de IA.** With `AI_MODE=live`, every text the writer produces gets a second pass (`editCopy` inside `writeCopy`, prompt `editor-2026-11-13.1`): it cuts clichés, varies the rhythm, makes the hero specific and keeps one voice, without adding any fact. Its answer goes through the same checks as the writer's (facts, banned phrases, the hero's concrete fact, the schema) plus a length check (at most 10% longer); if anything fails, or the model errs, the writer's text stays. The report records `copyEditor` (applied, discarded, failed, off). Its cost is counted under "copy" in `/admin/custos` (the `ai_calls` table has no separate task; a migration could split it later) and inside the daily budget.
+- **`AI_COPY_EDITOR`** (Trigger.dev, optional): on by default; `false` turns it off. Ignored in simulated mode.
+- **O que o dono roda** (passo do dono, gasta créditos): `AI_MODE=live AI_MODEL_ID=… ANTHROPIC_API_KEY=… pnpm --filter @brotasites/ai eval` prints, for the 30 businesses, `editorApplied`, `editorDiscarded`, `editorFailed`, `editorInventedFacts` and `editorBannedPhrases` (both must be 0 in the final sites; the ones caught are counted here), the mean of changed fields and the length ratio. In CI (simulated) the editor is off.
+
 ## Order of the remaining steps
 
 Em português, na ordem em que destravam a geração. Nada disso precisa de máquina com o projeto instalado: tudo é feito nos painéis e no GitHub.
@@ -151,6 +157,7 @@ Em português, na ordem em que destravam a geração. Nada disso precisa de máq
 | `AI_MODE` | jobs (`apps/jobs`) | Trigger.dev, prod env | required | Simulated AI: placeholder texts, never for clients. | `live` |
 | `AI_MODEL_ID` | jobs (`apps/jobs`) | Trigger.dev, prod env | required | With AI_MODE=live, every job fails. | claude-opus-5-5 (decision of E8) |
 | `ANTHROPIC_API_KEY` | jobs (`apps/jobs`) | Trigger.dev, prod env (secret) | required | With AI_MODE=live, every job fails. | secret (never in the repo) |
+| `AI_COPY_EDITOR` | jobs (`apps/jobs`) | Trigger.dev, prod env | optional | Default on: with AI_MODE=live the text gets the editor's second pass (E41). | true (default); false turns the editor off |
 | `AI_EFFORT` | jobs (`apps/jobs`) | Trigger.dev, prod env | optional | Default medium. | medium (default) |
 | `CLOUDFLARE_ACCOUNT_ID` | jobs (`apps/jobs`) | Trigger.dev, prod env | required | Previews and sites cannot be stored: the job stops. | the Cloudflare account id |
 | `R2_ACCESS_KEY_ID` | jobs (`apps/jobs`) | Trigger.dev, prod env (secret) | required | Same as above. | secret (never in the repo) |

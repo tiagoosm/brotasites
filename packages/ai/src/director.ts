@@ -24,6 +24,7 @@ import {
   copyFields,
   copyInputFrom,
   copySchema,
+  isThin,
   sourceTexts,
   specificsOf,
 } from "./copy.js";
@@ -44,7 +45,9 @@ import { costOf } from "./prices.js";
 import {
   ART_DIRECTOR_PROMPT_VERSION,
   artDirectorSystem,
+  COPY_EDITOR_PROMPT_VERSION,
   COPY_PROMPT_VERSION,
+  copyEditorSystem,
   copySystem,
   retryNote,
 } from "./prompts.js";
@@ -74,6 +77,8 @@ export interface AiDirectorOptions {
   cache?: AiCache;
   guard?: SpendingGuard;
   onEvent?: (event: AiEvent) => void;
+  /** E41: the editor's second pass on the copy (AI_COPY_EDITOR; on unless "false"). */
+  copyEditor?: boolean;
 }
 
 export interface AiDirectionsRequest extends DirectionsRequest {
@@ -91,6 +96,41 @@ export interface CopyResult {
   source: "ai" | "engine";
   costUsd: number;
   warnings: string[];
+  /**
+   * E41, the editor's second pass: "applied" (its text is the site's), "discarded" (it broke a
+   * check, the writer's text stays), "failed" (no usable answer), "off" (simulated, disabled,
+   * or no AI text to edit).
+   */
+  editor: "applied" | "discarded" | "failed" | "off";
+  /** E41: the client gave little to write from; the text is lean on purpose. */
+  thin: boolean;
+  /** E41: when the editor's text was used, how much it changed. */
+  editStats?: { changedFields: number; lengthBefore: number; lengthAfter: number };
+}
+
+/** The editor may tighten the text, never stretch it: at most this much longer overall. */
+const EDITOR_GROWTH = 1.1;
+
+function editStats(before: Copy, after: Copy): NonNullable<CopyResult["editStats"]> {
+  const a = copyFields(before);
+  const b = copyFields(after);
+  const length = (fields: Record<string, string>) =>
+    Object.values(fields).reduce((sum, value) => sum + value.length, 0);
+  return {
+    changedFields: Object.keys(b).filter((field) => a[field] !== b[field]).length,
+    lengthBefore: length(a),
+    lengthAfter: length(b),
+  };
+}
+
+/** True when the edited text is not longer than the draft (10% and 20 characters of slack). */
+export function editorGrowthOk(
+  before: Record<string, string>,
+  after: Record<string, string>,
+): boolean {
+  const length = (fields: Record<string, string>) =>
+    Object.values(fields).reduce((sum, value) => sum + value.length, 0);
+  return length(after) <= length(before) * EDITOR_GROWTH + 20;
 }
 
 const ATTEMPTS = 2;
@@ -341,7 +381,11 @@ ${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos
     const heroFields = ["sections.hero.content.title", "sections.hero.content.subtitle"];
     let costUsd = 0;
 
-    const review = (copy: Copy): { config?: SiteConfig; problems: string[] } => {
+    const thin = isThin(input);
+    const review = (
+      copy: Copy,
+      promptVersion = COPY_PROMPT_VERSION,
+    ): { config?: SiteConfig; problems: string[] } => {
       const fields = copyFields(copy);
       const problems = [
         ...checkFacts(fields, sources).map(
@@ -355,7 +399,7 @@ ${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos
       ];
       if (problems.length > 0) return { problems };
       const next = applyCopy(config, copy, {
-        promptVersion: COPY_PROMPT_VERSION,
+        promptVersion,
         playbookVersion: playbook.version,
         modelId: this.modelId,
       });
@@ -368,6 +412,79 @@ ${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos
       return { config: valid.data, problems: [] };
     };
 
+    // E41: the editor's pass over an accepted text. Its answer goes through the same checks,
+    // plus a length check; on any problem the writer's text stays. Never blocks the site.
+    const edited = async (
+      writer: Copy,
+      writerConfig: SiteConfig,
+      spent: number,
+    ): Promise<CopyResult> => {
+      const kept = (editor: CopyResult["editor"], cost = spent): CopyResult => ({
+        config: writerConfig,
+        source: "ai",
+        costUsd: cost,
+        warnings,
+        editor,
+        thin,
+      });
+      if (this.options.copyEditor === false || this.modelId === "simulated") return kept("off");
+      const version = `${COPY_PROMPT_VERSION}+${COPY_EDITOR_PROMPT_VERSION}`;
+      const accept = (copy: Copy): SiteConfig | undefined => {
+        const result = review(copy, version);
+        if (!result.config) return undefined;
+        return editorGrowthOk(copyFields(writer), copyFields(copy)) ? result.config : undefined;
+      };
+      const editKey = cacheKey({
+        task: "copy-editor",
+        model: this.modelId,
+        prompt: COPY_EDITOR_PROMPT_VERSION,
+        playbook: playbook.version,
+        input,
+        draft: writer,
+      });
+      const cachedEdit = (await this.cache.get(editKey)) as Copy | undefined;
+      if (cachedEdit) {
+        const config = accept(cachedEdit);
+        if (config) return { ...kept("applied"), config, editStats: editStats(writer, cachedEdit) };
+      }
+      if (await this.admitted("copy", caller)) return kept("off");
+      const answer = await this.ask(
+        "copy",
+        // Metered with the copy it belongs to (ai_calls has no separate task for it).
+        { task: notes.length > 0 ? "rewrite" : "copy", caller },
+        schema,
+        copyEditorSystem(playbook.text),
+        `Edit this draft. Sections in page order: ${input.pageOrder.join(", ")}.${thin ? " The data is thin: keep the text short." : ""}\n\n<draft>\n${JSON.stringify(writer)}\n</draft>\n\n${delimit(input)}`,
+        { task: "copy-editor", copy: writer },
+        16000,
+      );
+      const cost = spent + answer.costUsd;
+      if (!answer.value) {
+        this.emit({
+          type: "rejected",
+          task: "copy",
+          siteId: caller.siteId,
+          attempt: 0,
+          problems: ["editor", ...answer.problems],
+        });
+        return kept("failed", cost);
+      }
+      const config = accept(answer.value);
+      if (!config) {
+        const problems = review(answer.value, version).problems;
+        this.emit({
+          type: "rejected",
+          task: "copy",
+          siteId: caller.siteId,
+          attempt: 0,
+          problems: ["editor", ...(problems.length > 0 ? problems : ["longer than the draft"])],
+        });
+        return kept("discarded", cost);
+      }
+      await this.cache.set(editKey, answer.value);
+      return { ...kept("applied", cost), config, editStats: editStats(writer, answer.value) };
+    };
+
     const key = cacheKey({
       task: "copy",
       notes,
@@ -376,16 +493,16 @@ ${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos
       playbook: playbook.version,
       input,
     });
+    const warnings: string[] = [];
     const cached = (await this.cache.get(key)) as Copy | undefined;
     if (cached) {
       const result = review(cached);
       if (result.config) {
         this.emit({ type: "cache-hit", task: "copy", siteId: caller.siteId });
-        return { config: result.config, source: "ai", costUsd: 0, warnings: [] };
+        return edited(cached, result.config, 0);
       }
     }
 
-    const warnings: string[] = [];
     const skipped = await this.admitted("copy", caller);
     if (!skipped) {
       const system = copySystem(playbook.text);
@@ -393,7 +510,10 @@ ${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos
         notes.length > 0
           ? `\n\nA reviewer read the current version. Address these points:\n${notes.map((note) => `- ${note}`).join("\n")}`
           : "";
-      const basePrompt = `Rewrite the text of this site. Sections in page order: ${input.pageOrder.join(", ")}.${reviewerNotes}\n\n${delimit(input)}`;
+      const thinNote = thin
+        ? "\n\nThe data is thin: the client wrote little. Write less, in short sentences; never fill the space with generic claims."
+        : "";
+      const basePrompt = `Rewrite the text of this site. Sections in page order: ${input.pageOrder.join(", ")}.${reviewerNotes}${thinNote}\n\n${delimit(input)}`;
       let problems: string[] = [];
       for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
         const answer = await this.ask(
@@ -412,7 +532,7 @@ ${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos
           const result = review(answer.value);
           if (result.config) {
             await this.cache.set(key, answer.value);
-            return { config: result.config, source: "ai", costUsd, warnings };
+            return edited(answer.value, result.config, costUsd);
           }
           problems = result.problems;
         }
@@ -442,6 +562,6 @@ ${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos
       );
     }
     warnings.push("Textos do próprio cliente (a IA não foi usada).");
-    return { config: valid.data, source: "engine", costUsd, warnings };
+    return { config: valid.data, source: "engine", costUsd, warnings, editor: "off", thin };
   }
 }

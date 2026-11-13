@@ -17,6 +17,8 @@ import {
   copyFromConfig,
   copyInputFrom,
   draftCopy,
+  editorGrowthOk,
+  isThin,
   MemoryUsageStore,
   ModelError,
   NeedsAttention,
@@ -33,12 +35,15 @@ function director(
   model: ScriptedModelClient | SimulatedModelClient,
   events: AiEvent[] = [],
   guard?: SpendingGuard,
+  copyEditor = false,
 ) {
   return new AiDirector({
     model,
     registry: new MemoryRegistry(),
     guard,
     onEvent: (event) => events.push(event),
+    // The editor's own tests turn it on (E41); here one answer is one request.
+    copyEditor,
   });
 }
 
@@ -134,8 +139,8 @@ describe("copy", () => {
     const result = await director(new SimulatedModelClient()).writeCopy(config(), caller);
     expect(result.source).toBe("ai");
     expect(result.config.ai).toMatchObject({
-      promptVersion: "copy-2026-10-27.1",
-      playbookVersion: "food@1+common@1",
+      promptVersion: "copy-2026-11-13.1",
+      playbookVersion: "food@2+common@2",
       modelId: "simulated",
     });
     expect(result.config.ai.generatedFields).toContain("sections.hero.content.title");
@@ -209,5 +214,91 @@ describe("copy", () => {
     expect(result.source).toBe("engine");
     expect(result.config.ai.modelId).toBe("engine");
     expect(result.warnings[0]).toMatch(/próprio cliente/);
+  });
+});
+
+describe("the editor's second pass (E41)", () => {
+  const site = config();
+  const writer = draftCopy(copyInputFrom(site));
+  const answer = JSON.stringify(writer);
+  const withTitle = (title: string) => {
+    const copy = structuredClone(writer);
+    copy.hero.title = title;
+    return JSON.stringify(copy);
+  };
+  const titleOf = (result: Awaited<ReturnType<AiDirector["writeCopy"]>>) =>
+    copyFromConfig(result.config).hero.title;
+
+  it("uses the editor's text when it passes every check", async () => {
+    const better = "Pães de fermentação natural todo dia";
+    const model = new ScriptedModelClient([answer, withTitle(better)]);
+    const events: AiEvent[] = [];
+    const result = await director(model, events, undefined, true).writeCopy(site, caller);
+    expect(events.filter((event) => event.type === "rejected")).toEqual([]);
+    expect(model.requests).toHaveLength(2);
+    expect(model.requests[1]?.system).toContain("You are the editor of BrotaSites");
+    expect(model.requests[1]?.prompt).toContain("<draft>");
+    expect(result.editor).toBe("applied");
+    expect(titleOf(result)).toBe(better);
+    expect(result.config.ai.promptVersion).toMatch(/\+editor-/);
+  });
+
+  it("keeps the writer's text when the editor invents a fact", async () => {
+    const events: AiEvent[] = [];
+    const model = new ScriptedModelClient([
+      answer,
+      withTitle("Padaria do Zé, desde 1950 em Lisboa"),
+    ]);
+    const result = await director(model, events, undefined, true).writeCopy(site, caller);
+    expect(result.editor).toBe("discarded");
+    expect(titleOf(result)).toBe(writer.hero.title);
+    expect(
+      events.some((event) => event.type === "rejected" && event.problems[0] === "editor"),
+    ).toBe(true);
+  });
+
+  it("accepts a shorter text, refuses one that grows", () => {
+    const fields = (title: string) => ({ a: title, b: "texto do meio" });
+    expect(editorGrowthOk(fields("Padaria do Zé"), fields("Padaria"))).toBe(true);
+    expect(editorGrowthOk(fields("Padaria"), fields(`Padaria ${"de bairro ".repeat(8)}`))).toBe(
+      false,
+    );
+  });
+
+  it("never blocks the site: an error from the model keeps the writer's text", async () => {
+    const model = new ScriptedModelClient([answer, new ModelError("overloaded", true)]);
+    const result = await director(model, [], undefined, true).writeCopy(site, caller);
+    expect(result.source).toBe("ai");
+    expect(result.editor).toBe("failed");
+    expect(titleOf(result)).toBe(writer.hero.title);
+  });
+
+  it("is off in simulated mode", async () => {
+    const result = await director(new SimulatedModelClient(), [], undefined, true).writeCopy(
+      site,
+      caller,
+    );
+    expect(result.editor).toBe("off");
+  });
+});
+
+describe("little from the client (E41)", () => {
+  it("tells the writer to write less when the data is thin, and says so in the result", async () => {
+    const site = structuredClone(config());
+    site.business.description = "Padaria.";
+    for (const section of site.sections) {
+      if (section.id === "sobre" || section.id === "diferenciais" || section.id === "faq") {
+        section.enabled = false;
+      }
+    }
+    expect(isThin(copyInputFrom(site))).toBe(true);
+    const model = new ScriptedModelClient([JSON.stringify(draftCopy(copyInputFrom(site)))]);
+    const result = await director(model).writeCopy(site, caller);
+    expect(model.requests[0]?.prompt).toContain("The data is thin");
+    expect(result.thin).toBe(true);
+  });
+
+  it("does not call a full answer thin", () => {
+    expect(isThin(copyInputFrom(config()))).toBe(false);
   });
 });

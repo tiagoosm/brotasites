@@ -112,3 +112,26 @@ test("old addresses of the form lead to the new one", async ({ page }) => {
   await page.goto("/criar/negocio");
   await expect(page).toHaveURL(/\/cadastro\?voltar=%2Fcriar$/);
 });
+
+test("the description gets a gentle, optional nudge for more detail (E41)", async ({
+  page,
+  context,
+}) => {
+  await withSite(context, { draft: { business: { category: "padaria" } } });
+  await page.goto(`/criar/${SITE}/negocio`);
+  await expect(page.getByText(/Quanto mais você escrever, melhor fica o seu site/)).toBeVisible();
+  await page.getByText("Ver um exemplo").click();
+  await expect(page.getByText(/Padaria de bairro desde 1998/)).toBeVisible();
+  const field = page.getByLabel("Conte em poucas palavras o que você faz");
+  await field.fill("Padaria.");
+  await expect(
+    page.getByText(/Dá para contar um pouco mais: Qual é o produto mais pedido\?/),
+  ).toBeVisible();
+  await field.fill(
+    "Padaria de bairro desde 1998, com pão de fermentação natural toda manhã, bolo de fubá da receita da avó, café passado na hora e encomendas de bolos e salgados para festas e aniversários.",
+  );
+  await expect(page.getByText("Isso ajuda muito.")).toBeVisible();
+  await expect(page.getByText(/Dá para contar um pouco mais/)).toHaveCount(0);
+  // Each story question asks for a concrete detail.
+  await expect(page.getByText("Ex.: o nome do produto ou do serviço campeão.")).toBeVisible();
+});

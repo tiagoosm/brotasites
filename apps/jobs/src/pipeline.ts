@@ -249,9 +249,24 @@ export async function runBuild(deps: PipelineDeps, job: Job): Promise<void> {
     await store.saveReport(site.id, report.status, {
       reason: report.reason,
       rounds: report.rounds,
-      findings: report.findings,
+      findings: [
+        ...report.findings,
+        // E41: a note for the team, never a reason to hold the site.
+        ...(copy.thin
+          ? [
+              {
+                check: "few-facts",
+                severity: "low" as const,
+                where: "page",
+                message: "Poucas informações do cliente: texto enxuto de propósito.",
+              },
+            ]
+          : []),
+      ],
       costUsd: report.costUsd + copy.costUsd,
       copySource: copy.source,
+      // E41: whether the editor's second pass was used (applied, discarded, failed, off).
+      copyEditor: copy.editor,
     });
 
     if (report.status === "needsAttention") {

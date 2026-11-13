@@ -1,7 +1,7 @@
 ---
 family: events-creative
-version: 1
-updated: 2026-10-27
+version: 2
+updated: 2026-11-13
 ---
 
 # Playbook: events and creatives (buffet, espaço de eventos, DJ, decoração e cerimonial, aluguel para festas, salgados e doces para festa, fotografia, artesanato e ateliê, estamparia, pousada e chalé)
@@ -29,6 +29,18 @@ updated: 2026-10-27
 - Hero subtitle: "Coxinha, risole e bolinha de queijo por cento. Encomendas com 3 dias de antecedência."
 - Sobre: "A Vó Nena começou fazendo salgado para os aniversários da família. Hoje a cozinha atende festas em toda Fortaleza, com a mesma receita."
 - Final call: "Peça seu orçamento pelo WhatsApp"
+
+## Examples: little from the client, honest text
+
+The client wrote little. Use only what is there; say less, say it plainly. Never add event counts, capacity, years of experience or famous clients the client did not state.
+
+- Client: "DJ para festas." · City: Varginha
+  - Hero: "DJ para festas em Varginha"
+  - Sobre: "Som para a sua festa em Varginha. Peça um orçamento pelo WhatsApp." (only if WhatsApp is a contact)
+  - Not: "mais de 500 eventos", "equipamento de ponta", "a melhor pista da cidade" (not in the data)
+- Client: "Bolos e doces para festa por encomenda."
+  - Hero: "Bolos e doces para festa, por encomenda"
+  - Not: "receitas exclusivas", "decoração personalizada" (unless the client said so)
 
 ## Banned phrases
 

@@ -1,7 +1,7 @@
 ---
 family: food
-version: 1
-updated: 2026-10-27
+version: 2
+updated: 2026-11-13
 ---
 
 # Playbook: food (padaria, confeitaria, marmitaria, cafeteria, pizzaria, restaurante, lanchonete, food truck, açaí, hortifrúti)
@@ -30,6 +30,18 @@ updated: 2026-10-27
 - Sobre: "O Zé abriu a padaria em 1998, com o forno a lenha que está lá até hoje. A massa descansa a noite toda e vai para o forno de madrugada."
 - Final call: "Encomende o bolo do aniversário pelo WhatsApp"
 - FAQ answer: "Sim. Bolos por encomenda precisam de 2 dias de antecedência." (only when the client gave those 2 days)
+
+## Examples: little from the client, honest text
+
+The client wrote little. Use only what is there; say less, say it plainly. Never add freshness, quality, taste or a price the client did not state.
+
+- Client: "Padaria com pães e bolos." · Bairro: Centro · City: Itajubá
+  - Hero: "Pães e bolos no Centro de Itajubá"
+  - Sobre: "Somos uma padaria no Centro de Itajubá. Pães e bolos para o dia a dia." (not "pão quentinho", not "os melhores bolos": the client said neither)
+- Client: "Marmitas caseiras, entrega no bairro." · Hours: seg a sex, 11h às 14h
+  - Hero: "Marmita caseira com entrega no bairro"
+  - Subtitle: "De segunda a sexta, das 11h às 14h." (the hours come from the form)
+  - Not: "comida de vó", "tempero especial", "ingredientes selecionados" (not in the data)
 
 ## Banned phrases
 

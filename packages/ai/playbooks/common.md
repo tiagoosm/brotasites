@@ -1,7 +1,7 @@
 ---
 family: common
-version: 1
-updated: 2026-10-27
+version: 2
+updated: 2026-11-13
 ---
 
 # Common rules for every family
@@ -24,6 +24,12 @@ Applies to every site, before the family's own playbook.
 - Never promise what the data does not say (delivery, parking, card payment, opening on holidays).
 - Prices stay exactly as the client wrote them. Never invent, round or estimate a price.
 - No testimonials, reviews or quotes from customers. Those come only from the client, already authorized.
+
+## When the client wrote little
+
+- Write less, not vaguer: short sentences, one idea each, sections lean. A short honest site beats a long generic one.
+- Never fill the gap with claims about quality, freshness, care, experience or results. Those need the client's own words.
+- Prefer the facts the form always has: the name, the city or neighborhood, the category, the hours, how to get in touch.
 
 ## Banned phrases
 
