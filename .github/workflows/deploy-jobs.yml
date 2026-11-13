@@ -62,7 +62,7 @@ jobs:
 
       # Automatic: only a green CI of a push to main in this repository (never a pull request,
       # never a fork), and only when the push changed what the jobs run.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: github.event_name == 'workflow_run'
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
@@ -114,7 +114,7 @@ jobs:
           fi
 
       # Exactly the commit CI checked (or, by hand, the head of main).
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.guard.outputs.sha }}
           persist-credentials: false
