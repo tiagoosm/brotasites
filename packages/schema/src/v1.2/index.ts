@@ -4,6 +4,7 @@
 export * from "./form.js";
 export * from "./hours.js";
 export * from "./json-schema.js";
+export * from "./photo-tips.js";
 export * from "./primitives.js";
 export * from "./reserved.js";
 export * from "./sections.js";

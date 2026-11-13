@@ -216,7 +216,7 @@ test("a finished site made from few answers invites the client to tell more (E41
   );
 });
 
-test("a finished site from full answers shows no such note", async ({ page, context }) => {
+test("a finished site with no photo suggests real ones, once (E41)", async ({ page, context }) => {
   await withSite(context, {
     ...finished,
     draft: {
@@ -225,8 +225,36 @@ test("a finished site from full answers shows no such note", async ({ page, cont
     },
   });
   await page.goto(dashboard);
+  await expect(page.getByText(/com fotos reais do seu espaço/)).toBeVisible();
+  await expect(page.getByText(/Envie fotos em/)).toBeVisible();
+  await expect(page.getByText(/mais detalhes sobre o seu negócio/)).toHaveCount(0);
+});
+
+test("few answers and no photo: one note, one link (E41)", async ({ page, context }) => {
+  await withSite(context, {
+    ...finished,
+    draft: { ...padaria, business: { ...padaria.business, description: "Padaria." } },
+  });
+  await page.goto(dashboard);
+  await expect(page.getByText(/Conte mais e envie fotos em/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Pedir ajustes" })).toHaveCount(1);
+});
+
+test("a finished site from full answers shows no such note", async ({ page, context }) => {
+  await withSite(context, {
+    ...finished,
+    draft: {
+      ...padaria,
+      business: { ...padaria.business, story: { bestseller: "Pão de queijo e bolo de fubá" } },
+      content: {
+        ...padaria.content,
+        photos: [{ assetId: "a0000000-0000-4000-8000-000000000001", alt: "Balcão da padaria" }],
+      },
+    },
+  });
+  await page.goto(dashboard);
   await expect(page.getByRole("heading", { name: "Site pronto" })).toBeVisible();
-  await expect(page.getByText(/Seu site ficaria ainda melhor/)).toHaveCount(0);
+  await expect(page.getByText(/Seu site ficaria/)).toHaveCount(0);
 });
 
 test("the address: suggestion, availability and keeping it before approving", async ({

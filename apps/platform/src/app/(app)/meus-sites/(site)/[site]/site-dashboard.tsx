@@ -1,6 +1,6 @@
 "use client";
 
-import { fewFacts } from "@brotasites/schema/v1.2";
+import { fewFacts, photoTipShort } from "@brotasites/schema/v1.2";
 import { ArrowRight, ExternalLink, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -37,6 +37,10 @@ import {
 import { isStuck, type JobState } from "@/lib/stuck-job";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+
+/** E41: the photo tip's call to action, lowercase when it follows "Conte mais e". */
+const finishedPhotoAction = "envie fotos";
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 // One site of the dashboard: where it is, what the client can do now, and what happened. It
 // refreshes on its own while the system works; nothing here waits on a loading screen.
@@ -152,6 +156,20 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
   const preview = previewUrl(site);
   const locked = Boolean(site.approved_direction);
   const liveUrl = site.subdomain ? `https://${site.subdomain}.${SITES_DOMAIN}` : null;
+  // E41: what would make the finished site better, from the client's own answers.
+  const finishedTips = [
+    ...(fewFacts(site.draft.business ?? {})
+      ? [
+          {
+            text: "Seu site ficaria ainda melhor com mais detalhes sobre o seu negócio.",
+            action: "Conte mais",
+          },
+        ]
+      : []),
+    ...((site.draft.content?.photos ?? []).length === 0
+      ? [{ text: photoTipShort, action: finishedPhotoAction }]
+      : []),
+  ];
 
   return (
     <div className="grid gap-12">
@@ -290,11 +308,13 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           <p className="text-[0.9375rem] text-ink-soft">
             Um endereço particular, só para você conferir. Ele não aparece no Google.
           </p>
-          {site.status === "awaiting_approval" && fewFacts(site.draft.business ?? {}) && (
-            // E41: the text is lean because the answers were; more detail makes it better.
+          {site.status === "awaiting_approval" && finishedTips.length > 0 && (
+            // E41: the text is lean when the answers were, and real photos make the site the
+            // client's own; one note, one way to act on it.
             <Tip>
               <p>
-                Seu site ficaria ainda melhor com mais detalhes sobre o seu negócio. Conte mais em{" "}
+                {finishedTips.map((tip) => tip.text).join(" ")}{" "}
+                {capitalize(finishedTips.map((tip) => tip.action).join(" e "))} em{" "}
                 <a
                   href="#ajustes"
                   className="font-semibold text-leaf-deep underline underline-offset-4"

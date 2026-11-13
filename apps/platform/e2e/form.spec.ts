@@ -135,3 +135,11 @@ test("the description gets a gentle, optional nudge for more detail (E41)", asyn
   // Each story question asks for a concrete detail.
   await expect(page.getByText("Ex.: o nome do produto ou do serviço campeão.")).toBeVisible();
 });
+
+test("the photos card says what makes a site the client's own (E41)", async ({ page, context }) => {
+  await withSite(context, { draft: padaria, completed: ["negocio", "marca", "secoes"] });
+  await page.goto(`/criar/${SITE}/conteudo`);
+  await expect(
+    page.getByText(/Fotos reais deixam o site com a sua cara\. Use fotos do seu espaço/),
+  ).toBeVisible();
+});
