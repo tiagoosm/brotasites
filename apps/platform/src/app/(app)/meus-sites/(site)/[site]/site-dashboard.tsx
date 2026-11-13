@@ -1,5 +1,6 @@
 "use client";
 
+import { fewFacts } from "@brotasites/schema/v1.2";
 import { ArrowRight, ExternalLink, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,6 +9,7 @@ import { DiscardSite } from "@/components/dashboard/discard-site";
 import { RedoPanel } from "@/components/dashboard/redo-panel";
 import { CustomDomain } from "@/components/domains/custom-domain";
 import { Loading, Notice } from "@/components/shared/page-state";
+import { Tip } from "@/components/shared/tip";
 import { Button } from "@/components/ui/button";
 import { pricing } from "@/config/pricing";
 import { extraRoundRule, nextRoundAt, redoUsage } from "@/lib/limits-copy";
@@ -305,6 +307,21 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           <p className="text-[0.9375rem] text-ink-soft">
             Um endereço particular, só para você conferir. Ele não aparece no Google.
           </p>
+          {site.status === "awaiting_approval" && fewFacts(site.draft.business ?? {}) && (
+            // E41: the text is lean because the answers were; more detail makes it better.
+            <Tip>
+              <p>
+                Seu site ficaria ainda melhor com mais detalhes sobre o seu negócio. Conte mais em{" "}
+                <a
+                  href="#ajustes"
+                  className="font-semibold text-leaf-deep underline underline-offset-4"
+                >
+                  Pedir ajustes
+                </a>
+                .
+              </p>
+            </Tip>
+          )}
           <a
             href={preview}
             target="_blank"

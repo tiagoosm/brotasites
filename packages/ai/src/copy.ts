@@ -193,6 +193,20 @@ export function copyInputFrom(config: SiteConfig) {
 
 export type CopyInput = ReturnType<typeof copyInputFrom>;
 
+/**
+ * E41: the client gave little to write from: a short description and nothing else of their
+ * own (no "sobre" text, highlights or questions). The writer and the editor then write less.
+ */
+export function isThin(input: CopyInput): boolean {
+  const description = (input.business.description ?? "").trim();
+  const { sobre, diferenciais, faq } = input.sections;
+  const more =
+    Boolean(sobre?.text?.trim()) ||
+    (diferenciais?.items.length ?? 0) > 0 ||
+    ((faq as { items?: unknown[] } | undefined)?.items?.length ?? 0) > 0;
+  return description.length < 80 && !more;
+}
+
 /** Every text value of the input, for the fact check. */
 export function sourceTexts(input: CopyInput): string[] {
   const out: string[] = [];

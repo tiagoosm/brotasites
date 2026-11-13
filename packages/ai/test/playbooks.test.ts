@@ -6,13 +6,13 @@ describe("playbooks", () => {
   it("has a versioned playbook per family of this round, plus the common rules", () => {
     for (const family of playbookFamilies) {
       const playbook = playbookFor(family);
-      expect(playbook.version).toBe(`${family}@1+common@1`);
+      expect(playbook.version).toBe(`${family}@2+common@2`);
       expect(playbook.text).toContain("## Good examples");
       expect(playbook.banned).toEqual(
         expect.arrayContaining(["excelência", "descubra", "venha conhecer"]),
       );
     }
-    expect(playbookFor("health").version).toBe("general@1+common@1");
+    expect(playbookFor("health").version).toBe("general@2+common@2");
   });
 
   it("keeps every version label within the schema's 40 characters", () => {
