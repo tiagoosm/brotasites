@@ -173,14 +173,12 @@ describe("what production needs (E34)", () => {
     }
   });
 
-  it("keeps both deploy workflows manual, main-only, confirmed and least-privileged", () => {
+  it("keeps both deploy workflows main-only, confirmed and least-privileged", () => {
     for (const file of ["deploy-worker.yml", "deploy-jobs.yml"]) {
       const yml = readFileSync(join(root, ".github/workflows", file), "utf8");
       const on = yml.slice(yml.indexOf("\non:"), yml.indexOf("\npermissions:"));
       expect(on, file).toMatch(/workflow_dispatch:/);
-      expect(on, file).not.toMatch(
-        /\b(push|pull_request|pull_request_target|schedule|workflow_run):/,
-      );
+      expect(on, file).not.toMatch(/\b(push|pull_request|pull_request_target|schedule):/);
       expect(yml, file).not.toMatch(/pull_request_target/);
       expect(yml, file).toMatch(/^permissions:\n {2}contents: read$/m);
       expect(yml, file).toMatch(/refs\/heads\/main/);
@@ -191,6 +189,23 @@ describe("what production needs (E34)", () => {
       // The typed confirmation goes through env, never interpolated into a script.
       expect(yml, file).not.toMatch(/run:[^\n]*\$\{\{\s*(inputs|github\.event)/);
     }
+  });
+
+  it("deploys automatically only after a green CI of a push to main (E40)", () => {
+    for (const file of ["deploy-worker.yml", "deploy-jobs.yml"]) {
+      const yml = readFileSync(join(root, ".github/workflows", file), "utf8");
+      expect(yml, file).toMatch(
+        /workflow_run:\n {4}workflows: \[CI\]\n {4}types: \[completed\]\n {4}branches: \[main\]/,
+      );
+      expect(yml, file).toMatch(/"\$CONCLUSION" != "success"/);
+      expect(yml, file).toMatch(/"\$EVENT" != "push"/);
+      expect(yml, file).toMatch(/"\$BRANCH" != "main"/);
+      expect(yml, file).toMatch(/"\$FROM_REPO" != "\$THIS_REPO"/);
+      expect(yml, file).toMatch(/if: needs\.guard\.outputs\.deploy == 'true'/);
+    }
+    // Every push to main keeps its own CI run, so none skips its deploy.
+    const ci = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
+    expect(ci).toMatch(/cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/);
   });
 
   it("reads dotenv files", () => {
