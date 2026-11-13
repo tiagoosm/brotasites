@@ -46,8 +46,16 @@ Included and optional. On the page of a published site: *Usar o seu próprio dom
 | `publishing` | "Colocando no ar" | System |
 | `live` | Link to the site | |
 | `needs_attention` | A clear message about what is missing | Client or admin |
-| `suspended` | Notice and reason | Admin |
+| `suspended` | Notice and reason; cannot undo it | Admin (disciplinary: reports, terms) |
 | `grace` | Renewal notice and download | Client |
+| `offline` (E42) | "Fora do ar (por você) · Recolocar no ar", or the team's reason when it chose to show it; with a scheduled deletion, "Exclusão em N dias · Cancelar exclusão" | Client (their own take-offline and deletion) or admin |
+
+**Taking offline and deleting (E42).** Two different things:
+
+- **Tirar do ar** (reversible): the site stops answering (KV `offline`, the Worker's "Site fora do ar", 410, also on the client's own domain); nothing is deleted. The client does it alone and undoes it alone; the team may do it with a reason (the client cannot undo the team's). From `live` or `grace` only; `grace` comes back as `grace`.
+- **Excluir** (final): scheduled for `deletionWaitDays` (7) with the site offline meanwhile, cancellable until then (the client cancels only their own). Then the content, directions, reports, events, files, the R2 copy, the preview and the client's domain go; the charges (with who paid, as account deletion keeps them), the terms acceptances (they belong to the account) and the audit record (`site_takedowns`: site id, address, who, when, reason, note) stay. The address rests 30 days (`subdomain_holds`): nobody else may take it; its owner may. The team may also delete now (typing the address; never with a job or a charge on the way).
+- `suspended` stays the team's disciplinary measure; `offline` is the neutral one. An unpaid site is still discarded on its page (E24), not deleted this way.
+- No team approval for the client's own requests: the team is told (a notice to every admin) and sees the scheduled deletions on its panel. Deleting a paid site gives no slot or credit back (the slot rule counts unpaid sites in progress only).
 
 Rules: no loading screen; the dashboard polls the status (or uses Supabase realtime). No fake progress bar. Time estimates only when measured. On failure: one automatic retry, then `needs_attention` with an alert to the admin. Worst case, payment confirmed and publishing failed: automatic retry, immediate alert and a documented refund path.
 

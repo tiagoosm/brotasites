@@ -51,6 +51,12 @@ If the project is paused anyway: Supabase Dashboard > the project > Resume proje
 
 The same daily Vercel Cron that keeps Supabase awake (`/api/cron/keep-alive`) also runs the cleanup (`apps/platform/src/lib/server/cleanup.ts`): first the dashboard warnings (7 days and 1 day before), then the sites past their deadline, at most 25 per run, each removed in the database and then its files (uploads, images, renders, the preview pointer in KV, and the purge job for anything published). One schedule instead of two keeps within the Hobby plan's cron limits (to verify in the Vercel docs before adding more). The team panel's `/admin/limites` shows a dry run of what the next 7 days would delete.
 
+## Taking offline and deleting a site (E42)
+
+- **Order:** the database decides and records (`server_take_offline`, `server_restore_online`, `server_request_deletion`, `server_cancel_deletion`, `server_delete_site_now`); then the platform sets `site:<subdomain>` to `offline` (or back to `active`/`grace`) in KV (`lib/server/takedown.ts`). On a deletion, KV goes `offline` first, then the files in Storage, the preview pointer and the R2 purge (`site_purges`); the client's domain is queued in `domain_purges` by the database and removed by the daily routine. A cleanup never throws: if it fails, the site is already offline and the queues retry.
+- **The client's own domain** maps to the same `site:` record, so an offline site answers 410 there too.
+- **Scheduled deletions:** the same daily cron runs the due ones (`runScheduledDeletions`, at most 25 per run, before the domain routine); a failure is recorded on the site (`deletion_attempts`, `deletion_error`, up to 10 tries) for the team to see.
+
 ## Client domains (E25)
 
 Included in the price and optional (owner's decision of 2026-11-04). Built against a simulated hosting; the real calls to Cloudflare for SaaS are written (`apps/platform/src/lib/domains/provider.ts`) and not run until the owner sets up the account (`docs/owner-steps.md`, "Client domains").

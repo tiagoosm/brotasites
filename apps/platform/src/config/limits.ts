@@ -30,6 +30,15 @@ export const limits = {
   domainsIncluded: 100,
   domainsAlertAt: 80,
   /**
+   * E42: a client's deletion waits this many days, the site offline meanwhile, cancellable. The
+   * team may choose 0 to 30. Owner's decision pending confirmation (docs/launch-status.md).
+   */
+  deletionWaitDays: 7,
+  /** E42: a deleted site's address rests this many days (set in the database migration). */
+  subdomainHoldDays: 30,
+  /** E42: scheduled deletions run by the daily routine, at most this many per run. */
+  deletionBatch: 25,
+  /**
    * E39: times the team may run a failed step of one site again ("Tentar de novo" in the admin)
    * in 24 hours. Each run can call the AI again, so it is capped; past it, look at the cause
    * first.
