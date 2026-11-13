@@ -1,4 +1,9 @@
-import { designDistance, MemoryRegistry } from "@brotasites/engine";
+import {
+  designDistance,
+  featuresOf,
+  MemoryRegistry,
+  type PreviousDirection,
+} from "@brotasites/engine";
 import { siteConfigSchema } from "@brotasites/schema/v1.2";
 import {
   AiDirector,
@@ -15,12 +20,15 @@ import { configOf, engineInputOf, facts } from "./businesses.js";
 // The evaluation of the 30 businesses (docs/ai-and-reviewer.md, Evaluations). Metrics: JSON
 // validity of the model's answers, invented facts and banned phrases in them (caught and
 // thrown away; the final sites must have none), diversity across the 3 directions and the
-// distance between sites of the same family. Works with the simulated or the live model.
+// distance between sites of the same family, and (E41) the distance between a redo and the
+// rounds before it. Works with the simulated or the live model.
 
 export interface EvalCase {
   name: string;
   family: string;
   directions: { source: "ai" | "engine"; minDistance: number };
+  /** E41: rounds 1 and 2 against every earlier round of the same site. */
+  redo: { minDistance: number; meanDistance: number; sources: ("ai" | "engine")[] };
   copy: {
     source: "ai" | "engine";
     finalFactIssues: number;
@@ -56,6 +64,9 @@ export interface EvalReport {
     /** Final length over the writer's, mean over applied edits (below 1 = shorter). */
     editorLengthRatio: number;
     thinClients: number;
+    /** E41: distance between a redo's directions and every earlier round's (min and mean). */
+    minRedoDistance: number;
+    meanRedoDistance: number;
     costUsd: number;
   };
 }
@@ -85,6 +96,29 @@ export async function evaluate(model: ModelClient): Promise<EvalReport> {
       approved.push({ family: input.family, features: first.features });
     }
 
+    // E41: two redos, each against every earlier round of this site.
+    const previous: PreviousDirection[] = list.map((direction) => ({
+      round: 0,
+      identity: direction.identity,
+    }));
+    const redoDistances: number[] = [];
+    const redoSources: ("ai" | "engine")[] = [];
+    for (const round of [1, 2]) {
+      const redo = await director.generateDirections({
+        siteId,
+        input: { ...input, round, previous: [...previous] },
+      });
+      costUsd += redo.costUsd;
+      redoSources.push(redo.source);
+      for (const direction of redo.directions) {
+        for (const earlier of previous) {
+          redoDistances.push(designDistance(direction.features, featuresOf(earlier.identity)));
+        }
+      }
+      for (const direction of redo.directions)
+        previous.push({ round, identity: direction.identity });
+    }
+
     const config = siteConfigSchema.parse(configOf(item));
     const copy = await director.writeCopy(config, { siteId, accountId: siteId });
     costUsd += copy.costUsd;
@@ -96,6 +130,11 @@ export async function evaluate(model: ModelClient): Promise<EvalReport> {
       name: item.name,
       family: item.family,
       directions: { source: directions.source, minDistance },
+      redo: {
+        minDistance: Math.min(...redoDistances),
+        meanDistance: redoDistances.reduce((sum, value) => sum + value, 0) / redoDistances.length,
+        sources: redoSources,
+      },
       copy: {
         source: copy.source,
         finalFactIssues,
@@ -167,6 +206,11 @@ export async function evaluate(model: ModelClient): Promise<EvalReport> {
         ),
       ),
       thinClients: cases.filter((item) => item.copy.thin).length,
+      minRedoDistance: Math.min(...cases.map((item) => item.redo.minDistance)),
+      meanRedoDistance:
+        Math.round(
+          (cases.reduce((sum, item) => sum + item.redo.meanDistance, 0) / cases.length) * 1000,
+        ) / 1000,
       costUsd,
     },
   };

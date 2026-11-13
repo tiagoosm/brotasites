@@ -46,6 +46,9 @@ describe("evaluation set", () => {
     // E41: the editor is off in simulated mode; with the live model it is measured here.
     expect(summary.editorInventedFacts).toBe(0);
     expect(summary.editorApplied).toBe(0);
+    // E41: a redo never comes back close to an earlier round.
+    expect(summary.meanRedoDistance).toBeGreaterThanOrEqual(0.6);
+    expect(summary.minRedoDistance).toBeGreaterThanOrEqual(0.3);
     expect(summary.costUsd).toBe(0);
   });
 });

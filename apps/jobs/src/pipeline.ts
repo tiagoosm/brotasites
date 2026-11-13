@@ -13,6 +13,8 @@ import { maskJobError } from "@brotasites/schema/job-error";
 import {
   familyOf,
   formToSiteConfig,
+  isEmptyFeedback,
+  redoFeedbackSchema,
   reviewLevel,
   type SiteConfig,
   sectionsOf,
@@ -121,7 +123,19 @@ export async function runDirections(deps: PipelineDeps, job: Job): Promise<void>
   try {
     for (const warning of workspace.warnings)
       await store.addEvent(site.id, "photo_warning", warning);
-    const input = engineInputOf(site, workspace);
+    // E41: a redo keeps away from every earlier round and follows what the client did not like
+    // (the job's payload, from the platform; validated again here).
+    const previous = (await store.listDirections(site.id))
+      .filter((direction) => direction.round < site.round)
+      .map((direction) => ({ round: direction.round, identity: direction.identity }));
+    const feedback = redoFeedbackSchema.safeParse(job.payload.feedback ?? undefined);
+    const input: EngineInput = {
+      ...engineInputOf(site, workspace),
+      ...(previous.length > 0 ? { previous } : {}),
+      ...(site.round > 0 && feedback.success && !isEmptyFeedback(feedback.data)
+        ? { feedback: feedback.data }
+        : {}),
+    };
     const result = await deps.ai.generateDirections({
       siteId: site.id,
       accountId: site.ownerId,

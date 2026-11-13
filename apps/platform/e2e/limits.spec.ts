@@ -110,6 +110,7 @@ test.describe("rounds of directions", () => {
     );
     await page.goto(dashboardOf(SITE));
     await page.getByRole("button", { name: "Nenhuma serviu: criar outras 3" }).click();
+    await page.getByRole("button", { name: "Criar sem dizer o motivo" }).click();
     await expect(page.getByText("Próxima rodada disponível às 15h40.")).toBeVisible();
   });
 });

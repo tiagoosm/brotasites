@@ -96,9 +96,46 @@ test("none of the 3 fits: asking for 3 more", async ({ page, context }) => {
     directions: threeDirections,
   });
   await page.goto(dashboard);
-  await page.getByRole("button", { name: "Nenhuma serviu: criar outras 3" }).click();
+  // E41: the round is spent only after the client says what to change, or skips it.
+  const redo = page.getByRole("button", { name: "Nenhuma serviu: criar outras 3" });
+  await expect(redo).toHaveAttribute("aria-expanded", "false");
+  await redo.click();
+  await expect(redo).toHaveAttribute("aria-expanded", "true");
+  expect(state.rpc.filter((call) => call.name === "request_directions")).toEqual([]);
+  await page.getByRole("button", { name: "Criar sem dizer o motivo" }).click();
   await expect(page.getByRole("status").first()).toContainText("Criando as 3 direções");
-  expect(state.rpc.at(-1)?.name).toBe("request_directions");
+  expect(state.rpc.at(-1)).toEqual({ name: "request_directions", body: { p_site_id: SITE } });
+});
+
+test("asking for 3 more, saying what to change (E41)", async ({ page, context }) => {
+  const state = await withSite(context, {
+    site: siteRow("awaiting_direction_choice"),
+    draft: padaria,
+    directions: threeDirections,
+  });
+  await page.goto(dashboard);
+  await page.getByRole("button", { name: "Nenhuma serviu: criar outras 3" }).click();
+  const panel = page.getByRole("region", { name: "O que você não gostou?" });
+  const lighter = panel.getByRole("button", { name: "Mais claro" });
+  const darker = panel.getByRole("button", { name: "Mais escuro" });
+  await lighter.click();
+  await expect(lighter).toHaveAttribute("aria-pressed", "true");
+  // Opposites replace each other.
+  await darker.click();
+  await expect(darker).toHaveAttribute("aria-pressed", "true");
+  await expect(lighter).toHaveAttribute("aria-pressed", "false");
+  await panel.getByRole("button", { name: "Outras fontes" }).click();
+  await panel.getByLabel("Quer contar mais? (opcional)").fill("  Queria algo mais  alegre.  ");
+  await expect(panel.getByText("29/140")).toBeVisible();
+  await panel.getByRole("button", { name: "Criar outras 3" }).click();
+  await expect(page.getByRole("status").first()).toContainText("Criando as 3 direções");
+  expect(state.rpc.at(-1)).toEqual({
+    name: "request_directions",
+    body: {
+      p_site_id: SITE,
+      feedback: { reasons: ["darker", "fonts"], note: "Queria algo mais  alegre." },
+    },
+  });
 });
 
 const finished = {

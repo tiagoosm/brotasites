@@ -217,6 +217,28 @@ describe("pipeline", { timeout: 240_000 }, () => {
     expect(store.events.at(-1)?.kind).toBe("job_failed");
   });
 
+  it("a redo keeps away from the earlier round and follows the client's chips (E41)", async () => {
+    const { store, siteId, deps } = setup();
+    store.enqueue(siteId, "directions");
+    expect(await runNext(deps, store)).toBe("done");
+    const first = store.directions.filter((d) => d.siteId === siteId && d.round === 0);
+
+    // request_directions moves to the next round; the platform adds the chips to the payload.
+    await store.updateSite(siteId, { status: "generating_directions" });
+    const record = store.sites.get(siteId);
+    if (record) record.round = 1;
+    store.enqueue(siteId, "directions", { round: 1, feedback: { reasons: ["fonts"] } });
+    expect(await runNext(deps, store)).toBe("done");
+    const second = store.directions.filter((d) => d.siteId === siteId && d.round === 1);
+    expect(second).toHaveLength(3);
+    const usedFonts = new Set(first.map((d) => d.identity.fontPair));
+    expect(second.some((d) => !usedFonts.has(d.identity.fontPair))).toBe(true);
+    const before = new Set(first.map((d) => d.identity.personality));
+    expect(second.filter((d) => !before.has(d.identity.personality)).length).toBeGreaterThanOrEqual(
+      2,
+    );
+  });
+
   it("stores the error masked: no secret of the environment nor key-shaped text (E39)", async () => {
     const { store, siteId, deps } = setup();
     await store.updateSite(siteId, { status: "generating_directions" });

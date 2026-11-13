@@ -1,4 +1,4 @@
-import type { FormDraft } from "@brotasites/schema/v1.2";
+import type { FormDraft, RedoFeedback } from "@brotasites/schema/v1.2";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { JobState } from "@/lib/stuck-job";
 import { hosts } from "./domains/hosts";
@@ -248,11 +248,12 @@ export async function loadDirectionsQuota(
 }
 
 /** Asks for a round of directions; the server decides with the limits (and starts the job). */
-export async function requestDirections(siteId: string): Promise<void> {
+export async function requestDirections(siteId: string, feedback?: RedoFeedback): Promise<void> {
   const response = await fetch(`/api/sites/${siteId}/directions`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: "{}",
+    // E41: what the client did not like about the last round, when they said.
+    body: JSON.stringify(feedback ? { feedback } : {}),
   });
   if (!response.ok) {
     const body = (await response.json().catch(() => ({}))) as { error?: string };

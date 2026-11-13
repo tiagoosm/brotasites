@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { DiscardSite } from "@/components/dashboard/discard-site";
+import { RedoPanel } from "@/components/dashboard/redo-panel";
 import { CustomDomain } from "@/components/domains/custom-domain";
 import { Loading, Notice } from "@/components/shared/page-state";
 import { Tip } from "@/components/shared/tip";
@@ -67,6 +68,8 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
   const [view, setView] = useState<View | null | "missing" | "failed">(null);
   const [acting, setActing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // E41: "Nenhuma serviu" opens "O que você não gostou?" before the round is spent.
+  const [redoOpen, setRedoOpen] = useState(false);
 
   const load = useCallback(async () => {
     const supabase = getBrowserSupabase();
@@ -252,14 +255,15 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           <div className="grid gap-3">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               <Button
-                aria-busy={acting === "redo" || undefined}
                 variant="outline"
                 size="lg"
                 disabled={acting !== null || waitUntil !== null}
                 aria-describedby="refazer-info"
-                onClick={() => act("redo", () => requestDirections(site.id))}
+                aria-expanded={redoOpen}
+                aria-controls="refazer-motivo"
+                onClick={() => setRedoOpen((open) => !open)}
               >
-                {acting === "redo" ? "Pedindo…" : "Nenhuma serviu: criar outras 3"}
+                Nenhuma serviu: criar outras 3
               </Button>
               <Link
                 href={`/criar/${site.id}/marca`}
@@ -268,6 +272,19 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
                 Mudar cores ou sensação antes
               </Link>
             </div>
+            {redoOpen && waitUntil === null && (
+              <div id="refazer-motivo">
+                <RedoPanel
+                  busy={acting === "redo"}
+                  onSubmit={(feedback) =>
+                    act("redo", async () => {
+                      await requestDirections(site.id, feedback);
+                      setRedoOpen(false);
+                    })
+                  }
+                />
+              </div>
+            )}
             {quota && (
               <p id="refazer-info" className="text-sm text-ink-soft">
                 {waitUntil
