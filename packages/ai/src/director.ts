@@ -10,6 +10,7 @@ import {
   type DirectionsResponse,
   type EngineInput,
   type EngineProvider,
+  featuresOf,
   NO_WEIGHTS,
   type UniquenessRegistry,
 } from "@brotasites/engine";
@@ -295,6 +296,26 @@ export class AiDirector implements EngineProvider {
     weights: CatalogWeights,
   ): string {
     const { name, city, category, family, feelings, brandColors, hasLogo, photos, round } = input;
+    // E41: what the client already saw, as engine facts (our own data, not the client's).
+    const earlier = (input.previous ?? []).map(({ round: seen, identity }) => ({
+      round: seen,
+      personality: identity.personality,
+      heroVariant: identity.heroVariant,
+      fontPair: identity.fontPair,
+      mode: featuresOf(identity).mode,
+      hue: featuresOf(identity).hue,
+    }));
+    const history =
+      earlier.length > 0
+        ? `
+<earlier-rounds>
+${JSON.stringify(earlier)}
+</earlier-rounds>
+<client-feedback>
+${JSON.stringify({ reasons: input.feedback?.reasons ?? [] })}
+</client-feedback>
+`
+        : "";
     const recommended = weights.recommended.filter((choices) => choices.heroVariant);
     const advice =
       recommended.length > 0
@@ -310,8 +331,19 @@ Compositions that clients approved often. Fiel à marca or Evolução may reuse 
 <catalog>
 ${JSON.stringify(catalogMenu(input, variants))}
 </catalog>
-${advice}
-${delimit({ name, city, category, family, feelings, brandColors, hasLogo, photos })}`;
+${advice}${history}
+${delimit({
+  name,
+  city,
+  category,
+  family,
+  feelings,
+  brandColors,
+  hasLogo,
+  photos,
+  // The client's own words about the last round: data, delimited with the rest.
+  ...(input.feedback?.note ? { feedbackNote: input.feedback.note } : {}),
+})}`;
   }
 
   recordApproved(

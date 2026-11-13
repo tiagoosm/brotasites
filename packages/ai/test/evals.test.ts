@@ -43,6 +43,9 @@ describe("evaluation set", () => {
     expect(summary.aiCopy).toBe(30);
     expect(summary.aiDirections).toBeGreaterThanOrEqual(27);
     expect(summary.minDirectionDistance).toBeGreaterThanOrEqual(0.45);
+    // E41: a redo never comes back close to an earlier round.
+    expect(summary.meanRedoDistance).toBeGreaterThanOrEqual(0.6);
+    expect(summary.minRedoDistance).toBeGreaterThanOrEqual(0.3);
     expect(summary.costUsd).toBe(0);
   });
 });

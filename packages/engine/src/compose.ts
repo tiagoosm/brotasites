@@ -23,6 +23,15 @@ import {
 } from "./directions.js";
 import { type DesignFeatures, designDistance, featuresOf, fingerprintOf } from "./features.js";
 import { type EngineInput, seedFor } from "./input.js";
+import {
+  avoidFor,
+  lastRoundPersonalities,
+  modeFromReasons,
+  previousFeatures,
+  redoScore,
+  VISIBLE_AXES_REQUIRED,
+  visibleDifferences,
+} from "./redo.js";
 import { activeVariants, type CatalogWeights, compositionKey, NO_WEIGHTS } from "./weights.js";
 
 // The engine's check of a composition proposed by someone else (the AI art director, E8). The
@@ -134,7 +143,42 @@ export function composeDirections(
       ? [`${choice.id}: this composition was retired`]
       : []),
   ]);
+  // E41: a redo must rotate personalities and follow the chips, as the engine does.
+  const previous = input.previous ?? [];
+  const chips = input.feedback?.reasons ?? [];
+  const last = lastRoundPersonalities(previous);
+  if (last.size > 0) {
+    const fresh = choices.filter((choice) => !last.has(choice.personality)).length;
+    if (fresh < 2) {
+      reasons.push(
+        `at least 2 personalities must be new against the round before (${[...last].join(", ")})`,
+      );
+    }
+  }
+  const avoid = avoidFor(chips, previous);
+  for (const choice of choices) {
+    const heroes = allowedVariants(active, "hero", input, choice.personality);
+    if (
+      avoid.heroVariants.has(choice.heroVariant) &&
+      heroes.some((hero) => !avoid.heroVariants.has(hero.id))
+    ) {
+      reasons.push(
+        `${choice.id}: the client asked for another layout; hero ${choice.heroVariant} was used before`,
+      );
+    }
+    const pairs = compatibleFontPairs(choice.personality);
+    if (
+      avoid.fontPairs.has(choice.fontPair) &&
+      pairs.some((pair) => !avoid.fontPairs.has(pair.id))
+    ) {
+      reasons.push(
+        `${choice.id}: the client asked for other fonts; ${choice.fontPair} was used before`,
+      );
+    }
+  }
   if (reasons.length > 0) throw new CompositionRejected(reasons);
+  const forcedMode = modeFromReasons(chips);
+  const earlier = previousFeatures(previous);
 
   const seed = seedFor(input);
   const directions: Direction[] = [];
@@ -143,7 +187,7 @@ export function composeDirections(
     const choice = choices.find((item) => item.id === id) as DirectionChoice;
     const subSeed = `${seed}|${id}|composed`;
     const random = createRandom(subSeed);
-    const options = optionsFor(id, choice.personality, random, firstMode);
+    const options = optionsFor(id, choice.personality, random, firstMode, forcedMode);
     const marks = grammar[choice.personality].marks;
     const identity: Omit<Identity, "fingerprint"> = {
       personality: choice.personality,
@@ -189,6 +233,14 @@ export function composeDirections(
       if (value < MIN_DIRECTION_DISTANCE) {
         distance.push(`${direction.id} and ${other.id} too close (${value.toFixed(2)})`);
       }
+    }
+    if (redoScore(direction.features, earlier) < 1) {
+      const visible = Math.min(
+        ...earlier.map((other) => visibleDifferences(direction.features, other).length),
+      );
+      distance.push(
+        `${direction.id} repeats an earlier round (needs ${VISIBLE_AXES_REQUIRED} visible changes: hue, light or dark, fonts, hero, personality; has ${visible})`,
+      );
     }
     for (const neighbor of neighbors) {
       const value = designDistance(direction.features, neighbor);

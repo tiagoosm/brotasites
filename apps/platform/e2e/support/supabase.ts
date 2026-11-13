@@ -411,7 +411,12 @@ export async function fakeSupabase(
       return route.fulfill(json({ id: SITE }, 201));
     }
     if (url.pathname.endsWith("/directions") && route.request().method() === "POST") {
-      state.rpc.push({ name: "request_directions", body: { p_site_id: SITE } });
+      // E41: the body carries what the client did not like, when they said.
+      const sent = (route.request().postDataJSON() ?? {}) as Record<string, unknown>;
+      state.rpc.push({
+        name: "request_directions",
+        body: { p_site_id: SITE, ...(sent.feedback ? { feedback: sent.feedback } : {}) },
+      });
       if (state.quota.availableAt) {
         return route.fulfill(
           json({ error: "Você já usou os refazeres grátis. Tente de novo mais tarde." }, 429),

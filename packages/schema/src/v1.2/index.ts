@@ -5,6 +5,7 @@ export * from "./form.js";
 export * from "./hours.js";
 export * from "./json-schema.js";
 export * from "./primitives.js";
+export * from "./redo.js";
 export * from "./reserved.js";
 export * from "./sections.js";
 export * from "./site-config.js";

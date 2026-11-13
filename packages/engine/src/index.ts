@@ -7,5 +7,6 @@ export * from "./input.js";
 export * from "./lock.js";
 export * from "./personality.js";
 export * from "./provider.js";
+export * from "./redo.js";
 export * from "./registry.js";
 export * from "./weights.js";
