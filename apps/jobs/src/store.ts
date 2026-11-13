@@ -111,6 +111,8 @@ export interface PipelineStore {
     directions: Omit<DirectionRecord, "id" | "siteId" | "round">[],
   ): Promise<DirectionRecord[]>;
   getDirection(directionId: string): Promise<DirectionRecord | null>;
+  /** E41: every direction of a site, all rounds (a redo keeps away from the earlier ones). */
+  listDirections(siteId: string): Promise<DirectionRecord[]>;
 
   listAssets(siteId: string): Promise<AssetRecord[]>;
   downloadAsset(asset: AssetRecord): Promise<Uint8Array>;

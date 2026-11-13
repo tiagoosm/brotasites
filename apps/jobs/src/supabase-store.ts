@@ -306,6 +306,13 @@ export function supabaseStore(db: SupabaseClient): PipelineStore {
       }
       return weights;
     },
+    async listDirections(siteId) {
+      const rows = check(
+        await db.from("site_directions").select("*").eq("site_id", siteId).order("round"),
+        "directions",
+      ) as Record<string, unknown>[];
+      return rows.map(toDirection);
+    },
     async getDirection(directionId) {
       const rows = check(
         await db.from("site_directions").select("*").eq("id", directionId),

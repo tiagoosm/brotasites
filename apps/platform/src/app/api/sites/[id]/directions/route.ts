@@ -1,3 +1,4 @@
+import { blockedTopic, redoFeedbackSchema } from "@brotasites/schema/v1.2";
 import { z } from "zod";
 import { extraRoundWaitSeconds, limits } from "@/config/limits";
 import { nextRoundAt } from "@/lib/limits-copy";
@@ -21,8 +22,15 @@ const known: Record<string, [number, string]> = {
 };
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const body = await readBody(request, z.object({}).strict());
+  // E41: what the client did not like about the last round (optional chips and a short note).
+  const body = await readBody(
+    request,
+    z.object({ feedback: redoFeedbackSchema.optional() }).strict(),
+  );
   if ("error" in body) return body.error;
+  const feedback = body.data.feedback;
+  const topic = blockedTopic(feedback?.note);
+  if (topic) return refuse(400, `Esse assunto não pode aparecer nos sites: ${topic}.`);
   const { id } = await params;
   const owned = await ownSite(id);
   if ("error" in owned) return owned.error;
@@ -64,6 +72,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       },
       429,
     );
+  }
+  // The chips travel with the round's job, before it starts; the job validates them again.
+  if (result.jobId && feedback && (feedback.reasons.length > 0 || feedback.note)) {
+    const { data: job } = await admin
+      .from("jobs")
+      .select("payload")
+      .eq("id", result.jobId)
+      .maybeSingle();
+    await admin
+      .from("jobs")
+      .update({ payload: { ...((job?.payload as object) ?? {}), feedback } })
+      .eq("id", result.jobId);
   }
   if (result.jobId) await triggerJob(result.jobId);
   return json({ used: result.used, free: result.free });

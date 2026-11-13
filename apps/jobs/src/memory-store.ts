@@ -115,6 +115,9 @@ export class MemoryStore implements PipelineStore {
   async catalogWeights() {
     return this.weights;
   }
+  async listDirections(siteId: string) {
+    return this.directions.filter((item) => item.siteId === siteId);
+  }
   async getDirection(directionId: string) {
     return this.directions.find((item) => item.id === directionId) ?? null;
   }

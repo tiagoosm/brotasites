@@ -17,6 +17,14 @@ import type { EngineInput } from "./input.js";
 import { seedFor } from "./input.js";
 import { directionPersonalities } from "./personality.js";
 import {
+  avoidFor,
+  modeFromReasons,
+  NO_AVOID,
+  previousFeatures,
+  type RedoAvoid,
+  redoScore,
+} from "./redo.js";
+import {
   activeVariants,
   type CatalogWeights,
   type CompositionChoices,
@@ -82,8 +90,12 @@ function pickVariant(
   input: EngineInput,
   personality: Personality,
   weights: CatalogWeights,
+  avoid: ReadonlySet<string> = new Set(),
 ): string | undefined {
-  const allowed = allowedVariants(variants, section, input, personality);
+  const all = allowedVariants(variants, section, input, personality);
+  // E41 "Layout diferente": leave out what earlier rounds used, when anything else fits.
+  const fresh = all.filter((variant) => !avoid.has(variant.id));
+  const allowed = fresh.length > 0 ? fresh : all;
   if (allowed.length === 0) return undefined;
   // With no recommendation every weight is 1, which draws exactly like random.pick.
   return random.weighted(allowed, (variant) => Math.max(variantWeight(variant.id, weights), 0.0001))
@@ -143,13 +155,18 @@ function drawIdentity(
   options: DrawOptions,
   weights: CatalogWeights = NO_WEIGHTS,
   base?: CompositionChoices,
+  avoid: RedoAvoid = NO_AVOID,
 ): Identity {
   const { personality } = options;
   const rules = grammar[personality];
-  const fontPairs = compatibleFontPairs(personality);
+  const allPairs = compatibleFontPairs(personality);
+  // E41 "Outras fontes": a pair earlier rounds did not use, when the personality has one.
+  const freshPairs = allPairs.filter((pair) => !avoid.fontPairs.has(pair.id));
+  const fontPairs = freshPairs.length > 0 ? freshPairs : allPairs;
 
   const heroVariant =
-    base?.heroVariant ?? pickVariant(random, variants, "hero", input, personality, weights);
+    base?.heroVariant ??
+    pickVariant(random, variants, "hero", input, personality, weights, avoid.heroVariants);
   if (!heroVariant) throw new EngineError(`No hero variant for the family ${input.family}`);
   const sections = input.sections ?? familyInfo[input.family].defaultSections;
   const sectionVariants: Identity["sectionVariants"] = {};
@@ -157,7 +174,7 @@ function drawIdentity(
     if (section === "hero") continue;
     const variant =
       base?.sectionVariants[section] ??
-      pickVariant(random, variants, section, input, personality, weights);
+      pickVariant(random, variants, section, input, personality, weights, avoid.sectionVariants);
     if (variant) sectionVariants[section] = variant;
   }
 
@@ -194,8 +211,22 @@ export function optionsFor(
   personality: Personality,
   random: Random,
   firstMode: PaletteMode,
+  /** E41: "Mais claro" or "Mais escuro" sets every direction's mode the personality allows. */
+  forcedMode?: PaletteMode,
 ): DrawOptions {
   const modes = personalityPalettes[personality].modes;
+  const options = baseOptions(id, personality, random, firstMode, modes);
+  if (forcedMode && modes.includes(forcedMode)) return { ...options, mode: forcedMode };
+  return options;
+}
+
+function baseOptions(
+  id: DirectionId,
+  personality: Personality,
+  random: Random,
+  firstMode: PaletteMode,
+  modes: readonly PaletteMode[],
+): DrawOptions {
   if (id === "fiel-a-marca") {
     return { personality, mode: modes[0], keepBrandColor: true, hueShift: 0 };
   }
@@ -232,17 +263,23 @@ export function drawDirections(
   const variants = activeVariants(catalog, weights);
   const seed = seedFor(input);
   const personalities = directionPersonalities(input);
+  // E41: the earlier rounds of this site, and what the client did not like.
+  const previous = input.previous ?? [];
+  const earlier = previousFeatures(previous);
+  const reasons = input.feedback?.reasons ?? [];
+  const avoid = avoidFor(reasons, previous);
+  const forcedMode = modeFromReasons(reasons);
   const directions: Direction[] = [];
   const warnings: string[] = [];
   let firstMode: PaletteMode = "light";
 
   directionIds.forEach((id, index) => {
     const personality = personalities[index] as Personality;
-    let best: { direction: Direction; score: number } | undefined;
+    let best: { direction: Direction; score: number; toEarlier: number } | undefined;
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       const subSeed = `${seed}|${id}|${attempt}`;
       const random = createRandom(subSeed);
-      const options = optionsFor(id, personality, random, firstMode);
+      const options = optionsFor(id, personality, random, firstMode, forcedMode);
       // "Contraste" always explores; the others take a recommended composition part of the time.
       const recommended =
         id === "contraste" ? [] : fittingRecommended(input, variants, personality, weights);
@@ -250,7 +287,16 @@ export function drawDirections(
         recommended.length > 0 && random.next() < RECOMMENDED_SHARE
           ? random.pick(recommended)
           : undefined;
-      const identity = drawIdentity(random, input, variants, options, weights, base);
+      const identity = drawIdentity(
+        random,
+        input,
+        variants,
+        options,
+        weights,
+        // A recommended composition would undo "Layout diferente" or "Outras fontes".
+        avoid.heroVariants.size + avoid.fontPairs.size > 0 ? undefined : base,
+        avoid,
+      );
       const features = featuresOf(identity);
       const toDirections = Math.min(
         1,
@@ -259,16 +305,22 @@ export function drawDirections(
       const toSites = Math.min(1, ...neighbors.map((other) => designDistance(features, other)));
       // Normalized so 1 means both minimums are met; the best attempt wins if none meets them.
       // A retired composition never wins over one that is not.
+      // E41: also far from, and visibly different from, every direction of earlier rounds.
+      const toEarlier = redoScore(features, earlier);
       const score =
-        Math.min(toDirections / MIN_DIRECTION_DISTANCE, toSites / MIN_SITE_DISTANCE) -
+        Math.min(toDirections / MIN_DIRECTION_DISTANCE, toSites / MIN_SITE_DISTANCE, toEarlier) -
         (isRetired(identity, weights) ? 2 : 0);
       const direction = { id, label: directionLabels[id], seed: subSeed, identity, features };
-      if (!best || score > best.score) best = { direction, score };
+      if (!best || score > best.score) best = { direction, score, toEarlier };
       if (score >= 1) break;
     }
     if (!best) throw new EngineError("No direction drawn");
     if (best.score < 1) {
-      warnings.push(`A direção "${directionLabels[id]}" ficou abaixo da distância mínima.`);
+      warnings.push(
+        best.toEarlier < 1
+          ? `A direção "${directionLabels[id]}" ficou parecida com uma rodada anterior.`
+          : `A direção "${directionLabels[id]}" ficou abaixo da distância mínima.`,
+      );
     }
     if (index === 0) firstMode = best.direction.features.mode;
     directions.push(best.direction);
