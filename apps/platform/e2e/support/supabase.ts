@@ -100,6 +100,10 @@ export interface FakeState {
     status_message: string | null;
     preview_token: string | null;
     approved_direction: string | null;
+    offline_by?: "owner" | "admin" | "system" | null;
+    offline_public_reason?: string | null;
+    delete_after?: string | null;
+    deletion_by?: "owner" | "admin" | null;
     created_at: string;
     updated_at: string;
   } | null;
@@ -146,6 +150,8 @@ export interface FakeState {
   quota: { used: number; free: number; availableAt: string | null };
   /** The account already has another unpaid site in progress (E24): creating answers 409. */
   openSiteId?: string | null;
+  /** E42: the client's takedown requests, in order. */
+  takedowns?: { action: string; body: Record<string, unknown> }[];
   /** The site was discarded (POST /api/sites/:id/discard). */
   discarded?: boolean;
   /** Admin reads with their query string (E24 panel: search, filters, pages). */
@@ -429,6 +435,54 @@ export async function fakeSupabase(
     }
     if (/\/api\/sites\/[^/]+\/domain/.test(url.pathname))
       return answerDomain(route, url, state, json);
+    // E42: "Gerenciar o site", as the route handlers answer after the database functions.
+    const takedown = url.pathname.match(
+      /\/api\/sites\/[^/]+\/(offline|online|deletion|deletion\/cancel)$/,
+    );
+    if (takedown && route.request().method() === "POST" && state.site) {
+      const body = (route.request().postDataJSON() ?? {}) as {
+        confirm?: boolean;
+        address?: string;
+      };
+      if (body.confirm !== true) return route.fulfill(json({ error: "Confirme." }, 400));
+      const site = state.site;
+      const action = takedown[1] ?? "";
+      if (action === "offline") {
+        state.site = { ...site, status: "offline", offline_by: "owner" };
+      } else if (action === "online") {
+        if (site.offline_by !== "owner") {
+          return route.fulfill(json({ error: "Quem tirou o site do ar foi a equipe." }, 409));
+        }
+        state.site = { ...site, status: "live", offline_by: null };
+      } else if (action === "deletion") {
+        if (body.address !== site.subdomain) {
+          return route.fulfill(
+            json(
+              { error: "O endereço digitado não confere. Digite exatamente o endereço do site." },
+              400,
+            ),
+          );
+        }
+        const due = new Date(Date.now() + 7 * 86_400_000).toISOString();
+        state.site = {
+          ...site,
+          status: "offline",
+          offline_by: site.status === "offline" ? site.offline_by : "owner",
+          delete_after: due,
+          deletion_by: "owner",
+        };
+      } else {
+        state.site = { ...site, delete_after: null, deletion_by: null };
+      }
+      state.takedowns = [...(state.takedowns ?? []), { action, body }];
+      return route.fulfill(
+        json({
+          status: state.site.status,
+          changed: true,
+          deleteAfter: state.site.delete_after ?? null,
+        }),
+      );
+    }
     if (url.pathname.endsWith("/discard") && route.request().method() === "POST") {
       const body = (route.request().postDataJSON() ?? {}) as { confirm?: boolean };
       if (body.confirm !== true) return route.fulfill(json({ error: "Confirme." }, 400));
