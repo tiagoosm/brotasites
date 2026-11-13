@@ -43,6 +43,9 @@ describe("evaluation set", () => {
     expect(summary.aiCopy).toBe(30);
     expect(summary.aiDirections).toBeGreaterThanOrEqual(27);
     expect(summary.minDirectionDistance).toBeGreaterThanOrEqual(0.45);
+    // E41: the editor is off in simulated mode; with the live model it is measured here.
+    expect(summary.editorInventedFacts).toBe(0);
+    expect(summary.editorApplied).toBe(0);
     // E41: a redo never comes back close to an earlier round.
     expect(summary.meanRedoDistance).toBeGreaterThanOrEqual(0.6);
     expect(summary.minRedoDistance).toBeGreaterThanOrEqual(0.3);

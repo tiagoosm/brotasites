@@ -29,7 +29,14 @@ export interface EvalCase {
   directions: { source: "ai" | "engine"; minDistance: number };
   /** E41: rounds 1 and 2 against every earlier round of the same site. */
   redo: { minDistance: number; meanDistance: number; sources: ("ai" | "engine")[] };
-  copy: { source: "ai" | "engine"; finalFactIssues: number };
+  copy: {
+    source: "ai" | "engine";
+    finalFactIssues: number;
+    /** E41: the editor's outcome and, when applied, how much it changed. */
+    editor: "applied" | "discarded" | "failed" | "off";
+    editStats?: { changedFields: number; lengthBefore: number; lengthAfter: number };
+    thin: boolean;
+  };
 }
 
 export interface EvalReport {
@@ -47,6 +54,16 @@ export interface EvalReport {
     finalFactIssues: number;
     minDirectionDistance: number;
     minSameFamilyDistance: number;
+    /** E41, the editor: outcomes, facts it tried to invent (caught), what it changed. */
+    editorApplied: number;
+    editorDiscarded: number;
+    editorFailed: number;
+    editorInventedFacts: number;
+    editorBannedPhrases: number;
+    editorChangedFieldsMean: number;
+    /** Final length over the writer's, mean over applied edits (below 1 = shorter). */
+    editorLengthRatio: number;
+    thinClients: number;
     /** E41: distance between a redo's directions and every earlier round's (min and mean). */
     minRedoDistance: number;
     meanRedoDistance: number;
@@ -118,7 +135,13 @@ export async function evaluate(model: ModelClient): Promise<EvalReport> {
         meanDistance: redoDistances.reduce((sum, value) => sum + value, 0) / redoDistances.length,
         sources: redoSources,
       },
-      copy: { source: copy.source, finalFactIssues },
+      copy: {
+        source: copy.source,
+        finalFactIssues,
+        editor: copy.editor,
+        ...(copy.editStats ? { editStats: copy.editStats } : {}),
+        thin: copy.thin,
+      },
     });
   }
 
@@ -138,8 +161,21 @@ export async function evaluate(model: ModelClient): Promise<EvalReport> {
   const rejected = events.filter(
     (event): event is Extract<AiEvent, { type: "rejected" }> => event.type === "rejected",
   );
+  // The writer's and the art director's answers; the editor's are counted on their own.
   const has = (pattern: RegExp) =>
-    rejected.filter((event) => event.problems.some((problem) => pattern.test(problem))).length;
+    rejected.filter(
+      (event) =>
+        event.problems[0] !== "editor" && event.problems.some((problem) => pattern.test(problem)),
+    ).length;
+  const editorRejected = rejected.filter((event) => event.problems[0] === "editor");
+  const editorHas = (pattern: RegExp) =>
+    editorRejected.filter((event) => event.problems.some((problem) => pattern.test(problem)))
+      .length;
+  const applied = cases.filter((item) => item.copy.editStats);
+  const mean = (values: number[]) =>
+    values.length === 0
+      ? 0
+      : Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 1000) / 1000;
   const invalidAnswers = has(/not valid JSON|^[\w.()-]+: (Invalid|Too|Unrecognized|Expected)/);
   return {
     model: model.modelId,
@@ -156,6 +192,20 @@ export async function evaluate(model: ModelClient): Promise<EvalReport> {
       finalFactIssues: cases.reduce((sum, item) => sum + item.copy.finalFactIssues, 0),
       minDirectionDistance: Math.min(...cases.map((item) => item.directions.minDistance)),
       minSameFamilyDistance,
+      editorApplied: cases.filter((item) => item.copy.editor === "applied").length,
+      editorDiscarded: cases.filter((item) => item.copy.editor === "discarded").length,
+      editorFailed: cases.filter((item) => item.copy.editor === "failed").length,
+      editorInventedFacts: editorHas(/is not in the data/),
+      editorBannedPhrases: editorHas(/: banned "/),
+      editorChangedFieldsMean: mean(applied.map((item) => item.copy.editStats?.changedFields ?? 0)),
+      editorLengthRatio: mean(
+        applied.map(
+          (item) =>
+            (item.copy.editStats?.lengthAfter ?? 0) /
+            Math.max(1, item.copy.editStats?.lengthBefore ?? 1),
+        ),
+      ),
+      thinClients: cases.filter((item) => item.copy.thin).length,
       minRedoDistance: Math.min(...cases.map((item) => item.redo.minDistance)),
       meanRedoDistance:
         Math.round(

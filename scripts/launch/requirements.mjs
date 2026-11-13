@@ -340,6 +340,15 @@ export const VARIABLES = [
     step: "trigger",
   },
   {
+    name: "AI_COPY_EDITOR",
+    target: "trigger",
+    need: "optional",
+    secret: false,
+    expected: "true (default); false turns the editor off",
+    without: "Default on: with AI_MODE=live the text gets the editor's second pass (E41).",
+    step: "trigger",
+  },
+  {
     name: "CLOUDFLARE_ACCOUNT_ID",
     target: "trigger",
     need: "required",

@@ -72,5 +72,7 @@ export function aiProviderFromEnv(env: Env, deps: ProviderDeps): AiDirector {
     cache: deps.cache,
     guard: new SpendingGuard(deps.usage, limitsFromEnv(env), deps.onBudgetAlert),
     onEvent: deps.onEvent,
+    // E41: on unless "false"; the simulated model always skips it.
+    copyEditor: env.AI_COPY_EDITOR !== "false",
   });
 }

@@ -237,6 +237,35 @@ test("directions that failed on our side: the page opens and leads back to the a
   ).toHaveAttribute("href", `/criar/${SITE}/contato`);
 });
 
+test("a finished site made from few answers invites the client to tell more (E41)", async ({
+  page,
+  context,
+}) => {
+  await withSite(context, {
+    ...finished,
+    draft: { ...padaria, business: { ...padaria.business, description: "Padaria.", story: {} } },
+  });
+  await page.goto(dashboard);
+  await expect(page.getByText(/Seu site ficaria ainda melhor com mais detalhes/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Pedir ajustes" })).toHaveAttribute(
+    "href",
+    "#ajustes",
+  );
+});
+
+test("a finished site from full answers shows no such note", async ({ page, context }) => {
+  await withSite(context, {
+    ...finished,
+    draft: {
+      ...padaria,
+      business: { ...padaria.business, story: { bestseller: "Pão de queijo e bolo de fubá" } },
+    },
+  });
+  await page.goto(dashboard);
+  await expect(page.getByRole("heading", { name: "Site pronto" })).toBeVisible();
+  await expect(page.getByText(/Seu site ficaria ainda melhor/)).toHaveCount(0);
+});
+
 test("the address: suggestion, availability and keeping it before approving", async ({
   page,
   context,
