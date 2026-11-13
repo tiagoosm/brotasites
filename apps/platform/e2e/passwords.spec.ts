@@ -130,8 +130,11 @@ test("Caps Lock is pointed out, never blocked", async ({ page }) => {
       { capsLock, key },
     );
   await password(page).focus();
-  await key(true, "A");
-  await expect(page.getByText("Caps Lock está ligado.")).toBeVisible();
+  // The first event can land before React hydrates the field: send it again until it is heard.
+  await expect(async () => {
+    await key(true, "A");
+    await expect(page.getByText("Caps Lock está ligado.")).toBeVisible({ timeout: 500 });
+  }).toPass();
   await password(page).fill("Cafe-forte-2026");
   await expect(password(page)).toHaveValue("Cafe-forte-2026");
   await key(false, "b");

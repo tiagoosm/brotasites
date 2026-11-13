@@ -4,9 +4,11 @@ import {
   contentAnswersSchema,
   type FormDraft,
   type PhotoAnswer,
+  photoTip,
   sectionsOf,
 } from "@brotasites/schema/v1.2";
 import { useId } from "react";
+import { Tip } from "@/components/shared/tip";
 import { useForm12 } from "@/lib/form-store";
 import { PickFiles, Thumb, UploadStatus, useAssetUrls, useUploader } from "./asset-upload";
 import { ItemList, SectionCard, TextField } from "./fields";
@@ -224,6 +226,10 @@ function PhotosCard({
       name="Fotos"
       note="Até 12, suas ou com permissão. Sem fotos, o site fica só com texto no topo."
     >
+      {/* E41: what most sets a site apart is the client's own photos. */}
+      <Tip>
+        <p>{photoTip}</p>
+      </Tip>
       <details className="rounded-lg border border-border bg-paper p-4 text-[0.9375rem]">
         <summary className="-my-2.5 cursor-pointer py-2.5 font-semibold">
           Como tirar boas fotos com o celular
