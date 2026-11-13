@@ -136,6 +136,10 @@ export interface FakeState {
     stuckMinutes: number;
     stuckRunningMinutes?: number;
   };
+  /** E39: the site's jobs as the admin API returns them (masked, explained). */
+  adminJobs?: Record<string, unknown>[];
+  /** E39: the queue row's short failure line. */
+  failure?: { step: string; summary: string; at: string } | null;
   /** Bodies posted to the admin route handlers, by path. */
   adminPosts: { path: string; body: Record<string, unknown> }[];
   /** Rounds of directions used on the site, the free ones and when the next one opens (E24). */
@@ -546,6 +550,7 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
                 review: "changesNeeded",
                 costUsd: 0.42,
                 rounds: 2,
+                failure: state.failure ?? null,
               },
             ]
           : [],
@@ -579,6 +584,7 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
         events: state.events,
         decisions: [],
         payments: [],
+        jobs: state.adminJobs ?? [],
         retry:
           state.site.status === "needs_attention"
             ? { available: true, step: "Montar o site", used: 0, limit: 3 }
@@ -740,6 +746,18 @@ function overviewFor(state: FakeState) {
     },
     budget: BUDGET,
     ...(state.generation ? { generation: state.generation } : {}),
+    // E39: sites that need attention, with the short failure line.
+    failures:
+      state.site?.status === "needs_attention"
+        ? [
+            {
+              siteId: state.site.id,
+              name: ((state.draft.business ?? {}) as { name?: string }).name ?? null,
+              updatedAt: state.site.updated_at,
+              failure: state.failure ?? null,
+            },
+          ]
+        : [],
   };
 }
 

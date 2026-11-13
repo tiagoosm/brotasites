@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BudgetBar } from "@/components/admin/bars";
 import { BudgetNotice, PanelSection, STAGES, Stat, stageLabel } from "@/components/admin/panel";
@@ -55,23 +56,35 @@ interface Generation {
   stuckRunningMinutes?: number;
 }
 
+/** E39: sites in needs_attention, newest first, with what went wrong in a short line. */
+interface Failure {
+  siteId: string;
+  name: string | null;
+  updatedAt: string;
+  failure: { step: string; summary: string; at: string } | null;
+}
+
 export default function OverviewPage() {
   const [data, setData] = useState<{
     overview: Overview;
     budget: AiBudget;
     generation?: Generation;
+    failures?: Failure[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<(typeof periods)[number][0]>("30");
   useEffect(() => {
     document.title = "Visão geral · BrotaSites";
-    adminGet<{ overview: Overview; budget: AiBudget; generation?: Generation }>(
-      "/api/admin/overview",
-    ).then(setData, (caught: Error) => setError(caught.message));
+    adminGet<{
+      overview: Overview;
+      budget: AiBudget;
+      generation?: Generation;
+      failures?: Failure[];
+    }>("/api/admin/overview").then(setData, (caught: Error) => setError(caught.message));
   }, []);
   if (error) return <Notice title="Não foi possível abrir a visão geral" text={error} />;
   if (!data) return <Loading />;
-  const { overview, budget, generation } = data;
+  const { overview, budget, generation, failures = [] } = data;
   const now = overview[period];
   const funnel = now.funnel;
   const spent = Number(overview.today.spentUsd);
@@ -81,6 +94,7 @@ export default function OverviewPage() {
   return (
     <div className="grid gap-10">
       {generation && <GenerationNotice generation={generation} />}
+      {failures.length > 0 && <Failures failures={failures} />}
       <header className="grid gap-4">
         <h1 className="font-display text-[2.5rem] leading-[1.05]">Visão geral</h1>
         <div role="tablist" aria-label="Período" className="flex flex-wrap gap-2">
@@ -186,6 +200,43 @@ export default function OverviewPage() {
         )}
       </PanelSection>
     </div>
+  );
+}
+
+/** E39: the sites waiting for the team after a failure; each opens its "O que deu errado". */
+function Failures({ failures }: { failures: Failure[] }) {
+  return (
+    <section
+      aria-labelledby="falhas"
+      className="grid gap-3 rounded-lg border border-pollen/60 bg-pollen/10 p-4 text-[0.9375rem]"
+    >
+      <h2 id="falhas" className="font-semibold">
+        {failures.length === 1
+          ? "1 site precisa de atenção"
+          : `${failures.length} sites precisam de atenção`}
+      </h2>
+      <ul className="grid gap-2">
+        {failures.map((item) => (
+          <li key={item.siteId}>
+            <Link
+              href={`/admin/sites/${item.siteId}`}
+              className="font-semibold text-leaf-deep underline underline-offset-4"
+            >
+              {item.name ?? "Site sem nome"}
+            </Link>
+            {item.failure ? (
+              <>
+                {" · "}
+                <span className="font-semibold">{item.failure.step} falhou:</span>{" "}
+                {item.failure.summary}
+              </>
+            ) : (
+              " · sem tarefa com falha"
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

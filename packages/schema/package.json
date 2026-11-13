@@ -13,6 +13,10 @@
       "types": "./dist/hours.d.ts",
       "default": "./dist/hours.js"
     },
+    "./job-error": {
+      "types": "./dist/job-error.d.ts",
+      "default": "./dist/job-error.js"
+    },
     "./v1.2": {
       "types": "./dist/v1.2/index.d.ts",
       "default": "./dist/v1.2/index.js"

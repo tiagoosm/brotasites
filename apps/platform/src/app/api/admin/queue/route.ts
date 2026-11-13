@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { failuresBySite } from "@/lib/job-failures";
 import { requireAdmin } from "@/lib/server/admin";
 
 const QUEUE = ["in_review", "needs_attention", "suspended"];
@@ -29,6 +30,20 @@ export async function GET() {
     : { data: {} };
   const costOf = (id: string) =>
     ((costs ?? {}) as Record<string, { costUsd: number; rounds: number }>)[id] ?? null;
+  // E39: what went wrong, in a short line, for the sites that need attention.
+  const attention = (sites ?? [])
+    .filter((site) => site.status === "needs_attention")
+    .map((site) => site.id as string);
+  const { data: failedJobs } = attention.length
+    ? await admin.db
+        .from("jobs")
+        .select("site_id, id, kind, status, error, payload, created_at, finished_at")
+        .in("site_id", attention)
+        .eq("status", "failed")
+        .order("created_at", { ascending: false })
+        .limit(200)
+    : { data: [] };
+  const failures = failuresBySite(failedJobs ?? []);
   const latest = new Map<string, string>();
   for (const report of reports ?? []) {
     if (!latest.has(report.site_id as string))
@@ -52,6 +67,7 @@ export async function GET() {
         review: latest.get(site.id as string) ?? null,
         costUsd: costOf(site.id as string)?.costUsd ?? null,
         rounds: costOf(site.id as string)?.rounds ?? null,
+        failure: failures.get(site.id as string) ?? null,
       };
     }),
     { headers: { "cache-control": "private, no-store" } },

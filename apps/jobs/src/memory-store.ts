@@ -78,6 +78,10 @@ export class MemoryStore implements PipelineStore {
     const job = this.jobs.find((item) => item.id === jobId);
     if (job) Object.assign(job, { status: "queued", error });
   }
+  async recordRun(jobId: string, runId: string) {
+    const job = this.jobs.find((item) => item.id === jobId);
+    if (job) job.payload = { ...job.payload, triggerRunId: runId };
+  }
   async requeueIfRunning(jobId: string, error: string) {
     const job = this.jobs.find((item) => item.id === jobId);
     if (job?.status === "running") Object.assign(job, { status: "queued", error });

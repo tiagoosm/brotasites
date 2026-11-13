@@ -94,6 +94,11 @@ export interface PipelineStore {
    * memory) and nothing marked it. A finished or queued job is left alone.
    */
   requeueIfRunning(jobId: string, error: string): Promise<void>;
+  /**
+   * E39: the Trigger.dev run working on a job (payload.triggerRunId), so the admin can open it
+   * in Runs. Never fails the job: a lost id only costs the link.
+   */
+  recordRun(jobId: string, runId: string): Promise<void>;
 
   loadSite(siteId: string): Promise<SiteRecord>;
   updateSite(siteId: string, patch: SitePatch): Promise<void>;

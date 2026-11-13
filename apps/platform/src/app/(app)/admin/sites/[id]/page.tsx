@@ -5,11 +5,13 @@ import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
+import { JobFailures } from "@/components/admin/job-failures";
 import { TeamAction } from "@/components/admin/team-action";
 import { Loading, Notice } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/config/pricing";
 import { adminGet, adminPost } from "@/lib/admin/client";
+import { type AdminJob, failureNoteFor } from "@/lib/job-failures";
 import { type RetryPlan, retryRefusals } from "@/lib/retry-job";
 import { infoFor } from "@/lib/site-status";
 import { previewUrl } from "@/lib/sites";
@@ -54,6 +56,8 @@ interface Detail {
     created_at: string;
   }[];
   payments: { purpose: string; status: string; amount_cents: number }[];
+  /** E39: the recent jobs, newest first, errors masked. */
+  jobs?: AdminJob[];
   /** E39: "Tentar de novo" for a site in needs_attention. */
   retry?:
     | { available: true; step: string; used: number; limit: number }
@@ -135,6 +139,9 @@ export default function AdminSitePage() {
         </p>
         {site.status_message && <p className="text-[0.9375rem]">{site.status_message}</p>}
       </header>
+
+      {/* E39: first thing on the page when a step failed, before the reviewer's report. */}
+      <JobFailures jobs={detail.jobs ?? []} />
 
       {site.status === "needs_attention" && detail.retry ? (
         <RetryStep
@@ -337,7 +344,17 @@ export default function AdminSitePage() {
                   at: d.created_at,
                   text: `Equipe: ${actionLabels[d.action] ?? d.action} (${d.from_status} → ${d.to_status})${d.note ? `: ${d.note}` : ""}`,
                 })),
-                ...detail.events.map((e) => ({ at: e.created_at, text: e.message })),
+                ...detail.events.map((e) => {
+                  // E39: the team sees which step failed and why; the client's text stays generic.
+                  const note =
+                    e.kind === "job_failed"
+                      ? failureNoteFor(e.created_at, detail.jobs ?? [])
+                      : null;
+                  return {
+                    at: e.created_at,
+                    text: note ? `${e.message} (Equipe: ${note})` : e.message,
+                  };
+                }),
               ]
                 .sort((a, b) => b.at.localeCompare(a.at))
                 .map((item) => (

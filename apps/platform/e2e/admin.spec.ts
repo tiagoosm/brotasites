@@ -90,6 +90,94 @@ test("a site that needs attention runs its failed step again, after a confirmati
   expect(state.site?.status).toBe("building");
 });
 
+test("what went wrong: the step, the cause, the details and the run, for the team (E39)", async ({
+  page,
+  context,
+}) => {
+  const failedJob = {
+    id: "j0000000-0000-4000-8000-000000000002",
+    kind: "build",
+    step: "Montar o site",
+    status: "failed",
+    attempts: 2,
+    error: `page.evaluate: ReferenceError: __name is not defined\n${"    at eval (bundle.js:1:1)\n".repeat(80)}`,
+    cause: {
+      id: "keep-names",
+      summary:
+        "O revisor não conseguiu rodar no navegador: o código empacotado chama __name, que não existe na página.",
+      action:
+        "Corrigido no E39. Rode “Deploy jobs” com a versão atual da main e use “Tentar de novo”.",
+    },
+    createdAt: "2026-11-12T10:00:00Z",
+    startedAt: "2026-11-12T10:00:05Z",
+    finishedAt: "2026-11-12T10:03:00Z",
+    triggerRunId: "run_cm1abc2def3ghi",
+    retry: false,
+  };
+  await withSite(context, {
+    ...inReview,
+    site: { ...inReview.site, status: "needs_attention", preview_token: null },
+    admin: true,
+    adminJobs: [failedJob],
+    failure: {
+      step: "Montar o site",
+      summary: failedJob.cause.summary,
+      at: failedJob.finishedAt,
+    },
+    events: [
+      {
+        id: 1,
+        kind: "job_failed",
+        message: "Algo deu errado do nosso lado. Nossa equipe já foi avisada.",
+        created_at: "2026-11-12T10:03:01Z",
+      },
+    ],
+  });
+  // The queue: a short line of what failed.
+  await page.goto("/admin");
+  await page.getByRole("tab", { name: /Precisa de atenção/ }).click();
+  await expect(page.getByRole("link", { name: /Padaria do Zé/ })).toContainText(
+    "Montar o site falhou: O revisor não conseguiu rodar no navegador",
+  );
+
+  // The overview: the same line, with a way to the site.
+  await page.goto("/admin/visao-geral");
+  const attention = page.getByRole("region", { name: "1 site precisa de atenção" });
+  await expect(attention).toContainText("Montar o site falhou:");
+  await attention.getByRole("link", { name: "Padaria do Zé" }).click();
+  await expect(page).toHaveURL(new RegExp(`/admin/sites/${SITE}$`));
+  const section = page.getByRole("region", { name: "O que deu errado" });
+  await expect(section).toContainText("Montar o site");
+  await expect(section).toContainText("2 tentativas");
+  await expect(section).toContainText("O que fazer: Corrigido no E39.");
+  // Before the reviewer's report.
+  const box = await section.boundingBox();
+  const report = await page.getByRole("heading", { name: "Relatório do revisor" }).boundingBox();
+  expect(box && report && box.y < report.y).toBe(true);
+  // The long text is folded, then scrolls inside its box.
+  const details = section.locator("pre");
+  await expect(details).toBeHidden();
+  await section.getByText("Detalhes técnicos").click();
+  await expect(details).toBeVisible();
+  expect(await details.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+  await details.focus();
+  await expect(details).toBeFocused();
+  await expect(
+    section.getByRole("link", { name: /Abrir a execução no Trigger.dev/ }),
+  ).toHaveAttribute("href", "https://cloud.trigger.dev/runs/run_cm1abc2def3ghi");
+  // The history: the client's generic line, with the team's complement.
+  await expect(
+    page.getByText(/Nossa equipe já foi avisada\. \(Equipe: Montar o site: O revisor/),
+  ).toBeVisible();
+});
+
+test("no failed step: no section about errors", async ({ page, context }) => {
+  await withSite(context, { ...inReview, admin: true });
+  await page.goto(`/admin/sites/${SITE}`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Padaria do Zé");
+  await expect(page.getByRole("region", { name: "O que deu errado" })).toHaveCount(0);
+});
+
 test("approving sends the finished site to the client", async ({ page, context }) => {
   const state = await withSite(context, { ...inReview, admin: true });
   await page.goto(`/admin/sites/${SITE}`);
