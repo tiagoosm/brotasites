@@ -16,6 +16,13 @@ export interface SiteRow {
   status_message: string | null;
   preview_token: string | null;
   approved_direction: string | null;
+  /** E42: who took the site offline (owner, admin, system), while it is offline. */
+  offline_by?: "owner" | "admin" | "system" | null;
+  /** E42: the reason the team chose to show the client, if any. */
+  offline_public_reason?: string | null;
+  /** E42: when a scheduled deletion happens, and who scheduled it. */
+  delete_after?: string | null;
+  deletion_by?: "owner" | "admin" | null;
   created_at: string;
   updated_at: string;
 }
@@ -47,7 +54,7 @@ export interface EventRow {
 }
 
 const SITE_COLUMNS =
-  "id, subdomain, status, round, schema_version, status_message, preview_token, approved_direction, created_at, updated_at";
+  "id, subdomain, status, round, schema_version, status_message, preview_token, approved_direction, offline_by, offline_public_reason, delete_after, deletion_by, created_at, updated_at";
 
 export const directionLabels: Record<DirectionRow["direction"], string> = {
   "fiel-a-marca": "Fiel à marca",
@@ -276,6 +283,37 @@ export async function discardSite(siteId: string): Promise<void> {
       body.error ?? "Não foi possível descartar agora. Tente de novo em instantes.",
     );
   }
+}
+
+/** E42: what the client may do to their own published site ("Gerenciar o site"). */
+export type TakedownAction = "offline" | "online" | "schedule" | "cancel";
+
+const takedownPaths: Record<TakedownAction, string> = {
+  offline: "offline",
+  online: "online",
+  schedule: "deletion",
+  cancel: "deletion/cancel",
+};
+
+export async function manageSite(
+  siteId: string,
+  action: TakedownAction,
+  address?: string,
+): Promise<{ status: string; deleteAfter: string | null }> {
+  const response = await fetch(`/api/sites/${siteId}/${takedownPaths[action]}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(address === undefined ? { confirm: true } : { confirm: true, address }),
+  });
+  const body = (await response.json().catch(() => ({}))) as {
+    status?: string;
+    deleteAfter?: string | null;
+    error?: string;
+  };
+  if (!response.ok) {
+    throw new SiteActionError(body.error ?? "Não foi possível fazer isso agora. Tente de novo.");
+  }
+  return { status: body.status ?? "", deleteAfter: body.deleteAfter ?? null };
 }
 
 export async function chooseDirection(
