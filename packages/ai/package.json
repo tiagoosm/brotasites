@@ -26,7 +26,7 @@
     "eval": "pnpm run build && node dist/evals/run.js"
   },
   "devDependencies": {
-    "@types/node": "24.19.2",
+    "@types/node": "26.6.6",
     "typescript": "6.0.3",
     "vitest": "5.0.5"
   },
