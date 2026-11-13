@@ -1,5 +1,7 @@
-# Publishes the sites Worker (apps/sites-worker) to Cloudflare (E35). Manual only: the owner
-# clicks "Run workflow" on main and types "publicar". Nothing here runs on push or pull request.
+# Publishes the sites Worker (apps/sites-worker) to Cloudflare (E35, E40). Two ways in:
+#   - Automatic (owner's decision of 2026-11-13): after the CI of a push to main ends green, when
+#     that push changed the Worker (apps/sites-worker, the lockfile, the Node version or this file).
+#   - Manual: "Run workflow" on main, typing "publicar" (to redeploy, or after a failed run).
 # Secrets live in the repository's "production" environment (which the owner can protect with a
 # required reviewer); EXPORT_SECRET never passes through here: it is set once in the Cloudflare
 # dashboard. See docs/owner-steps.md, "Publishing from GitHub", and "How to revert".
@@ -12,6 +14,10 @@ on:
         description: 'Digite "publicar" para publicar o Worker dos sites'
         required: true
         type: string
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -24,13 +30,19 @@ jobs:
   guard:
     name: Check the request
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
+    outputs:
+      deploy: ${{ steps.manual.outputs.deploy || steps.auto.outputs.deploy }}
+      sha: ${{ steps.manual.outputs.sha || steps.auto.outputs.sha }}
     steps:
       # The typed value goes through env, never into the script's text.
-      - name: Only main, only with the confirmation
+      - name: Manual run, only main, only with the confirmation
+        id: manual
+        if: github.event_name == 'workflow_dispatch'
         env:
           CONFIRMATION: ${{ inputs.confirmacao }}
           REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
         run: |
           if [ "$REF" != "refs/heads/main" ]; then
             echo "::error::Publique só a partir da main (pedido em $REF)."
@@ -40,16 +52,57 @@ jobs:
             echo "::error::Confirmação ausente: digite publicar."
             exit 1
           fi
+          echo "deploy=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      # Automatic: only a green CI of a push to main in this repository (never a pull request,
+      # never a fork), and only when the push changed the Worker.
+      - uses: actions/checkout@v4
+        if: github.event_name == 'workflow_run'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Automatic run after CI on main
+        id: auto
+        if: github.event_name == 'workflow_run'
+        env:
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          EVENT: ${{ github.event.workflow_run.event }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          FROM_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+          THIS_REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          if [ "$CONCLUSION" != "success" ] || [ "$EVENT" != "push" ] || [ "$BRANCH" != "main" ] || [ "$FROM_REPO" != "$THIS_REPO" ]; then
+            echo "CI de $EVENT em $BRANCH terminou como $CONCLUSION: nada a publicar."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # A squash merge is one commit; a merge commit is compared with its first parent.
+          changed="$(git diff --name-only HEAD^1 HEAD)"
+          echo "Arquivos mudados:"; echo "$changed" | sed 's/^/  /'
+          if echo "$changed" | grep -Eq '^(apps/sites-worker/|pnpm-lock\.yaml$|package\.json$|pnpm-workspace\.yaml$|\.nvmrc$|\.github/workflows/deploy-worker\.yml$)'; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nada do Worker mudou: nada a publicar."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
 
   deploy:
     name: Deploy the Worker
     needs: guard
+    if: needs.guard.outputs.deploy == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: production
     steps:
+      # Exactly the commit CI checked (or, by hand, the head of main).
       - uses: actions/checkout@v4
         with:
+          ref: ${{ needs.guard.outputs.sha }}
           persist-credentials: false
 
       - uses: actions/setup-node@v4

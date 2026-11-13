@@ -5,9 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# On main, every push keeps its own run (E40): "Deploy jobs" follows each green run of main, so a
+# cancelled run would skip a deploy. Pull requests still cancel their older runs.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:
