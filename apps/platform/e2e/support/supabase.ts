@@ -100,6 +100,7 @@ export interface FakeState {
     status_message: string | null;
     preview_token: string | null;
     approved_direction: string | null;
+    published_at?: string | null;
     offline_by?: "owner" | "admin" | "system" | null;
     offline_public_reason?: string | null;
     delete_after?: string | null;
@@ -150,6 +151,12 @@ export interface FakeState {
   quota: { used: number; free: number; availableAt: string | null };
   /** The account already has another unpaid site in progress (E24): creating answers 409. */
   openSiteId?: string | null;
+  /** E42: the team's "Retirada do ar" log, newest first, as the admin API returns it. */
+  takedownLog?: Record<string, unknown>[];
+  /** E42: what "Excluir agora" would refuse. */
+  deleteBlockers?: { job: boolean; payment: boolean };
+  /** E42: the published sites the team's list shows (defaults to the one site). */
+  adminSites?: NonNullable<FakeState["site"]>[];
   /** E42: the client's takedown requests, in order. */
   takedowns?: { action: string; body: Record<string, unknown> }[];
   /** The site was discarded (POST /api/sites/:id/discard). */
@@ -574,6 +581,72 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
       return route.fulfill(json({ jobId: "job-retry", started: true, status: "building" }));
     }
     if (url.pathname.endsWith("/decide") && state.site) {
+      // E42: "Retirada do ar", as the route handler answers after the database functions.
+      const site = state.site;
+      const note = String(body.note ?? "").trim();
+      const takedown = [
+        "take_offline",
+        "restore_online",
+        "schedule_deletion",
+        "cancel_deletion",
+        "delete_now",
+      ].includes(String(body.action));
+      if (takedown) {
+        if (note.length < 3) {
+          return route.fulfill(json({ error: "Escreva o motivo: o registro precisa dele." }, 400));
+        }
+        const log = (action: string, extra: Record<string, unknown> = {}) => {
+          state.takedownLog = [
+            {
+              action,
+              actor: "admin",
+              reason: (body.reason as string) ?? null,
+              note,
+              delete_after: null,
+              created_at: new Date().toISOString(),
+              ...extra,
+            },
+            ...(state.takedownLog ?? []),
+          ];
+        };
+        if (body.action === "take_offline") {
+          state.site = {
+            ...site,
+            status: "offline",
+            offline_by: "admin",
+            offline_public_reason: body.public === true ? note : null,
+          };
+          log("take_offline");
+        } else if (body.action === "restore_online") {
+          state.site = { ...site, status: "live", offline_by: null, offline_public_reason: null };
+          log("restore_online");
+        } else if (body.action === "schedule_deletion") {
+          const due = new Date(Date.now() + Number(body.days ?? 7) * 86_400_000).toISOString();
+          state.site = {
+            ...site,
+            status: "offline",
+            offline_by: site.status === "offline" ? site.offline_by : "admin",
+            delete_after: due,
+            deletion_by: "admin",
+          };
+          log("schedule_deletion", { delete_after: due });
+        } else if (body.action === "cancel_deletion") {
+          state.site = { ...site, delete_after: null, deletion_by: null };
+          log("cancel_deletion");
+        } else {
+          if (body.address !== site.subdomain) {
+            return route.fulfill(
+              json(
+                { error: "O endereço digitado não confere. Digite exatamente o endereço do site." },
+                400,
+              ),
+            );
+          }
+          state.site = null;
+          return route.fulfill(json({ status: "deleted" }));
+        }
+        return route.fulfill(json({ status: state.site.status, changed: true, hosting: "synced" }));
+      }
       const next: Record<string, string> = {
         approve: "awaiting_approval",
         request_changes: "building",
@@ -644,10 +717,47 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
         decisions: [],
         payments: [],
         jobs: state.adminJobs ?? [],
+        takedowns: state.takedownLog ?? [],
+        deleteBlockers: state.deleteBlockers ?? { job: false, payment: false },
         retry:
           state.site.status === "needs_attention"
             ? { available: true, step: "Montar o site", used: 0, limit: 3 }
             : { available: false, reason: "wrong_status", used: 0, limit: 3 },
+      }),
+    );
+  }
+  if (url.pathname === "/api/admin/sites") {
+    // E42: the published sites, with the filter applied like the route handler does.
+    const filter = url.searchParams.get("filter") ?? "";
+    const q = (url.searchParams.get("q") ?? "").toLowerCase();
+    const business = (state.draft.business ?? {}) as Record<string, string>;
+    const all = (state.adminSites ?? (state.site ? [state.site] : [])).map((site) => ({
+      id: site.id,
+      subdomain: site.subdomain,
+      name: business.name ?? null,
+      status: site.status,
+      offlineBy: site.offline_by ?? null,
+      deleteAfter: site.delete_after ?? null,
+      deletionBy: site.deletion_by ?? null,
+      deletionAttempts: 0,
+      deletionError: null,
+      publishedAt: "2026-11-01T12:00:00Z",
+    }));
+    const rows = all.filter(
+      (row) =>
+        (filter === "" ||
+          (filter === "live" && ["live", "grace"].includes(row.status)) ||
+          (filter === "offline" && row.status === "offline" && !row.deleteAfter) ||
+          (filter === "scheduled" && row.deleteAfter)) &&
+        (!q || (row.subdomain ?? "").includes(q)),
+    );
+    return route.fulfill(
+      json({
+        rows,
+        total: rows.length,
+        scheduled: all.filter((row) => row.deleteAfter).length,
+        page: 0,
+        pageSize: 20,
       }),
     );
   }

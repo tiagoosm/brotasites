@@ -3,9 +3,14 @@
 import { categoryInfo, type FormDraft } from "@brotasites/schema/v1.2";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
 import { JobFailures } from "@/components/admin/job-failures";
+import {
+  TakedownPanel,
+  type TakedownRow,
+  type TakedownSite,
+} from "@/components/admin/takedown-panel";
 import { TeamAction } from "@/components/admin/team-action";
 import { Loading, Notice } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
@@ -29,15 +34,16 @@ interface Finding {
 }
 
 interface Detail {
-  site: {
-    id: string;
-    status: string;
+  site: TakedownSite & {
     status_message: string | null;
-    subdomain: string | null;
     preview_token: string | null;
     approved_direction: string | null;
     created_at: string;
   };
+  /** E42: taking offline and deletion, newest first. */
+  takedowns?: TakedownRow[];
+  /** E42: what "Excluir agora" would refuse. */
+  deleteBlockers?: { job: boolean; payment: boolean };
   draft: FormDraft;
   ownerEmail: string | null;
   direction: { direction: string; composition_key: string | null; source: string } | null;
@@ -74,6 +80,11 @@ const actionLabels: Record<string, string> = {
   request_changes: "Pediu ajustes",
   suspend: "Suspendeu",
   unsuspend: "Retirou a suspensão",
+  take_offline: "Tirou do ar",
+  restore_online: "Recolocou no ar",
+  schedule_deletion: "Agendou a exclusão",
+  cancel_deletion: "Cancelou a exclusão",
+  delete_now: "Excluiu agora",
 };
 const severityLabels = { high: "Alta", medium: "Média", low: "Baixa" } as const;
 const when = (iso: string) =>
@@ -81,6 +92,7 @@ const when = (iso: string) =>
 
 export default function AdminSitePage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState<string | null>(null);
   // E39: the answer to "Tentar de novo" outlives its section (the site leaves needs_attention).
@@ -333,6 +345,19 @@ export default function AdminSitePage() {
             siteId={site.id}
             hasPreview={Boolean(preview)}
             onDone={load}
+          />
+          <TakedownPanel
+            site={site}
+            history={detail.takedowns ?? []}
+            blockers={detail.deleteBlockers}
+            onDone={async (message) => {
+              // A deleted site has no page left: back to the list, which says so.
+              if (message.startsWith("Site excluído")) {
+                router.push("/admin/sites?excluido=1");
+                return;
+              }
+              await load();
+            }}
           />
           <section aria-labelledby="historico" className="grid gap-3">
             <h2 id="historico" className="font-display text-[1.5rem]">
