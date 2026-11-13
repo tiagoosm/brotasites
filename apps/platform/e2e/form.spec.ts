@@ -128,7 +128,7 @@ test("the description gets a gentle, optional nudge for more detail (E41)", asyn
     page.getByText(/Dá para contar um pouco mais: Qual é o produto mais pedido\?/),
   ).toBeVisible();
   await field.fill(
-    "Padaria de bairro desde 1998, com pão de fermentação natural toda manhã, bolo de fubá da receita da avó, café passado na hora e encomendas de bolos e salgados para festas e aniversários.",
+    "Padaria de bairro desde 1998, com pão de fermentação natural toda manhã, bolo de fubá da receita da avó, café passado na hora e encomendas de bolos e salgados para festas e aniversários. Fica na praça da matriz, aberta todo dia.",
   );
   await expect(page.getByText("Isso ajuda muito.")).toBeVisible();
   await expect(page.getByText(/Dá para contar um pouco mais/)).toHaveCount(0);
