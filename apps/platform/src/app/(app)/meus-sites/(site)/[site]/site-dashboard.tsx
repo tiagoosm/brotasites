@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { DiscardSite } from "@/components/dashboard/discard-site";
+import { ManageSite } from "@/components/dashboard/manage-site";
 import { RedoPanel } from "@/components/dashboard/redo-panel";
 import { CustomDomain } from "@/components/domains/custom-domain";
 import { Loading, Notice } from "@/components/shared/page-state";
@@ -74,6 +75,8 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
   const [error, setError] = useState<string | null>(null);
   // E41: "Nenhuma serviu" opens "O que você não gostou?" before the round is spent.
   const [redoOpen, setRedoOpen] = useState(false);
+  // E42: what "Gerenciar o site" just did, announced once.
+  const [done, setDone] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const supabase = getBrowserSupabase();
@@ -173,6 +176,15 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
       ? [{ text: photoTipShort, action: finishedPhotoAction }]
       : []),
   ];
+  const download = () =>
+    act("export", async () => {
+      const response = await fetch(`/api/sites/${site.id}/export`);
+      const body = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!response.ok || !body.url) {
+        throw new SiteActionError(body.error ?? "O download não está disponível agora.");
+      }
+      window.location.assign(body.url);
+    });
 
   return (
     <div className="grid gap-12">
@@ -200,6 +212,9 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
           {error}
         </p>
       )}
+      <p role="status" className="empty:hidden text-[0.9375rem] font-semibold text-leaf-deep">
+        {done}
+      </p>
 
       {stuck && job && (
         // E34: a job that waited in the queue too long (the queue was down or not set up).
@@ -394,26 +409,14 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         </a>
       )}
 
-      {["live", "grace"].includes(site.status) && (
+      {["live", "grace", "offline"].includes(site.status) && (
         <div id="baixar" className="grid scroll-mt-6 gap-2">
           <Button
             variant="outline"
             size="lg"
             className="justify-self-start"
             disabled={acting !== null}
-            onClick={() =>
-              act("export", async () => {
-                const response = await fetch(`/api/sites/${site.id}/export`);
-                const body = (await response.json().catch(() => ({}))) as {
-                  url?: string;
-                  error?: string;
-                };
-                if (!response.ok || !body.url) {
-                  throw new SiteActionError(body.error ?? "O download não está disponível agora.");
-                }
-                window.location.assign(body.url);
-              })
-            }
+            onClick={download}
           >
             Baixar o site (.zip)
           </Button>
@@ -516,11 +519,24 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         />
       )}
 
-      {["publishing", "live", "grace", "suspended"].includes(site.status) && (
+      {["publishing", "live", "grace", "suspended", "offline"].includes(site.status) && (
         <CustomDomain
           siteId={site.id}
           siteAddress={liveUrl ? liveUrl.replace("https://", "") : null}
           wish={site.draft.site?.customDomain}
+        />
+      )}
+
+      {["live", "grace", "offline"].includes(site.status) && liveUrl && (
+        <ManageSite
+          site={site}
+          address={liveUrl.replace("https://", "")}
+          busy={acting !== null}
+          onDownload={download}
+          onChanged={async (message) => {
+            setDone(message);
+            await load();
+          }}
         />
       )}
 

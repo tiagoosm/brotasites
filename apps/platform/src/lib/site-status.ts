@@ -12,6 +12,8 @@ export type SiteStatus =
   | "needs_attention"
   | "suspended"
   | "grace"
+  // E42: taken offline by the owner or the team (reversible), or waiting for its deletion.
+  | "offline"
   // Schema 1.1 sites, from before the identity engine.
   | "generating"
   | "failed";
@@ -73,6 +75,12 @@ export const statusInfo: Record<SiteStatus, StatusInfo> = {
   needs_attention: {
     label: "Precisa de atenção",
     text: "Algo precisa ser resolvido antes de seguir.",
+    busy: false,
+    yourTurn: false,
+  },
+  offline: {
+    label: "Fora do ar",
+    text: "O site não está aparecendo para os visitantes. Nada foi apagado.",
     busy: false,
     yourTurn: false,
   },

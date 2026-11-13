@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { domainProvider } from "@/lib/domains/provider";
 import { runIdleCleanup } from "@/lib/server/cleanup";
 import { runDomainRoutine } from "@/lib/server/domains";
+import { runScheduledDeletions } from "@/lib/server/takedown";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 
 // Keeps the Supabase project awake. Supabase pauses Free plan projects that get too few
@@ -10,7 +11,8 @@ import { getAdminSupabase } from "@/lib/supabase/admin";
 // docs/hosting.md). Vercel Cron calls this once a day (vercel.json) with the CRON_SECRET as a
 // bearer token; anyone else gets 401. It counts rows, then (E24) runs the daily cleanup of
 // unpaid sites left idle (lib/server/cleanup.ts) and (E25) the checks of client domains still
-// waiting, for up to 7 days (lib/server/domains.ts): one schedule for all, the one the project has.
+// waiting, for up to 7 days (lib/server/domains.ts), and (E42) the scheduled deletions that are
+// due (lib/server/takedown.ts): one schedule for all, the one the project has.
 
 const TABLES = ["sites", "profiles", "notifications"] as const;
 
@@ -47,6 +49,16 @@ export async function GET(request: Request) {
     console.warn(`cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
     return null;
   });
+  // E42: deletions the owner or the team scheduled that are due (before the domain routine, so
+  // the domains of the sites deleted now are purged in this same run).
+  const deletions = await runScheduledDeletions(supabase, {
+    log: (message) => console.warn(message),
+  }).catch((error: unknown) => {
+    console.warn(
+      `scheduled deletions failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return null;
+  });
   const domains = await runDomainRoutine(supabase, domainProvider()).catch((error: unknown) => {
     console.warn(`domain checks failed: ${error instanceof Error ? error.message : String(error)}`);
     return null;
@@ -57,6 +69,7 @@ export async function GET(request: Request) {
       at: new Date().toISOString(),
       queries: results.map(({ table, ok }) => ({ table, ok })),
       cleanup,
+      deletions,
       domains,
     },
     { status: ok ? 200 : 502, headers: noStore },
