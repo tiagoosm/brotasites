@@ -178,3 +178,46 @@ for (const width of [340, 375, 1280]) {
     ).toBe(true);
   });
 }
+
+test("a withdrawal: the team sees it to refund, records it, and the list counts it", async ({
+  page,
+  context,
+}) => {
+  const state = await withSite(context, {
+    site: live({
+      status: "offline",
+      offline_by: "owner",
+      deletion_by: "owner",
+      delete_after: new Date(Date.now() + 6 * 86_400_000).toISOString(),
+    }),
+    draft: padaria,
+    admin: true,
+    refunds: [
+      {
+        id: "r0000000-0000-4000-8000-000000000001",
+        amount_cents: 29700,
+        status: "requested",
+        requested_at: new Date().toISOString(),
+        resolved_at: null,
+      },
+    ],
+  });
+  await page.goto("/admin/sites");
+  const pending = page.getByRole("region", { name: /Desistências a devolver/ });
+  await expect(pending).toContainText("Desistências a devolver (1)");
+  await pending.getByRole("link", { name: "padaria-do-ze" }).click();
+
+  const section = page.getByRole("region", { name: "Desistência" });
+  await expect(section).toContainText("Devolva o valor integral no provedor de pagamento");
+  await expect(section).toContainText("R$ 297");
+  await section.getByRole("button", { name: "Marcar como devolvido" }).click();
+  await section.getByLabel(/Nota/).fill("pay_123 estornado");
+  await section.getByRole("button", { name: "Confirmar: valor devolvido" }).click();
+  await expect(section.getByRole("status")).toContainText("Devolução registrada");
+  await expect(section).toContainText("devolvido em");
+  expect(state.adminPosts.at(-1)?.body).toEqual({
+    action: "refund_done",
+    requestId: "r0000000-0000-4000-8000-000000000001",
+    note: "pay_123 estornado",
+  });
+});

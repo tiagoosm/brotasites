@@ -190,7 +190,7 @@ const server = createServer(async (req, res) => {
       email: body.email,
       password: body.password,
       confirmed: body.confirmed !== false,
-      meta: { full_name: body.fullName ?? "", terms_version: "2026-10-draft" },
+      meta: { full_name: body.fullName ?? "", terms_version: "2026-11-draft" },
     };
     users.set(user.id, user);
     return send(res, 200, userJson(user));

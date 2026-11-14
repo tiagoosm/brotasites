@@ -7,9 +7,10 @@ import { Stat } from "@/components/admin/panel";
 import { Loading, Notice } from "@/components/shared/page-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatBRL } from "@/config/pricing";
 import { adminGet } from "@/lib/admin/client";
 import { dateTime, formatCount } from "@/lib/admin/format";
-import type { AdminSiteRow } from "@/lib/admin/sites";
+import type { AdminSiteRow, OpenRefund } from "@/lib/admin/sites";
 import { infoFor } from "@/lib/site-status";
 
 // Team panel, published sites (E42): search by address and filters "No ar", "Fora do ar" and
@@ -20,6 +21,8 @@ interface Result {
   rows: AdminSiteRow[];
   total: number;
   scheduled: number;
+  /** E43: withdrawals still to refund. */
+  openRefunds?: OpenRefund[];
   page: number;
   pageSize: number;
 }
@@ -97,6 +100,38 @@ function SitesList() {
           <p role="status" className="text-[0.9375rem] font-semibold">
             Site excluído. O registro ficou no log.
           </p>
+        )}
+        {result?.openRefunds && result.openRefunds.length > 0 && (
+          <section
+            aria-labelledby="a-devolver"
+            className="grid gap-3 rounded-xl border border-destructive/40 bg-card p-4"
+          >
+            <h2 id="a-devolver" className="text-[1.0625rem] font-semibold">
+              Desistências a devolver ({formatCount(result.openRefunds.length)})
+            </h2>
+            <p className="text-sm text-ink-soft">
+              Direito de arrependimento: devolva o valor integral no provedor de pagamento e
+              registre na página do site.
+            </p>
+            <ul className="grid gap-2">
+              {result.openRefunds.map((refund) => (
+                <li key={refund.id} className="text-[0.9375rem]">
+                  {refund.site_id ? (
+                    <Link
+                      href={`/admin/sites/${refund.site_id}`}
+                      className="touch-target font-semibold text-leaf-deep underline underline-offset-4"
+                    >
+                      {refund.subdomain ?? "Site"}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold">{refund.subdomain ?? "Site excluído"}</span>
+                  )}{" "}
+                  · {formatBRL(refund.amount_cents / 100)} · pedido em{" "}
+                  {dateTime(refund.requested_at)}
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
         {result && (
           <dl className="grid max-w-xs">

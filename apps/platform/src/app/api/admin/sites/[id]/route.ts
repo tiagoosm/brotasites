@@ -23,7 +23,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     .eq("id", id)
     .maybeSingle();
   if (!site) return fail(404, errors.notFound);
-  const [direction, reports, events, decisions, payments, owner, jobs, takedowns] =
+  const [direction, reports, events, decisions, payments, owner, jobs, takedowns, refunds] =
     await Promise.all([
       site.approved_direction
         ? db
@@ -67,6 +67,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         .eq("site_id", id)
         .order("created_at", { ascending: false })
         .limit(50),
+      // E43: withdrawals (direito de arrependimento) and whether the team already refunded them.
+      db
+        .from("refund_requests")
+        .select("id, amount_cents, status, requested_at, resolved_at, note")
+        .eq("site_id", id)
+        .order("requested_at", { ascending: false }),
     ]);
   // E39: whether "Tentar de novo" can run now, and which step it would run.
   const plan = retryPlan(site.status as string, jobs.data ?? [], admin.userId);
@@ -91,6 +97,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       decisions: decisions.data ?? [],
       payments: payments.data ?? [],
       takedowns: takedowns.data ?? [],
+      refunds: refunds.data ?? [],
       // E42: what delete_now would refuse (a job on the way or a charge not settled).
       deleteBlockers: {
         job: (jobs.data ?? []).some((job) => ["queued", "running"].includes(job.status as string)),

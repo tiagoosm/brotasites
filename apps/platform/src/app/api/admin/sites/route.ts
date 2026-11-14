@@ -1,4 +1,4 @@
-import { type AdminSiteRow, addressPattern } from "@/lib/admin/sites";
+import { type AdminSiteRow, addressPattern, type OpenRefund } from "@/lib/admin/sites";
 import { adminErrors, requireAdmin } from "@/lib/server/admin";
 import { json, refuse } from "@/lib/server/guard";
 import { errors } from "@/lib/server/session";
@@ -43,19 +43,21 @@ export async function GET(request: Request) {
   if (filter === "scheduled") rows = rows.not("delete_after", "is", null);
   const pattern = addressPattern(query);
   if (query && !pattern)
-    return json({ rows: [], total: 0, scheduled: 0, page, pageSize: PAGE_SIZE });
+    return json({ rows: [], total: 0, scheduled: 0, openRefunds: [], page, pageSize: PAGE_SIZE });
   if (pattern) rows = rows.ilike("subdomain", pattern);
   rows =
     filter === "scheduled"
       ? rows.order("delete_after", { ascending: true })
       : rows.order("published_at", { ascending: false });
 
-  const [list, scheduled] = await Promise.all([
+  const [list, scheduled, refunds] = await Promise.all([
     rows.range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1),
     admin.db
       .from("sites")
       .select("id", { count: "exact", head: true })
       .not("delete_after", "is", null),
+    // E43: withdrawals the team still has to refund at the payment provider.
+    admin.db.rpc("server_open_refunds", { p_limit: 100 }),
   ]);
   if (list.error) return refuse(500, errors.unavailable);
   const result: AdminSiteRow[] = (list.data ?? []).map((row) => {
@@ -77,6 +79,7 @@ export async function GET(request: Request) {
     rows: result,
     total: list.count ?? result.length,
     scheduled: scheduled.count ?? 0,
+    openRefunds: (refunds.data as OpenRefund[] | null) ?? [],
     page,
     pageSize: PAGE_SIZE,
   });

@@ -59,6 +59,10 @@ export async function GET(request: Request) {
     );
     return null;
   });
+  // E43: audit rows past 5 years (CDC art. 27) and address holds that expired.
+  const purge = await supabase.rpc("server_purge_expired_records");
+  if (purge.error) console.warn(`record purge failed: ${purge.error.message}`);
+  const records = purge.error ? null : (purge.data as { audits: number; holds: number });
   const domains = await runDomainRoutine(supabase, domainProvider()).catch((error: unknown) => {
     console.warn(`domain checks failed: ${error instanceof Error ? error.message : String(error)}`);
     return null;
@@ -70,6 +74,7 @@ export async function GET(request: Request) {
       queries: results.map(({ table, ok }) => ({ table, ok })),
       cleanup,
       deletions,
+      records,
       domains,
     },
     { status: ok ? 200 : 502, headers: noStore },

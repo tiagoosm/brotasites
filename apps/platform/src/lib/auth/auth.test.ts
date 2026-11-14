@@ -158,6 +158,6 @@ describe("account schemas", () => {
     ).toBe(true);
     // Signing in with an older, weaker password is still accepted by the schema.
     expect(signInSchema.safeParse({ email: "ze@x.com.br", password: "senha1" }).success).toBe(true);
-    expect(TERMS_VERSION).toBe("2026-10-draft");
+    expect(TERMS_VERSION).toBe("2026-11-draft");
   });
 });

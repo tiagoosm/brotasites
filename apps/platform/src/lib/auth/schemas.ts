@@ -5,7 +5,7 @@ import { PASSWORD_MAX, passwordProblem } from "./passwords";
 // are pt-BR, shown next to the field.
 
 /** The terms in force; the database accepts only this one (accounts migration). */
-export const TERMS_VERSION = "2026-10-draft";
+export const TERMS_VERSION = "2026-11-draft";
 
 export const emailSchema = z
   .string("Informe o seu e-mail.")

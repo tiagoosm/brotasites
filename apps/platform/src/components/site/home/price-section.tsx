@@ -89,9 +89,10 @@ export function PriceSection() {
               </dd>
             </div>
             <div data-reveal="" className="grid content-start gap-1.5">
-              <dt className="font-semibold">Garantia de {pricing.guaranteeDays} dias</dt>
+              <dt className="font-semibold">{pricing.guaranteeDays} dias para desistir</dt>
               <dd className="text-[0.9375rem] text-ink-soft">
-                Se não gostar, devolvemos o valor.
+                Desistiu? Devolvemos o valor integral em até {pricing.guaranteeDays} dias do
+                pagamento.
                 {!pricing.legalReviewed && (
                   <span className="tag mt-2 block text-[0.75rem] text-ink-soft">
                     Texto {LEGAL_REVIEW_PENDING}

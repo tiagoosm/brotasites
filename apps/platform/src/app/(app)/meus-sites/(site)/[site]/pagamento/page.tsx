@@ -65,7 +65,9 @@ function Payment() {
           <li>Uma cópia do site para baixar: o site é seu</li>
         </ul>
         <p className="text-sm text-ink-soft">
-          Garantia de {pricing.guaranteeDays} dias.
+          Direito de arrependimento: desista em até {pricing.guaranteeDays} dias depois do pagamento
+          e receba o valor integral de volta, em Meus sites. Depois disso, não há devolução, porque
+          o site já terá sido entregue.
           {!pricing.legalReviewed && ` (Texto ${LEGAL_REVIEW_PENDING}.)`}
         </p>
       </div>

@@ -123,7 +123,7 @@ test("terms and privacy say they are under review", async ({ page }) => {
   for (const path of ["/termos", "/privacidade"]) {
     await page.goto(path);
     await expect(page.getByRole("note")).toHaveText(
-      /Versão inicial \(2026-10-draft\), pendente de revisão jurídica/,
+      /Versão 2026-11-draft, pendente de revisão jurídica/,
     );
   }
 });

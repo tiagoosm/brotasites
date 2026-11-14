@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
 import { JobFailures } from "@/components/admin/job-failures";
+import { RefundRequests, type RefundRow } from "@/components/admin/refund-requests";
 import {
   TakedownPanel,
   type TakedownRow,
@@ -42,6 +43,8 @@ interface Detail {
   };
   /** E42: taking offline and deletion, newest first. */
   takedowns?: TakedownRow[];
+  /** E43: withdrawals and whether they were refunded. */
+  refunds?: RefundRow[];
   /** E42: what "Excluir agora" would refuse. */
   deleteBlockers?: { job: boolean; payment: boolean };
   draft: FormDraft;
@@ -85,6 +88,7 @@ const actionLabels: Record<string, string> = {
   schedule_deletion: "Agendou a exclusão",
   cancel_deletion: "Cancelou a exclusão",
   delete_now: "Excluiu agora",
+  refund_done: "Registrou a devolução",
 };
 const severityLabels = { high: "Alta", medium: "Média", low: "Baixa" } as const;
 const when = (iso: string) =>
@@ -346,6 +350,7 @@ export default function AdminSitePage() {
             hasPreview={Boolean(preview)}
             onDone={load}
           />
+          <RefundRequests siteId={site.id} refunds={detail.refunds ?? []} onDone={load} />
           <TakedownPanel
             site={site}
             history={detail.takedowns ?? []}

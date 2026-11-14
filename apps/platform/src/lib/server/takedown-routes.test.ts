@@ -34,7 +34,7 @@ vi.mock("./hosting", () => ({
   },
 }));
 
-const { ownerTakedown } = await import("./takedown-routes");
+const { ownerTakedown, ownerWithdraw } = await import("./takedown-routes");
 
 const request = (body: unknown) =>
   new Request("https://brotasites.com.br/api/sites/s1/offline", {
@@ -116,5 +116,69 @@ describe("the owner's take-offline and deletion routes", () => {
     expect(response.status).toBe(409);
     expect(((await response.json()) as { error: string }).error).toMatch(/suspenso/);
     expect(state.kv).toEqual([]);
+  });
+});
+
+describe("the owner's withdrawal (E43, direito de arrependimento)", () => {
+  it("records the withdrawal, confirms receipt at once and takes the site offline", async () => {
+    state.answer = {
+      data: {
+        requestId: "r1",
+        requestedAt: "2026-11-14T12:00:00Z",
+        amountCents: 29700,
+        status: "requested",
+        changed: true,
+        subdomain: "padaria-do-ze",
+        ownerId: "u1",
+        siteStatus: "offline",
+        deleteAfter: "2026-11-21T12:00:00Z",
+      },
+      error: null,
+    };
+    const response = await ownerWithdraw(request({ confirm: true }), "s1");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      requestId: "r1",
+      requestedAt: "2026-11-14T12:00:00Z",
+      amountCents: 29700,
+      hosting: "synced",
+    });
+    expect(state.rpc).toEqual([
+      { name: "server_withdraw", args: { p_site_id: "s1", p_owner_id: "u1" } },
+    ]);
+    expect(state.kv).toEqual(["padaria-do-ze offline"]);
+  });
+
+  it("asked twice, answers the same request without touching the hosting", async () => {
+    state.answer = {
+      data: {
+        requestId: "r1",
+        requestedAt: "2026-11-14T12:00:00Z",
+        amountCents: 29700,
+        status: "requested",
+        changed: false,
+        subdomain: "padaria-do-ze",
+        ownerId: "u1",
+        siteStatus: "offline",
+        deleteAfter: null,
+      },
+      error: null,
+    };
+    const response = await ownerWithdraw(request({ confirm: true }), "s1");
+    expect((await response.json()).hosting).toBe("none");
+    expect(state.kv).toEqual([]);
+  });
+
+  it("after the 7 days, says the period ended", async () => {
+    state.answer = { data: null, error: { message: "withdrawal_expired" } };
+    const response = await ownerWithdraw(request({ confirm: true }), "s1");
+    expect(response.status).toBe(409);
+    expect((await response.json()).error).toMatch(/prazo para desistir com devolução/);
+  });
+
+  it("needs the confirmation", async () => {
+    const response = await ownerWithdraw(request({}), "s1");
+    expect(response.status).toBe(400);
+    expect(state.rpc).toEqual([]);
   });
 });
