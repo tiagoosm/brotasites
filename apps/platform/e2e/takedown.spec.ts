@@ -133,3 +133,118 @@ for (const width of [375, 1280]) {
     ).toBe(true);
   });
 }
+
+// E43: the withdrawal (direito de arrependimento) within 7 days of the payment.
+const paidDaysAgo = (days: number) => [
+  {
+    amount_cents: 29700,
+    paid_at: new Date(Date.now() - days * 86_400_000).toISOString(),
+    status: "paid",
+  },
+];
+
+test("within 7 days of paying, the client withdraws and gets the receipt at once", async ({
+  page,
+  context,
+}) => {
+  const state = await withSite(context, { site: live(), draft: padaria, payments: paidDaysAgo(2) });
+  await page.goto(page_);
+  const section = page.getByRole("region", { name: "Gerenciar o site" });
+  await expect(section).toContainText("receber de volta os R$ 297 pagos");
+  await expect(section).toContainText("Código de Defesa do Consumidor, art. 49");
+  await section.getByRole("button", { name: "Desistir da compra" }).click();
+
+  const step = page.getByRole("region", { name: "Desistir da compra" });
+  await expect(step).toContainText("O site sai do ar agora");
+  await expect(step.getByRole("button", { name: "Baixar o site (.zip)" })).toBeVisible();
+  await step.getByRole("button", { name: "Sim, desistir e receber R$ 297" }).click();
+
+  await expect(page.getByRole("status").filter({ hasText: "Desistência recebida" })).toBeVisible();
+  await expect(section).toContainText("Desistência recebida em");
+  await expect(section).toContainText("Vamos devolver R$ 297 pelo mesmo meio de pagamento");
+  await expect(section).toContainText("Este site será excluído em");
+  await expect(section.getByRole("button", { name: "Desistir da compra" })).toHaveCount(0);
+  // The contract is over: no way back to the site with the refund.
+  await expect(section.getByRole("button", { name: "Cancelar a exclusão" })).toHaveCount(0);
+  await expect(section).toContainText("Você desistiu da compra, então a exclusão segue.");
+  expect(state.takedowns?.map((item) => item.action)).toEqual(["withdraw"]);
+});
+
+test("within the 7 days, the delete steps point to the withdrawal instead", async ({
+  page,
+  context,
+}) => {
+  await withSite(context, { site: live(), draft: padaria, payments: paidDaysAgo(1) });
+  await page.goto(page_);
+  await page.getByRole("button", { name: "Excluir o site" }).click();
+  const steps = page.getByRole("region", { name: "Excluir o site" });
+  await expect(steps).toContainText("Excluir não devolve o valor pago");
+  await expect(steps).toContainText("use “Desistir da compra” até");
+});
+
+test("after the 7 days, there is no withdrawal and deleting says it refunds nothing", async ({
+  page,
+  context,
+}) => {
+  await withSite(context, { site: live(), draft: padaria, payments: paidDaysAgo(10) });
+  await page.goto(page_);
+  const section = page.getByRole("region", { name: "Gerenciar o site" });
+  await expect(section.getByRole("button", { name: "Tirar do ar" })).toBeVisible();
+  await expect(section.getByRole("button", { name: "Desistir da compra" })).toHaveCount(0);
+  await section.getByRole("button", { name: "Excluir o site" }).click();
+  await expect(page.getByRole("region", { name: "Excluir o site" })).toContainText(
+    "o prazo de 7 dias para desistir com devolução terminou",
+  );
+});
+
+test("a refunded withdrawal says so", async ({ page, context }) => {
+  await withSite(context, {
+    site: live({
+      status: "offline",
+      offline_by: "owner",
+      deletion_by: "owner",
+      delete_after: new Date(Date.now() + 5 * 86_400_000).toISOString(),
+    }),
+    draft: padaria,
+    payments: paidDaysAgo(2),
+    refunds: [
+      {
+        amount_cents: 29700,
+        status: "refunded",
+        requested_at: new Date(Date.now() - 86_400_000).toISOString(),
+        resolved_at: new Date().toISOString(),
+      },
+    ],
+  });
+  await page.goto(page_);
+  await expect(page.getByRole("region", { name: "Gerenciar o site" })).toContainText(
+    "Valor devolvido: R$ 297",
+  );
+});
+
+test("a suspended site can still be withdrawn within the 7 days, and nothing else", async ({
+  page,
+  context,
+}) => {
+  await withSite(context, {
+    site: live({ status: "suspended" }),
+    draft: padaria,
+    payments: paidDaysAgo(3),
+  });
+  await page.goto(page_);
+  const section = page.getByRole("region", { name: "Gerenciar o site" });
+  await expect(section.getByRole("button", { name: "Desistir da compra" })).toBeVisible();
+  await expect(section.getByRole("button", { name: "Tirar do ar" })).toHaveCount(0);
+  await expect(section.getByRole("button", { name: "Excluir o site" })).toHaveCount(0);
+});
+
+test("the terms and the payment page state the withdrawal and the no-refund rule", async ({
+  page,
+}) => {
+  await page.goto("/termos");
+  await expect(page.getByText(/Direito de arrependimento: em até 7 dias/)).toBeVisible();
+  await expect(page.getByText(/Depois desse prazo, excluir o site/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tirar o site do ar e excluir" })).toBeVisible();
+  await page.goto("/privacidade");
+  await expect(page.getByText(/Registros de pagamento e de devolução/)).toBeVisible();
+});

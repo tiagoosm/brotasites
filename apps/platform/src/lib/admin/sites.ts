@@ -22,3 +22,12 @@ export function addressPattern(query: string): string | null {
     ?.replace(/[^a-z0-9-]/g, "");
   return clean ? `%${clean}%` : null;
 }
+
+/** E43: a withdrawal the team still has to refund at the payment provider. */
+export interface OpenRefund {
+  id: string;
+  site_id: string | null;
+  subdomain: string | null;
+  amount_cents: number;
+  requested_at: string;
+}

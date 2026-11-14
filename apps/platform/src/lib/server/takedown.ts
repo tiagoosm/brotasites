@@ -95,6 +95,17 @@ export function takedownError(message: string | undefined): [number, string] {
     ],
     ["reason_required", 400, "Escolha o motivo e escreva uma nota: o registro precisa dela."],
     ["not_due", 409, "Esta exclusão ainda não venceu."],
+    [
+      "withdrawal_expired",
+      409,
+      "O prazo para desistir com devolução do valor (7 dias depois do pagamento) já terminou.",
+    ],
+    ["not_found", 404, "Pedido não encontrado."],
+    [
+      "withdrawn",
+      409,
+      "Você desistiu da compra: a exclusão segue. Se foi engano, fale com a gente.",
+    ],
     ["wrong_status", 409, "Este passo não está disponível agora. Atualize a página."],
     ["bad_request", 400, "Pedido inválido."],
   ];

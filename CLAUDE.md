@@ -43,7 +43,7 @@ Project owner: Tiago da Silva Machado (github.com/tiagoosm). Product language (U
 - Included: 12 months of hosting, changes through the dashboard for 30 days after publishing, and a static export of the site (the site belongs to the client). After 30 days, changes are paid separately, with the price stated up front.
 - After 12 months: optional renewal at R$ 99/year. Without renewal the site goes into a grace period and then offline; the client can download it first.
 - Custom domain: included and optional (decision of 2026-11-04), no price of its own. The client registers, pays and renews the domain at the registrar; BrotaSites never sells nor registers domains. Connecting it is a flow on the site's page (E25).
-- 7-day money-back guarantee: text pending legal review.
+- 7-day withdrawal (direito de arrependimento, decision of 2026-11-14): full refund within 7 days of the payment, done from the site's page; after that, no refund. Text pending legal review. Rules, sources and gaps: `docs/legal-compliance.md`.
 - Every value lives in `apps/platform/src/config/pricing.ts` (including the optional `launchPrice`, undecided between 197 and 297). Never hard-code a price elsewhere.
 - Never compare prices with freelancers or competitors in product copy.
 
@@ -125,6 +125,7 @@ brotasites/
 - `blind-test.md`: the "does not look like AI" criterion.
 - `owner-steps.md`: accounts and decisions that depend on the owner.
 - `platform-design.md`, `platform-copy.md`: the platform's own look and copy (not client sites).
+- `legal-compliance.md`: consumer, internet and data law applied (withdrawal, record keeping), sources and gaps.
 - `ux-laws.md`: the 20 UX laws, the rule each sets here, how it is checked, and the review checklist. `ux-audit.md`: the first audit against them (E22).
 - `design-references.md`: third-party style references reviewed (principles only), what was kept and what was discarded.
 

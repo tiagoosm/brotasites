@@ -56,7 +56,7 @@ test("a sensitive change asks for a recent sign-in", async ({ page, context }) =
   await page.route("**/api/account/**", (route) => route.continue());
   await page.route(`${SUPABASE}/rest/v1/profiles**`, (route) =>
     route.fulfill({
-      json: { full_name: "Zé", phone: null, terms_version: "2026-10-draft", has_password: true },
+      json: { full_name: "Zé", phone: null, terms_version: "2026-11-draft", has_password: true },
     }),
   );
   await page.goto("/conta");

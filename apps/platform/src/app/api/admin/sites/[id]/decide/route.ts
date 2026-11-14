@@ -39,6 +39,8 @@ interface Body {
   days?: unknown;
   /** delete_now: the site's address, typed to confirm. */
   address?: unknown;
+  /** refund_done: the refund request the team refunded at the payment provider. */
+  requestId?: unknown;
 }
 
 /** E42: the team's take-offline and deletion, through the same functions the client uses. */
@@ -105,6 +107,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if ("error" in admin) return admin.error;
   const body = (await request.json().catch(() => null)) as Body | null;
   const note = typeof body?.note === "string" ? body.note.trim().slice(0, 1000) : "";
+  // E43: the team refunded a withdrawal at the payment provider and records it here.
+  if (body?.action === "refund_done") {
+    const requestId = typeof body.requestId === "string" ? body.requestId : "";
+    if (!isUuid(requestId)) return fail(400, adminErrors.badRequest);
+    const { data, error } = await admin.db.rpc("server_refund_done", {
+      p_request_id: requestId,
+      p_admin_id: admin.userId,
+      p_note: note || null,
+    });
+    if (error) {
+      const [status, message] = takedownError(error.message);
+      return fail(status, message);
+    }
+    return NextResponse.json(data);
+  }
   const takedown = takedownActions.find((item) => item === body?.action);
   if (takedown) return decideTakedown(id, admin, takedown, note, body ?? {});
   const action = actions.find((item) => item === body?.action);

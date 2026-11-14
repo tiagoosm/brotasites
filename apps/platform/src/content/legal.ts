@@ -28,12 +28,12 @@ export interface LegalSection {
   blocks: LegalBlock[];
 }
 
-export const LEGAL_UPDATED = "29 de outubro de 2026";
+export const LEGAL_UPDATED = "14 de novembro de 2026";
 // PENDING LEGAL REVIEW ("pendente de revisão jurídica"): a provisional text, version
-// TERMS_VERSION ("2026-10-draft", src/lib/auth/schemas.ts and the accounts migration). Accounts
+// TERMS_VERSION ("2026-11-draft", src/lib/auth/schemas.ts and the accounts migration). Accounts
 // record the version they accepted; a new version asks everyone to accept again.
 export const LEGAL_NOTICE =
-  "Versão inicial (2026-10-draft), pendente de revisão jurídica. O texto pode mudar antes do lançamento do serviço.";
+  "Versão 2026-11-draft, pendente de revisão jurídica. O texto pode mudar antes do lançamento do serviço.";
 
 export const privacySections: LegalSection[] = [
   {
@@ -118,7 +118,17 @@ export const privacySections: LegalSection[] = [
     id: "prazo",
     title: "Por quanto tempo guardamos",
     blocks: [
-      "Guardamos os dados da sua conta, os rascunhos e as fotos enquanto a conta existir. Você pode excluir a conta a qualquer momento, na página Conta: apagamos a conta, os sites, os rascunhos e as fotos, e tiramos do ar os sites publicados. Os registros de pagamentos feitos ficam guardados pelo prazo que a lei fiscal exige.",
+      "Guardamos os dados da sua conta, os rascunhos e as fotos enquanto a conta existir. Você pode excluir a conta a qualquer momento, na página Conta: apagamos a conta, os sites, os rascunhos e as fotos, e tiramos do ar os sites publicados.",
+      `Quando você exclui um site, apagamos o site, os textos, as fotos, as direções e o histórico dele, depois de ${limits.deletionWaitDays} dias (dá para cancelar até lá).`,
+      {
+        list: [
+          "Registros de pagamento e de devolução, com os dados de quem pagou: 5 anos, para cumprir a lei fiscal e responder a pedidos do consumidor.",
+          "Registro de exclusão ou retirada do ar de um site (endereço, quem pediu, quando e o motivo): 5 anos, o prazo para reclamar de danos no Código de Defesa do Consumidor. Depois, é apagado automaticamente.",
+          "Aceites dos termos (versão e data): enquanto a conta existir.",
+          `Endereço de um site excluído: reservado para o mesmo dono por ${limits.subdomainHoldDays} dias, depois liberado.`,
+        ],
+      },
+      "Esses dados ficam guardados só para essas obrigações (Lei Geral de Proteção de Dados, art. 16) e não são usados para mais nada.",
       `Um site não pago, sem nenhuma ação sua por ${idleDays} dias, é apagado com as respostas e as fotos dele. Avisamos em Meus sites ${warnDays}. Depois de apagado, fica só um registro sem dados pessoais (até onde o site chegou e o custo dele), para as nossas contas.`,
     ],
   },
@@ -187,7 +197,25 @@ export const termsSections: LegalSection[] = [
           `O site é seu: você pode baixar o site pronto a qualquer momento e hospedá-lo onde quiser.`,
           `Depois dos ${pricing.hostingMonths} meses, manter o site no ar custa ${formatBRL(pricing.renewalPerYear)} por ano, de forma opcional. Se não houver renovação, o site sai do ar, e você pode baixá-lo antes.`,
           `Conectar um domínio próprio está incluído e é opcional. O registro e a renovação do domínio são feitos e pagos por você, direto ao registrador. A BrotaSites não vende nem registra domínios e não responde por domínio vencido nem por falha do registrador; o site continua no endereço seunegocio.${EXAMPLE_SITES_DOMAIN}.`,
-          `Garantia de ${pricing.guaranteeDays} dias: se não gostar, devolvemos o valor pago.`,
+          `Direito de arrependimento: em até ${pricing.guaranteeDays} dias depois da confirmação do pagamento, você pode desistir da compra, sem precisar dizer o motivo, e recebe de volta o valor integral pago, pelo mesmo meio de pagamento (Código de Defesa do Consumidor, art. 49).`,
+          `Como desistir: em Meus sites, na página do site, use “Desistir da compra” (o mesmo lugar onde você comprou), ou escreva para ${CONTACT_EMAIL ?? PENDING}. Confirmamos o recebimento na hora, na própria página, e pedimos a devolução ao banco ou à administradora do cartão logo em seguida. O prazo para o valor aparecer depende do banco ou do cartão.`,
+          `Ao desistir, o site sai do ar e é excluído em ${pricing.guaranteeDays} dias; até lá você pode baixar a cópia dele.`,
+          `Depois desse prazo, excluir o site ou parar de usá-lo não gera devolução do valor pago, porque o site já foi criado, publicado e entregue. Isso é informado antes de você confirmar a exclusão.`,
+        ],
+      },
+    ],
+  },
+  {
+    id: "tirar-do-ar",
+    title: "Tirar o site do ar e excluir",
+    blocks: [
+      {
+        list: [
+          "Tirar do ar: em Meus sites, você pode tirar o seu site do ar e recolocá-lo quando quiser. Nada é apagado; quem visitar vê a página “Site fora do ar”.",
+          `Excluir: você pede a exclusão na página do site, digitando o endereço para confirmar. O site sai do ar na hora e é excluído depois de ${limits.deletionWaitDays} dias; até lá, dá para cancelar e baixar a cópia.`,
+          `Ao excluir, apagamos o site, os textos, as fotos, as direções e o histórico dele. Ficam guardados os registros de pagamento e um registro da exclusão (quem pediu e quando), pelos prazos da seção “Por quanto tempo guardamos” da Política de Privacidade.`,
+          `O endereço do site excluído fica reservado para você por ${limits.subdomainHoldDays} dias, para que ninguém se passe pelo seu negócio. Depois disso, outra pessoa pode usá-lo.`,
+          "A nossa equipe pode tirar do ar, suspender ou excluir um site que desrespeite estes termos ou a lei, ou por ordem de autoridade. Quando for possível, avisamos o motivo na página do site.",
         ],
       },
     ],
@@ -236,7 +264,7 @@ export const termsSections: LegalSection[] = [
     id: "encerramento",
     title: "Encerramento",
     blocks: [
-      "Você pode parar de usar o BrotaSites quando quiser e pedir a exclusão da sua conta. A exclusão também retira do ar os sites publicados pela conta.",
+      "Você pode parar de usar o BrotaSites quando quiser e pedir a exclusão da sua conta. A exclusão também retira do ar os sites publicados pela conta. A devolução do valor pago segue a seção “Preço, renovação e reembolso”.",
     ],
   },
   {

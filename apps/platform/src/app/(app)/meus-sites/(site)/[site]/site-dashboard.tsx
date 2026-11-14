@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { DiscardSite } from "@/components/dashboard/discard-site";
-import { ManageSite } from "@/components/dashboard/manage-site";
+import { canWithdraw, ManageSite } from "@/components/dashboard/manage-site";
 import { RedoPanel } from "@/components/dashboard/redo-panel";
 import { CustomDomain } from "@/components/domains/custom-domain";
 import { Loading, Notice } from "@/components/shared/page-state";
@@ -28,6 +28,7 @@ import {
   loadEvents,
   loadLatestJob,
   loadSite,
+  loadWithdrawal,
   previewUrl,
   renderUrls,
   requestDirections,
@@ -35,6 +36,7 @@ import {
   retryJob,
   SiteActionError,
   type SiteWithDraft,
+  type WithdrawalInfo,
 } from "@/lib/sites";
 import { isStuck, type JobState } from "@/lib/stuck-job";
 import { getBrowserSupabase } from "@/lib/supabase/client";
@@ -64,7 +66,11 @@ interface View {
   quota: DirectionsQuota | null;
   /** The latest job, while the system works: a stuck one offers "Tentar de novo" (E34). */
   job: JobState | null;
+  /** E43: the publication payment and the withdrawal, once published. */
+  withdrawal: WithdrawalInfo | null;
 }
+
+const PUBLISHED = ["live", "grace", "offline", "suspended"];
 
 // Where an unpaid site waits on the person, they may discard it (E24).
 
@@ -88,12 +94,15 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         return;
       }
       const choosing = site.status === "awaiting_direction_choice";
-      const [events, directions, renders, quota, job] = await Promise.all([
+      const [events, directions, renders, quota, job, withdrawal] = await Promise.all([
         loadEvents(supabase, siteId),
         choosing ? loadDirections(supabase, siteId, site.round) : Promise.resolve([]),
         choosing ? renderUrls(siteId) : Promise.resolve({}),
         choosing ? loadDirectionsQuota(supabase, siteId) : Promise.resolve(null),
         infoFor(site.status).busy ? loadLatestJob(supabase, siteId) : Promise.resolve(null),
+        PUBLISHED.includes(site.status)
+          ? loadWithdrawal(supabase, siteId, pricing.guaranteeDays).catch(() => null)
+          : Promise.resolve(null),
       ]);
       setView((current) => ({
         site,
@@ -101,6 +110,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         directions,
         quota,
         job,
+        withdrawal,
         // Keep addresses already signed, so the images do not flash on each refresh.
         renders: { ...(typeof current === "object" && current ? current.renders : {}), ...renders },
       }));
@@ -149,7 +159,7 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
   if (view === "failed")
     return <Notice title="Não foi possível abrir agora" text="Tente de novo em instantes." />;
 
-  const { site, directions, events, renders, quota, job } = view;
+  const { site, directions, events, renders, quota, job, withdrawal } = view;
   const stuck = infoFor(site.status).busy && isStuck(job);
   // The next round opens later (E24): the button says why instead of failing on click.
   const waitUntil =
@@ -527,18 +537,21 @@ export function SiteDashboard({ siteId }: { siteId: string }) {
         />
       )}
 
-      {["live", "grace", "offline"].includes(site.status) && liveUrl && (
-        <ManageSite
-          site={site}
-          address={liveUrl.replace("https://", "")}
-          busy={acting !== null}
-          onDownload={download}
-          onChanged={async (message) => {
-            setDone(message);
-            await load();
-          }}
-        />
-      )}
+      {(["live", "grace", "offline"].includes(site.status) ||
+        (site.status === "suspended" && (canWithdraw(withdrawal) || withdrawal?.request))) &&
+        liveUrl && (
+          <ManageSite
+            site={site}
+            withdrawal={withdrawal}
+            address={liveUrl.replace("https://", "")}
+            busy={acting !== null}
+            onDownload={download}
+            onChanged={async (message) => {
+              setDone(message);
+              await load();
+            }}
+          />
+        )}
 
       {events.length > 0 && (
         <section aria-labelledby="historico" className="grid gap-4">

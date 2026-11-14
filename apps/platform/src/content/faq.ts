@@ -119,7 +119,7 @@ export const faqGroups: FaqGroup[] = [
       {
         slug: "nao-quiser-mais",
         question: "E se eu não quiser mais?",
-        answer: `O site é seu: baixe quando quiser. Sem renovar, ele sai do ar depois de ${pricing.hostingMonths} meses. Em até ${pricing.guaranteeDays} dias do pagamento, devolvemos o valor${legalNote}.`,
+        answer: `O site é seu: baixe quando quiser. Sem renovar, ele sai do ar depois de ${pricing.hostingMonths} meses. Em até ${pricing.guaranteeDays} dias do pagamento, você pode desistir em Meus sites e receber o valor integral de volta; depois disso, não há devolução${legalNote}.`,
       },
     ],
   },

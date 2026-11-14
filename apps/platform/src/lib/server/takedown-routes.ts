@@ -62,3 +62,56 @@ export async function ownerTakedown(
     hosting,
   });
 }
+
+/** What the database answers to a withdrawal (server_withdraw). */
+interface WithdrawalAnswer {
+  requestId: string;
+  requestedAt: string;
+  amountCents: number;
+  status: "requested" | "refunded";
+  changed: boolean;
+  subdomain: string | null;
+  ownerId: string;
+  siteStatus: string;
+  deleteAfter: string | null;
+}
+
+const withdrawal = z.object({ confirm: z.literal(true) }).strict();
+
+/**
+ * E43: the owner withdraws (direito de arrependimento, CDC art. 49) within 7 days of paying.
+ * The database checks the window, records the refund request for the full amount, takes the
+ * site offline and schedules its deletion; the answer is the immediate confirmation of receipt
+ * that Decreto 7.962/2013 art. 5 asks for. The team refunds at the payment provider.
+ */
+export async function ownerWithdraw(request: Request, siteId: string): Promise<Response> {
+  const body = await readBody(request, withdrawal);
+  if ("error" in body) return body.error;
+  const owned = await ownSite(siteId);
+  if ("error" in owned && owned.error) return owned.error;
+  if (!(await withinLimits(rulesFor("sites", clientIp(request), owned.user.id, limitKey)))) {
+    return refuse(429, guardErrors.rateLimited);
+  }
+  const admin = getAdminSupabase();
+  if (!admin) return refuse(503, guardErrors.unavailable);
+  const { data, error } = await admin.rpc("server_withdraw", {
+    p_site_id: siteId,
+    p_owner_id: owned.user.id,
+  });
+  if (error) {
+    const [status, message] = takedownError(error.message);
+    return refuse(status, message);
+  }
+  const answer = data as WithdrawalAnswer;
+  const hosting = answer.changed
+    ? await syncHosting({ status: answer.siteStatus, subdomain: answer.subdomain })
+    : "none";
+  return json({
+    requestId: answer.requestId,
+    requestedAt: answer.requestedAt,
+    amountCents: answer.amountCents,
+    status: answer.status,
+    deleteAfter: answer.deleteAfter,
+    hosting,
+  });
+}

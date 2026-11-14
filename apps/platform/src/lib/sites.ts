@@ -286,13 +286,14 @@ export async function discardSite(siteId: string): Promise<void> {
 }
 
 /** E42: what the client may do to their own published site ("Gerenciar o site"). */
-export type TakedownAction = "offline" | "online" | "schedule" | "cancel";
+export type TakedownAction = "offline" | "online" | "schedule" | "cancel" | "withdraw";
 
 const takedownPaths: Record<TakedownAction, string> = {
   offline: "offline",
   online: "online",
   schedule: "deletion",
   cancel: "deletion/cancel",
+  withdraw: "withdraw",
 };
 
 export async function manageSite(
@@ -314,6 +315,74 @@ export async function manageSite(
     throw new SiteActionError(body.error ?? "Não foi possível fazer isso agora. Tente de novo.");
   }
   return { status: body.status ?? "", deleteAfter: body.deleteAfter ?? null };
+}
+
+/**
+ * E43: the publication payment and the withdrawal (direito de arrependimento) of a site, read
+ * with the owner's session (RLS). The database decides; this only says what to show.
+ */
+export interface WithdrawalInfo {
+  /** When the publication was paid, and how much, if it was. */
+  paidAt: string | null;
+  amountCents: number | null;
+  /** The last moment to withdraw with a full refund (paidAt + the window), if paid. */
+  deadline: string | null;
+  /** The withdrawal already made, if any. */
+  request: {
+    requestedAt: string;
+    amountCents: number;
+    status: "requested" | "refunded";
+    resolvedAt: string | null;
+  } | null;
+}
+
+export async function loadWithdrawal(
+  supabase: SupabaseClient,
+  siteId: string,
+  windowDays: number,
+): Promise<WithdrawalInfo> {
+  const [{ data: payments }, { data: requests }] = await Promise.all([
+    supabase
+      .from("payments")
+      .select("amount_cents, paid_at, status")
+      .eq("site_id", siteId)
+      .eq("purpose", "publish")
+      .in("status", ["paid", "refunded"])
+      .order("paid_at", { ascending: false })
+      .limit(1),
+    supabase
+      .from("refund_requests")
+      .select("amount_cents, status, requested_at, resolved_at")
+      .eq("site_id", siteId)
+      .order("requested_at", { ascending: false })
+      .limit(1),
+  ]);
+  const payment = (payments?.[0] ?? null) as {
+    amount_cents: number;
+    paid_at: string | null;
+  } | null;
+  const request = (requests?.[0] ?? null) as {
+    amount_cents: number;
+    status: "requested" | "refunded";
+    requested_at: string;
+    resolved_at: string | null;
+  } | null;
+  const paidAt = payment?.paid_at ?? null;
+  return {
+    paidAt,
+    amountCents: payment?.amount_cents ?? null,
+    deadline: paidAt
+      ? new Date(new Date(paidAt).getTime() + windowDays * 86_400_000).toISOString()
+      : null,
+    request: request
+      ? {
+          requestedAt: request.requested_at,
+          amountCents: request.amount_cents,
+          status: request.status,
+          resolvedAt: request.resolved_at,
+        }
+      : null,
+  };
 }
 
 export async function chooseDirection(

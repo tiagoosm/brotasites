@@ -157,6 +157,17 @@ export interface FakeState {
   deleteBlockers?: { job: boolean; payment: boolean };
   /** E42: the published sites the team's list shows (defaults to the one site). */
   adminSites?: NonNullable<FakeState["site"]>[];
+  /** E43: the site's publication payment, as the owner reads it. */
+  payments?: { amount_cents: number; paid_at: string | null; status: string }[];
+  /** E43: the withdrawal (refund request), as the owner and the team read it. */
+  refunds?: {
+    id?: string;
+    amount_cents: number;
+    status: "requested" | "refunded";
+    requested_at: string;
+    resolved_at: string | null;
+    note?: string | null;
+  }[];
   /** E42: the client's takedown requests, in order. */
   takedowns?: { action: string; body: Record<string, unknown> }[];
   /** The site was discarded (POST /api/sites/:id/discard). */
@@ -354,6 +365,9 @@ export async function fakeSupabase(
         return route.fulfill({ status: method === "POST" ? 201 : 204, body: "" });
       }
     }
+    // E43: the publication payment and the withdrawal, read with the owner's session.
+    if (table === "payments" && method === "GET") return answer(state.payments ?? []);
+    if (table === "refund_requests" && method === "GET") return answer(state.refunds ?? []);
     if (table === "site_events" && method === "GET") return answer(state.events);
     if (table === "jobs" && method === "GET") return answer(state.job ? [state.job] : []);
     if (table === "site_directions" && method === "GET") {
@@ -442,6 +456,53 @@ export async function fakeSupabase(
     }
     if (/\/api\/sites\/[^/]+\/domain/.test(url.pathname))
       return answerDomain(route, url, state, json);
+    // E43: the withdrawal, as the route handler answers after server_withdraw.
+    if (url.pathname.endsWith("/withdraw") && route.request().method() === "POST" && state.site) {
+      const body = (route.request().postDataJSON() ?? {}) as { confirm?: boolean };
+      if (body.confirm !== true) return route.fulfill(json({ error: "Confirme." }, 400));
+      const paid = state.payments?.[0];
+      const open = paid?.paid_at && Date.now() - new Date(paid.paid_at).getTime() < 7 * 86_400_000;
+      if (!paid || !open) {
+        return route.fulfill(
+          json(
+            {
+              error:
+                "O prazo para desistir com devolução do valor (7 dias depois do pagamento) já terminou.",
+            },
+            409,
+          ),
+        );
+      }
+      const requestedAt = new Date().toISOString();
+      state.refunds = [
+        {
+          id: "r0000000-0000-4000-8000-000000000001",
+          amount_cents: paid.amount_cents,
+          status: "requested",
+          requested_at: requestedAt,
+          resolved_at: null,
+        },
+      ];
+      const due = new Date(Date.now() + 7 * 86_400_000).toISOString();
+      state.site = {
+        ...state.site,
+        status: state.site.status === "suspended" ? "suspended" : "offline",
+        offline_by: state.site.offline_by ?? "owner",
+        delete_after: state.site.delete_after ?? due,
+        deletion_by: state.site.deletion_by ?? "owner",
+      };
+      state.takedowns = [...(state.takedowns ?? []), { action: "withdraw", body }];
+      return route.fulfill(
+        json({
+          requestId: "r0000000-0000-4000-8000-000000000001",
+          requestedAt,
+          amountCents: paid.amount_cents,
+          status: "requested",
+          deleteAfter: state.site.delete_after,
+          hosting: "synced",
+        }),
+      );
+    }
     // E42: "Gerenciar o site", as the route handlers answer after the database functions.
     const takedown = url.pathname.match(
       /\/api\/sites\/[^/]+\/(offline|online|deletion|deletion\/cancel)$/,
@@ -581,6 +642,22 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
       return route.fulfill(json({ jobId: "job-retry", started: true, status: "building" }));
     }
     if (url.pathname.endsWith("/decide") && state.site) {
+      // E43: the team records the refund it made at the payment provider.
+      if (body.action === "refund_done") {
+        state.refunds = (state.refunds ?? []).map((refund) =>
+          refund.id === body.requestId
+            ? {
+                ...refund,
+                status: "refunded" as const,
+                resolved_at: new Date().toISOString(),
+                note: (body.note as string) || null,
+              }
+            : refund,
+        );
+        return route.fulfill(
+          json({ requestId: body.requestId, status: "refunded", changed: true }),
+        );
+      }
       // E42: "Retirada do ar", as the route handler answers after the database functions.
       const site = state.site;
       const note = String(body.note ?? "").trim();
@@ -718,6 +795,7 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
         payments: [],
         jobs: state.adminJobs ?? [],
         takedowns: state.takedownLog ?? [],
+        refunds: state.refunds ?? [],
         deleteBlockers: state.deleteBlockers ?? { job: false, payment: false },
         retry:
           state.site.status === "needs_attention"
@@ -756,6 +834,15 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
         rows,
         total: rows.length,
         scheduled: all.filter((row) => row.deleteAfter).length,
+        openRefunds: (state.refunds ?? [])
+          .filter((refund) => refund.status === "requested")
+          .map((refund) => ({
+            id: refund.id,
+            site_id: state.site?.id ?? null,
+            subdomain: state.site?.subdomain ?? null,
+            amount_cents: refund.amount_cents,
+            requested_at: refund.requested_at,
+          })),
         page: 0,
         pageSize: 20,
       }),

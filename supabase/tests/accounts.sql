@@ -19,7 +19,7 @@ begin
   -- 1. The sign-up makes the profile from validated metadata. -----------------------------
   insert into auth.users (id, email, aud, role, raw_user_meta_data, encrypted_password) values
     (a, 'a-accounts@brotasites.test', 'authenticated', 'authenticated',
-      jsonb_build_object('full_name', E'  Zé   da\tPadaria\u0007 ', 'terms_version', '2026-10-draft'), '$2a$10$hash'),
+      jsonb_build_object('full_name', E'  Zé   da\tPadaria\u0007 ', 'terms_version', '2026-11-draft'), '$2a$10$hash'),
     (b, 'b-accounts@brotasites.test', 'authenticated', 'authenticated',
       jsonb_build_object('full_name', repeat('x', 200), 'terms_version', '1999-01-old'), ''),
     (admin, 'admin-accounts@brotasites.test', 'authenticated', 'authenticated', null, null);
@@ -31,9 +31,9 @@ begin
   if not exists (select 1 from public.profiles where id = admin and full_name = '') then
     raise exception 'FAIL: no profile without metadata';
   end if;
-  select count(*) into n from public.terms_acceptances where user_id = a and terms_version = '2026-10-draft';
+  select count(*) into n from public.terms_acceptances where user_id = a and terms_version = '2026-11-draft';
   if n <> 1 then raise exception 'FAIL: the accepted terms were not recorded'; end if;
-  if not exists (select 1 from public.profiles where id = a and terms_version = '2026-10-draft' and terms_accepted_at is not null) then
+  if not exists (select 1 from public.profiles where id = a and terms_version = '2026-11-draft' and terms_accepted_at is not null) then
     raise exception 'FAIL: the profile does not show the accepted terms';
   end if;
   select count(*) into n from public.terms_acceptances where user_id = b;
@@ -97,7 +97,7 @@ begin
   exception when raise_exception then
     if sqlerrm <> 'wrong_terms_version' then raise; end if;
   end;
-  perform public.accept_terms('2026-10-draft');
+  perform public.accept_terms('2026-11-draft');
   select count(*) into n from public.terms_acceptances;
   if n <> 2 then raise exception 'FAIL: A sees % acceptances, expected 2', n; end if;
   begin
@@ -111,7 +111,7 @@ begin
   exception when insufficient_privilege then null;
   end;
   begin
-    insert into public.terms_acceptances (user_id, terms_version) values (b, '2026-10-draft');
+    insert into public.terms_acceptances (user_id, terms_version) values (b, '2026-11-draft');
     raise exception 'FAIL: A recorded an acceptance for B';
   exception when insufficient_privilege then null;
   end;
