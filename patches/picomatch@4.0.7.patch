@@ -1,0 +1,19 @@
+diff --git a/lib/parse.js b/lib/parse.js
+index 29207512c60183b4bb9bf5112be3b9b5f4a9a9fd..aeb443ab3be443af7ffffd21166a03e288c830d5 100644
+--- a/lib/parse.js
++++ b/lib/parse.js
+@@ -296,6 +296,14 @@ const analyzeRepeatedExtglob = (body, options) => {
+ 
+   const branches = splitTopLevel(body).map(branch => branch.trim());
+ 
++  // Local patch (BrotaSites, GHSA-fc5q-39xc-vjpf / CVE-2026-112366, no upstream fix yet): a
++  // branch with a bare `*` (not a nested `*(...)`) inside a repeated extglob, single branch
++  // included (`+(*)`, `+(*a)`, `*(a*)`), nests an unbounded quantifier in the repetition and
++  // backtracks exponentially. Mark it risky so it is matched literally, like other risky ones.
++  if (branches.some(branch => /(?:^|[^\\])\*(?!\()/.test(branch))) {
++    return { risky: true };
++  }
++
+   if (branches.length > 1) {
+     if (
+       branches.some(branch => branch === '') ||

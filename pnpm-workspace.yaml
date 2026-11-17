@@ -32,3 +32,17 @@ minimumReleaseAgeExclude:
   - "@trigger.dev/schema-to-json@4.8.5"
   - "@trigger.dev/sdk@4.8.5"
   - trigger.dev@4.8.5
+
+patchedDependencies:
+  picomatch@2.3.2: patches/picomatch@2.3.2.patch
+  picomatch@4.0.7: patches/picomatch@4.0.7.patch
+
+# picomatch ReDoS (GHSA-fc5q-39xc-vjpf, CVE-2026-112366): no fixed version exists yet, so the
+# fix is the local patch above (patches/picomatch@*.patch). `pnpm audit` only sees version
+# numbers, not patches, so this advisory is accepted here ONLY while the patch is applied:
+# scripts/security/picomatch-patch.test.mjs fails if any picomatch in the lockfile is
+# unpatched or the attack pattern still hangs. When picomatch publishes a fix, update it,
+# drop the patch and this entry (docs/security.md).
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf
