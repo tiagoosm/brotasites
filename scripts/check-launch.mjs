@@ -88,6 +88,8 @@ for (const target of targets) {
           : "✗  ";
     const where = row.state === "conferir" ? `  (${row.manual})` : "";
     console.log(`${mark} ${row.name.padEnd(38)} ${row.state.padEnd(12)} ${NEED[row.need]}${where}`);
+    // E44: a sentence for what is set but wrong (never a value).
+    if (row.warning) console.log(`    ↳ ${row.warning}`);
   }
   console.log(
     result.ok

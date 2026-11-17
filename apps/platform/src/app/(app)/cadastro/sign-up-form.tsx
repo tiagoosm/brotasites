@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useId, useState } from "react";
 import { postJson } from "@/components/account/api";
-import { Captcha } from "@/components/account/captcha";
+import { Captcha, captchaButtonLabel, useCaptcha } from "@/components/account/captcha";
 import { Field, FormError } from "@/components/account/field";
 import { PasswordChecklist, PasswordField } from "@/components/account/password-field";
 import { ResendConfirmation } from "@/components/account/resend-confirmation";
@@ -56,8 +56,8 @@ export function SignUpForm() {
   const [confirmTouched, setConfirmTouched] = useState(false);
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
-  const [captcha, setCaptcha] = useState<string>();
-  const [attempt, setAttempt] = useState(0);
+  // E44: the token, and whether the form may send yet (never without a token).
+  const captcha = useCaptcha();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -90,7 +90,7 @@ export function SignUpForm() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (sending) return;
+    if (sending || captcha.waiting) return;
     setError(null);
     // Checked here first, so every field's problem shows at once; the server checks it all again.
     const checked = signUpSchema.safeParse({
@@ -112,11 +112,11 @@ export function SignUpForm() {
       password,
       confirmPassword: confirm,
       acceptTerms: accepted,
-      captchaToken: captcha,
+      captchaToken: captcha.token,
       next,
     });
     setSending(false);
-    setAttempt((count) => count + 1);
+    captcha.reset();
     if (result.ok) {
       setSent(true);
       return;
@@ -255,7 +255,7 @@ export function SignUpForm() {
         />
       </div>
 
-      <Captcha onToken={setCaptcha} resetKey={attempt} />
+      <Captcha {...captcha.props} />
       {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
 
       {/* The card's footer (E30): the terms in one sentence (one line on the 40rem card), the
@@ -298,8 +298,14 @@ export function SignUpForm() {
             </p>
           )}
         </div>
-        <Button aria-busy={sending || undefined} type="submit" size="lg" className="group w-full">
-          {sending ? "Criando…" : "Criar conta"}
+        <Button
+          aria-busy={sending || undefined}
+          type="submit"
+          size="lg"
+          className="group w-full"
+          disabled={captcha.waiting && !sending}
+        >
+          {sending ? "Criando…" : captchaButtonLabel(captcha, "Criar conta")}
           <ArrowRight
             aria-hidden="true"
             className="transition-transform duration-200 group-hover:translate-x-0.5"

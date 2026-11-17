@@ -1,6 +1,6 @@
 import { emailOnlySchema } from "@/lib/auth/schemas";
 import { confirmUrl, isCaptchaError, startAuthRoute } from "@/lib/server/auth-route";
-import { captchaError } from "@/lib/server/captcha";
+import { captchaRefused } from "@/lib/server/captcha";
 import { guardErrors, json, readBody, refuse, steadyPace } from "@/lib/server/guard";
 
 // "Reenviar e-mail de confirmação". Supabase also waits 60 s between emails to one address.
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     options: { emailRedirectTo: confirmUrl(request, next), captchaToken: auth.captchaToken },
   });
   await steadyPace(started);
-  if (isCaptchaError(error)) return refuse(400, captchaError, { captcha: captchaError });
+  if (isCaptchaError(error)) return refuse(400, captchaRefused, { captcha: captchaRefused });
   if (error && (error.status ?? 500) >= 500) return refuse(503, guardErrors.unavailable);
   return json({ ok: true });
 }

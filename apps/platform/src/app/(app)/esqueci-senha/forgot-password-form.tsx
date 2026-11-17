@@ -5,15 +5,15 @@ import Link from "next/link";
 import { useState } from "react";
 import { formErrorOf, postJson } from "@/components/account/api";
 import { AuthShell } from "@/components/account/auth-shell";
-import { Captcha } from "@/components/account/captcha";
+import { Captcha, captchaButtonLabel, useCaptcha } from "@/components/account/captcha";
 import { Field, FormError } from "@/components/account/field";
 import { Button } from "@/components/ui/button";
 
 // "Esqueci a senha": a link by email that signs in and leads to /redefinir-senha.
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
-  const [captcha, setCaptcha] = useState<string>();
-  const [attempt, setAttempt] = useState(0);
+  // E44: the token, and whether the form may send yet (never without a token).
+  const captcha = useCaptcha();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -21,11 +21,12 @@ export function ForgotPasswordForm() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (sending || captcha.waiting) return;
     setSending(true);
     setError(null);
-    const result = await postJson("/api/auth/recover", { email, captchaToken: captcha });
+    const result = await postJson("/api/auth/recover", { email, captchaToken: captcha.token });
     setSending(false);
-    setAttempt((count) => count + 1);
+    captcha.reset();
     if (result.ok) {
       setSent(true);
       return;
@@ -73,10 +74,15 @@ export function ForgotPasswordForm() {
             onChange={(event) => setEmail(event.target.value)}
             error={fields.email}
           />
-          <Captcha onToken={setCaptcha} resetKey={attempt} />
+          <Captcha {...captcha.props} />
           {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
-          <Button aria-busy={sending || undefined} type="submit" size="lg" disabled={sending}>
-            {sending ? "Enviando…" : "Enviar link"}
+          <Button
+            aria-busy={sending || undefined}
+            type="submit"
+            size="lg"
+            disabled={sending || captcha.waiting}
+          >
+            {sending ? "Enviando…" : captchaButtonLabel(captcha, "Enviar link")}
           </Button>
           <Link
             href="/entrar"

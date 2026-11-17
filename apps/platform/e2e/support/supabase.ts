@@ -157,6 +157,13 @@ export interface FakeState {
   deleteBlockers?: { job: boolean; payment: boolean };
   /** E42: the published sites the team's list shows (defaults to the one site). */
   adminSites?: NonNullable<FakeState["site"]>[];
+  /** E44: the bot check's diagnosis on the overview (never a key). */
+  captcha?: {
+    mode: "turnstile" | "simulated" | "off" | "misconfigured";
+    siteKey: "production" | "test" | "unexpected" | "missing";
+    production: boolean;
+    warning: string | null;
+  };
   /** E43: the site's publication payment, as the owner reads it. */
   payments?: { amount_cents: number; paid_at: string | null; status: string }[];
   /** E43: the withdrawal (refund request), as the owner and the team read it. */
@@ -1002,6 +1009,8 @@ function overviewFor(state: FakeState) {
     },
     budget: BUDGET,
     ...(state.generation ? { generation: state.generation } : {}),
+    // E44: the bot check, as captchaDiagnosis() reports it.
+    ...(state.captcha ? { captcha: state.captcha } : {}),
     // E39: sites that need attention, with the short failure line.
     failures:
       state.site?.status === "needs_attention"

@@ -1,6 +1,6 @@
 import { DEFAULT_NEXT, safeNextPath } from "@/lib/supabase/env";
 import { getAuthSupabase } from "@/lib/supabase/server";
-import { captchaError, captchaTokenFor } from "./captcha";
+import { captchaMissing, captchaTokenFor } from "./captcha";
 import { clientIp, guardErrors, limitKey, refuse } from "./guard";
 import { rulesFor, withinLimits } from "./rate-limit";
 
@@ -20,7 +20,7 @@ export async function startAuthRoute(
     return { error: refuse(429, guardErrors.rateLimited) } as const;
   }
   const token = captchaTokenFor(captcha);
-  if (!token) return { error: refuse(400, captchaError, { captcha: captchaError }) } as const;
+  if (!token) return { error: refuse(400, captchaMissing, { captcha: captchaMissing }) } as const;
   const supabase = await getAuthSupabase(ip);
   if (!supabase) return { error: refuse(503, guardErrors.unavailable) } as const;
   return { supabase, captchaToken: token.token } as const;

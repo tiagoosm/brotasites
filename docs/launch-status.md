@@ -192,6 +192,12 @@ Read by the deploy workflows only (`.github/workflows/deploy-worker.yml`, `deplo
 | `TRIGGER_ACCESS_TOKEN` | secret | Deploy jobs | A Trigger.dev API key of the project's Production environment with the "Deploy only" preset (`tr_prod_…`). A personal access token (`tr_pat_…`) also works, but ties deploys to one person. |
 | `TRIGGER_PROJECT_REF` | variable | Deploy jobs | The Trigger.dev project ref (`proj_…`). Not a secret: a variable, so it shows in the logs. |
 
+## Turnstile on the account pages (E44, 2026-11-17)
+
+- **What happened:** on `/entrar` the owner got "Confirme que você não é um robô e tente de novo." and no check showed. The widget runs in "interaction-only" (invisible), and when it failed (script blocked, domain not in the widget's hostnames, wrong site key) the page hid it and sent the form without a token. "Reenviar e-mail de confirmação" never sent a token at all, so it always failed with Turnstile on.
+- **The fix:** the widget has visible states: "Verificando…" on the button, a message and "Tentar de novo" on failure, the widget shown when no token comes in 8 seconds, an expired token renewed by itself. The forms (entrar, cadastro, esqueci a senha, conta, entrar/equipe, and the resend) no longer send without a token. The server says apart "no token" from "token refused by Supabase". The team panel shows the check's state and `pnpm check:launch` warns about `off`, `simulated` and test keys.
+- **Still to check by the owner** (only the owner reaches these): the steps in `docs/owner-steps.md`, "Accounts (E15)" step 4, and its symptom table.
+
 ## Divergences found (2026-11-12)
 
 Between what the code reads and what `.env.example` and `docs/owner-steps.md` said before this step:

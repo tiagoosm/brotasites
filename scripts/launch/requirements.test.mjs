@@ -118,6 +118,35 @@ describe("what production needs (E34)", () => {
     );
   });
 
+  it("warns about the bot check off, simulated or with a test key, never printing it (E44)", () => {
+    const off = checkTarget("vercel", {
+      NEXT_PUBLIC_CAPTCHA_MODE: "off",
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAAAAbcdefghijklmn",
+    });
+    expect(off.rows.find((r) => r.name === "NEXT_PUBLIC_CAPTCHA_MODE")?.warning).toMatch(
+      /ninguém está protegido/,
+    );
+    const simulated = checkTarget("vercel", { NEXT_PUBLIC_CAPTCHA_MODE: "simulated" });
+    expect(simulated.blocking.map((b) => b.name)).toContain("NEXT_PUBLIC_CAPTCHA_MODE");
+    const test = checkTarget("vercel", {
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+    });
+    const key = test.rows.find((r) => r.name === "NEXT_PUBLIC_TURNSTILE_SITE_KEY");
+    expect(key?.state).toBe("valor errado");
+    expect(key?.warning).toMatch(/chave de teste/);
+    expect(JSON.stringify(test)).not.toContain("1x00000000000000000000AA");
+    const odd = checkTarget("vercel", { NEXT_PUBLIC_TURNSTILE_SITE_KEY: "minha-chave-123" });
+    expect(odd.rows.find((r) => r.name === "NEXT_PUBLIC_TURNSTILE_SITE_KEY")?.state).toBe(
+      "valor errado",
+    );
+    const good = checkTarget("vercel", {
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAAAAbcdefghijklmn",
+    });
+    expect(good.rows.find((r) => r.name === "NEXT_PUBLIC_TURNSTILE_SITE_KEY")?.state).toBe(
+      "presente",
+    );
+  });
+
   it("asks the jobs for the live AI", () => {
     const result = checkTarget("trigger", { AI_MODE: "simulated" });
     expect(result.rows.find((r) => r.name === "AI_MODE")?.state).toBe("valor errado");

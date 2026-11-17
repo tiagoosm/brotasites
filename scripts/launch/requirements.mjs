@@ -617,7 +617,29 @@ export function checkTarget(target, env) {
     const mode = env.NEXT_PUBLIC_CAPTCHA_MODE?.trim();
     if (key && key.state !== "presente" && mode !== "off") key.need = "required";
     const modeRow = rows.find((r) => r.name === "NEXT_PUBLIC_CAPTCHA_MODE");
-    if (modeRow && mode === "simulated") modeRow.state = "valor errado";
+    // E44: "simulated" refuses every sign-in in production; "off" leaves nobody protected.
+    if (modeRow && mode === "simulated") {
+      modeRow.state = "valor errado";
+      modeRow.need = "required";
+      modeRow.warning =
+        "simulated em produção recusa toda entrada e cadastro: apague a variável e faça um novo deploy.";
+    }
+    if (modeRow && mode === "off") {
+      modeRow.warning =
+        "A verificação está desligada: ninguém está protegido contra robôs. Apague a variável e faça um novo deploy.";
+    }
+    // Turnstile production site keys start with 0x; 1x, 2x and 3x are Cloudflare's test keys
+    // (developers.cloudflare.com/turnstile/troubleshooting/testing). Never print the key.
+    const siteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
+    if (key && siteKey && key.state === "presente") {
+      if (/^[123]x/.test(siteKey)) {
+        key.state = "valor errado";
+        key.warning = "É uma chave de teste da Cloudflare: use a chave do widget de produção.";
+      } else if (!/^0x[A-Za-z0-9_-]{10,}$/.test(siteKey)) {
+        key.state = "valor errado";
+        key.warning = "A chave do site não tem o formato esperado (começa com 0x).";
+      }
+    }
   }
   const blocking = rows.filter(
     (r) =>
