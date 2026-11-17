@@ -1,6 +1,6 @@
 import { signUpSchema, TERMS_VERSION } from "@/lib/auth/schemas";
 import { confirmUrl, isCaptchaError, isRateLimited, startAuthRoute } from "@/lib/server/auth-route";
-import { captchaError } from "@/lib/server/captcha";
+import { captchaRefused } from "@/lib/server/captcha";
 import { guardErrors, json, readBody, refuse, steadyPace } from "@/lib/server/guard";
 
 // Creating an account (E15): name, email, password and the accepted terms. Supabase sends the
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     },
   });
   await steadyPace(started);
-  if (isCaptchaError(error)) return refuse(400, captchaError, { captcha: captchaError });
+  if (isCaptchaError(error)) return refuse(400, captchaRefused, { captcha: captchaRefused });
   if (isRateLimited(error)) return refuse(429, guardErrors.rateLimited);
   if (error?.code === "weak_password") {
     const message = "Essa senha apareceu em vazamentos de dados. Escolha outra.";

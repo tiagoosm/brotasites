@@ -176,3 +176,37 @@ test.describe("in production without generation set up", () => {
     expect([404, 503]).toContain(answers.directions.status);
   });
 });
+
+test("the overview says how the bot check is, and warns when it is off (E44)", async ({
+  page,
+  context,
+}) => {
+  await withSite(context, {
+    admin: true,
+    captcha: {
+      mode: "off",
+      siteKey: "production",
+      production: true,
+      warning: "A verificação está desligada: ninguém está protegido contra robôs.",
+    },
+  });
+  await page.goto("/admin/visao-geral");
+  const line = page.getByRole("region", { name: /Verificação anti-robô \(Turnstile\)/ });
+  await expect(line).toContainText("Desligada");
+  await expect(line).toContainText("chave do site no formato de produção (0x…) · produção");
+  await expect(line).toContainText("ninguém está protegido contra robôs");
+});
+
+test("with the bot check on, the overview says so and points to the console code", async ({
+  page,
+  context,
+}) => {
+  await withSite(context, {
+    admin: true,
+    captcha: { mode: "turnstile", siteKey: "production", production: true, warning: null },
+  });
+  await page.goto("/admin/visao-geral");
+  const line = page.getByRole("region", { name: /Verificação anti-robô/ });
+  await expect(line).toContainText("Ativa");
+  await expect(line).toContainText("110200");
+});

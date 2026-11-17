@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { formErrorOf, postJson } from "@/components/account/api";
-import { Captcha } from "@/components/account/captcha";
+import { Captcha, captchaButtonLabel, useCaptcha } from "@/components/account/captcha";
 import { Field, FormError } from "@/components/account/field";
 import { PasswordField } from "@/components/account/password-field";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -27,8 +27,8 @@ export function TeamSignInForm() {
   const next = teamNextPath(params.get("voltar"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [captcha, setCaptcha] = useState<string>();
-  const [attempt, setAttempt] = useState(0);
+  // E44: the token, and whether the form may send yet (never without a token).
+  const captcha = useCaptcha();
   const [sending, setSending] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -68,18 +68,18 @@ export function TeamSignInForm() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (sending || entering) return;
+    if (sending || entering || captcha.waiting) return;
     setSending(true);
     setError(null);
     setFields({});
     const result = await postJson<{ next?: string }>("/api/auth/sign-in", {
       email,
       password,
-      captchaToken: captcha,
+      captchaToken: captcha.token,
       next,
     });
     setSending(false);
-    setAttempt((count) => count + 1);
+    captcha.reset();
     if (!result.ok) {
       setFields(result.data.fields ?? {});
       setError(
@@ -159,11 +159,17 @@ export function TeamSignInForm() {
         onChange={setPassword}
         error={fields.password}
       />
-      <Captcha onToken={setCaptcha} resetKey={attempt} />
+      <Captcha {...captcha.props} />
       {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
 
-      <Button aria-busy={busy || undefined} type="submit" size="lg" className="group w-full">
-        {busy ? "Entrando…" : "Entrar"}
+      <Button
+        aria-busy={busy || undefined}
+        type="submit"
+        size="lg"
+        className="group w-full"
+        disabled={captcha.waiting && !busy}
+      >
+        {busy ? "Entrando…" : captchaButtonLabel(captcha, "Entrar")}
         <ArrowRight
           aria-hidden="true"
           className="transition-transform duration-200 group-hover:translate-x-0.5"

@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { RECOVERY_COOKIE, recoveryState } from "@/lib/auth/recovery";
 import { changePasswordSchema, newPassword } from "@/lib/auth/schemas";
 import { isCaptchaError, isRateLimited } from "@/lib/server/auth-route";
-import { captchaError, captchaTokenFor } from "@/lib/server/captcha";
+import { captchaMissing, captchaRefused, captchaTokenFor } from "@/lib/server/captcha";
 import { clientIp, guardErrors, json, limitKey, readBody, refuse } from "@/lib/server/guard";
 import { rulesFor, withinLimits } from "@/lib/server/rate-limit";
 import { accountErrors, currentUser, sessionClaims, signedInRecently } from "@/lib/server/session";
@@ -30,13 +30,13 @@ export async function POST(request: Request) {
 
   if (body.data.currentPassword) {
     const token = captchaTokenFor(body.data.captchaToken);
-    if (!token) return refuse(400, captchaError, { captcha: captchaError });
+    if (!token) return refuse(400, captchaMissing, { captcha: captchaMissing });
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password: body.data.currentPassword,
       options: { captchaToken: token.token },
     });
-    if (isCaptchaError(error)) return refuse(400, captchaError, { captcha: captchaError });
+    if (isCaptchaError(error)) return refuse(400, captchaRefused, { captcha: captchaRefused });
     if (isRateLimited(error)) return refuse(429, guardErrors.rateLimited);
     if (error) {
       const message = "A senha atual não confere.";

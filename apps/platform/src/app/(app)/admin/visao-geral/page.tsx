@@ -56,6 +56,14 @@ interface Generation {
   stuckRunningMinutes?: number;
 }
 
+/** E44: the bot check, as captchaDiagnosis() reports it (never the key). */
+interface CaptchaInfo {
+  mode: "turnstile" | "simulated" | "off" | "misconfigured";
+  siteKey: "production" | "test" | "unexpected" | "missing";
+  production: boolean;
+  warning: string | null;
+}
+
 /** E39: sites in needs_attention, newest first, with what went wrong in a short line. */
 interface Failure {
   siteId: string;
@@ -70,6 +78,7 @@ export default function OverviewPage() {
     budget: AiBudget;
     generation?: Generation;
     failures?: Failure[];
+    captcha?: CaptchaInfo;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<(typeof periods)[number][0]>("30");
@@ -80,11 +89,12 @@ export default function OverviewPage() {
       budget: AiBudget;
       generation?: Generation;
       failures?: Failure[];
+      captcha?: CaptchaInfo;
     }>("/api/admin/overview").then(setData, (caught: Error) => setError(caught.message));
   }, []);
   if (error) return <Notice title="Não foi possível abrir a visão geral" text={error} />;
   if (!data) return <Loading />;
-  const { overview, budget, generation, failures = [] } = data;
+  const { overview, budget, generation, failures = [], captcha } = data;
   const now = overview[period];
   const funnel = now.funnel;
   const spent = Number(overview.today.spentUsd);
@@ -95,6 +105,7 @@ export default function OverviewPage() {
     <div className="grid gap-10">
       {generation && <GenerationNotice generation={generation} />}
       {failures.length > 0 && <Failures failures={failures} />}
+      {captcha && <CaptchaLine captcha={captcha} />}
       <header className="grid gap-4">
         <h1 className="font-display text-[2.5rem] leading-[1.05]">Visão geral</h1>
         <div role="tablist" aria-label="Período" className="flex flex-wrap gap-2">
@@ -283,5 +294,49 @@ function GenerationNotice({ generation }: { generation: Generation }) {
         </p>
       )}
     </div>
+  );
+}
+
+const captchaModes: Record<CaptchaInfo["mode"], string> = {
+  turnstile: "Ativa",
+  off: "Desligada",
+  misconfigured: "Mal configurada",
+  simulated: "Simulada",
+};
+const siteKeyLabels: Record<CaptchaInfo["siteKey"], string> = {
+  production: "chave do site no formato de produção (0x…)",
+  test: "chave do site de teste da Cloudflare",
+  unexpected: "chave do site num formato inesperado",
+  missing: "sem chave do site",
+};
+
+/**
+ * E44: "Verificação anti-robô (Turnstile)": the state the server computes, and a warning when
+ * nobody is protected or sign-in is refused. Never the key nor the secret. A browser-side
+ * failure (domain not authorized, blocked script) shows in the browser's console as
+ * "[turnstile] <código>"; the steps to check are in docs/owner-steps.md.
+ */
+function CaptchaLine({ captcha }: { captcha: CaptchaInfo }) {
+  const bad = Boolean(captcha.warning);
+  return (
+    <section
+      aria-labelledby="turnstile"
+      className={`grid gap-1.5 rounded-xl border p-4 text-[0.9375rem] ${bad ? "border-destructive/40 bg-destructive/5" : "border-input bg-card"}`}
+    >
+      <h2 id="turnstile" className="font-semibold">
+        Verificação anti-robô (Turnstile): {captchaModes[captcha.mode]}
+      </h2>
+      <p className="text-ink-soft">
+        {siteKeyLabels[captcha.siteKey]}
+        {captcha.production ? " · produção" : " · fora da produção"}
+      </p>
+      {captcha.warning && <p className="font-semibold text-destructive">{captcha.warning}</p>}
+      {!bad && captcha.mode === "turnstile" && (
+        <p className="text-sm text-ink-soft">
+          Se alguém não consegue entrar, o erro do navegador aparece no console como “[turnstile]
+          código”. 110200 é domínio fora da lista do widget na Cloudflare.
+        </p>
+      )}
+    </section>
   );
 }

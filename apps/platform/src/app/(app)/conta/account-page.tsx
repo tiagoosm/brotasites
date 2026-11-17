@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
 import { formErrorOf, postJson } from "@/components/account/api";
-import { Captcha } from "@/components/account/captcha";
+import { Captcha, captchaButtonLabel, useCaptcha } from "@/components/account/captcha";
 import { EmailConfirmBanner } from "@/components/account/email-banner";
 import { Field, FormError } from "@/components/account/field";
 import { MfaEnroll } from "@/components/account/mfa";
@@ -309,8 +309,8 @@ function PasswordSection({
   const [password, setPassword] = useState("");
   const [repeat, setRepeat] = useState("");
   const checklistId = useId();
-  const [captcha, setCaptcha] = useState<string>();
-  const [attempt, setAttempt] = useState(0);
+  // E44: the token, and whether the form may send yet (never without a token).
+  const captcha = useCaptcha();
   const [fields, setFields] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [reauth, setReauth] = useState(false);
@@ -320,6 +320,8 @@ function PasswordSection({
     setSaved(null);
     setError(null);
     setReauth(false);
+    // E44: with a password, the change goes through the CAPTCHA: never without a token.
+    if (hasPassword && captcha.waiting) return;
     const problem = passwordProblem(password);
     if (problem || password !== repeat) {
       setFields({
@@ -333,9 +335,9 @@ function PasswordSection({
       currentPassword: hasPassword ? current : undefined,
       password,
       confirmPassword: repeat,
-      captchaToken: captcha,
+      captchaToken: captcha.token,
     });
-    setAttempt((count) => count + 1);
+    captcha.reset();
     setFields(result.data.fields ?? {});
     if (result.data.reauth) return setReauth(true);
     if (!result.ok)
@@ -396,10 +398,15 @@ function PasswordSection({
           error={fields.confirmPassword}
         />
         <PasswordChecklist id={checklistId} value={password} />
-        {hasPassword && <Captcha onToken={setCaptcha} resetKey={attempt} />}
+        {hasPassword && <Captcha {...captcha.props} />}
         {fields.captcha && <p className="text-sm text-destructive">{fields.captcha}</p>}
-        <Button type="submit" size="lg" className="justify-self-start">
-          {hasPassword ? "Trocar senha" : "Criar senha"}
+        <Button
+          type="submit"
+          size="lg"
+          className="justify-self-start"
+          disabled={hasPassword && captcha.waiting}
+        >
+          {hasPassword ? captchaButtonLabel(captcha, "Trocar senha") : "Criar senha"}
         </Button>
         <Saved message={saved} />
       </form>

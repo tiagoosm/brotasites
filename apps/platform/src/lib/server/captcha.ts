@@ -35,4 +35,59 @@ export function captchaTokenFor(
   return token ? { token } : null;
 }
 
-export const captchaError = "Confirme que você não é um robô e tente de novo.";
+/**
+ * E44: two different failures, two sentences. No token at all: the widget did not finish (the
+ * forms no longer send without one, so this is a script or an old page). A token Supabase
+ * refused: expired, used twice, or a site key and a secret of different widgets; the form
+ * gets a fresh token for the next try.
+ */
+export const captchaMissing =
+  "A verificação de segurança ainda não terminou. Espere ela concluir e tente de novo.";
+export const captchaRefused = "A verificação expirou ou foi recusada. Tente de novo.";
+
+/**
+ * What the team panel and `pnpm check:launch` say about the CAPTCHA (E44). Never the key itself:
+ * only whether it looks like a production key. Turnstile production site keys start with "0x";
+ * the official test keys start with "1x", "2x" or "3x" (Cloudflare docs, turnstile/troubleshooting/
+ * testing.mdx, read on 2026-11-17).
+ */
+export type SiteKeyFormat = "production" | "test" | "unexpected" | "missing";
+
+export interface CaptchaDiagnosis {
+  mode: CaptchaMode;
+  siteKey: SiteKeyFormat;
+  production: boolean;
+  /** One sentence for the team, in pt-BR; null when all is well. */
+  warning: string | null;
+}
+
+export function siteKeyFormat(value: string | undefined): SiteKeyFormat {
+  const key = value?.trim();
+  if (!key) return "missing";
+  if (/^0x[A-Za-z0-9_-]{10,}$/.test(key)) return "production";
+  if (/^[123]x[A-Za-z0-9_-]{10,}$/.test(key)) return "test";
+  return "unexpected";
+}
+
+export function captchaDiagnosis(
+  env: Record<string, string | undefined> = process.env,
+): CaptchaDiagnosis {
+  const mode = captchaMode(env);
+  const siteKey = siteKeyFormat(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  const production = isProduction(env);
+  let warning: string | null = null;
+  if (mode === "off") {
+    warning = "A verificação está desligada: ninguém está protegido contra robôs.";
+  } else if (mode === "misconfigured") {
+    warning =
+      "Falta a chave do site do Turnstile: cadastro, entrada e troca de senha estão recusados.";
+  } else if (mode === "simulated" && production) {
+    warning = "A verificação está simulada em produção: ninguém está protegido contra robôs.";
+  } else if (mode === "turnstile" && siteKey === "test" && production) {
+    warning =
+      "A chave do site é uma chave de teste da Cloudflare: troque pela chave do widget de produção.";
+  } else if (mode === "turnstile" && siteKey === "unexpected") {
+    warning = "A chave do site não tem o formato esperado (começa com 0x). Confira na Vercel.";
+  }
+  return { mode, siteKey, production, warning };
+}

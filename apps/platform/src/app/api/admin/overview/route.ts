@@ -1,6 +1,7 @@
 import { aiBudget } from "@/lib/admin/budget";
 import { failuresBySite } from "@/lib/job-failures";
 import { requireAdmin, teamRpcError } from "@/lib/server/admin";
+import { captchaDiagnosis } from "@/lib/server/captcha";
 import { generationStatus, STUCK_JOB_MINUTES } from "@/lib/server/generation";
 import { json } from "@/lib/server/guard";
 import { runningCutoff, STUCK_RUNNING_MINUTES } from "@/lib/stuck-job";
@@ -66,5 +67,7 @@ export async function GET() {
       stuckRunningMinutes: STUCK_RUNNING_MINUTES,
     },
     failures,
+    // E44: the bot check's state, never the key nor the secret.
+    captcha: captchaDiagnosis(),
   });
 }
