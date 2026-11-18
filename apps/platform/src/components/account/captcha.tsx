@@ -147,6 +147,13 @@ export function Captcha({
             Verificação de segurança em andamento…
           </p>
         )}
+        {/* E44b: the invisible widget passed. Say so, instead of leaving a blank space. */}
+        {state.status === "ready" && !state.visible && (
+          <p className="flex items-center gap-2 text-sm text-leaf-deep">
+            <ShieldCheck aria-hidden="true" className="size-4 shrink-0" />
+            Verificação de segurança concluída.
+          </p>
+        )}
         {state.message && (
           <p
             className={failed ? "text-sm font-semibold text-destructive" : "text-sm text-ink-soft"}

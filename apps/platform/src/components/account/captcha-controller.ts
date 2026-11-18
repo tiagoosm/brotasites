@@ -59,7 +59,9 @@ export function captchaMessage(code: string | undefined): string {
   if (value === "script" || value === "200500") return captchaMessages.blocked;
   if (value === "unsupported") return captchaMessages.unsupported;
   if (value === "200100") return captchaMessages.clock;
-  if (value === "110600" || value === "110620") return captchaMessages.timeout;
+  if (value === "110600" || value === "110620" || value === "timeout") {
+    return captchaMessages.timeout;
+  }
   if (CONFIG_ERRORS.includes(value)) return captchaMessages.generic;
   if (/^[36]\d{5}$/.test(value)) return captchaMessages.failed;
   return captchaMessages.generic;
@@ -67,6 +69,12 @@ export function captchaMessage(code: string | undefined): string {
 
 /** How long an invisible widget may stay without a token before it is shown (ms). */
 export const VISIBLE_AFTER_MS = 8000;
+/**
+ * How long the visible widget may then stay silent before it counts as a failure (ms). A widget
+ * of the "Invisible" type in Cloudflare is never shown, whatever the appearance: without this the
+ * page waited forever on a blank space (E44b).
+ */
+export const GIVE_UP_AFTER_MS = 15000;
 
 export interface ControllerDeps {
   siteKey: string;
@@ -78,6 +86,7 @@ export interface ControllerDeps {
   clearTimer?: (handle: unknown) => void;
   warn?: (...args: unknown[]) => void;
   visibleAfterMs?: number;
+  giveUpAfterMs?: number;
 }
 
 export interface CaptchaController {
@@ -95,6 +104,7 @@ export function createCaptchaController(deps: ControllerDeps): CaptchaController
   const clearTimer = deps.clearTimer ?? ((handle) => clearTimeout(handle as number));
   const warn = deps.warn ?? ((...args) => console.warn(...args));
   const waitMs = deps.visibleAfterMs ?? VISIBLE_AFTER_MS;
+  const giveUpMs = deps.giveUpAfterMs ?? GIVE_UP_AFTER_MS;
 
   let api: TurnstileApi | undefined;
   let widget: string | undefined;
@@ -132,16 +142,21 @@ export function createCaptchaController(deps: ControllerDeps): CaptchaController
     });
   };
 
-  // No token and no click asked for in time: show the widget, so the person can act.
+  // No token and no click asked for in time: show the widget, so the person can act. Still
+  // nothing from the visible widget after that: say so, with "Tentar de novo" (never a blank).
   const armTimer = () => {
     stopTimer();
-    if (state.visible) return;
     const mine = generation;
-    timer = setTimer(() => {
-      timer = undefined;
-      if (destroyed || mine !== generation) return;
-      if (state.status === "loading") render(true);
-    }, waitMs);
+    const visible = state.visible;
+    timer = setTimer(
+      () => {
+        timer = undefined;
+        if (destroyed || mine !== generation || state.status !== "loading") return;
+        if (visible) fail("timeout");
+        else render(true);
+      },
+      visible ? giveUpMs : waitMs,
+    );
   };
 
   function render(visible: boolean) {

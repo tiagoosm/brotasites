@@ -191,4 +191,29 @@ describe("the Turnstile widget (E44)", () => {
     expect(captchaMessage("unsupported")).toBe(captchaMessages.unsupported);
     expect(captchaMessage(undefined)).toBe(captchaMessages.generic);
   });
+
+  it("a visible widget that stays silent becomes an error with Tentar de novo (E44b)", async () => {
+    const api = fakeTurnstile();
+    const { controller, last, flush, timers, warn } = setup(async () => api);
+    controller.start();
+    await flush();
+    timers[0]?.run();
+    expect(api.renders[1]?.appearance).toBe("always");
+    expect(timers[1]?.ms).toBe(15000);
+    timers[1]?.run();
+    expect(last()).toMatchObject({ status: "error", errorCode: "timeout" });
+    expect(last().message).toBe(captchaMessages.timeout);
+    expect(warn).toHaveBeenCalledWith("[turnstile]", "timeout");
+  });
+
+  it("a visible widget that answers in time is not turned into an error", async () => {
+    const api = fakeTurnstile();
+    const { controller, last, flush, timers } = setup(async () => api);
+    controller.start();
+    await flush();
+    timers[0]?.run();
+    callback(api.renders[1] as Record<string, unknown>, "callback")("token-2");
+    timers[1]?.run();
+    expect(last()).toMatchObject({ status: "ready", token: "token-2" });
+  });
 });
