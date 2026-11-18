@@ -137,9 +137,10 @@ export function Captcha({
   if (!siteKey) return null;
   const failed = state.status === "error";
   return (
-    // The reserved height keeps the button from jumping when the widget appears.
-    <div className="grid min-h-[65px] content-start gap-2">
-      <div ref={box} />
+    // E44c: the widget is invisible unless Cloudflare doubts ("interaction-only"), so only one
+    // line of text is shown; the widget's box takes room (65px) only once it is visible.
+    <div className={state.visible ? "grid min-h-[65px] content-start gap-2" : "grid content-start"}>
+      <div ref={box} className={state.visible ? undefined : "h-0 overflow-hidden"} />
       <div aria-live="polite" className="grid gap-2">
         {state.status === "loading" && !state.visible && (
           <p className="flex items-center gap-2 text-sm text-ink-soft">
@@ -166,7 +167,7 @@ export function Captcha({
         <button
           type="button"
           onClick={() => controller.current?.retry()}
-          className="touch-target inline-flex items-center gap-2 justify-self-start rounded font-semibold text-leaf-deep underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf"
+          className={`touch-target ${state.visible ? "" : "mt-2 "}inline-flex items-center gap-2 justify-self-start rounded font-semibold text-leaf-deep underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf`}
         >
           <RotateCw aria-hidden="true" className="size-4 motion-safe:transition-transform" />
           Tentar de novo
