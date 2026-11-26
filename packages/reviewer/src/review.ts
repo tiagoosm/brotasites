@@ -11,15 +11,19 @@ import { type SectionId, type SiteConfig, siteConfigSchema } from "@brotasites/s
 import type { ReviewerAgent } from "./agent.js";
 import { type BrowserResult, checkInBrowser } from "./browser-checks.js";
 import { checkConfig } from "./config-checks.js";
-import { type Finding, findingKey } from "./findings.js";
+import { type Finding, findingKey, isAgentFinding, originOf } from "./findings.js";
 import { checkBuild } from "./html-checks.js";
 
 // The review loop (docs/ai-and-reviewer.md, Reviewer 3). Each round runs the deterministic
 // checks (config, built files, browser) and the agent. Fixable findings go back to the
 // generator, inside the catalog: another variant for the section, the text rewritten, the
-// colors pulled back to AA. At most 2 fix rounds. A security finding stops the loop at once;
-// a high finding left at the end, or one that came back after a fix, sends the site to the
-// admin queue ("needsAttention") with the report.
+// colors pulled back to AA. At most 2 fix rounds. A security finding stops the loop at once.
+//
+// E46: only a measured problem holds the site. A deterministic finding (config, build, layout,
+// contrast, requests, accessibility, weight) that is high, or that came back after a fix, sends
+// the site to the admin queue ("needsAttention") with the report. The agent's findings are
+// opinions: they are rewritten once, then kept as notes for the person who reviews every site
+// anyway; they hold the site only when no person will look (humanReview off, development).
 
 export const MAX_FIX_ROUNDS = 2;
 
@@ -41,6 +45,14 @@ export interface ReviewOptions {
   rewriteCopy?: (config: SiteConfig, findings: Finding[]) => Promise<SiteConfig>;
   variants?: readonly Variant[];
   maxFixRounds?: number;
+  /**
+   * E46: whether a person reviews the site before the client sees it (true unless
+   * REVIEW_SKIP_HUMAN). Without one, a high finding of the agent holds the site too, and the
+   * agent runs every round.
+   */
+  humanReview?: boolean;
+  /** One line per round, without the client's text (Trigger.dev run logs). */
+  log?: (message: string) => void;
 }
 
 export interface ReviewRound {
@@ -48,6 +60,8 @@ export interface ReviewRound {
   /** What the generator changed after this round. */
   fixes: string[];
   costUsd: number;
+  /** E46: false when the agent was not asked this round (only its own notes were fixed). */
+  agent?: boolean;
 }
 
 export interface ReviewReport {
@@ -181,40 +195,67 @@ async function applyFixes(
   return { config: next, fixes };
 }
 
+/** "round 2: 1 check (overflow), 2 agent (fit, repetition)": counts and categories only. */
+function roundLine(round: number, findings: Finding[], agent: boolean): string {
+  const describe = (items: Finding[], prefix = "") =>
+    `${items.length}${items.length > 0 ? ` (${[...new Set(items.map((f) => f.check.slice(prefix.length)))].join(", ")})` : ""}`;
+  const checks = findings.filter((finding) => !isAgentFinding(finding));
+  const agentFindings = findings.filter(isAgentFinding);
+  return `review round ${round}: ${describe(checks)} check, ${agent ? describe(agentFindings, "agent:") : "skipped"} agent`;
+}
+
 export async function reviewSite(options: ReviewOptions): Promise<ReviewReport> {
   const variants = options.variants ?? catalogVariants;
   const maxFixRounds = options.maxFixRounds ?? MAX_FIX_ROUNDS;
+  const humanReview = options.humanReview ?? true;
   const browser =
     options.browser ?? ((site: BuiltSite) => checkInBrowser(site.distDir, { base: site.base }));
   const rounds: ReviewRound[] = [];
+  // Deterministic findings only: an agent note in other words is not "the same problem back".
   const seen = new Map<string, number>();
+  // The agent's notes already sent to the generator once: never a second time.
+  const agentFixed = new Set<string>();
+  let askAgent = true;
   let config = options.config;
   let costUsd = 0;
 
+  const label = (finding: Finding, blocking: ReadonlySet<Finding>): Finding => ({
+    ...finding,
+    origin: originOf(finding),
+    blocking: blocking.has(finding),
+  });
   const finish = (
     status: ReviewReport["status"],
     reason: string,
     findings: Finding[],
-  ): ReviewReport => ({
-    status,
-    reason,
-    config,
-    rounds,
-    findings,
-    costUsd,
-  });
+    blocking: readonly Finding[] = [],
+  ): ReviewReport => {
+    const held = new Set(blocking);
+    return {
+      status,
+      reason,
+      config,
+      rounds: rounds.map((round) => ({
+        ...round,
+        findings: round.findings.map((finding) => label(finding, held)),
+      })),
+      findings: findings.map((finding) => label(finding, held)),
+      costUsd,
+    };
+  };
 
   for (let round = 0; round <= maxFixRounds; round++) {
     const checked = checkConfig(config);
     let findings = checked.findings;
     let roundCost = 0;
+    let agentRan = false;
     if (checked.config) {
       config = checked.config;
       const site = await options.build(config);
       findings.push(...checkBuild(site.distDir, { base: site.base }));
       const inBrowser = await browser(site);
       findings.push(...inBrowser.findings);
-      if (!findings.some((finding) => finding.security)) {
+      if (askAgent && !findings.some((finding) => finding.security)) {
         const html = readFileSync(join(site.distDir, "index.html"), "utf8");
         const agent = await options.agent.review({
           config,
@@ -224,21 +265,26 @@ export async function reviewSite(options: ReviewOptions): Promise<ReviewReport> 
         });
         findings.push(...agent.findings);
         roundCost = agent.costUsd;
+        agentRan = true;
       }
     }
     findings = findings.map(withFix);
     costUsd += roundCost;
+    options.log?.(roundLine(round, findings, agentRan));
 
-    for (const finding of findings)
+    for (const finding of findings) {
+      if (isAgentFinding(finding)) continue;
       seen.set(findingKey(finding), (seen.get(findingKey(finding)) ?? 0) + 1);
+    }
 
     const security = findings.filter((finding) => finding.security);
     if (security.length > 0) {
-      rounds.push({ findings, fixes: [], costUsd: roundCost });
+      rounds.push({ findings, fixes: [], costUsd: roundCost, agent: agentRan });
       return finish(
         "needsAttention",
         "Problema de segurança: o site não pode ser publicado sem revisão.",
         findings,
+        security,
       );
     }
     if (!checked.config) {
@@ -248,41 +294,74 @@ export async function reviewSite(options: ReviewOptions): Promise<ReviewReport> 
         findings.every((finding) => finding.fix?.type === "repair-colors")
       ) {
         config = repairColors(config);
-        rounds.push({ findings, fixes: ["cores ajustadas para contraste AA"], costUsd: roundCost });
+        rounds.push({
+          findings,
+          fixes: ["cores ajustadas para contraste AA"],
+          costUsd: roundCost,
+          agent: agentRan,
+        });
         continue;
       }
-      rounds.push({ findings, fixes: [], costUsd: roundCost });
-      return finish("needsAttention", "A configuração do site é inválida.", findings);
+      rounds.push({ findings, fixes: [], costUsd: roundCost, agent: agentRan });
+      return finish("needsAttention", "A configuração do site é inválida.", findings, findings);
     }
-    const fixable = findings.filter((finding) => finding.fix && finding.severity !== "low");
+    const fixable = findings.filter(
+      (finding) =>
+        finding.fix &&
+        finding.severity !== "low" &&
+        !(isAgentFinding(finding) && agentFixed.has(findingKey(finding))),
+    );
     if (fixable.length === 0 || round === maxFixRounds) {
-      rounds.push({ findings, fixes: [], costUsd: roundCost });
+      rounds.push({ findings, fixes: [], costUsd: roundCost, agent: agentRan });
       break;
     }
     const applied = await applyFixes(config, fixable, options, variants);
-    rounds.push({ findings, fixes: applied.fixes, costUsd: roundCost });
+    rounds.push({ findings, fixes: applied.fixes, costUsd: roundCost, agent: agentRan });
     if (applied.fixes.length === 0) break;
     const valid = siteConfigSchema.safeParse(applied.config);
     if (!valid.success) break;
     config = valid.data;
+    for (const finding of fixable) if (isAgentFinding(finding)) agentFixed.add(findingKey(finding));
+    // The agent looks again only when a measured problem changed the page, or when no person
+    // will look after it: a second opinion on its own notes costs a call and rarely ends at zero.
+    askAgent = !humanReview || fixable.some((finding) => !isAgentFinding(finding));
   }
 
-  const last = rounds.at(-1)?.findings ?? [];
-  const high = last.filter((finding) => finding.severity === "high");
-  const returned = last.filter(
-    (finding) => (seen.get(findingKey(finding)) ?? 0) > 1 && finding.severity !== "low",
+  const lastRound = rounds.at(-1);
+  // When the agent was not asked in the last round, its latest notes still go to the person.
+  const lastNotes =
+    lastRound?.agent === false
+      ? (rounds.findLast((item) => item.agent)?.findings.filter(isAgentFinding) ?? [])
+      : [];
+  const last = [...(lastRound?.findings ?? []), ...lastNotes];
+  const checks = last.filter((finding) => !isAgentFinding(finding));
+  const notes = last.filter(isAgentFinding);
+  const high = checks.filter((finding) => finding.severity === "high");
+  const returned = checks.filter(
+    (finding) => finding.severity === "medium" && (seen.get(findingKey(finding)) ?? 0) > 1,
   );
-  if (high.length > 0 || returned.length > 0) {
+  const unreviewed = humanReview ? [] : notes.filter((finding) => finding.severity === "high");
+  if (high.length > 0 || returned.length > 0 || unreviewed.length > 0) {
     return finish(
       "needsAttention",
       high.length > 0
         ? `${high.length} problema(s) grave(s) continuam depois das correções.`
-        : `${returned.length} problema(s) voltaram depois das correções.`,
+        : returned.length > 0
+          ? `${returned.length} problema(s) voltaram depois das correções.`
+          : `${unreviewed.length} observação(ões) grave(s) do revisor automático, e ninguém vai revisar o site antes do cliente.`,
       last,
+      [...high, ...returned, ...unreviewed],
     );
   }
-  if (last.some((finding) => finding.severity === "medium")) {
+  if (checks.some((finding) => finding.severity === "medium")) {
     return finish("changesNeeded", "Ajustes recomendados antes de publicar.", last);
+  }
+  if (notes.some((finding) => finding.severity !== "low")) {
+    return finish(
+      "changesNeeded",
+      "Observações do revisor automático para a pessoa conferir.",
+      last,
+    );
   }
   return finish("passed", "Nenhum problema relevante.", last);
 }

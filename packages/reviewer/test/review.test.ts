@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   type BrowserResult,
   type Finding,
+  type ReviewerAgent,
   reviewSite,
   SimulatedReviewerAgent,
 } from "../src/index.js";
@@ -80,7 +81,9 @@ describe("reviewSite", () => {
       },
     });
     expect(calls[0]?.map((f) => f.check)).toContain("agent:invented-fact");
-    expect(report.status).toBe("passed");
+    // E46: rewritten once; the note stays for the person who reviews the site.
+    expect(calls).toHaveLength(1);
+    expect(report.status).toBe("changesNeeded");
   });
 
   it("never loops on a security finding", async () => {
@@ -123,5 +126,137 @@ describe("reviewSite", () => {
       ]),
     });
     expect(report.status).toBe("changesNeeded");
+  });
+
+  // E46: a real agent almost always finds something, and rarely the same words twice.
+  describe("the agent's findings are notes for the person, not a reason to hold the site", () => {
+    const opinions = (): Finding[] => [
+      {
+        check: "agent:fit",
+        severity: "high",
+        where: "hero",
+        message: "O tom do título não combina com uma padaria.",
+        fix: { type: "rewrite-copy" },
+      },
+      {
+        check: "agent:generic-copy",
+        severity: "medium",
+        where: "sobre",
+        message: "Texto genérico.",
+        fix: { type: "rewrite-copy" },
+      },
+    ];
+    /** An agent that says the same thing every round, counting its calls. */
+    const stubborn = (findings: () => Finding[] = opinions) => {
+      const agent = {
+        calls: 0,
+        async review() {
+          agent.calls++;
+          return { findings: findings(), costUsd: 0.05, source: "model" as const };
+        },
+      } satisfies ReviewerAgent & { calls: number };
+      return agent;
+    };
+
+    it("rewrites once, keeps the notes and sends the site on to the person (no needsAttention)", async () => {
+      const agent = stubborn();
+      let rewrites = 0;
+      const lines: string[] = [];
+      const report = await reviewSite({
+        config: fixture(),
+        form: fixture(),
+        build,
+        agent,
+        browser: browserSequence([]),
+        rewriteCopy: async (site) => {
+          rewrites++;
+          return site;
+        },
+        log: (line) => lines.push(line),
+      });
+      expect(report.status).toBe("changesNeeded");
+      expect(report.reason).toMatch(/revisor automático/);
+      expect(rewrites).toBe(1);
+      // Only its own notes were fixed: it is not asked again.
+      expect(agent.calls).toBe(1);
+      expect(report.rounds.map((round) => round.agent)).toEqual([true, false]);
+      expect(report.findings.map((f) => [f.check, f.origin, f.blocking])).toEqual([
+        ["agent:fit", "agent", false],
+        ["agent:generic-copy", "agent", false],
+      ]);
+      expect(lines[0]).toBe("review round 0: 0 check, 2 (fit, generic-copy) agent");
+      expect(lines[1]).toBe("review round 1: 0 check, skipped agent");
+    });
+
+    it("asks again after a measured fix, and does not rewrite the same note twice", async () => {
+      const agent = stubborn();
+      let rewrites = 0;
+      const report = await reviewSite({
+        config: fixture(),
+        form: fixture(),
+        build,
+        agent,
+        browser: browserSequence([overflow], []),
+        rewriteCopy: async (site) => {
+          rewrites++;
+          return site;
+        },
+      });
+      expect(agent.calls).toBe(2);
+      expect(rewrites).toBe(1);
+      expect(report.rounds).toHaveLength(2);
+      expect(report.status).toBe("changesNeeded");
+    });
+
+    it("holds a high note when no person will look (REVIEW_SKIP_HUMAN)", async () => {
+      const agent = stubborn();
+      const report = await reviewSite({
+        config: fixture(),
+        form: fixture(),
+        build,
+        agent,
+        browser: browserSequence([]),
+        rewriteCopy: async (site) => site,
+        humanReview: false,
+      });
+      expect(agent.calls).toBe(2);
+      expect(report.status).toBe("needsAttention");
+      expect(report.findings.find((f) => f.check === "agent:fit")?.blocking).toBe(true);
+      expect(report.findings.find((f) => f.check === "agent:generic-copy")?.blocking).toBe(false);
+    });
+
+    it("still holds a deterministic problem that stays, and marks it as the reason", async () => {
+      const report = await reviewSite({
+        config: fixture(),
+        form: fixture(),
+        build,
+        agent: stubborn(),
+        browser: browserSequence([overflow]),
+        rewriteCopy: async (site) => site,
+      });
+      expect(report.status).toBe("needsAttention");
+      const held = report.findings.filter((f) => f.blocking);
+      expect(held.map((f) => [f.check, f.origin])).toEqual([["overflow", "check"]]);
+    });
+
+    it("an agent that did not answer is a note, never a hold", async () => {
+      const unavailable = stubborn(() => [
+        {
+          check: "agent:unavailable",
+          severity: "medium",
+          where: "page",
+          message: "O revisor automático não respondeu; revise à mão.",
+        },
+      ]);
+      const report = await reviewSite({
+        config: fixture(),
+        form: fixture(),
+        build,
+        agent: unavailable,
+        browser: browserSequence([]),
+        humanReview: false,
+      });
+      expect(report.status).toBe("changesNeeded");
+    });
   });
 });
