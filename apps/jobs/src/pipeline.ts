@@ -64,8 +64,10 @@ export interface PipelineDeps {
 
 export const JOB_KINDS: JobKind[] = ["directions", "build", "publish"];
 
+// E46: needs_attention now means a technical problem (a failed job, or a measured defect the
+// reviewer could not fix); the reviewer agent's opinions go to the person in in_review instead.
 const ATTENTION_MESSAGE =
-  "Encontramos um problema que precisa de uma pessoa. Nossa equipe já foi avisada e responde por aqui.";
+  "Tivemos um problema técnico ao montar o seu site. Nossa equipe já foi avisada e responde por aqui.";
 
 export class JobError extends Error {}
 
@@ -245,10 +247,13 @@ export async function runBuild(deps: PipelineDeps, job: Job): Promise<void> {
         return result;
       },
     };
+    const humanReview = needsHumanReview(site.draft.business?.category, deps.skipHumanReview);
     const report = await reviewSite({
       config: copy.config,
       form,
       agent,
+      humanReview,
+      log: deps.log,
       browser: deps.browserChecks,
       build: async (config) => ({
         distDir: await build(deps, workspace, config, `review-${reviewBuilds++}`),
@@ -292,7 +297,7 @@ export async function runBuild(deps: PipelineDeps, job: Job): Promise<void> {
       await store.addEvent(
         site.id,
         "review_needs_attention",
-        "A revisão encontrou algo que precisa de uma pessoa.",
+        "Tivemos um problema técnico na montagem. Nossa equipe já foi avisada.",
       );
       return;
     }
@@ -306,9 +311,7 @@ export async function runBuild(deps: PipelineDeps, job: Job): Promise<void> {
       deps.previews.base(site.id, token),
     );
     await deps.previews.upload(site.id, token, outDir);
-    const next = needsHumanReview(site.draft.business?.category, deps.skipHumanReview)
-      ? "in_review"
-      : "awaiting_approval";
+    const next = humanReview ? "in_review" : "awaiting_approval";
     await store.updateSite(site.id, {
       status: next,
       statusMessage: null,

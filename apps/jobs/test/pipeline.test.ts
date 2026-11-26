@@ -206,6 +206,58 @@ describe("pipeline", { timeout: 240_000 }, () => {
     expect(notes[0]).toEqual(["O título repete o nome."]);
   });
 
+  // E46: the production run of 16/11 used every review round and the agent kept finding
+  // something; its opinions must not stop the site before the person who reviews it anyway.
+  const stubbornAgent = (): PipelineDeps["agent"] => ({
+    review: async () => ({
+      findings: [
+        {
+          check: "agent:fit",
+          severity: "high",
+          where: "hero",
+          message: "O tom do título não combina.",
+          fix: { type: "rewrite-copy" },
+        },
+      ],
+      costUsd: 0.05,
+      source: "model",
+    }),
+  });
+
+  async function buildChosen(deps: PipelineDeps, store: MemoryStore, siteId: string) {
+    store.enqueue(siteId, "directions");
+    expect(await runNext(deps, store)).toBe("done");
+    const [chosen] = store.directions.filter((d) => d.siteId === siteId);
+    await store.updateSite(siteId, { status: "building" });
+    const record = store.sites.get(siteId);
+    if (record) record.approvedDirection = chosen?.id ?? null;
+    store.enqueue(siteId, "build");
+    return runNext(deps, store);
+  }
+
+  it("an agent that repeats a high note in every round still reaches the person (E46)", async () => {
+    const { store, siteId, deps, uploads } = setup();
+    deps.agent = stubbornAgent();
+    expect(await buildChosen(deps, store, siteId)).toBe("done");
+    const site = await store.loadSite(siteId);
+    expect(site.status).toBe("in_review");
+    expect(uploads).toHaveLength(1);
+    expect(store.reports[0]?.status).toBe("changesNeeded");
+    expect(store.events.at(-1)?.kind).toBe("site_built");
+  });
+
+  it("holds the agent's high note when nobody reviews the site (E46)", async () => {
+    const { store, siteId, deps, uploads } = setup();
+    deps.agent = stubbornAgent();
+    deps.skipHumanReview = true;
+    expect(await buildChosen(deps, store, siteId)).toBe("done");
+    const site = await store.loadSite(siteId);
+    expect(site.status).toBe("needs_attention");
+    expect(site.statusMessage).toMatch(/problema técnico/);
+    expect(uploads).toHaveLength(0);
+    expect(store.reports[0]?.status).toBe("needsAttention");
+  });
+
   it("retries a failed job once, then sends the site to needs attention", async () => {
     const { store, siteId, deps } = setup();
     await store.updateSite(siteId, { status: "publishing" });
