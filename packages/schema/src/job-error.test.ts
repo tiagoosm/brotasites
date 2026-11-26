@@ -106,6 +106,10 @@ describe("explainJobError (E39)", () => {
       "O build falhou:\n[astro] TypeError: fetch failed (fonts)\nError: Cannot find module",
       "build",
     ],
+    [
+      "Faltam variáveis no ambiente das tarefas: R2_SECRET_ACCESS_KEY, CLOUDFLARE_KV_API_TOKEN. Confira em Trigger.dev > Production > Environment Variables.",
+      "missing-env",
+    ],
     ["read ECONNRESET", "network"],
     ["Request timed out after 600000ms", "network"],
   ];
@@ -135,5 +139,13 @@ describe("explainJobError (E39)", () => {
     expect(shortJobError("ReferenceError: __name is not defined")).toMatch(/__name/);
     expect(shortJobError(`\n  Erro estranho ${"x".repeat(200)}`, 40)).toHaveLength(40);
     expect(shortJobError("")).toBeNull();
+  });
+});
+
+describe("missing variables (E46)", () => {
+  it("keeps the names readable after masking", () => {
+    const text =
+      "Faltam variáveis no ambiente das tarefas: ANTHROPIC_API_KEY, R2_SECRET_ACCESS_KEY, CLOUDFLARE_KV_API_TOKEN.";
+    expect(maskJobError(text)).toBe(text);
   });
 });

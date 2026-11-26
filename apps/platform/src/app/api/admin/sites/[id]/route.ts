@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminJobs } from "@/lib/job-failures";
+import { releasePlan } from "@/lib/release-review";
 import { jobStepLabels, retryPlan } from "@/lib/retry-job";
 import { isUuid, requireAdmin } from "@/lib/server/admin";
 import { errors, fail } from "@/lib/server/session";
@@ -79,6 +80,16 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const retry = plan.ok
     ? { available: true, step: jobStepLabels[plan.kind], used: plan.used, limit: plan.limit }
     : { available: false, reason: plan.reason, used: plan.used, limit: plan.limit };
+  // E46: whether "Liberar para o cliente" can run now, or why not.
+  const releaseCheck = releasePlan(
+    site.status as string,
+    reports.data ?? [],
+    jobs.data ?? [],
+    admin.userId,
+  );
+  const release = releaseCheck.ok
+    ? { available: true }
+    : { available: false, reason: releaseCheck.reason };
   const shots = (direction.data?.screenshots as string[] | undefined) ?? [];
   const signed = shots.length
     ? ((await db.storage.from("site-renders").createSignedUrls(shots, SIGNED_SECONDS)).data ?? [])
@@ -104,6 +115,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         payment: (payments.data ?? []).some((payment) => payment.status === "pending"),
       },
       retry,
+      release,
       // E39: the recent jobs, newest first, errors masked (admin only).
       jobs: adminJobs(jobs.data ?? []).slice(0, 10),
     },

@@ -38,6 +38,32 @@ export function r2FromEnv(env: Env): R2Options | undefined {
   };
 }
 
+/**
+ * E46: what the build step needs with the real AI. Without the R2 keys the preview cannot be
+ * stored; without the three KV values it is stored but its token never reaches the Worker, so
+ * the preview page does not open.
+ */
+export const BUILD_ENV = [
+  "ANTHROPIC_API_KEY",
+  "AI_MODEL_ID",
+  "SUPABASE_SECRET_KEY",
+  "R2_ACCESS_KEY_ID",
+  "R2_SECRET_ACCESS_KEY",
+  "CLOUDFLARE_ACCOUNT_ID",
+  "CLOUDFLARE_KV_NAMESPACE_ID",
+  "CLOUDFLARE_KV_API_TOKEN",
+] as const;
+
+/** The names (never the values) the build step is missing; empty unless AI_MODE=live. */
+export function missingBuildEnv(env: Env): string[] {
+  if ((env.AI_MODE || "simulated") !== "live") return [];
+  const missing: string[] = BUILD_ENV.filter((name) => !env[name]?.trim());
+  if (!env.SUPABASE_URL?.trim() && !env.NEXT_PUBLIC_SUPABASE_URL?.trim()) {
+    missing.unshift("NEXT_PUBLIC_SUPABASE_URL");
+  }
+  return missing;
+}
+
 export function depsFromEnv(
   env: Env,
   options: { localPreviews?: string } = {},
@@ -71,6 +97,7 @@ export function depsFromEnv(
     purger: r2 ? (site) => purgeSite(r2, site) : undefined,
     screenshot,
     skipHumanReview: env.REVIEW_SKIP_HUMAN === "true",
+    missingEnv: missingBuildEnv(env),
     log: (message) => console.log(message),
     secrets: envSecrets(env),
     close: () => screenshot.close(),

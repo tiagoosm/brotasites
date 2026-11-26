@@ -1,114 +1,8 @@
-import { randomUUID } from "node:crypto";
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-import { AiDirector, SimulatedModelClient } from "@brotasites/ai";
-import { SimulatedReviewerAgent } from "@brotasites/reviewer";
-import { contrastIssues, type FormDraft, siteConfigSchema } from "@brotasites/schema/v1.2";
-import { templatesRoot } from "@brotasites/templates";
+import { contrastIssues, siteConfigSchema } from "@brotasites/schema/v1.2";
 import { describe, expect, it } from "vitest";
-import {
-  JOB_KINDS,
-  MemoryStore,
-  type PipelineDeps,
-  type PreviewHost,
-  previewBase,
-  runJob,
-} from "../src/index.js";
-
-const assetsDir = join(templatesRoot, "e2e/fixture-v12/assets");
-const photos = readdirSync(assetsDir).filter((file) => file.endsWith(".jpg"));
-
-function setup(draftChange?: (draft: FormDraft) => void) {
-  const store = new MemoryStore();
-  const siteId = randomUUID();
-  const photoIds = photos.slice(0, 3).map((file) => {
-    const id = file.replace(/\.jpg$/, "");
-    store.assets.set(id, {
-      record: { id, bucket: "site-uploads", storagePath: `owner/${siteId}/${file}`, kind: "image" },
-      data: readFileSync(join(assetsDir, file)),
-    });
-    return id;
-  });
-  const draft: FormDraft = {
-    business: {
-      name: "Padaria do Zé",
-      category: "padaria",
-      city: "Santa Rita do Sapucaí",
-      state: "MG",
-      description:
-        "Padaria de bairro com pães de fermentação natural, bolos e café da manhã desde 1998.",
-    },
-    brand: { logoAsset: null, brandColors: ["#B45309"], feelings: ["acolhedor"] },
-    content: {
-      services: [
-        { name: "Pães artesanais", description: "Feitos todas as manhãs." },
-        { name: "Bolos por encomenda", price: "R$ 60,00" },
-      ],
-      photos: photoIds.map((assetId, index) => ({
-        assetId,
-        alt: `Foto ${index + 1}`,
-        use: index === 0 ? "hero" : undefined,
-      })),
-    },
-    contact: {
-      whatsapp: "5535999990000",
-      hasFixedAddress: true,
-      street: "Rua das Flores",
-      number: "123",
-      district: "Centro",
-      serviceArea: [],
-      openingHours: {
-        mode: "schedule",
-        rules: [{ days: ["mon", "tue", "wed"], intervals: [{ open: "06:00", close: "19:00" }] }],
-      },
-    },
-  };
-  draftChange?.(draft);
-  store.sites.set(siteId, {
-    id: siteId,
-    ownerId: "owner-1",
-    status: "generating_directions",
-    round: 0,
-    subdomain: "padaria-do-ze",
-    approvedDirection: null,
-    previewToken: null,
-    draft,
-    config: null,
-  });
-  const uploads: { siteId: string; token: string; html: string }[] = [];
-  const previews: PreviewHost = {
-    base: previewBase,
-    async upload(id, token, distDir) {
-      uploads.push({ siteId: id, token, html: readFileSync(join(distDir, "index.html"), "utf8") });
-    },
-  };
-  const deployed: string[] = [];
-  const deps: PipelineDeps = {
-    store,
-    ai: new AiDirector({
-      model: new SimulatedModelClient(),
-      registry: store.registry,
-      cache: store.cache,
-    }),
-    agent: new SimulatedReviewerAgent(),
-    previews,
-    publisher: { deploy: async (subdomain) => void deployed.push(subdomain) },
-    screenshot: async () => [
-      { width: 390, png: Buffer.from("phone") },
-      { width: 1280, png: Buffer.from("desktop") },
-    ],
-    browserChecks: async () => ({ findings: [], screenshots: [] }),
-    // A job that fails shows why in the test output.
-    log: (message) => console.error(message),
-  };
-  return { store, siteId, deps, uploads, deployed };
-}
-
-async function runNext(deps: PipelineDeps, store: MemoryStore) {
-  const job = await store.claimJob(JOB_KINDS);
-  if (!job) throw new Error("no job");
-  return runJob(deps, job);
-}
+import { BUILD_ENV, missingBuildEnv } from "../src/env.js";
+import type { MemoryStore, PipelineDeps } from "../src/index.js";
+import { runNext, setup } from "./setup.js";
 
 describe("pipeline", { timeout: 240_000 }, () => {
   it("goes from the answers to 3 directions, a reviewed preview and the live site", async () => {
@@ -256,6 +150,78 @@ describe("pipeline", { timeout: 240_000 }, () => {
     expect(site.statusMessage).toMatch(/problema técnico/);
     expect(uploads).toHaveLength(0);
     expect(store.reports[0]?.status).toBe("needsAttention");
+  });
+
+  it("the team releases a site the review held: the preview, no new copy nor review (E46)", async () => {
+    const { store, siteId, deps, uploads } = setup();
+    deps.agent = stubbornAgent();
+    deps.skipHumanReview = true;
+    expect(await buildChosen(deps, store, siteId)).toBe("done");
+    expect((await store.loadSite(siteId)).status).toBe("needs_attention");
+    const held = (await store.loadSite(siteId)).config;
+    expect(store.reports[0]?.report).toMatchObject({ releasable: true });
+
+    let copyCalls = 0;
+    const writeCopy = deps.ai.writeCopy.bind(deps.ai);
+    deps.ai.writeCopy = (...args) => {
+      copyCalls++;
+      return writeCopy(...args);
+    };
+    let reviews = 0;
+    deps.agent = {
+      review: async () => {
+        reviews += 1;
+        return { findings: [], costUsd: 0, source: "simulated" };
+      },
+    };
+    await store.updateSite(siteId, { status: "building" });
+    store.enqueue(siteId, "build", { release: true, releasedBy: "admin-1" });
+    expect(await runNext(deps, store)).toBe("done");
+    const site = await store.loadSite(siteId);
+    // Padaria has standard review: straight to the client.
+    expect(site.status).toBe("awaiting_approval");
+    expect(site.config).toEqual(held);
+    expect(uploads).toHaveLength(1);
+    expect(uploads[0]?.html).toContain(`/${siteId}/${site.previewToken}/`);
+    expect(copyCalls).toBe(0);
+    expect(reviews).toBe(0);
+    expect(store.reports).toHaveLength(1);
+  });
+
+  it("stops the build at once when a variable is missing, and names only the names (E46)", async () => {
+    const { store, siteId, deps } = setup();
+    store.enqueue(siteId, "directions");
+    await runNext(deps, store);
+    const [chosen] = store.directions.filter((d) => d.siteId === siteId);
+    await store.updateSite(siteId, { status: "building" });
+    const record = store.sites.get(siteId);
+    if (record) record.approvedDirection = chosen?.id ?? null;
+    const job = store.enqueue(siteId, "build");
+    const missing = missingBuildEnv({
+      AI_MODE: "live",
+      ANTHROPIC_API_KEY: "value-of-the-key",
+      AI_MODEL_ID: "claude-opus-5-5",
+      NEXT_PUBLIC_SUPABASE_URL: "https://x.supabase.co",
+      SUPABASE_SECRET_KEY: "value",
+      CLOUDFLARE_ACCOUNT_ID: "acc",
+      R2_ACCESS_KEY_ID: "a",
+      R2_SECRET_ACCESS_KEY: "b",
+    });
+    expect(missing).toEqual(["CLOUDFLARE_KV_NAMESPACE_ID", "CLOUDFLARE_KV_API_TOKEN"]);
+    const broken: PipelineDeps = { ...deps, missingEnv: missing };
+    expect(await runNext(broken, store)).toBe("retry");
+    expect(await runNext(broken, store)).toBe("failed");
+    const stored = store.jobs.find((item) => item.id === job.id)?.error ?? "";
+    expect(stored).toContain("CLOUDFLARE_KV_NAMESPACE_ID, CLOUDFLARE_KV_API_TOKEN");
+    expect(stored).not.toContain("value-of-the-key");
+  });
+
+  it("checks the variables only with the real AI (E46)", () => {
+    expect(missingBuildEnv({})).toEqual([]);
+    expect(missingBuildEnv({ AI_MODE: "live" })).toEqual([
+      "NEXT_PUBLIC_SUPABASE_URL",
+      ...BUILD_ENV,
+    ]);
   });
 
   it("retries a failed job once, then sends the site to needs attention", async () => {
