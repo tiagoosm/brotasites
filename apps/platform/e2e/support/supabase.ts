@@ -143,6 +143,10 @@ export interface FakeState {
   };
   /** E39: the site's jobs as the admin API returns them (masked, explained). */
   adminJobs?: Record<string, unknown>[];
+  /** E46: the newest reviewer report the admin API returns, in place of the default one. */
+  adminReport?: Record<string, unknown>;
+  /** E46: "Liberar para o cliente", as the admin API reports it. */
+  release?: { available: boolean; reason?: string };
   /** E39: the queue row's short failure line. */
   failure?: { step: string; summary: string; at: string } | null;
   /** Bodies posted to the admin route handlers, by path. */
@@ -642,6 +646,13 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
       if (note.length < 3) return route.fulfill(json({ error: "Escreva o motivo." }, 400));
       return route.fulfill(json({ ok: true }));
     }
+    if (url.pathname.endsWith("/release") && state.site) {
+      // E46: the review's hold is lifted; the preview job runs.
+      if (body.confirm !== true) return route.fulfill(json({ error: "Pedido inválido." }, 400));
+      state.site = { ...state.site, status: "building", status_message: null };
+      state.release = { available: false, reason: "wrong_status" };
+      return route.fulfill(json({ jobId: "job-release", started: true, status: "building" }));
+    }
     if (url.pathname.endsWith("/retry") && state.site) {
       // E39: the step runs again; the site leaves needs_attention.
       if (body.confirm !== true) return route.fulfill(json({ error: "Pedido inválido." }, 400));
@@ -782,7 +793,7 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
         direction: { direction: "evolucao", composition_key: "c0ffee00c0ffee00", source: "ai" },
         screenshots: [],
         reports: [
-          {
+          state.adminReport ?? {
             status: "changesNeeded",
             created_at: "2026-10-29T10:00:00Z",
             report: {
@@ -808,6 +819,7 @@ function answerAdmin(route: Route, url: URL, state: FakeState, json: Json) {
           state.site.status === "needs_attention"
             ? { available: true, step: "Montar o site", used: 0, limit: 3 }
             : { available: false, reason: "wrong_status", used: 0, limit: 3 },
+        release: state.release ?? { available: false, reason: "no_report" },
       }),
     );
   }

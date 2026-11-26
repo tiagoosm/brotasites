@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/config/pricing";
 import { adminGet, adminPost } from "@/lib/admin/client";
 import { type AdminJob, failureNoteFor } from "@/lib/job-failures";
+import { type ReleasePlan, releaseRefusals } from "@/lib/release-review";
 import { type RetryPlan, retryRefusals } from "@/lib/retry-job";
 import { infoFor } from "@/lib/site-status";
 import { previewUrl } from "@/lib/sites";
@@ -32,7 +33,21 @@ interface Finding {
   where: string;
   width?: number;
   message: string;
+  /** E46: "check" (measured) or "agent" (the automatic reviewer's opinion). */
+  origin?: "check" | "agent";
+  /** E46: whether this finding held the site. */
+  blocking?: boolean;
 }
+
+interface ReviewRoundRow {
+  findings?: Finding[];
+  fixes?: string[];
+  agent?: boolean;
+}
+
+/** E46: older reports carry no origin; the agent's checks start with "agent:". */
+const isAgentNote = (finding: Finding) =>
+  finding.origin ? finding.origin === "agent" : finding.check.startsWith("agent:");
 
 interface Detail {
   site: TakedownSite & {
@@ -54,7 +69,7 @@ interface Detail {
   reports: {
     status: string;
     created_at: string;
-    report: { findings?: Finding[]; reason?: string; rounds?: unknown[] };
+    report: { findings?: Finding[]; reason?: string; rounds?: ReviewRoundRow[] };
   }[];
   events: { kind: string; message: string; created_at: string }[];
   decisions: {
@@ -76,6 +91,10 @@ interface Detail {
         used: number;
         limit: number;
       };
+  /** E46: "Liberar para o cliente" for a site the review held. */
+  release?:
+    | { available: true }
+    | { available: false; reason: Exclude<ReleasePlan, { ok: true }>["reason"] };
 }
 
 const actionLabels: Record<string, string> = {
@@ -176,6 +195,18 @@ export default function AdminSitePage() {
         )
       )}
 
+      {site.status === "needs_attention" &&
+        (detail.release?.available || detail.release?.reason === "blocked") && (
+          <ReleaseStep
+            siteId={site.id}
+            release={detail.release}
+            onDone={async (text) => {
+              setRetried(text);
+              await load();
+            }}
+          />
+        )}
+
       {/* Team exceptions for this site (E24), each logged with the reason. */}
       <section
         aria-labelledby="excecoes"
@@ -265,25 +296,21 @@ export default function AdminSitePage() {
                 {findings.length === 0 ? (
                   <p className="text-sm">Nenhum problema encontrado.</p>
                 ) : (
-                  <ul className="grid gap-2">
-                    {findings.map((finding) => (
-                      <li
-                        key={`${finding.check}-${finding.where}-${finding.width ?? ""}-${finding.message}`}
-                        className="rounded-lg border border-border bg-card p-3 text-[0.9375rem]"
-                      >
-                        <span className="tag mr-2 text-stem">
-                          {severityLabels[finding.severity]}
-                          {finding.security ? " · segurança" : ""}
-                        </span>
-                        {finding.message}
-                        <span className="block text-[0.8125rem] text-ink-soft">
-                          {finding.check} · {finding.where}
-                          {finding.width ? ` · ${finding.width}px` : ""}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  <>
+                    <FindingList
+                      title="Problemas técnicos"
+                      empty="Nenhum problema técnico."
+                      findings={findings.filter((finding) => !isAgentNote(finding))}
+                    />
+                    <FindingList
+                      title="Observações do revisor automático"
+                      hint="Opiniões da IA para a pessoa conferir: não seguram o site."
+                      empty="Nenhuma observação."
+                      findings={findings.filter(isAgentNote)}
+                    />
+                  </>
                 )}
+                <ReviewRounds rounds={report.report.rounds ?? []} />
               </>
             )}
           </section>
@@ -400,6 +427,172 @@ export default function AdminSitePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** E46: one kind of finding, the ones that held the site marked. */
+function FindingList({
+  title,
+  hint,
+  empty,
+  findings,
+}: {
+  title: string;
+  hint?: string;
+  empty: string;
+  findings: Finding[];
+}) {
+  return (
+    <div className="grid gap-2">
+      <h3 className="text-[1.0625rem] font-semibold">{title}</h3>
+      {hint && <p className="text-sm text-ink-soft">{hint}</p>}
+      {findings.length === 0 ? (
+        <p className="text-sm text-ink-soft">{empty}</p>
+      ) : (
+        <ul className="grid gap-2">
+          {findings.map((finding) => (
+            <li
+              key={`${finding.check}-${finding.where}-${finding.width ?? ""}-${finding.message}`}
+              className="rounded-lg border border-border bg-card p-3 text-[0.9375rem]"
+            >
+              <span className="tag mr-2 text-stem">
+                {severityLabels[finding.severity]}
+                {finding.security ? " · segurança" : ""}
+                {finding.blocking ? " · segurou o site" : ""}
+              </span>
+              {finding.message}
+              <span className="block text-[0.8125rem] text-ink-soft">
+                {finding.check} · {finding.where}
+                {finding.width ? ` · ${finding.width}px` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** E46: what each round found and what the generator changed after it. */
+function ReviewRounds({ rounds }: { rounds: ReviewRoundRow[] }) {
+  if (rounds.length < 2 && !rounds.some((round) => round.fixes?.length)) return null;
+  return (
+    <div className="grid gap-2">
+      <h3 className="text-[1.0625rem] font-semibold">Rodadas da revisão</h3>
+      <ol className="grid gap-1 text-sm">
+        {rounds.map((round, index) => {
+          const all = round.findings ?? [];
+          const notes = all.filter(isAgentNote).length;
+          return (
+            // biome-ignore lint/suspicious/noArrayIndexKey: rounds are fixed and in order
+            <li key={index}>
+              <strong>Rodada {index + 1}:</strong> {all.length - notes} técnico(s),{" "}
+              {round.agent === false
+                ? "revisor automático não chamado"
+                : `${notes} observação(ões)`}
+              {round.fixes?.length ? `. Corrigido: ${round.fixes.join("; ")}.` : "."}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+/**
+ * E46: sends a site the review held to the client as it is, after a person read the report. Two
+ * clicks (Murphy); never after a security finding or an invalid config (the server checks too).
+ */
+function ReleaseStep({
+  siteId,
+  release,
+  onDone,
+}: {
+  siteId: string;
+  release: NonNullable<Detail["release"]>;
+  onDone: (message: string) => Promise<unknown>;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function run() {
+    if (busy) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const result = await adminPost<{ started: boolean }>(`/api/admin/sites/${siteId}/release`, {
+        confirm: true,
+      });
+      setConfirming(false);
+      await onDone(
+        result.started
+          ? "Site liberado. A prévia está sendo preparada e vai para o cliente conferir."
+          : "Site liberado, mas a fila de tarefas não respondeu. Confira o Trigger.dev.",
+      );
+    } catch (caught) {
+      setMessage((caught as Error).message);
+    }
+    setBusy(false);
+  }
+
+  return (
+    <section
+      aria-labelledby="liberar"
+      className="grid gap-3 rounded-xl border border-input bg-card p-5"
+    >
+      <h2 id="liberar" className="font-display text-[1.5rem]">
+        Liberar para o cliente
+      </h2>
+      {release.available ? (
+        <>
+          <p className="text-[0.9375rem]">
+            A revisão automática segurou este site. Se o relatório abaixo não impede, mostre o site
+            ao cliente como está, sem montar de novo. Categorias com revisão reforçada continuam
+            esperando a aprovação da equipe.
+          </p>
+          {confirming ? (
+            <div className="grid gap-3">
+              <p className="text-[0.9375rem] font-semibold">
+                Você revisou o relatório e quer mostrar este site ao cliente?
+              </p>
+              <span className="flex flex-wrap items-center gap-3">
+                <Button
+                  size="lg"
+                  disabled={busy}
+                  aria-busy={busy || undefined}
+                  onClick={() => void run()}
+                >
+                  {busy ? "Liberando…" : "Sim, liberar"}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => setConfirming(false)}
+                >
+                  Cancelar
+                </Button>
+              </span>
+            </div>
+          ) : (
+            <Button
+              size="lg"
+              variant="outline"
+              className="justify-self-start"
+              onClick={() => setConfirming(true)}
+            >
+              Liberar para o cliente
+            </Button>
+          )}
+        </>
+      ) : (
+        <p className="text-[0.9375rem]">{releaseRefusals[release.reason][1]}</p>
+      )}
+      <p role="status" className="text-[0.9375rem] font-semibold empty:hidden">
+        {message}
+      </p>
+    </section>
   );
 }
 

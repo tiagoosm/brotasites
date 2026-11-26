@@ -73,6 +73,11 @@ export interface ReviewReport {
   /** The findings of the last round. */
   findings: Finding[];
   costUsd: number;
+  /**
+   * E46: a site held by the review that the team may still send to the client as it is
+   * ("Liberar para o cliente"): never after a security finding or an invalid config.
+   */
+  releasable: boolean;
 }
 
 /** What the engine needs to pick another variant for a built site. */
@@ -229,6 +234,7 @@ export async function reviewSite(options: ReviewOptions): Promise<ReviewReport> 
     reason: string,
     findings: Finding[],
     blocking: readonly Finding[] = [],
+    releasable = status === "needsAttention",
   ): ReviewReport => {
     const held = new Set(blocking);
     return {
@@ -241,6 +247,7 @@ export async function reviewSite(options: ReviewOptions): Promise<ReviewReport> 
       })),
       findings: findings.map((finding) => label(finding, held)),
       costUsd,
+      releasable,
     };
   };
 
@@ -285,6 +292,7 @@ export async function reviewSite(options: ReviewOptions): Promise<ReviewReport> 
         "Problema de segurança: o site não pode ser publicado sem revisão.",
         findings,
         security,
+        false,
       );
     }
     if (!checked.config) {
@@ -303,7 +311,13 @@ export async function reviewSite(options: ReviewOptions): Promise<ReviewReport> 
         continue;
       }
       rounds.push({ findings, fixes: [], costUsd: roundCost, agent: agentRan });
-      return finish("needsAttention", "A configuração do site é inválida.", findings, findings);
+      return finish(
+        "needsAttention",
+        "A configuração do site é inválida.",
+        findings,
+        findings,
+        false,
+      );
     }
     const fixable = findings.filter(
       (finding) =>

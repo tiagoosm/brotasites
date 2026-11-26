@@ -90,6 +90,84 @@ test("a site that needs attention runs its failed step again, after a confirmati
   expect(state.site?.status).toBe("building");
 });
 
+test("a site the review held: technical problems apart from the agent's notes, then released (E46)", async ({
+  page,
+  context,
+}) => {
+  const state = await withSite(context, {
+    ...inReview,
+    site: { ...inReview.site, status: "needs_attention", preview_token: null },
+    admin: true,
+    release: { available: true },
+    adminReport: {
+      status: "needsAttention",
+      created_at: "2026-11-26T10:00:00Z",
+      report: {
+        reason: "1 problema(s) grave(s) continuam depois das correções.",
+        releasable: true,
+        findings: [
+          {
+            check: "overflow",
+            severity: "high",
+            where: "servicos",
+            width: 360,
+            message: "A seção passa da largura da tela.",
+            origin: "check",
+            blocking: true,
+          },
+          {
+            check: "agent:fit",
+            severity: "high",
+            where: "hero",
+            message: "O tom do título não combina com uma padaria.",
+            origin: "agent",
+            blocking: false,
+          },
+        ],
+        rounds: [
+          { findings: [], fixes: ["servicos: variante trocada para cards"], agent: true },
+          { findings: [], fixes: [], agent: false },
+        ],
+      },
+    },
+  });
+  await page.goto(`/admin/sites/${SITE}`);
+  const report = page.getByRole("region", { name: "Relatório do revisor" });
+  await expect(report.getByRole("heading", { name: "Problemas técnicos" })).toBeVisible();
+  await expect(report.getByText("Alta · segurou o site")).toBeVisible();
+  await expect(
+    report.getByRole("heading", { name: "Observações do revisor automático" }),
+  ).toBeVisible();
+  await expect(report.getByText(/Corrigido: servicos: variante trocada/)).toBeVisible();
+
+  const release = page.getByRole("region", { name: "Liberar para o cliente" });
+  await release.getByRole("button", { name: "Liberar para o cliente" }).click();
+  await expect(
+    release.getByText("Você revisou o relatório e quer mostrar este site ao cliente?"),
+  ).toBeVisible();
+  // Nothing is sent before the second click.
+  expect(state.adminPosts.filter((post) => post.path.endsWith("/release"))).toEqual([]);
+  await release.getByRole("button", { name: "Sim, liberar" }).click();
+  await expect(page.getByText(/Site liberado/)).toBeVisible();
+  expect(state.adminPosts.filter((post) => post.path.endsWith("/release"))).toEqual([
+    { path: `/api/admin/sites/${SITE}/release`, body: { confirm: true } },
+  ]);
+  expect(state.site?.status).toBe("building");
+});
+
+test("a security finding: the site cannot be released (E46)", async ({ page, context }) => {
+  await withSite(context, {
+    ...inReview,
+    site: { ...inReview.site, status: "needs_attention", preview_token: null },
+    admin: true,
+    release: { available: false, reason: "blocked" },
+  });
+  await page.goto(`/admin/sites/${SITE}`);
+  const release = page.getByRole("region", { name: "Liberar para o cliente" });
+  await expect(release).toContainText("problema de segurança");
+  await expect(release.getByRole("button")).toHaveCount(0);
+});
+
 test("what went wrong: the step, the cause, the details and the run, for the team (E39)", async ({
   page,
   context,

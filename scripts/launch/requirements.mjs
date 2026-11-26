@@ -354,7 +354,7 @@ export const VARIABLES = [
     need: "required",
     secret: false,
     expected: "the Cloudflare account id",
-    without: "Previews and sites cannot be stored: the job stops.",
+    without: "Previews and sites cannot be stored: the build job stops and names it (E46).",
     step: "trigger",
   },
   {
@@ -390,7 +390,8 @@ export const VARIABLES = [
     need: "required",
     secret: false,
     expected: "the KV namespace id",
-    without: "Published sites and previews never reach the Worker.",
+    without:
+      "Published sites and previews never reach the Worker: the preview page does not open (the build job stops and names it, E46).",
     step: "trigger",
   },
   {

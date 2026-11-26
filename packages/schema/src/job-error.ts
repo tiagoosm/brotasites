@@ -84,6 +84,13 @@ export interface JobErrorCause {
  */
 export const JOB_ERROR_CAUSES: (JobErrorCause & { pattern: RegExp })[] = [
   {
+    id: "missing-env",
+    pattern: /Faltam variáveis no ambiente das tarefas/,
+    summary: "Faltam variáveis no ambiente das tarefas (Trigger.dev); os nomes estão nos detalhes.",
+    action:
+      "Cadastre as variáveis listadas em Trigger.dev > Production > Environment Variables (docs/launch-status.md), rode “Deploy jobs” e use “Tentar de novo”.",
+  },
+  {
     id: "keep-names",
     pattern: /__name is not defined/,
     summary:

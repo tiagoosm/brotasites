@@ -99,6 +99,7 @@ describe("reviewSite", () => {
     expect(report.status).toBe("needsAttention");
     expect(report.rounds).toHaveLength(1);
     expect(report.reason).toMatch(/segurança/);
+    expect(report.releasable).toBe(false);
   });
 
   it("repairs the client's colors to AA", async () => {
@@ -235,6 +236,7 @@ describe("reviewSite", () => {
         rewriteCopy: async (site) => site,
       });
       expect(report.status).toBe("needsAttention");
+      expect(report.releasable).toBe(true);
       const held = report.findings.filter((f) => f.blocking);
       expect(held.map((f) => [f.check, f.origin])).toEqual([["overflow", "check"]]);
     });

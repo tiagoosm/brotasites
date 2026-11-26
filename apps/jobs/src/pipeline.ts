@@ -60,6 +60,8 @@ export interface PipelineDeps {
    * as sk-, eyJ and Bearer are masked anyway).
    */
   secrets?: readonly string[];
+  /** E46: the variable names the build step is missing (missingBuildEnv); it stops at once. */
+  missingEnv?: readonly string[];
 }
 
 export const JOB_KINDS: JobKind[] = ["directions", "build", "publish"];
@@ -184,10 +186,58 @@ export async function runDirections(deps: PipelineDeps, job: Job): Promise<void>
   }
 }
 
+/** E46: the message for missing variables; JOB_ERROR_CAUSES ("missing-env") explains it. */
+export function missingEnvMessage(names: readonly string[]): string {
+  return `Faltam variáveis no ambiente das tarefas: ${names.join(", ")}. Confira em Trigger.dev > Production > Environment Variables.`;
+}
+
+/**
+ * E46: "Liberar para o cliente" in the admin. A site the review held for a measured problem
+ * (never security nor an invalid config, checked by the platform) goes to the client as the
+ * reviewer left it: the last config, no new copy nor review, a private preview. A category with
+ * reinforced or mandatory review still waits for a person.
+ */
+async function releaseReviewed(deps: PipelineDeps, site: SiteRecord): Promise<void> {
+  const { store } = deps;
+  if (!site.config) throw new JobError("Não há site montado para liberar.");
+  const workspace = await prepareWorkspace(store, site.id);
+  try {
+    const token = site.previewToken ?? randomBytes(24).toString("base64url");
+    const outDir = await build(
+      deps,
+      workspace,
+      site.config,
+      "preview",
+      deps.previews.base(site.id, token),
+    );
+    await deps.previews.upload(site.id, token, outDir);
+    const next = needsHumanReview(site.draft.business?.category, true)
+      ? "in_review"
+      : "awaiting_approval";
+    await store.updateSite(site.id, { status: next, statusMessage: null, previewToken: token });
+    await store.addEvent(
+      site.id,
+      "site_built",
+      next === "in_review"
+        ? "Seu site está montado. Estamos dando uma última olhada antes de mostrar para você."
+        : "Seu site está pronto para você conferir.",
+    );
+  } finally {
+    await workspace.dispose();
+  }
+}
+
 export async function runBuild(deps: PipelineDeps, job: Job): Promise<void> {
   const { store } = deps;
   const site = await store.loadSite(job.siteId);
   if (site.status !== "building") return;
+  if (deps.missingEnv && deps.missingEnv.length > 0) {
+    throw new JobError(missingEnvMessage(deps.missingEnv));
+  }
+  if (job.payload.release === true) {
+    await releaseReviewed(deps, site);
+    return;
+  }
   const direction = site.approvedDirection
     ? await store.getDirection(site.approvedDirection)
     : null;
@@ -286,6 +336,8 @@ export async function runBuild(deps: PipelineDeps, job: Job): Promise<void> {
       copySource: copy.source,
       // E41: whether the editor's second pass was used (applied, discarded, failed, off).
       copyEditor: copy.editor,
+      // E46: whether the team may send a held site to the client as it is.
+      releasable: report.releasable,
     });
 
     if (report.status === "needsAttention") {
